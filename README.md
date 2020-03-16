@@ -1,5 +1,6 @@
 # pskruntime
-Example repository project. Use it as a template for creating <b>PrivateSky</b> domains
+Example repository project. Use it as a template for creating <b>PrivateSky</b> domains.
+
 For detailed documentation and tutorials check http://privatesky.xyz
 
 # Table of Contents
