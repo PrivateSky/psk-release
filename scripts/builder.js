@@ -30,7 +30,7 @@ for(let i=0; i<domains.length; i++){
 
     console.log("Building domain", domain);
     try{
-        let res = child_process.execSync(`node ${pskBuildPath} ${domainTargetsMap} `+
+        let res = child_process.execSync(`node ${pskBuildPath} --projectMap=${domainTargetsMap} `+
             `--input="${domainBundlesInput}" `+
             `--output="${domainBundlesOutput}"`, {cwd: path.resolve(path.join(__dirname, "..", "domains", domain))});
         console.log(res.toString());

@@ -4,17 +4,21 @@
   Start a Launcher
  */
 
-const {spawnSync, fork, spawn} = require('child_process');
+const path = require('path');
+process.env.PSK_ROOT_INSTALATION_FOLDER = path.resolve(path.join(__dirname, "../../../"));
+const ConfigBox = require('../../core/ConfigBox');
 const max_timeout = 10*60*1000; // 10 minutes
 const restartDelays = {};
+
+const pingFork = require("../../core/utils/pingpongFork").fork;
 
 let shouldRestart = true;
 const forkedProcesses = {};
 
 
-function startProcess(filePath) {
+function startProcess(filePath,  args, options) {
     console.log("Booting", filePath);
-    forkedProcesses[filePath] = spawn('node', [filePath], {detached: process.platform === "win32" ? false : true, setsid: true, stdio: 'inherit'});
+    forkedProcesses[filePath] = pingFork(filePath, args, options);
 
     console.log('SPAWNED ', forkedProcesses[filePath].pid);
 
@@ -50,7 +54,19 @@ function startProcess(filePath) {
     forkedProcesses[filePath].on('exit', exitHandler(filePath));
 }
 
-startProcess('./psknode/bin/scripts/virtualMq.js');
-startProcess('./psknode/core/launcher.js');
+startProcess(path.join(__dirname, 'startZeromqProxy.js'));
+startProcess(path.join(__dirname, 'virtualMq.js'));
 
-require('./../../core/utils/exitHandler.js')(forkedProcesses);
+require('../../bundles/virtualMQ');
+require('../../bundles/pskruntime');
+require('../../bundles/blockchain');
+require('../../bundles/edfsBar');
+require('callflow');
+
+ConfigBox.getSeed((err, seed) => {
+    if (err) {
+        throw err;
+    }
+
+    startProcess(path.join(__dirname, '../../core/launcher.js'), [seed.toString()]);
+});
