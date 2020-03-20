@@ -43,6 +43,6 @@
     "start": "npm run build && node ./psknode/bin/scripts/psknode.js",
     "tests": "npm run build && cd tests && node ./../scripts/testrunner.js",
     "cmd": "node bin//terminal.js",
-    "build": "node scripts/builder.js"
+    "build": "node ./psknode/bin/scripts/pskbuild.js --jsonInput=true --projectMap={\\\"domain\\\":{\\\"deps\\\":\\\"./../../domain\\\",\\\"autoLoad\\\":true}}"
   }
 }
