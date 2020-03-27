@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/PrivateSky/psk-release.svg?branch=master)](https://travis-ci.com/PrivateSky/psk-release)
 # pskruntime
 Example repository project. Use it as a template for creating <b>PrivateSky</b> domains.
 
