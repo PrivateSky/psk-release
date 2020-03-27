@@ -1,6 +1,6 @@
 ![PrivateSky Release Build](https://github.com/PrivateSky/psk-release/workflows/PrivateSky%20Release%20Build/badge.svg) [![Build Status](https://travis-ci.com/PrivateSky/psk-release.svg?branch=master)](https://travis-ci.com/PrivateSky/psk-release)
-# pskruntime
-Example repository project. Use it as a template for creating <b>PrivateSky</b> domains.
+# PrivateSky Release
+Template repository project. Use it for creating <b>PrivateSky</b> domains.
 
 For detailed documentation and tutorials check http://privatesky.xyz
 
