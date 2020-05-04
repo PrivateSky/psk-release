@@ -15643,15 +15643,6 @@ module.exports = {
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js":[function(require,module,exports){
 (function (process,Buffer,__dirname){
-const storageFolder = process.env.vmq_channel_storage || "../tmp";
-const maxQueueSize = process.env.vmq_max_queue_size || 100;
-const tokenSize = process.env.vmq_token_size || 48;
-const tokenHeaderName = process.env.vmq_token_header_name || "x-tokenHeader";
-const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
-
-const channelsFolderName = process.env.PSK_VIRTUAL_MQ_CHANNEL_FOLDER_NAME || "channels";
-const channelKeyFileName = "channel_key";
-
 const path = require("path");
 const fs = require("fs");
 const crypto = require('crypto');
@@ -15661,16 +15652,16 @@ const Queue = require("swarmutils").Queue;
 const SwarmPacker = require("swarmutils").SwarmPacker;
 
 function ChannelsManager(server){
+    const utils = require("./utils");
+    const config = utils.getServerConfig();
+    const channelKeyFileName = "channel_key";
 
-    const rootFolder = path.join(storageFolder, channelsFolderName);
+    const rootFolder = path.join(config.getStorage(), config.getChannelsFolderName());
     fs.mkdirSync(rootFolder, {recursive: true});
 
     const channelKeys = {};
     const queues = {};
     const subscribers = {};
-
-
-    process.env.enable_signature_check = true;
 
     let baseDir = __dirname;
 
@@ -15683,11 +15674,11 @@ function ChannelsManager(server){
 
     let forwarder;
     if(integration.testIfAvailable()){
-        forwarder = integration.getForwarderInstance(process.env.vmq_zeromq_forward_address);
+        forwarder = integration.getForwarderInstance(config.getZeromqForwardAddress());
     }
 
     function generateToken(){
-        let buffer = crypto.randomBytes(tokenSize);
+        let buffer = crypto.randomBytes(config.getTokenSize());
         return buffer.toString('hex');
     }
 
@@ -15792,7 +15783,7 @@ function ChannelsManager(server){
 
             createChannel(channelName, publicKey, (err, token)=>{
                 if(!err){
-                    res.setHeader('Cookie', [`${tokenHeaderName}=${token}`]);
+                    res.setHeader('Cookie', [`${config.getTokenSize()}=${token}`]);
                 }
                 handler(err, res);
             });
@@ -15821,7 +15812,7 @@ function ChannelsManager(server){
         readBody(req, (err, message)=>{
             const {enable} = message;
             const channelName = req.params.channelName;
-            const signature = req.headers[signatureHeaderName];
+            const signature = req.headers[config.getSignatureHeaderName()];
 
             if(typeof channelName !== "string" || typeof signature !== "string"){
                 return sendStatus(res, 400);
@@ -15969,7 +15960,7 @@ function ChannelsManager(server){
                                 dispatched = writeMessage(subscribers, message);
                             }
                             if(!dispatched) {
-                                if(queue.length < maxQueueSize){
+                                if(queue.length < config.getMaxQueueSize()){
                                     queue.push(message);
                                 }else{
                                     //queue is full
@@ -16086,312 +16077,7 @@ function ChannelsManager(server){
 module.exports = ChannelsManager;
 }).call(this,require('_process'),require("buffer").Buffer,"/modules/virtualmq")
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js":[function(require,module,exports){
-(function (process,Buffer){
-const fs = require('fs');
-const path = require('path');
-let rootFolder = process.env.npm_package_config_ROOT_FILE_UPLOAD || process.env.ROOT_FILE_UPLOAD || "./FileUploads";
-
-rootFolder = path.resolve(rootFolder);
-
-guid = function () {
-	function s4() {
-		return Math.floor((1 + Math.random()) * 0x10000)
-			.toString(16)
-			.substring(1);
-	}
-
-	return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-};
-
-function upload(req, callback) {
-	const readFileStream = req;
-	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
-		callback(new Error("Something wrong happened"));
-		return;
-	}
-
-	const folder = Buffer.from(req.params.folder, 'base64').toString().replace('\n', '');
-	if (folder.includes('..')) {
-		return callback('err');
-	}
-	let filename = guid();
-	if (filename.split('.').length > 1) {
-		return callback('err');
-	}
-	const completeFolderPath = path.join(rootFolder, folder);
-
-	const contentType = req.headers['content-type'].split('/');
-
-	if (contentType[0] === 'image' || (contentType[0] === 'application' && contentType[1] === 'pdf')) {
-		filename += '.' + contentType[1];
-	} else {
-		return callback('err');
-	}
-	try {
-		fs.mkdirSync(completeFolderPath, {recursive: true});
-	} catch (e) {
-		return callback(e);
-	}
-	const writeStream = fs.createWriteStream(path.join(completeFolderPath, filename));
-
-	writeStream.on('finish', () => {
-		writeStream.close();
-		return callback(null, {'path': path.posix.join(folder, filename)});
-	});
-
-	writeStream.on('error', (err) => {
-		writeStream.close();
-		return callback(err);
-	});
-	req.pipe(writeStream);
-}
-
-function download(req, res, callback) {
-	const readFileStream = req;
-	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
-		callback(new Error("Something wrong happened"));
-		return;
-	}
-	const folder = Buffer.from(req.params.filepath, 'base64').toString().replace('\n', '');
-
-	const completeFolderPath = path.join(rootFolder, folder);
-	if (folder.includes('..')) {
-		return callback(new Error("invalidPath"));
-	}
-	if (fs.existsSync(completeFolderPath)) {
-		const fileToSend = fs.createReadStream(completeFolderPath);
-		res.setHeader('Content-Type', `image/${folder.split('.')[1]}`);
-		return callback(null, fileToSend);
-	} else {
-		return callback(new Error("PathNotFound"));
-	}
-}
-
-function sendResult(resHandler, resultStream) {
-	resHandler.statusCode = 200;
-	resultStream.pipe(resHandler);
-	resultStream.on('finish', () => {
-		resHandler.end();
-	});
-}
-
-function FilesManager(server) {
-	//folder can be userId/tripId/...
-	server.post('/files/upload/:folder', function (req, res) {
-		upload(req, (err, result) => {
-			if (err) {
-				res.statusCode = 500;
-				res.end();
-			} else {
-				res.statusCode = 200;
-				res.end(JSON.stringify(result));
-			}
-		})
-	});
-
-	server.get('/files/download/:filepath', function (req, res) {
-		download(req, res, (err, result) => {
-			if (err) {
-				res.statusCode = 404;
-				res.end();
-			} else {
-				sendResult(res, result);
-			}
-		});
-	});
-
-	const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
-	if (typeof process.env.PSK_VIRTUAL_MQ_STATIC !== "undefined" && process.env.PSK_VIRTUAL_MQ_STATIC === "true") {
-		server.use("*", function (req, res, next) {
-			const prefix = "/directory-summary/";
-			requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
-				if (notOurResponsibility) {
-					return next();
-				}
-				targetPath = targetPath.replace(prefix, "");
-				serverTarget(targetPath);
-			});
-
-			function serverTarget(targetPath) {
-				console.log("Serving summary for dir:", targetPath);
-				fs.stat(targetPath, function (err, stats) {
-					if (err) {
-						res.statusCode = 404;
-						res.end();
-						return;
-					}
-					if (!stats.isDirectory()) {
-						res.statusCode = 403;
-						res.end();
-						return;
-					}
-
-					function send() {
-						res.statusCode = 200;
-						res.setHeader('Content-Type', "application/json");
-						//let's clean some empty objects
-						for (let prop in summary) {
-							if (Object.keys(summary[prop]).length === 0) {
-								delete summary[prop];
-							}
-						}
-
-						res.write(JSON.stringify(summary));
-						res.end();
-					}
-
-					let summary = {};
-					let directories = {};
-
-					function extractContent(currentPath) {
-						directories[currentPath] = -1;
-						let summaryId = currentPath.replace(targetPath, "");
-						summaryId = summaryId.split(path.sep).join("/");
-						if (summaryId === "") {
-							summaryId = "/";
-						}
-						//summaryId = path.basename(summaryId);
-						summary[summaryId] = {};
-
-						fs.readdir(currentPath, function (err, files) {
-							if (err) {
-								return markAsFinish(currentPath);
-							}
-							directories[currentPath] = files.length;
-							//directory empty test
-							if (files.length === 0) {
-								return markAsFinish(currentPath);
-							} else {
-								for (let i = 0; i < files.length; i++) {
-									let file = files[i];
-									const fileName = path.join(currentPath, file);
-									if (fs.statSync(fileName).isDirectory()) {
-										extractContent(fileName);
-									} else {
-										let fileContent = fs.readFileSync(fileName);
-										summary[summaryId][file] = fileContent.toString();
-									}
-									directories[currentPath]--;
-								}
-								return markAsFinish(currentPath);
-							}
-						});
-					}
-
-					function markAsFinish(targetPath) {
-						if (directories [targetPath] > 0) {
-							return;
-						}
-						delete directories [targetPath];
-						const dirsLeftToProcess = Object.keys(directories);
-						//if there are no other directories left to process
-						if (dirsLeftToProcess.length === 0) {
-							send();
-						}
-					}
-
-					extractContent(targetPath);
-				})
-			}
-
-		});
-
-		server.use("*", function (req, res, next) {
-			requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
-				if (notOurResponsibility) {
-					return next();
-				}
-				//from now on we mean to resolve the url
-				fs.stat(targetPath, function (err, stats) {
-					if (err) {
-						res.statusCode = 404;
-						res.end();
-						return;
-					}
-					if (stats.isDirectory()) {
-						let url = req.url;
-						if (url[url.length - 1] !== "/") {
-							res.writeHead(302, {
-								'Location': url + "/"
-							});
-							res.end();
-							return;
-						}
-						const defaultFileName = "index.html";
-						const defaultPath = path.join(targetPath, defaultFileName);
-						fs.stat(defaultPath, function (err) {
-							if (err) {
-								res.statusCode = 403;
-								res.end();
-								return;
-							}
-							return sendFile(res, defaultPath);
-						});
-					} else {
-						return sendFile(res, targetPath);
-					}
-				});
-			});
-		});
-
-		function sendFile(res, file) {
-			let stream = fs.createReadStream(file);
-			const mimes = require("./MimeType");
-			let ext = path.extname(file);
-			if (ext !== "") {
-				ext = ext.replace(".", "");
-				res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
-			} else {
-				res.setHeader('Content-Type', "application/octet-stream");
-			}
-			return sendResult(res, stream);
-		}
-
-		function requestValidation(req, method, urlPrefix, callback) {
-			if (typeof urlPrefix === "function") {
-				callback = urlPrefix;
-				urlPrefix = undefined;
-			}
-			if (req.method !== method) {
-				//we resolve only GET requests
-				return callback(true);
-			}
-
-			if (typeof urlPrefix === "undefined") {
-				for (let i = 0; i < lockedPathsPrefixes.length; i++) {
-					let reservedPath = lockedPathsPrefixes[i];
-					//if we find a url that starts with a reserved prefix is not our duty ro resolve
-					if (req.url.indexOf(reservedPath) === 0) {
-						return callback(true);
-					}
-				}
-			} else {
-				if (req.url.indexOf(urlPrefix) !== 0) {
-					return callback(true);
-				}
-			}
-
-			const rootFolder = server.rootFolder;
-			const path = require("path");
-			let requestedUrl = req.url;
-			if (urlPrefix) {
-				requestedUrl = requestedUrl.replace(urlPrefix, "");
-			}
-			let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
-			//if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
-			if (targetPath.indexOf(rootFolder) !== 0) {
-				return callback(true);
-			}
-			callback(false, targetPath);
-		}
-	}
-}
-
-module.exports = FilesManager;
-}).call(this,require('_process'),require("buffer").Buffer)
-
-},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js":[function(require,module,exports){
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js":[function(require,module,exports){
 const extensionsMimeTypes = {
     "aac": {
         name: "audio/aac",
@@ -16662,7 +16348,311 @@ module.exports.getMimeTypeFromExtension = function (extension) {
     }
     return defaultMimeType;
 };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ServerConfig.js":[function(require,module,exports){
+(function (__dirname){
+function ServerConfig(conf) {
+    const path = require("path");
+    const defaultConf = {
+        storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
+        "port": 8080,
+        "zeromqForwardAddress": "tcp://127.0.0.1:5001",
+        "endpoints": {
+            "virtualMQ": {
+                "channelsFolderName": "channels",
+                "maxSize": 100,
+                "tokenSize": 48,
+                "tokenHeaderName": "x-tokenHeader",
+                "signatureHeaderName": "x-signature",
+                "enableSignatureCheck": true
+            },
+            "staticServer": true,
+            "edfs": true,
+            "filesManager": true,
+            "dossierWizard": true
+
+        }
+    };
+    conf = conf || defaultConf;
+
+    this.getStorage = () => {
+        if (typeof conf.storage === "undefined") {
+            return defaultConf.storage;
+        }
+
+        return conf.storage;
+    };
+
+    this.getPort = () => {
+        if (typeof conf.port === "undefined") {
+            return defaultConf.port;
+        }
+
+        return conf.port;
+    };
+
+    this.getZeromqForwardAddress = () => {
+        if (typeof conf.zeromqForwardAddress === "undefined")  {
+            return defaultConf.zeromqForwardAddress;
+        }
+
+        return conf.zeromqForwardAddress;
+    };
+
+    this.getChannelsFolderName = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.channelsFolderName === "undefined") {
+            return defaultConf.endpoints.virtualMQ.channelsFolderName;
+        }
+
+        return conf.endpoints.virtualMQ.channelsFolderName;
+    };
+
+    this.getTokenSize = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.tokenSize === "undefined") {
+            return defaultConf.endpoints.virtualMQ.tokenSize;
+        }
+
+        return conf.endpoints.virtualMQ.tokenSize;
+    };
+
+    this.getTokenHeaderName = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.tokenHeaderName === "undefined") {
+            return defaultConf.endpoints.virtualMQ.tokenHeaderName;
+        }
+
+        return conf.endpoints.virtualMQ.tokenHeaderName;
+    };
+
+    this.getSignatureHeaderName = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.signatureHeaderName === "undefined") {
+            return defaultConf.endpoints.virtualMQ.signatureHeaderName;
+        }
+
+        return conf.endpoints.virtualMQ.signatureHeaderName;
+    };
+
+    this.signatureCheckIsEnabled = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.enableSignatureCheck === "undefined") {
+            return defaultConf.endpoints.virtualMQ.enableSignatureCheck;
+        }
+
+        return conf.endpoints.virtualMQ.enableSignatureCheck;
+    };
+
+    this.getMaxQueueSize = () => {
+        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.maxSize === "undefined") {
+            return defaultConf.endpoints.virtualMQ.maxSize;
+        }
+
+        return conf.endpoints.virtualMQ.maxSize;
+    };
+
+    this.getEnabledMiddlewareList = () => {
+        if (typeof conf.endpoints === "undefined") {
+            return Object.keys(defaultConf.endpoints);
+        }
+
+        return Object.keys(conf.endpoints);
+    };
+}
+
+module.exports = ServerConfig;
+}).call(this,"/modules/virtualmq")
+
+},{"path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/StaticServer.js":[function(require,module,exports){
+function StaticServer(server) {
+    const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
+    const fs = require("fs");
+    const path = require("path");
+    server.use("*", function (req, res, next) {
+        const prefix = "/directory-summary/";
+        requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            targetPath = targetPath.replace(prefix, "");
+            serverTarget(targetPath);
+        });
+
+        function serverTarget(targetPath) {
+            console.log("Serving summary for dir:", targetPath);
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (!stats.isDirectory()) {
+                    res.statusCode = 403;
+                    res.end();
+                    return;
+                }
+
+                function send() {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', "application/json");
+                    //let's clean some empty objects
+                    for (let prop in summary) {
+                        if (Object.keys(summary[prop]).length === 0) {
+                            delete summary[prop];
+                        }
+                    }
+
+                    res.write(JSON.stringify(summary));
+                    res.end();
+                }
+
+                let summary = {};
+                let directories = {};
+
+                function extractContent(currentPath) {
+                    directories[currentPath] = -1;
+                    let summaryId = currentPath.replace(targetPath, "");
+                    summaryId = summaryId.split(path.sep).join("/");
+                    if (summaryId === "") {
+                        summaryId = "/";
+                    }
+                    //summaryId = path.basename(summaryId);
+                    summary[summaryId] = {};
+
+                    fs.readdir(currentPath, function (err, files) {
+                        if (err) {
+                            return markAsFinish(currentPath);
+                        }
+                        directories[currentPath] = files.length;
+                        //directory empty test
+                        if (files.length === 0) {
+                            return markAsFinish(currentPath);
+                        } else {
+                            for (let i = 0; i < files.length; i++) {
+                                let file = files[i];
+                                const fileName = path.join(currentPath, file);
+                                if (fs.statSync(fileName).isDirectory()) {
+                                    extractContent(fileName);
+                                } else {
+                                    let fileContent = fs.readFileSync(fileName);
+                                    summary[summaryId][file] = fileContent.toString();
+                                }
+                                directories[currentPath]--;
+                            }
+                            return markAsFinish(currentPath);
+                        }
+                    });
+                }
+
+                function markAsFinish(targetPath) {
+                    if (directories [targetPath] > 0) {
+                        return;
+                    }
+                    delete directories [targetPath];
+                    const dirsLeftToProcess = Object.keys(directories);
+                    //if there are no other directories left to process
+                    if (dirsLeftToProcess.length === 0) {
+                        send();
+                    }
+                }
+
+                extractContent(targetPath);
+            })
+        }
+
+    });
+
+    server.use("*", function (req, res, next) {
+        requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            //from now on we mean to resolve the url
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (stats.isDirectory()) {
+                    let url = req.url;
+                    if (url[url.length - 1] !== "/") {
+                        res.writeHead(302, {
+                            'Location': url + "/"
+                        });
+                        res.end();
+                        return;
+                    }
+                    const defaultFileName = "index.html";
+                    const defaultPath = path.join(targetPath, defaultFileName);
+                    fs.stat(defaultPath, function (err) {
+                        if (err) {
+                            res.statusCode = 403;
+                            res.end();
+                            return;
+                        }
+                        return sendFile(res, defaultPath);
+                    });
+                } else {
+                    return sendFile(res, targetPath);
+                }
+            });
+        });
+    });
+
+    function sendFile(res, file) {
+        let stream = fs.createReadStream(file);
+        const mimes = require("./MimeType");
+        let ext = path.extname(file);
+        if (ext !== "") {
+            ext = ext.replace(".", "");
+            res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
+        } else {
+            res.setHeader('Content-Type', "application/octet-stream");
+        }
+        res.statusCode = 200;
+        stream.pipe(res);
+        stream.on('finish', () => {
+            res.end();
+        });
+    }
+
+    function requestValidation(req, method, urlPrefix, callback) {
+        if (typeof urlPrefix === "function") {
+            callback = urlPrefix;
+            urlPrefix = undefined;
+        }
+        if (req.method !== method) {
+            //we resolve only GET requests
+            return callback(true);
+        }
+
+        if (typeof urlPrefix === "undefined") {
+            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
+                let reservedPath = lockedPathsPrefixes[i];
+                //if we find a url that starts with a reserved prefix is not our duty ro resolve
+                if (req.url.indexOf(reservedPath) === 0) {
+                    return callback(true);
+                }
+            }
+        } else {
+            if (req.url.indexOf(urlPrefix) !== 0) {
+                return callback(true);
+            }
+        }
+
+        const rootFolder = server.rootFolder;
+        const path = require("path");
+        let requestedUrl = req.url;
+        if (urlPrefix) {
+            requestedUrl = requestedUrl.replace(urlPrefix, "");
+        }
+        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+        //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
+        if (targetPath.indexOf(rootFolder) !== 0) {
+            return callback(true);
+        }
+        callback(false, targetPath);
+    }
+}
+
+module.exports = StaticServer;
+},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
 (function (process,Buffer){
 const http = require('http');
 const {URL} = require('url');
@@ -16800,19 +16790,18 @@ module.exports = RequestFactory;
 
 },{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/index.js":[function(require,module,exports){
 (function (process){
-const path = require("path");
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
-const Router = httpWrapper.Router;
 const TokenBucket = require('./libs/TokenBucket');
 const START_TOKENS = 6000000;
-
 const signatureHeaderName = process.env.vmq_signature_header_name || 'x-signature';
 
 function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const port = listeningPort || 8080;
 	const tokenBucket = new TokenBucket(START_TOKENS, 1, 10);
 
+	const utils = require("./utils");
+	const conf = utils.getServerConfig();
 	const server = new Server(sslConfig);
 	server.rootFolder = rootFolder;
 	server.listen(port, (err) => {
@@ -16876,15 +16865,33 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 			headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
 			headers["Access-Control-Allow-Credentials"] = true;
 			headers["Access-Control-Max-Age"] = '3600'; //one hour
-			headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}`;
+			headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}}`;
 			res.writeHead(200, headers);
 			res.end();
 		});
 
-		require("./ChannelsManager.js")(server);
-		require("./FilesManager.js")(server);
-		require("edfs-middleware").getEDFSMiddleware(server);
-		require("dossier-wizard").getDossierWizardMiddleware(server);
+		const middlewareList = conf.getEnabledMiddlewareList();
+		middlewareList.forEach(middleware => {
+			switch(middleware){
+				case "virtualMQ":
+					require("./ChannelsManager.js")(server);
+					break;
+
+				case "staticServer":
+					require("./StaticServer")(server);
+					break;
+
+				case "edfs":
+					require("edfs-middleware")(server);
+					break;
+
+				case "dossierWizard":
+					require("dossier-wizard")(server);
+					break;
+
+				default:
+			}
+		});
 
 		setTimeout(function(){
 			//allow other endpoints registration before registering fallback handler
@@ -16919,9 +16926,14 @@ module.exports.getHttpWrapper = function() {
 	return require('./libs/http-wrapper');
 };
 
+module.exports.getServerConfig = function () {
+	const utils = require("./utils");
+	return utils.getServerConfig();
+};
+
 }).call(this,require('_process'))
 
-},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","dossier-wizard":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/index.js","edfs-middleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
+},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js","./StaticServer":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","dossier-wizard":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/index.js","edfs-middleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
 /**
  * An implementation of the Token bucket algorithm
  * @param startTokens - maximum number of tokens possible to obtain and the default starting value
@@ -17628,7 +17640,7 @@ module.exports = {Server, Client, httpUtils, Router};
 
 
 },{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer,__dirname){
 function readMessageBufferFromHTTPStream(reqORres, callback){
     const contentType = reqORres.headers['content-type'];
 
@@ -17681,10 +17693,31 @@ function readMessageBufferFromHTTPStream(reqORres, callback){
     }
 }
 
-module.exports.readMessageBufferFromStream = readMessageBufferFromHTTPStream;
-}).call(this,require("buffer").Buffer)
+let serverConf;
+const ServerConfig = require("./ServerConfig");
+function getServerConfig() {
+    if (typeof serverConf === "undefined") {
+        const fs = require("fs");
+        const path = require("path")
+        const pskRootInstallFolder = path.resolve("." + __dirname + "/../..");
+        try {
+            serverConf = fs.readFileSync(path.join(pskRootInstallFolder, "conf", "server.json"));
+            serverConf = JSON.parse(config.toString());
+        } catch (e) {
+            serverConf = undefined;
+        }
+    }
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js":[function(require,module,exports){
+    return new ServerConfig(serverConf);
+}
+
+module.exports = {
+    readMessageBufferFromHTTPStream,
+    getServerConfig
+};
+}).call(this,require("buffer").Buffer,"/modules/virtualmq")
+
+},{"./ServerConfig":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ServerConfig.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js":[function(require,module,exports){
 (function (process,Buffer){
 const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
 const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
