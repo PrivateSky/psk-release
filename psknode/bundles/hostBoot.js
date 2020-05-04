@@ -1,39 +1,32 @@
-swBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js":[function(require,module,exports){
+hostBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/hostBoot.js":[function(require,module,exports){
 const or = require('overwrite-require');
-or.enableForEnvironment(or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE);
+or.enableForEnvironment(or.constants.BROWSER_ENVIRONMENT_TYPE);
 
-require("./swBoot_intermediar");
-},{"./swBoot_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot_intermediar.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot_intermediar.js":[function(require,module,exports){
+require("./hostBoot_intermediar");
+
+},{"./hostBoot_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/hostBoot_intermediar.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/hostBoot_intermediar.js":[function(require,module,exports){
 (function (global){
-global.swBootLoadModules = function(){ 
+global.hostBootLoadModules = function(){ 
 
-	if(typeof $$.__runtimeModules["edfs"] === "undefined"){
-		$$.__runtimeModules["edfs"] = require("edfs");
-	}
-
-	if(typeof $$.__runtimeModules["sw"] === "undefined"){
-		$$.__runtimeModules["sw"] = require("swarm-engine/bootScripts/browser/sw");
+	if(typeof $$.__runtimeModules["boot-host"] === "undefined"){
+		$$.__runtimeModules["boot-host"] = require("swarm-engine/bootScripts/browser/host");
 	}
 
 	if(typeof $$.__runtimeModules["pskcrypto"] === "undefined"){
 		$$.__runtimeModules["pskcrypto"] = require("pskcrypto");
 	}
-
-	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
-		$$.__runtimeModules["psk-cache"] = require("psk-cache");
-	}
 };
 if (true) {
-	swBootLoadModules();
+	hostBootLoadModules();
 }
-global.swBootRequire = require;
+global.hostBootRequire = require;
 if (typeof $$ !== "undefined") {
-	$$.requireBundle("swBoot");
+	$$.requireBundle("hostBoot");
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"edfs":"edfs","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarm-engine/bootScripts/browser/sw":"swarm-engine/bootScripts/browser/sw"}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto","swarm-engine/bootScripts/browser/host":"swarm-engine/bootScripts/browser/host"}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js":[function(require,module,exports){
 
 "use strict";
 
@@ -7102,7 +7095,433 @@ exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js":[function(require,module,exports){
+},{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/DossierWizardMiddleware.js":[function(require,module,exports){
+(function (process){
+const URL_PREFIX = "/dossierWizard";
+
+function DossierWizardMiddleware(server) {
+    const path = require('path');
+    const fs = require('fs');
+    const VirtualMQ = require('virtualmq');
+    const httpWrapper = VirtualMQ.getHttpWrapper();
+    const httpUtils = httpWrapper.httpUtils;
+    const crypto = require('pskcrypto');
+    const serverCommands = require('./utils/serverCommands');
+    const executioner = require('./utils/executioner');
+
+    const randSize = 32;
+    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Request methods you wish to allow
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+        // Request headers you wish to allow
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
+        next();
+    });
+
+    server.post(`${URL_PREFIX}/begin`, (req, res) => {
+        const transactionId = crypto.randomBytes(randSize).toString('hex');
+        fs.mkdir(path.join(server.rootFolder, transactionId), {recursive: true}, (err) => {
+            if (err) {
+                res.statusCode = 500;
+                res.end();
+                return;
+            }
+
+            res.end(transactionId);
+        });
+    });
+
+    server.post(`${URL_PREFIX}/addFile`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/addFile/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        const fileObj = {
+            dossierPath: req.headers["x-dossier-path"],
+            stream: req
+        };
+
+        serverCommands.addFile(path.join(server.rootFolder, transactionId), fileObj, (err) => {
+            if (err) {
+                if (err.code === 'EEXIST') {
+                    res.statusCode = 409;
+                } else {
+                    res.statusCode = 500;
+                }
+            }
+
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/setEndpoint`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, httpUtils.bodyParser);
+
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        serverCommands.setEndpoint(path.join(server.rootFolder, transactionId), req.body, (err) => {
+            if (err) {
+                res.statusCode = 500;
+            }
+
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/mount`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/mount/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        const mountPoint = {
+            mountPath: req.headers['x-mount-path'],
+            seed: req.headers['x-mounted-dossier-seed']
+        };
+
+        serverCommands.mount(path.join(server.rootFolder, transactionId), mountPoint, (err) => {
+            if (err) {
+                res.statusCode = 500;
+                console.log("Error", err);
+                res.end();
+                return;
+            }
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/build`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+    server.post(`${URL_PREFIX}/build/:transactionId`, httpUtils.bodyParser);
+    server.post(`${URL_PREFIX}/build/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        executioner.executioner(path.join(server.rootFolder, transactionId), (err, seed) => {
+            if (err) {
+                res.statusCode = 500;
+                console.log("Error", err);
+                res.end();
+                return;
+            }
+            res.end(seed.toString());
+
+        });
+    });
+
+    server.use(`${URL_PREFIX}`, (req, res) => {
+        res.statusCode = 303;
+        let redirectLocation = 'index.html';
+
+        if (!req.url.endsWith('/')) {
+            redirectLocation = `${URL_PREFIX}/` + redirectLocation;
+        }
+
+        res.setHeader("Location", redirectLocation);
+        res.end();
+    });
+
+    server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dossier-wizard/web'), `${URL_PREFIX}/`));
+
+    server.use((req, res) => {
+        res.statusCode = 404;
+        res.end();
+    });
+}
+
+module.exports = DossierWizardMiddleware;
+
+}).call(this,require('_process'))
+
+},{"./utils/executioner":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js","./utils/serverCommands":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","pskcrypto":"pskcrypto","virtualmq":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/index.js":[function(require,module,exports){
+(function (process,__dirname){
+if (!process.env.PSK_ROOT_INSTALATION_FOLDER) {
+    process.env.PSK_ROOT_INSTALATION_FOLDER = path.resolve("." + __dirname + "/../..");
+}
+module.exports.getDossierWizardMiddleware = require("./DossierWizardMiddleware");
+
+
+}).call(this,require('_process'),"/modules/dossier-wizard")
+
+},{"./DossierWizardMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/DossierWizardMiddleware.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js":[function(require,module,exports){
+const fs = require('fs');
+const path = require('path');
+
+function TransactionManager(localFolder) {
+
+    const filePath = path.join(localFolder, 'commands.json');
+
+    function loadTransaction(callback) {
+        fs.mkdir(localFolder, {recursive: true}, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            fs.readFile(filePath, (err, transaction) => {
+                let transactionObj = {};
+                if (err) {
+                    return callback(undefined, transactionObj);
+                }
+
+                try {
+                    transactionObj = JSON.parse(transaction.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+                callback(undefined, transactionObj);
+            });
+        });
+    }
+
+    function saveTransaction(transaction, callback) {
+        fs.mkdir(localFolder, {recursive: true}, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            fs.writeFile(filePath, JSON.stringify(transaction), callback);
+        });
+    }
+
+    function addCommand(command, callback) {
+
+        loadTransaction((err, transaction) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof transaction.commands === "undefined") {
+                transaction.commands = [];
+            }
+
+            transaction.commands.push(command);
+
+            saveTransaction(transaction, callback);
+        });
+    }
+
+    return {
+        addCommand,
+        loadTransaction,
+        saveTransaction
+    };
+}
+
+module.exports = TransactionManager;
+
+},{"fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js":[function(require,module,exports){
+const EDFS = require("edfs");
+
+function createArchive(endpoint) {
+    const edfs = EDFS.attachToEndpoint(endpoint);
+    return edfs.createRawDossier();
+}
+
+function addFile(workingDir, dossierPath, archive, callback) {
+    const path = require("path");
+    archive.addFile(path.join(workingDir, path.basename(dossierPath)), dossierPath, callback);
+}
+
+function mount(workingDir, mountPath, mountName, seed, archive, callback) {
+    archive.mount(mountPath, mountName, seed, false, callback);
+}
+
+module.exports = {
+    addFile,
+    createArchive,
+    mount
+};
+},{"edfs":"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js":[function(require,module,exports){
+const dossierOperations = require('./dossierOperations');
+const TransactionManager = require('./TransactionManager');
+
+function executioner(workingDir, callback) {
+    const manager = new TransactionManager(workingDir);
+    manager.loadTransaction((err, transaction) => {
+        if (err) {
+            return callback(err);
+        }
+        let archive;
+        try {
+            archive = dossierOperations.createArchive(transaction.endpoint);
+        } catch (e) {
+            return callback(e);
+        }
+
+        executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, archive.getSeed());
+        });
+    });
+}
+
+function executeCommand(commands, archive, workingDir, index = 0, callback) {
+    if (!Array.isArray(commands)) {
+        return callback(Error(`No commands`));
+    }
+    if (index === commands.length) {
+        return callback();
+    }
+
+    const match = judge(commands[index], archive, workingDir, (err) => {
+        if (err) {
+            return callback(err);
+        }
+
+        executeCommand(commands, archive, workingDir, ++index, callback);
+    });
+
+    if (!match) {
+        return callback(new Error('No match for command found' + commands[index].name));
+    }
+}
+
+function judge(command, archive, workingDir, callback) {
+    switch (command.name) {
+        case 'addFile':
+            dossierOperations.addFile(workingDir, command.params.dossierPath, archive, callback);
+            break;
+
+        case 'mount':
+            dossierOperations.mount(workingDir, command.params.mountPath, command.params.mountName, command.params.seed, archive, callback);
+            break;
+
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+module.exports = {
+    executioner
+};
+
+},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js","./dossierOperations":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js":[function(require,module,exports){
+const fs = require("fs");
+const path = require("path");
+const url = require('url');
+
+const TransactionManager = require("./TransactionManager");
+
+function addFile(workingDir, FileObj, callback) {
+    const cmd = {
+        name: 'addFile',
+        params: {
+            dossierPath: FileObj.dossierPath
+        }
+    };
+
+    const manager = new TransactionManager(workingDir);
+    const filePath = path.join(workingDir, path.basename(FileObj.dossierPath));
+    fs.access(filePath, (err) => {
+        if (!err) {
+            const e = new Error('File already exists');
+            e.code = 'EEXIST';
+            return callback(e);
+        }
+
+        const file = fs.createWriteStream(filePath);
+
+        file.on('close', () => {
+            manager.addCommand(cmd, callback);
+        });
+
+        FileObj.stream.pipe(file);
+    });
+}
+
+function setEndpoint(workingDir, endpointObj, callback) {
+    let endpoint;
+    try {
+        endpoint = new url.URL(endpointObj).origin;
+    } catch (e) {
+        return callback(e);
+    }
+    const manager = new TransactionManager(workingDir);
+    manager.loadTransaction((err, transaction) => {
+        if (err) {
+            return callback(err);
+        }
+        transaction.endpoint = endpoint;
+
+        manager.saveTransaction(transaction, callback);
+    });
+}
+
+function mount(workingDir, mountPoint, callback) {
+    const cmd = {
+        name: 'mount',
+        params: {
+            mountPath: path.dirname(mountPoint.mountPath),
+            mountName: path.basename(mountPoint.mountPath),
+            seed: mountPoint.seed
+        }
+    };
+
+    const manager = new TransactionManager(workingDir);
+    manager.addCommand(cmd, callback);
+}
+module.exports = {
+    addFile,
+    setEndpoint,
+    mount
+};
+
+},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier/index.js":[function(require,module,exports){
+(function (process){
+const se = require("swarm-engine");
+if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
+    se.initialise();
+}
+
+module.exports.load = function(seed, identity, callback){
+    const pathName = "path";
+    const path = require(pathName);
+    const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
+
+    let cord_identity;
+    try{
+        const crypto = require("pskcrypto");
+        cord_identity = crypto.pskHash(seed, "hex");
+        $$.swarmEngine.plug(cord_identity, powerCord);
+    }catch(err){
+        return callback(err);
+    }
+    $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, "TooShortBlockChainWorkaroundDeleteThis", "add").onReturn(err => {
+        if (err) {
+            return callback(err);
+        }
+
+        const handler = {
+            attachTo : $$.interactions.attachTo,
+            startTransaction : function (transactionTypeName, methodName, ...args) {
+                //todo: get identity from context somehow
+                return $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, transactionTypeName, methodName, ...args);
+            }
+        };
+        //todo implement a way to know when thread is ready
+        setTimeout(()=>{
+            callback(undefined, handler);
+        }, 100);
+    });
+};
+}).call(this,require('_process'))
+
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","pskcrypto":"pskcrypto","swarm-engine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js":[function(require,module,exports){
 function EDFSBrickStorage(endpoint) {
 
     const bar = require("bar");
@@ -7228,7 +7647,299 @@ module.exports.create = (endpoint) => {
     return new EDFSBrickStorage(endpoint)
 };
 
-},{"./EDFSBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
+},{"./EDFSBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js":[function(require,module,exports){
+(function (process){
+const pathModule = "path";
+const path = require(pathModule);
+const fsModule = "fs";
+const fs = require(fsModule);
+const osModule = "os";
+const endOfLine = require(osModule).EOL;
+const crypto = require("pskcrypto");
+const folderNameSize = process.env.FOLDER_NAME_SIZE || 5;
+const FILE_SEPARATOR = '-';
+let brickStorageFolder;
+
+$$.flow.describe("BricksManager", {
+    init: function (rootFolder) {
+        rootFolder = path.resolve(rootFolder);
+        brickStorageFolder = rootFolder;
+        this.__ensureFolderStructure(rootFolder);
+    },
+    write: function (fileName, readFileStream, callback) {
+        if (!this.__verifyFileName(fileName, callback)) {
+            return;
+        }
+
+        if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+            callback(new Error("Something wrong happened"));
+            return;
+        }
+
+        const folderName = path.join(brickStorageFolder, fileName.substr(0, folderNameSize));
+
+        this.__ensureFolderStructure(folderName, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            this.__writeFile(readFileStream, folderName, fileName, callback);
+        });
+
+    },
+    read: function (fileName, writeFileStream, callback) {
+        if (!this.__verifyFileName(fileName, callback)) {
+            return;
+        }
+
+        const folderPath = path.join(brickStorageFolder, fileName.substr(0, folderNameSize));
+        const filePath = path.join(folderPath, fileName);
+
+        this.__verifyFileExistence(filePath, (err, result) => {
+            if (!err) {
+                this.__readFile(writeFileStream, filePath, callback);
+            } else {
+                callback(new Error(`File ${filePath} was not found.`));
+            }
+        });
+    },
+    addAlias: function (fileHash, readStream, callback) {
+        if (!this.__verifyFileName(fileHash, callback)) {
+            return;
+        }
+
+        this.__streamToString(readStream, (err, alias) => {
+            if (err) {
+                return callback(err);
+            }
+            if (!alias) {
+                return callback(new Error("No alias was provided"));
+            }
+
+            const filePath = path.join(brickStorageFolder, alias);
+            this.__verifyFileExistence(filePath, (err) => {
+                if (err) {
+                    fs.writeFile(filePath, fileHash + endOfLine, callback);
+                } else {
+                    fs.appendFile(filePath, fileHash + endOfLine, callback);
+                }
+            });
+
+        });
+    },
+    readVersions: function (alias, callback) {
+        const filePath = path.join(brickStorageFolder, alias);
+        fs.readFile(filePath, (err, fileHashes) => {
+            if (err) {
+                if (err.code === "ENOENT") {
+                    return callback(undefined, []);
+                }
+                return callback(err);
+            }
+            callback(undefined, fileHashes.toString().trimEnd().split(endOfLine));
+        });
+    },
+    __verifyFileName: function (fileName, callback) {
+        if (!fileName || typeof fileName !== "string") {
+            return callback(new Error("No fileId specified."));
+        }
+
+        if (fileName.length < folderNameSize) {
+            return callback(new Error("FileId too small. " + fileName));
+        }
+
+        return true;
+    },
+    __ensureFolderStructure: function (folder, callback) {
+        try{
+            fs.mkdirSync(folder, {recursive: true});
+        }catch(err){
+            if(callback){
+                callback(err);
+            }else{
+                throw err;
+            }
+        }
+        if(callback){
+            callback();
+        }
+    },
+    __writeFile: function (readStream, folderPath, fileName, callback) {
+        const PskHash = crypto.PskHash;
+        const hash = new PskHash();
+        const filePath = path.join(folderPath, fileName);
+        fs.access(filePath, (err) => {
+            if (err) {
+                readStream.on('data', (data) => {
+                    hash.update(data);
+                });
+
+                const writeStream = fs.createWriteStream(filePath, {mode: 0o444});
+
+                writeStream.on("finish", () => {
+                    callback(undefined, hash.digest("hex"));
+                });
+
+                writeStream.on("error", (err) => {
+                    writeStream.close();
+                    callback(err);
+                });
+
+                readStream.pipe(writeStream);
+            } else {
+                callback();
+
+            }
+        });
+    },
+    __readFile: function (writeFileStream, filePath, callback) {
+        const readStream = fs.createReadStream(filePath);
+
+        writeFileStream.on("finish", callback);
+        writeFileStream.on("error", callback);
+
+        readStream.pipe(writeFileStream);
+    },
+    __verifyFileExistence: function (filePath, callback) {
+        fs.access(filePath, callback);
+    },
+    __streamToString: function (readStream, callback) {
+        let str = '';
+        readStream.on("data", (chunk) => {
+            str += chunk;
+        });
+
+        readStream.on("end", () => {
+            callback(undefined, str);
+        });
+
+        readStream.on("error", callback);
+    }
+});
+
+}).call(this,require('_process'))
+
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/index.js":[function(require,module,exports){
+module.exports.getEDFSMiddleware = require("./lib/EDFSMiddleware");
+module.exports.createEDFSClient = (url) => {
+    const EDFSClient = require("./lib/EDFSClient");
+    return new EDFSClient(url);
+};
+
+
+},{"./lib/EDFSClient":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js","./lib/EDFSMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js":[function(require,module,exports){
+require("psk-http-client");
+
+function EDFSClient(url) {
+    this.attachAlias = (fileName, alias, callback) => {
+        $$.remote.doHttpPost(url + "/EDFS/attachHashToAlias/" + fileName, alias, callback);
+    };
+
+    this.writeToAlias = (alias, data, callback) => {
+        $$.remote.doHttpPost(url + "/EDFS/alias/" + alias, data, callback);
+    };
+
+    this.readFromAlias = (alias, callback) => {
+        $$.remote.doHttpGet(url + "/EDFS/alias/" + alias, callback);
+    };
+
+    this.writeFile = (fileName, data, callback) => {
+        $$.remote.doHttpPost(url + "/EDFS/" + fileName, data, callback);
+    };
+
+    this.readFile = (fileName, callback) => {
+        $$.remote.doHttpGet(url + "/EDFS/" + fileName, callback);
+    };
+}
+
+module.exports = EDFSClient;
+},{"psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
+(function (process){
+const bricks_storage_folder = "brick-storage";
+const URL_PREFIX = "/EDFS";
+
+function EDFSMiddleware(server) {
+    const path = require("path");
+    require("../flows/BricksManager");
+
+    let storageFolder = path.join(server.rootFolder, bricks_storage_folder);
+    if(typeof process.env.EDFS_BRICK_STORAGE_FOLDER !== "undefined"){
+        storageFolder = process.env.EDFS_BRICK_STORAGE_FOLDER;
+    }
+
+    $$.flow.start("BricksManager").init(storageFolder);
+    console.log("Bricks Storage location", storageFolder);
+
+    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Request methods you wish to allow
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+        // Request headers you wish to allow
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
+        next();
+    });
+
+    server.post(`${URL_PREFIX}/:fileId`, (req, res) => {
+        $$.flow.start("BricksManager").write(req.params.fileId, req, (err, result) => {
+            res.statusCode = 201;
+            if (err) {
+                res.statusCode = 500;
+
+                if (err.code === 'EACCES') {
+                    res.statusCode = 409;
+                }
+            }
+            res.end();
+        });
+    });
+
+    server.get(`${URL_PREFIX}/:fileId`, (req, res) => {
+        res.setHeader("content-type", "application/octet-stream");
+        res.setHeader('Cache-control', 'max-age=31536000'); // set brick cache expiry to 1 year
+        $$.flow.start("BricksManager").read(req.params.fileId, res, (err, result) => {
+            res.statusCode = 200;
+            if (err) {
+                console.log(err);
+                res.statusCode = 404;
+            }
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, (req, res) => {
+        $$.flow.start("BricksManager").addAlias(req.params.fileId, req, (err, result) => {
+            res.statusCode = 201;
+            if (err) {
+                res.statusCode = 500;
+
+                if (err.code === 'EACCES') {
+                    res.statusCode = 409;
+                }
+            }
+            res.end();
+        });
+    });
+
+    server.get(`${URL_PREFIX}/getVersions/:alias`, (req, res) => {
+        $$.flow.start("BricksManager").readVersions(req.params.alias, (err, fileHashes) => {
+            res.statusCode = 200;
+            if (err) {
+                console.error(err);
+                res.statusCode = 404;
+            }
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify(fileHashes));
+        });
+    });
+}
+
+module.exports = EDFSMiddleware;
+
+}).call(this,require('_process'))
+
+},{"../flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
 
 function FetchBrickTransportStrategy(initialConfig) {
@@ -7425,7 +8136,54 @@ if (!$$.brickTransportStrategiesRegistry) {
 }
 }).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js":[function(require,module,exports){
+require("./brickTransportStrategies/brickTransportStrategiesRegistry");
+const constants = require("./moduleConstants");
+
+const or = require("overwrite-require");
+const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+const cache = require('psk-cache').factory();
+
+if (browserContexts.indexOf($$.environmentType) !== -1) {
+    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
+} else {
+    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
+}
+
+module.exports = {
+    attachToEndpoint(endpoint) {
+        const EDFS = require("./lib/EDFS");
+        return new EDFS(endpoint, {
+            cache
+        });
+    },
+    attachWithSeed(compactSeed, callback) {
+        const SEED = require("bar").Seed;
+        let seed;
+        try {
+            seed = new SEED(compactSeed);
+        } catch (err) {
+            return callback(err);
+        }
+
+        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
+    },
+    attachWithPassword(password, callback) {
+        require("./seedCage").getSeed(password, (err, seed) => {
+            if (err) {
+                return callback(err);
+            }
+
+            this.attachWithSeed(seed, callback);
+        });
+    },
+    checkForSeedCage(callback) {
+        require("./seedCage").check(callback);
+    },
+    constants: constants
+};
+
+},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","psk-cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
 function EDFS(endpoint, options) {
     options = options || {};
 
@@ -8939,7 +9697,44 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/index.js":[function(require,module,exports){
+const Cache = require("./lib/Cache")
+let cacheInstance;
+
+module.exports = {
+
+    /**
+     * Create a new cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    factory: function (options) {
+        return new Cache(options);
+    },
+
+    /**
+     * Get a reference to a singleton cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    getDefaultInstance: function (options) {
+        if (!cacheInstance) {
+            cacheInstance = new Cache(options);
+        }
+
+        return cacheInstance;
+    }
+};
+
+},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -11476,7 +12271,278 @@ function Middleware() {
 module.exports = Middleware;
 
 
-},{"./EventRequest":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+},{"./EventRequest":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js":[function(require,module,exports){
+function SwarmEngine(identity) {
+    let myOwnIdentity = identity || SwarmEngine.prototype.ANONYMOUS_IDENTITY;
+
+    const protectedFunctions = {};
+
+    const SwarmPacker = require("swarmutils").SwarmPacker;
+    //serializationType used when starting a swarm from this SwarmEngine instance
+    let serializationType = SwarmPacker.prototype.JSON;
+
+    const swarmInstancesCache = new Map();
+    const powerCordCollection = new Map();
+
+    this.updateIdentity = function (identify) {
+        if (myOwnIdentity === SwarmEngine.prototype.ANONYMOUS_IDENTITY) {
+            console.log("Updating my identity with", identify);
+            myOwnIdentity = identify;
+        } else {
+            $$.err(`Trying to changing identity from "${myOwnIdentity}" to "${identify}"`);
+        }
+    };
+
+    this.setSerializationType = function (type) {
+        if (typeof SwarmPacker.getSerializer(type) !== "undefined") {
+            serializationType = type;
+        } else {
+            $$.throw(`Unknown serialization type "${type}"`);
+        }
+    };
+
+    this.plug = function (identity, powerCordImpl) {
+        makePluggable(powerCordImpl);
+        powerCordImpl.plug(identity, relay);
+
+        powerCordCollection.set(identity, powerCordImpl);
+    };
+
+    this.unplug = function (identity) {
+        const powerCord = powerCordCollection.get(identity);
+
+        if (!powerCord) {
+            //silent fail
+            return;
+        }
+
+        powerCord.unplug();
+        powerCordCollection.delete(identity);
+    };
+
+    function relay(swarmSerialization, ignoreMyIdentity) {
+        try {
+
+            const swarmutils = require('swarmutils');
+
+            const OwM = swarmutils.OwM;
+            const SwarmPacker = swarmutils.SwarmPacker;
+
+            const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
+            const swarmTargetIdentity = swarmHeader.swarmTarget;
+
+            if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
+                if (myOwnIdentity === swarmTargetIdentity || myOwnIdentity === "*") {
+                    const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+                    protectedFunctions.execute_swarm(deserializedSwarm);
+                    return;
+                }
+            }
+
+            const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.prototype.WILD_CARD_IDENTITY);
+
+            if (targetPowerCord) {
+                //console.log(myOwnIdentity, "calling powercord", swarmTargetIdentity);
+                targetPowerCord.sendSwarm(swarmSerialization);
+                return;
+            } else {
+                $$.err(`Bad Swarm Engine configuration. No PowerCord for identity "${swarmTargetIdentity}" found.`);
+            }
+        } catch (superError) {
+            console.log(superError);
+        }
+    }
+
+    function getPowerCord(identity) {
+        const powerCord = powerCordCollection.get(identity);
+
+        if (!powerCord) {
+            //should improve the search of powerCord based on * and self :D
+
+            $$.throw(`No powerCord found for the identity "${identity}"`);
+        }
+
+        return powerCord;
+    }
+
+    /* ???
+    swarmCommunicationStrategy.enableSwarmExecution(function(swarm){
+
+    }); */
+
+    function serialize(swarm) {
+        const beesHealer = require("swarmutils").beesHealer;
+        const simpleJson = beesHealer.asJSON(swarm, swarm.meta.phaseName, swarm.meta.args);
+        const serializer = SwarmPacker.getSerializer(swarm.meta.serializationType || serializationType);
+        return SwarmPacker.pack(simpleJson, serializer);
+    }
+
+    function createBaseSwarm(swarmTypeName) {
+        const swarmutils = require('swarmutils');
+        const OwM = swarmutils.OwM;
+
+        const swarm = new OwM();
+        swarm.setMeta("swarmId", $$.uidGenerator.safe_uuid());
+        swarm.setMeta("requestId", swarm.getMeta("swarmId"));
+        swarm.setMeta("swarmTypeName", swarmTypeName);
+        swarm.setMeta(SwarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
+
+        return swarm;
+    }
+
+    function cleanSwarmWaiter(swarmSerialisation) { // TODO: add better mechanisms to prevent memory leaks
+        let swarmId = swarmSerialisation.meta.swarmId;
+        let watcher = swarmInstancesCache[swarmId];
+
+        if (!watcher) {
+            $$.warn("Invalid swarm received: " + swarmId);
+            return;
+        }
+
+        let args = swarmSerialisation.meta.args;
+        args.push(swarmSerialisation);
+
+        watcher.callback.apply(null, args);
+        if (!watcher.keepAliveCheck()) {
+            delete swarmInstancesCache[swarmId];
+        }
+    }
+
+    protectedFunctions.startSwarmAs = function (identity, swarmTypeName, phaseName, ...args) {
+        const swarm = createBaseSwarm(swarmTypeName);
+        swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
+
+        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        return swarm;
+    };
+
+    protectedFunctions.sendSwarm = function (swarmAsVO, command, identity, phaseName, args) {
+
+        swarmAsVO.setMeta("phaseName", phaseName);
+        swarmAsVO.setMeta("target", identity);
+        swarmAsVO.setMeta("command", command);
+        swarmAsVO.setMeta("args", args);
+
+        relay(serialize(swarmAsVO), true);
+    };
+
+    protectedFunctions.waitForSwarm = function (callback, swarm, keepAliveCheck) {
+
+        function doLogic() {
+            let swarmId = swarm.getInnerValue().meta.swarmId;
+            let watcher = swarmInstancesCache.get(swarmId);
+            if (!watcher) {
+                watcher = {
+                    swarm: swarm,
+                    callback: callback,
+                    keepAliveCheck: keepAliveCheck
+                };
+                swarmInstancesCache.set(swarmId, watcher);
+            }
+        }
+
+        function filter() {
+            return swarm.getInnerValue().meta.swarmId;
+        }
+
+        //$$.uidGenerator.wait_for_condition(condition,doLogic);
+        swarm.observe(doLogic, null, filter);
+    };
+
+    protectedFunctions.execute_swarm = function (swarmOwM) {
+
+        const swarmCommand = swarmOwM.getMeta('command');
+
+        //console.log("Switching on command ", swarmCommand);
+        switch (swarmCommand) {
+            case SwarmEngine.prototype.EXECUTE_PHASE_COMMAND:
+                let swarmId = swarmOwM.getMeta('swarmId');
+                let swarmType = swarmOwM.getMeta('swarmTypeName');
+                let instance = swarmInstancesCache.get(swarmId);
+
+                let swarm;
+
+                if (instance) {
+                    swarm = instance.swarm;
+                    swarm.actualize(swarmOwM);
+
+                } else {
+                    if (typeof $$.blockchain !== "undefined") {
+                        swarm = $$.swarm.startWithContext($$.blockchain, swarmType);
+                    } else {
+                        swarm = $$.swarm.start(swarmType);
+                    }
+
+                    if (!swarm) {
+                        throw new Error(`Unknown swarm with type <${swarmType}>. Check if this swarm is defined in the domain constitution!`);
+                    } else {
+                        swarm.actualize(swarmOwM);
+                    }
+
+                    /*swarm = $$.swarm.start(swarmType, swarmSerialisation);*/
+                }
+                swarm.runPhase(swarmOwM.meta.phaseName, swarmOwM.meta.args);
+                break;
+            case SwarmEngine.prototype.EXECUTE_INTERACT_PHASE_COMMAND:
+                is.dispatch(swarmOwM);
+                break;
+            case SwarmEngine.prototype.RETURN_PHASE_COMMAND:
+                is.dispatch(swarmOwM);
+                break;
+            default:
+                $$.err(`Unrecognized swarm command ${swarmCommand}`);
+        }
+    };
+
+    protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase, cb){
+        powerCordCollection.forEach((powerCord, identity)=>{
+            if(typeof powerCord[method] === "function"){
+                powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase, cb);
+            }
+        });
+    };
+
+    require("./swarms")(protectedFunctions);
+    const is = require("./interactions")(protectedFunctions);
+}
+
+Object.defineProperty(SwarmEngine.prototype, "EXECUTE_PHASE_COMMAND", {value: "executeSwarmPhase"});
+Object.defineProperty(SwarmEngine.prototype, "EXECUTE_INTERACT_PHASE_COMMAND", {value: "executeInteractPhase"});
+Object.defineProperty(SwarmEngine.prototype, "RETURN_PHASE_COMMAND", {value: "__return__"});
+
+Object.defineProperty(SwarmEngine.prototype, "META_RETURN_CONTEXT", {value: "returnContext"});
+Object.defineProperty(SwarmEngine.prototype, "META_SECURITY_HOME_CONTEXT", {value: "homeSecurityContext"});
+Object.defineProperty(SwarmEngine.prototype, "META_WAITSTACK", {value: "waitStack"});
+
+Object.defineProperty(SwarmEngine.prototype, "ANONYMOUS_IDENTITY", {value: "anonymous"});
+Object.defineProperty(SwarmEngine.prototype, "SELF_IDENTITY", {value: "self"});
+Object.defineProperty(SwarmEngine.prototype, "WILD_CARD_IDENTITY", {value: "*"});
+
+function makePluggable(powerCord) {
+    powerCord.plug = function (identity, powerTransfer) {
+        powerCord.transfer = powerTransfer;
+        powerCord.identity = identity;
+    };
+
+    powerCord.unplug = function () {
+        powerCord.transfer = null;
+    };
+
+    Object.defineProperty(powerCord, "identity", {
+        set: (value) => {
+            if(typeof powerCord.__identity === "undefined"){
+                powerCord.__identity = value;
+            }
+        }, get: () => {
+            return powerCord.__identity;
+        }
+    });
+
+    return powerCord;
+}
+
+module.exports = SwarmEngine;
+},{"./interactions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js","./swarms":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
 	if (typeof getSeed !== "function") {
@@ -11575,769 +12641,1151 @@ function promisify(fn) {
 
 module.exports = BootEngine;
 
-},{"edfs":"edfs","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/FileReadableStreamAdapter.js":[function(require,module,exports){
-const { Readable } = require('stream');
-const util = require('util');
-const Buffer = require('buffer').Buffer;
+},{"edfs":"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/IsolateBootScript.js":[function(require,module,exports){
 
-/**
- * Stream.Readable adapter for File ReadableStream
- * @param {File} file
- * @param {object} options
- */
-function FileReadableStreamAdapter(file, options) {
-    if (!(this instanceof FileReadableStreamAdapter)) {
-        return new FileReadableStreamAdapter(file, options);
-    }
+async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
+    const swarmUtils = require('swarmutils');
+    const beesHealer = swarmUtils.beesHealer;
+    const OwM = swarmUtils.OwM;
+    const SwarmPacker = swarmUtils.SwarmPacker;
+    const pskIsolatesModuleName = "pskisolates";
+    const IsolatedVM = require(pskIsolatesModuleName);
+    const {EventEmitter} = require('events');
 
-    this.fileStreamReader = file.stream().getReader();
-    Readable.call(this, options);
-}
-util.inherits(FileReadableStreamAdapter, Readable);
-
-/**
- * Reads data from the File ReadableStreamDefaulReader
- * and pushes it into our Readable stream
- */
-FileReadableStreamAdapter.prototype._read = function (size) {
-    const pushData = (result) => {
-        const done = result.done;
-        const data = result.value;
-        if (done) {
-            this.push(null);
-            return;
+    const config = IsolatedVM.IsolateConfig.defaultConfig;
+    config.logger = {
+        send([logChannel, logObject]) {
+            $$.redirectLog(logChannel, logObject)
         }
-
-        if (this.push(Buffer.from(data))) {
-            return this.fileStreamReader.read().then(pushData);
-        }
-    }
-    this.fileStreamReader.read()
-        .then(pushData);
-}
-
-module.exports = FileReadableStreamAdapter;
-
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js":[function(require,module,exports){
-const MimeType = require("../util/MimeType");
-
-function RawDossierHelper(rawDossier){
-
-
-  function getAppFile(appFile) {
-        return new Promise((resolve, reject) => {
-            rawDossier.readFile(appFile, (err, content) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(content);
-                }
-            });
-        });
-    }
-
-    this.handleLoadApp = function (basePath, fallbackBasePath) {
-
-        function respondWithFile(req, res, basePath) {
-            let url = new URL(req.originalUrl);
-            let filePath = url.pathname;
-            //match landing page and other pages. e.g. /, /settings, /settings/privacy
-            if (filePath === "/" || filePath.indexOf(".") === -1) {
-                filePath = "/index.html";
-            }
-            let appFile = basePath + filePath;
-            let fileExtension = appFile.substring(appFile.lastIndexOf(".") + 1);
-            let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
-            return getAppFile(appFile).then((data) => {
-                let headers = {};
-                headers["Content-Type"] = mimeType.name;
-                res.set(headers);
-                res.status(200);
-                let content = mimeType.binary ? data : data.toString();
-                res.send(content);
-                res.end();
-            })
-        };
-
-        return function (req, res, next) {
-            if (rawDossier) {
-                respondWithFile(req, res, basePath).catch((err) => {
-                        return respondWithFile(req, res, fallbackBasePath);
-                    }).catch((err) => {
-                        console.log(err);
-                        res.status(404);
-                        res.end();
-                    })
-                return;
-            }
-
-            console.error("RawDossier is not ready");
-            res.status(503);
-            res.end();
-        }
-    }
-}
-
-module.exports = RawDossierHelper;
-
-},{"../util/MimeType":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js":[function(require,module,exports){
-function SWBootScript(seed) {
-
-    console.log("Booting host...");
-    const seeds = {};
-    let self = {seed};
-
-     this.boot = function(callback){
-        const BootEngine = require("../../BootEngine");
-
-        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
-        bootter.boot((err, archive)=>{
-            if(err){
-                console.log(err);
-                callback(err);
-                return;
-            }
-            // in fiecare csbReference vom gasi un obiect care va contine:
-            // - un seed pentru csb-ul referentiat(ssapp)
-            // - numele aplicatiei (e.g My Tenders)
-
-            //const csbReferences = self.myCSB.loadAssets('CSBReference');
-
-            callback(null, archive);
-
-        })
     };
 
-    function getSeed(callback){
-        callback(undefined, seed);
+    const fs = require('fs');
+
+    constitutions = constitutions.map(constitution => fs.readFileSync(constitution, 'utf8'));
+
+    const isolate = await IsolatedVM.getDefaultIsolate({
+        shimsBundle: constitutions[0],
+        browserifyBundles: constitutions.slice(1),
+        config: config,
+        externalApi: externalApi
+    });
+
+    class IsolatesWrapper extends EventEmitter {
+        postMessage(packedSwarm) {
+            const swarm = SwarmPacker.unpack(packedSwarm);
+
+            const phaseName = OwM.prototype.getMetaFrom(swarm, 'phaseName');
+            const args = OwM.prototype.getMetaFrom(swarm, 'args');
+            const serializedSwarm = beesHealer.asJSON(swarm, phaseName, args);
+            const stringifiedSwarm = JSON.stringify(serializedSwarm);
+
+            isolate.run(`
+                if(typeof global.identitySet === "undefined"){
+                    global.identitySet = true;
+                  
+				    $$.swarmEngine.updateIdentity(getIdentity.applySync(undefined, []));
+				}
+            `).then(() => {
+                const powerCordRef = isolate.context.global.getSync('powerCord');
+                const transferFnRef = powerCordRef.getSync('transfer');
+                const swarmAsRef = new isolate.ivm.ExternalCopy(new Uint8Array(packedSwarm)).copyInto();
+                // console.log(transferFnRef, swarmAsRef);
+
+                transferFnRef.applyIgnored(powerCordRef.derefInto(), [swarmAsRef]);
+            }).catch((err) => {
+                this.emit('error', err);
+            });
+
+        }
     }
 
+    const isolatesWrapper = new IsolatesWrapper();
+    isolatesWrapper.globalSetSync = isolate.globalSetSync;
 
+    isolate.globalSetSync('returnSwarm', (err, swarm) => {
+        try {
+            isolatesWrapper.emit('message', swarm);
+        } catch (e) {
+            console.log('Caught error', e);
+        }
+    });
+
+    await isolate.run(`
+            const se = require("swarm-engine");
+            global.powerCord = new se.InnerIsolatePowerCord();
+            $$.swarmEngine.plug($$.swarmEngine.WILD_CARD_IDENTITY, global.powerCord);
+		`);
+
+    //TODO: this might cause a memory leak
+    setInterval(async () => {
+        const rawIsolate = isolate.rawIsolate;
+        const cpuTime = rawIsolate.cpuTime;
+        const wallTime = rawIsolate.wallTime;
+
+        const heapStatistics = await rawIsolate.getHeapStatistics();
+        const activeCPUTime = (cpuTime[0] + cpuTime[1] / 1e9) * 1000;
+        const totalCPUTime = (wallTime[0] + wallTime[1] / 1e9) * 1000;
+        const idleCPUTime = totalCPUTime - activeCPUTime;
+        $$.event('sandbox.metrics', {heapStatistics, activeCPUTime, totalCPUTime, idleCPUTime});
+
+    }, 10 * 1000); // 10 seconds
+
+
+    return isolatesWrapper;
+}
+
+module.exports = getIsolatesWorker;
+
+},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js":[function(require,module,exports){
+(function (process){
+function boot() {
+    const worker_threads ='worker_threads';
+    const {parentPort, workerData} = require(worker_threads);
+
+    process.on("uncaughtException", (err) => {
+        console.error('unchaughtException inside worker', err);
+        setTimeout(() => {
+            process.exit(1);
+        }, 100);
+    });
+
+    function getSeed(callback){
+        let err;
+        if (!workerData.hasOwnProperty('constitutionSeed') || typeof workerData.constitutionSeed !== "string") {
+            err = new Error(`Missing or wrong type of constitutionSeed in worker data configuration: ${JSON.stringify(workerData)}`);
+            if(!callback){
+                throw err;
+            }
+        }
+        if(callback){
+            return callback(err, workerData.constitutionSeed);
+        }
+        return workerData.constitutionSeed;
+    }
+
+    let edfs;
     function getEDFS(callback){
         const EDFS = require("edfs");
-        EDFS.attachWithSeed(seed, callback);
+        EDFS.attachWithSeed(getSeed(), (err, edfsInst) => {
+            if (err) {
+                return callback(err);
+            }
+
+            edfs = edfsInst;
+            callback(null, edfs);
+        });
     }
 
     function initializeSwarmEngine(callback){
-            require('callflow').initialise();
-            console.log("Initializing swarm engine");
-            $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-            const se = pskruntimeRequire("swarm-engine");
-            se.initialise("*");
-            self.IframePC = se.IframePowerCord;
-            let ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
-            $$.swarmEngine.plug("*", new ServiceWorkerPC());
+        require('callflow').initialise();
+        const swarmEngine = require('swarm-engine');
+
+        swarmEngine.initialise(process.env.IDENTITY);
+        const powerCord = new swarmEngine.InnerThreadPowerCord();
+
+        $$.swarmEngine.plug($$.swarmEngine.WILD_CARD_IDENTITY, powerCord);
+
+        parentPort.on('message', (packedSwarm) => {
+            powerCord.transfer(packedSwarm);
+        });
+
+        edfs.bootRawDossier(workerData.constitutionSeed, (err, csbhandler) =>{
+            if(err){
+                $$.throwError(err);
+            }
             callback();
+        });
     }
 
+    const BootEngine = require("./BootEngine.js");
 
-    this.createPowerCord = function (identity, seed, iframe) {
-        seeds[identity] = seed;
-        const powerCord = new self.IframePC(iframe);
-        $$.swarmEngine.plug(identity, powerCord);
-    };
+    const booter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "blockchain.js"], ["domain.js"]);
 
-}
-
-module.exports = SWBootScript;
-
-
-
-
-
-
-},{"../../../powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","../../BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","edfs":"edfs","soundpubsub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/Uploader.js":[function(require,module,exports){
-const FileReadableStreamAdapter = require('./FileReadableStreamAdapter');
-
-/**
- * Constructor
- *
- * @param {object} options
- * @param {string} options.inputName
- * @param {RawDossier} options.dossier
- * @param {string} options.uploadPath
- * @param {string} options.filename
- * @param {Array} options.allowedMimeTypes
- * @param {string} options.maxSize
- * @param {Boolean} options.preventOverwrite
- */
-function Uploader(options) {
-    this.inputName = null;
-    this.dossier = null;
-    this.filename = null; // Must be configured when doing a request body upload
-    this.maxSize = null; // When not null file size validation is done
-    this.allowedMimeTypes = null; // When not null, mime type validation is done
-    this.uploadPath = null;
-    this.preventOverwrite = false;
-    this.uploadMultipleFiles = false;
-    this.sizeMultiplier = {
-        'b': 1,
-        'k': 1000,
-        'm': 1000000
-    };
-
-    this.configure(options);
-
-}
-
-Uploader.prototype.Error = {
-    UNKNOWN: -1,
-    NO_FILES: 10,
-    INVALID_FILE: 20,
-    INVALID_TYPE: 21,
-    MAX_SIZE_EXCEEDED: 22,
-    FILE_EXISTS: 30,
-};
-
-Uploader.prototype.configure = function (options) {
-    options = options || {};
-
-    if ((typeof options.inputName !== 'string' || !options.inputName) &&
-        (typeof options.filename !== 'string' || !options.filename)) {
-        throw new Error("The input name or filename is required");
-    }
-
-    if (typeof options.dossier !== 'object') {
-        throw new Error("The dossier is required and must be an instance of RawDossier");
-    }
-
-    if (typeof options.uploadPath !== 'string' || !options.uploadPath.length) {
-        throw new Error("The upload path is missing");
-    }
-
-    this.inputName = options.inputName;
-    this.dossier = options.dossier;
-    this.uploadPath = options.uploadPath;
-    this.preventOverwrite = Boolean(options.preventOverwrite);
-    if (this.inputName) {
-        this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
-    }
-    this.filename = options.filename || null;
-    if (typeof options.maxSize === 'number' || typeof options.maxSize === 'string') {
-        this.maxSize = options.maxSize;
-    }
-
-    if (Array.isArray(options.allowedMimeTypes)) {
-        this.allowedMimeTypes = options.allowedMimeTypes;
-    }
-}
-
-
-/**
- * @param {object|any} body
- * @throws {object}
- */
-Uploader.prototype.validateRequestBody = function (body) {
-    const inputName = this.inputName;
-    const filename = this.filename;
-
-    if (this.isMultipartUpload && !inputName) {
-        const error = {
-            message: `No files have been uploaded or the "input" parameter hasn't been set`,
-            code: this.Error.NO_FILES
-        };
-        throw error;
-    }
-
-    if (!this.isMultipartUpload &&  !filename) {
-        const error = {
-            message: `No files have been uploaded or the "filename" parameter hasn't been set`,
-            code: this.Error.NO_FILES
-        };
-        throw error;
-    }
-
-    const __uploadExists = () => {
-        if (this.isMultipartUpload){
-            if (this.uploadMultipleFiles) {
-                return Array.isArray(body[inputName]);
-            }
-
-            return body[inputName] instanceof File;
+    booter.boot((err) => {
+        if(err){
+            throw err;
         }
-
-        return body;
-    }
-
-    if (!__uploadExists()) {
-        const error = {
-            message: `No files have been uploaded or the "input"/"filename" parameters are missing`,
-            code: this.Error.NO_FILES
-        }
-        throw error;
-    }
-}
-
-/**
- * Validate a single file
- *
- * @param {File} file
- * @throws {object}
- */
-Uploader.prototype.validateFile = function (file) {
-    if (!file instanceof File) {
-        const error = {
-            message:'File must be an instance of File',
-            code: this.Error.INVALID_FILE
-        }
-        throw error;
-    }
-
-    if (Array.isArray(this.allowedMimeTypes) && this.allowedMimeTypes.length) {
-        const fileType = file.type;
-        if (this.allowedMimeTypes.indexOf(fileType) === -1) {
-            const error = {
-                message:'File type is not allowed',
-                code: this.Error.INVALID_TYPE
-            }
-            throw error;
-        }
-    }
-
-    if (this.maxSize !== null) {
-        let unit = 'b';
-        if (typeof this.maxSize === 'string') {
-            unit = this.maxSize.substr('-1').toLowerCase();
-        }
-
-        const sizeMultiplier = this.sizeMultiplier[unit] || this.sizeMultiplier['b'];
-        const maxSize = parseInt(this.maxSize, 10) * sizeMultiplier;
-
-        if (isNaN(maxSize)) {
-            const error = {
-                message: `Invalid max size parameter: ${this.maxSize}`,
-                code: this.Error.MAX_SIZE_EXCEEDED
-            }
-            throw error;
-        }
-
-        if (file.size > maxSize) {
-            const error = {
-                message: `The file size must not exceed ${maxSize} bytes`,
-                code: this.Error.MAX_SIZE_EXCEEDED
-            }
-            throw error;
-        }
-    }
-
-}
-
-/**
- * Create a File object from the request body
- * @param {EventRequest} request
- * @return {File}
- */
-Uploader.prototype.createFileFromRequest = function (request) {
-    const requestBody = request.body;
-    const type = request.get('Content-Type') || 'application/octet-stream';
-
-    const file = new File([requestBody], this.filename, {
-        type
+        parentPort.postMessage('ready');
     });
-    return file;
 }
 
-/**
- * @param {File} file
- * @param {callback} callback
- */
-Uploader.prototype.uploadFile = function (file, callback) {
-    const destFile = `${this.uploadPath}${file.name}`;
+boot();
+//module.exports = boot.toString();
 
-    let uploadPath = this.uploadPath;
-    if (uploadPath.substr(-1) === '/') {
-        uploadPath = uploadPath.substr(0, uploadPath.length - 1);
-    }
+}).call(this,require('_process'))
 
-    const writeFile = () => {
-        const stream = new FileReadableStreamAdapter(file);
-        this.dossier.writeFile(destFile, stream, (err) => {
-            callback(err, {
-                path: destFile
+},{"./BootEngine.js":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","edfs":"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js","swarm-engine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/host/HostBootScript.js":[function(require,module,exports){
+function HostBootScript(identity){
+    require('callflow').initialise();
+    const se = require("swarm-engine");
+    se.initialise(identity);
+    const SRPC = se.SmartRemoteChannelPowerCord;
+    let swUrl = "http://localhost:8080/";
+    const powerCord = new SRPC([swUrl]);
+    $$.swarmEngine.plug("test/agent/007", powerCord);
+}
+
+module.exports = HostBootScript;
+
+
+
+},{"callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","swarm-engine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/domainBootScript.js":[function(require,module,exports){
+(function (process){
+const path = require('path');
+//enabling life line to parent process
+require(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/core/utils/pingpongFork.js")).enableLifeLine();
+
+const seed = process.env.PSK_DOMAIN_SEED;
+//preventing children to access the env parameter
+process.env.PSK_DOMAIN_SEED = undefined;
+
+if (process.argv.length > 3) {
+    process.env.PRIVATESKY_DOMAIN_NAME = process.argv[2];
+} else {
+    process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
+}
+
+process.env.PRIVATESKY_TMP = path.resolve(process.env.PRIVATESKY_TMP || "../tmp");
+process.env.DOMAIN_WORKSPACE = path.resolve(process.env.PRIVATESKY_TMP, "domainsWorkspace", process.env.PRIVATESKY_DOMAIN_NAME);
+
+const config = JSON.parse(process.env.config);
+
+if (typeof config.constitution !== "undefined" && config.constitution !== "undefined") {
+    process.env.PRIVATESKY_DOMAIN_CONSTITUTION = config.constitution;
+}
+
+if (typeof config.workspace !== "undefined" && config.workspace !== "undefined") {
+    process.env.DOMAIN_WORKSPACE = config.workspace;
+}
+
+function boot() {
+    const BootEngine = require("./BootEngine");
+
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
+    bootter.boot(function (err, archive) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        try {
+            plugPowerCords();
+        } catch (err) {
+            console.log("Caught an error will finishing booting process", err);
+        }
+    })
+}
+
+function getSeed(callback) {
+    callback(undefined, self.seed);
+}
+
+let self = {seed};
+
+function getEDFS(callback) {
+    let EDFS = require("edfs");
+    EDFS.attachWithSeed(seed, (err, edfsInst) => {
+        if (err) {
+            return callback(err);
+        }
+
+        self.edfs = edfsInst;
+        callback(undefined, self.edfs);
+    });
+}
+
+function initializeSwarmEngine(callback) {
+    const EDFS = require("edfs");
+    const bar = self.edfs.loadBar(self.seed);
+    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+        if (err) {
+            return callback(err);
+        }
+        self.domainName = content.toString();
+        $$.log(`Domain ${self.domainName} is booting...`);
+
+        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+        const se = require("swarm-engine");
+        se.initialise(self.domainName);
+
+        callback();
+    });
+}
+
+function plugPowerCords() {
+    const dossier = require("dossier");
+    dossier.load(self.seed, "DomainIdentity", function (err, dossierHandler) {
+        if (err) {
+            throw err;
+        }
+
+        dossierHandler.startTransaction("DomainConfigTransaction", "getDomains").onReturn(function (err, domainConfigs) {
+            if (err) {
+                throw  err;
+            }
+
+            const se = require("swarm-engine");
+            if (domainConfigs.length === 0) {
+                console.log("No domain configuration found in CSB. Boot process will stop here...");
+                return;
+            }
+            self.domainConf = domainConfigs[0];
+
+            for (const alias in self.domainConf.communicationInterfaces) {
+                if (self.domainConf.communicationInterfaces.hasOwnProperty(alias)) {
+                    let remoteUrls = self.domainConf.communicationInterfaces[alias];
+                    let powerCordToDomain = new se.SmartRemoteChannelPowerCord([remoteUrls.virtualMQ + "/"], self.domainConf.alias, remoteUrls.zeroMQ);
+                    $$.swarmEngine.plug("*", powerCordToDomain);
+                }
+            }
+
+            dossierHandler.startTransaction("Agents", "getAgents").onReturn(function (err, agents) {
+                if (err) {
+                    throw err;
+                }
+
+                if (agents.length === 0) {
+                    agents.push({alias: 'system'});
+                }
+
+                const EDFS = require("edfs");
+                const pskPath = require("swarmutils").path;
+                const rawDossier = self.edfs.loadRawDossier(self.seed);
+                rawDossier.readFile(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    agents.forEach(agent => {
+                        const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                        $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+                    });
+
+                    $$.event('status.domains.boot', {name: self.domainConf.alias});
+                    console.log("Domain boot successfully");
+                });
             });
         })
+    });
+}
+
+boot();
+}).call(this,require('_process'))
+
+},{"./BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","dossier":"/home/travis/build/PrivateSky/privatesky/modules/dossier/index.js","edfs":"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js","swarm-engine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js":[function(require,module,exports){
+module.exports = {
+    getIsolatesBootScript: function() {
+        return require('./IsolateBootScript');
+    },
+    getThreadBootScript: function() {
+        return `(${require("./ThreadWorkerBootScript")})()`;
+    },
+    executeDomainBootScript: function() {
+        return require('./domainBootScript');
+    }
+};
+},{"./IsolateBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/IsolateBootScript.js","./ThreadWorkerBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js","./domainBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/domainBootScript.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js":[function(require,module,exports){
+module.exports = {
+    initialise:function(...args){
+        if(typeof $$.swarmEngine === "undefined"){
+            const SwarmEngine = require('./SwarmEngine');
+            $$.swarmEngine = new SwarmEngine(...args);
+        }else{
+            $$.throw("Swarm engine already initialized!");
+        }
+    },
+    OuterIsolatePowerCord: require("./powerCords/OuterIsolatePowerCord"),
+    InnerIsolatePowerCord: require("./powerCords/InnerIsolatePowerCord"),
+    OuterThreadPowerCord: require("./powerCords/OuterThreadPowerCord"),
+    InnerThreadPowerCord: require("./powerCords/InnerThreadPowerCord"),
+    RemoteChannelPairPowerCord: require("./powerCords/RemoteChannelPairPowerCord"),
+    RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord"),
+    SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
+    BootScripts: require('./bootScripts')
+};
+
+const or = require("overwrite-require");
+const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+if (browserContexts.indexOf($$.environmentType) !== -1) {
+    module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
+    module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
+    module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
+}
+
+},{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/HostPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js","./powerCords/browser/IframePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js","./powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/InteractionSpace.js":[function(require,module,exports){
+function InteractionSpace(swarmEngineApi) {
+    const listeners = {};
+    const interactionTemplate = require('./interaction_template').getTemplateHandler(swarmEngineApi);
+
+    function createThis(swarm) {
+        const thisObj = interactionTemplate.createForObject(swarm);
+        //todo: implement a proxy for public and private vars...
+        return thisObj;
     }
 
-    if (this.preventOverwrite) {
-        // Check that file doesn't exist
-        this.dossier.listFiles(uploadPath, (err, files) => {
-            if (files) {
-                if (files.indexOf(file.name) !== -1) {
-                    const err = {
-                        message: 'File exists',
-                        code: this.Error.FILE_EXISTS
-                    }
-                    return callback(err, {
-                        path: destFile
-                    });
+    this.dispatch = function (swarm) {
+        const {swarmId, swarmTypeName, phaseName, args} = swarm.meta;
+
+        const genericKey = `*/${swarmTypeName}/${phaseName}`;
+        const particularKey = `${swarmId}/${swarmTypeName}/${phaseName}`;
+
+        const handlers = listeners[particularKey] || listeners[genericKey] || [];
+
+        handlers.forEach(fn => {
+            fn.call(createThis(swarm), ...args);
+        });
+
+        if (phaseName === $$.swarmEngine.RETURN_PHASE_COMMAND) {
+            delete listeners[particularKey];
+        }
+
+        if (handlers.length === 0) {
+            console.log(`No implementation for phase "${phaseName}" was found`);
+        }
+    };
+
+    this.on = function (swarmId, swarmTypeName, phaseName, handler) {
+        const key = `${swarmId}/${swarmTypeName}/${phaseName}`;
+        if (typeof listeners[key] === "undefined") {
+            listeners[key] = [];
+        }
+        listeners[key].push(handler);
+        swarmEngineApi.acknowledge("on", swarmId, swarmTypeName, phaseName, handler);
+    };
+
+    this.off = function (swarmId = '*', swarmTypeName = '*', phaseName = '*', handler) {
+
+        function escapeIfStar(str) {
+            return str.replace("*", "\\*")
+        }
+
+        swarmId = escapeIfStar(swarmId);
+        swarmTypeName = escapeIfStar(swarmTypeName);
+        phaseName = escapeIfStar(phaseName);
+
+        const regexString = `(${swarmId})\\/(${swarmTypeName})\\/(${phaseName})`;
+        const reg = new RegExp(regexString);
+
+        const keys = Object.keys(listeners);
+        keys.forEach(key => {
+            if (key.match(reg)) {
+                const handlers = listeners[key];
+
+                if (!handler) {
+                    listeners[key] = [];
+                } else {
+                    listeners[key] = handlers.filter(fn => fn !== handler);
                 }
             }
-
-            writeFile();
         });
-    } else {
-        writeFile();
+        swarmEngineApi.acknowledge("off", swarmId, swarmTypeName, phaseName, handler);
+    };
+}
+
+module.exports = InteractionSpace;
+
+},{"./interaction_template":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/interaction_template.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js":[function(require,module,exports){
+module.exports = function (swarmEngineApi) {
+    let cm = require("callflow");
+    const InteractionSpace = require("./InteractionSpace");
+    const is = new InteractionSpace(swarmEngineApi);
+
+    $$.interactions = {};
+    //cm.createSwarmEngine("interaction", require("./interaction_template"));
+    $$.interaction = $$.interactions;
+
+    $$.interactions.attachTo = function (swarmTypeName, interactionDescription) {
+        Object.keys(interactionDescription).forEach(phaseName => {
+            is.on('*', swarmTypeName, phaseName, interactionDescription[phaseName]);
+        });
+    };
+
+    $$.interactions.startSwarmAs = function (identity, swarmTypeName, phaseName, ...args) {
+        const swarm = swarmEngineApi.startSwarmAs(identity, swarmTypeName, phaseName, ...args);
+        let swarmId = swarm.getMeta('swarmId');
+
+        return {
+            on: function (interactionDescription) {
+                Object.keys(interactionDescription).forEach(phaseName => {
+                    is.on(swarmId, swarmTypeName, phaseName, interactionDescription[phaseName]);
+                });
+
+                return this;
+            },
+            off: function (interactionDescription) {
+                is.off(interactionDescription);
+
+                return this;
+            },
+            onReturn: function (callback) {
+                is.on(swarmId, swarmTypeName, $$.swarmEngine.RETURN_PHASE_COMMAND, callback);
+
+                return this;
+            }
+        }
+    };
+
+    return is;
+};
+
+},{"./InteractionSpace":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/InteractionSpace.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/interaction_template.js":[function(require,module,exports){
+exports.getTemplateHandler = function (swarmEngineApi) {
+
+    return {
+        createForObject: function (valueObject, thisObject, localId) {
+            let cm = require("callflow");
+
+            let swarmFunction = function (destinationContext, phaseName, ...args) {
+                //make the execution at level 0  (after all pending events) and wait to have a swarmId
+                ret.observe(function () {
+                    swarmEngineApi.sendSwarm(valueObject, $$.swarmEngine.EXECUTE_PHASE_COMMAND, destinationContext, phaseName, args);
+                }, null, null);
+                ret.notify();
+                return thisObject;
+            };
+
+            function off() {
+                const swarmId = valueObject.getMeta('swarmId');
+                const swarmTypeName = valueObject.getMeta('swarmTypeName');
+
+                swarmEngineApi.off(swarmId, swarmTypeName);
+            }
+
+
+            let ret = cm.createStandardAPIsForSwarms(valueObject, thisObject, localId);
+
+            ret.swarm = swarmFunction;
+            ret.swarmAs = swarmFunction;
+            ret.off = off;
+
+            delete ret.home;
+            delete ret.onReturn;
+            delete ret.onResult;
+
+            delete ret.asyncReturn;
+            delete ret.return;
+
+            delete ret.autoInit;
+
+            return ret;
+        }
     }
+};
+
+},{"callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js":[function(require,module,exports){
+(function (global){
+function InnerIsolatePowerCord() {
+
+    let setterTransfer;
+
+    function transfer(...args) {
+
+        args = args.map(arg => {
+            if(arg.buffer) {
+                // transforming UInt8Array to ArrayBuffer
+                arg = arg.buffer;
+            }
+
+            return arg;
+        });
+
+        return setterTransfer(...args);
+    }
+
+    Object.defineProperty(this, "transfer", {
+        set: (fn) => {
+            setterTransfer = fn;
+        }, get: () => {
+            return setterTransfer ? transfer : undefined;
+        }
+    });
+
+    this.sendSwarm = function (swarmSerialization) {
+        try{
+            if(swarmSerialization instanceof ArrayBuffer) {
+                swarmSerialization = global.createCopyIntoExternalCopy(new Uint8Array(swarmSerialization));
+            }
+
+            returnSwarm.apply(undefined, [null, swarmSerialization])
+                .catch((err) => {
+                    console.log(err);
+                })
+        }catch(err){
+           console.log(err);
+        }
+
+    };
 
 }
 
-/**
- * TODO: Support for uploading the request body payload
- * @param {EventRequest} request
- * @param {callback} callback
- */
-Uploader.prototype.upload = function (request, callback) {
-	this.isMultipartUpload = (typeof request.body === 'object' && !(request.body instanceof ArrayBuffer));
-    try {
-        this.validateRequestBody(request.body);
-    } catch (e) {
-        return callback(e);
-    }
+module.exports = InnerIsolatePowerCord;
 
-    let files = [];
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-    if (this.isMultipartUpload) {
-        if (!this.uploadMultipleFiles) {
-            files.push(request.body[this.inputName]);
-        } else {
-            files = request.body[this.inputName];
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js":[function(require,module,exports){
+function InnerThreadPowerCord() {
+    const worker_threads = 'worker_threads';
+    const {parentPort} = require(worker_threads);
+
+    this.sendSwarm = function (swarmSerialization) {
+        parentPort.postMessage(swarmSerialization);
+    };
+
+}
+
+module.exports = InnerThreadPowerCord;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js":[function(require,module,exports){
+function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
+    const syndicate = require('syndicate');
+    const bootScripts = require('../bootScripts');
+    const pskIsolatesModuleName = "pskisolates";
+    const pskisolates = require(pskIsolatesModuleName);
+    let pool = null;
+
+
+    function connectToEnergy() {
+        const WorkerStrategies = syndicate.WorkerStrategies;
+
+        if(!apis) {
+            apis = {};
         }
-    } else {
-        const file = this.createFileFromRequest(request);
-        files.push(file);
-    }
 
-    const filesUploaded = [];
-
-    const uploadFileCallback = (file, err) => {
-
-        const _callback = function (err, result) {
-            const srcFile = {
-                name: file.name,
-                type: file.type
+        if(typeof apis.require === "undefined"){
+            apis.require = function(name) {
+                console.log('Creating proxy for', name);
+                return pskisolates.createDeepReference(require(name));
             };
+        }
 
-            if (err) {
-                if (err instanceof Error || typeof err === 'string') {
-                    err = {
-                        message: err.message,
-                        code: this.Error.UNKNOWN
-                    }
-                }
-
-                filesUploaded.push({
-                    file: srcFile,
-                    error: err
-                });
-            } else {
-                filesUploaded.push({
-                    file: srcFile,
-                    result,
-                });
-            }
-
-
-            if (filesUploaded.length === files.length) {
-                let errors = filesUploaded.filter(item => item.error !== undefined);
-                const uploadedFiles = filesUploaded.filter(item => item.result !== undefined);
-
-                errors = (errors.length) ? errors : null;
-                callback(errors, uploadedFiles);
+        const config = {
+            bootScript: bootScripts.getIsolatesBootScript(),
+            maximumNumberOfWorkers: numberOfWires,
+            workerStrategy: WorkerStrategies.ISOLATES,
+            workerOptions: {
+                workerData: {
+                    constitutions: energySource
+                },
+                externalApi: apis
             }
         };
 
-        if (err) {
-            return _callback.call(this, err);
-        }
-        return _callback.bind(this);
+        pool = syndicate.createWorkerPool(config, (isolate) => {
+
+            isolate.globalSetSync("getIdentity", () => {
+                return superThis.identity;
+            });
+        });
+
     }
 
-    for (const file of files) {
-        try {
-            this.validateFile(file);
-        } catch (e) {
-            uploadFileCallback(file, e);
-            continue;
-        }
+    let superThis = this;
+    connectToEnergy();
 
-        this.uploadFile(file, uploadFileCallback(file));
-    }
+
+    this.sendSwarm = function (swarmSerialization) {
+        pool.addTask(swarmSerialization, (err, msg) => {
+            if (err instanceof Error) {
+                throw err;
+            }
+
+            this.transfer(msg.buffer || msg);
+        });
+    };
+
 }
 
-module.exports = Uploader;
+module.exports = OuterIsolatePowerCord;
 
-},{"./FileReadableStreamAdapter":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/FileReadableStreamAdapter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js":[function(require,module,exports){
-const extensionsMimeTypes = {
-    "aac": {
-        name: "audio/aac",
-        binary: true
-    },
-    "abw": {
-        name: "application/x-abiword",
-        binary: true
-    },
-    "arc": {
-        name: "application/x-freearc",
-        binary: true
-    },
-    "avi": {
-        name: "video/x-msvideo",
-        binary: true
-    },
-    "azw": {
-        name: "application/vnd.amazon.ebook",
-        binary: true
-    },
-    "bin": {
-        name: "application/octet-stream",
-        binary: true
-    }, "bmp": {
-        name: "image/bmp",
-        binary: true
-    }, "bz": {
-        name: "application/x-bzip",
-        binary: true
-    }, "bz2": {
-        name: "application/x-bzip2",
-        binary: true
-    }, "csh": {
-        name: "application/x-csh",
-        binary: false
-    }, "css": {
-        name: "text/css",
-        binary: false
-    }, "csv": {
-        name: "text/csv",
-        binary: false
-    }, "doc": {
-        name: "application/msword",
-        binary: true
-    }, "docx": {
-        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        binary: true
-    }, "eot": {
-        name: "application/vnd.ms-fontobject",
-        binary: true
-    }, "epub": {
-        name: "application/epub+zip",
-        binary: true
-    }, "gz": {
-        name: "application/gzip",
-        binary: true
-    }, "gif": {
-        name: "image/gif",
-        binary: true
-    }, "htm": {
-        name: "text/html",
-        binary: false
-    }, "html": {
-        name: "text/html",
-        binary: false
-    }, "ico": {
-        name: "image/vnd.microsoft.icon",
-        binary: true
-    }, "ics": {
-        name: "text/calendar",
-        binary: false
-    }, "jpeg": {
-        name: "image/jpeg",
-        binary: true
-    }, "jpg": {
-        name: "image/jpeg",
-        binary: true
-    }, "js": {
-        name: "text/javascript",
-        binary: false
-    }, "json": {
-        name: "application/json",
-        binary: false
-    }, "jsonld": {
-        name: "application/ld+json",
-        binary: false
-    }, "mid": {
-        name: "audio/midi",
-        binary: true
-    }, "midi": {
-        name: "audio/midi",
-        binary: true
-    }, "mjs": {
-        name: "text/javascript",
-        binary: false
-    }, "mp3": {
-        name: "audio/mpeg",
-        binary: true
-    }, "mpeg": {
-        name: "video/mpeg",
-        binary: true
-    }, "mpkg": {
-        name: "application/vnd.apple.installer+xm",
-        binary: true
-    }, "odp": {
-        name: "application/vnd.oasis.opendocument.presentation",
-        binary: true
-    }, "ods": {
-        name: "application/vnd.oasis.opendocument.spreadsheet",
-        binary: true
-    }, "odt": {
-        name: "application/vnd.oasis.opendocument.text",
-        binary: true
-    }, "oga": {
-        name: "audio/ogg",
-        binary: true
-    },
-    "ogv": {
-        name: "video/ogg",
-        binary: true
-    },
-    "ogx": {
-        name: "application/ogg",
-        binary: true
-    },
-    "opus": {
-        name: "audio/opus",
-        binary: true
-    },
-    "otf": {
-        name: "font/otf",
-        binary: true
-    },
-    "png": {
-        name: "image/png",
-        binary: true
-    },
-    "pdf": {
-        name: "application/pdf",
-        binary: true
-    },
-    "php": {
-        name: "application/php",
-        binary: false
-    },
-    "ppt": {
-        name: "application/vnd.ms-powerpoint",
-        binary: true
-    },
-    "pptx": {
-        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        binary: true
-    },
-    "rtf": {
-        name: "application/rtf",
-        binary: true
-    },
-    "sh": {
-        name: "application/x-sh",
-        binary: false
-    },
-    "svg": {
-        name: "image/svg+xml",
-        binary: false
-    },
-    "swf": {
-        name: "application/x-shockwave-flash",
-        binary: true
-    },
-    "tar": {
-        name: "application/x-tar",
-        binary: true
-    },
-    "tif": {
-        name: "image/tiff",
-        binary: true
-    },
-    "tiff": {
-        name: "image/tiff",
-        binary: true
-    },
-    "ts": {
-        name: "video/mp2t",
-        binary: true
-    },
-    "ttf": {
-        name: "font/ttf",
-        binary: true
-    },
-    "txt": {
-        name: "text/plain",
-        binary: false
-    },
-    "vsd": {
-        name: "application/vnd.visio",
-        binary: true
-    },
-    "wav": {
-        name: "audio/wav",
-        binary: true
-    },
-    "weba": {
-        name: "audio/webm",
-        binary: true
-    },
-    "webm": {
-        name: "video/webm",
-        binary: true
-    },
-    "webp": {
-        name: "image/webp",
-        binary: true
-    },
-    "woff": {
-        name: "font/woff",
-        binary: true
-    },
-    "woff2": {
-        name: "font/woff2",
-        binary: true
-    },
-    "xhtml": {
-        name: "application/xhtml+xml",
-        binary: false
-    },
-    "xls": {
-        name: "application/vnd.ms-excel",
-        binary: true
-    },
-    "xlsx": {
-        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        binary: true
-    },
-    "xml": {
-        name: "text/xml",
-        binary: false
-    },
-    "xul": {
-        name: "application/vnd.mozilla.xul+xml",
-        binary: true
-    },
-    "zip": {
-        name: "application/zip",
-        binary: true
-    },
-    "3gp": {
-        name: "video/3gpp",
-        binary: true
-    },
-    "3g2": {
-        name: "video/3gpp2",
-        binary: true
-    },
-    "7z": {
-        name: "application/x-7z-compressed",
-        binary: true
-    }
-};
+},{"../bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","syndicate":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js":[function(require,module,exports){
+function OuterThreadPowerCord(threadBootScript, evaluate= false, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
+    const syndicate = require('syndicate');
+    let pool = null;
+    let self = this;
 
-const defaultMimeType = {
-    name: "text/plain",
-    binary: false
-};
-module.exports.getMimeTypeFromExtension = function (extension) {
-    if (typeof extensionsMimeTypes[extension] !== "undefined") {
-        return extensionsMimeTypes[extension];
+    function connectToEnergy() {
+        const config = {
+            maximumNumberOfWorkers: numberOfWires,
+            workerStrategy: syndicate.WorkerStrategies.THREADS,
+            bootScript: threadBootScript,
+            workerOptions: {
+                // cwd: process.env.DOMAIN_WORKSPACE,
+                eval: evaluate,
+                env: {
+                    IDENTITY: self.identity
+                },
+                workerData: {
+                    constitutionSeed: energySourceSeed
+                }
+            }
+        };
+
+        pool = syndicate.createWorkerPool(config);
+
     }
-    return defaultMimeType;
-};
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
+
+    this.sendSwarm = function (swarmSerialization) {
+        pool.addTask(swarmSerialization, (err, msg) => {
+            if (err instanceof Error) {
+                throw err;
+            }
+
+            this.transfer(msg.buffer || msg);
+        });
+    };
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                connectToEnergy();
+            }
+        }
+    })
+}
+
+module.exports = OuterThreadPowerCord;
+
+},{"syndicate":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js":[function(require,module,exports){
+const outbound = "outbound";
+const inbound = "inbound";
+
+function RemoteChannelPairPowerCord(host, channelName, receivingHost, receivingChannelName){
+
+    receivingHost = receivingHost || host;
+    receivingChannelName = receivingChannelName || generateChannelName();
+
+    function setup(){
+        //injecting necessary http methods
+        require("../../psk-http-client");
+
+        //this should be a channel that exists... we don't try to create
+        $$.remote.registerHttpChannelClient(outbound, host, channelName, {autoCreate: false});
+        $$.remote[outbound].setSenderMode();
+
+        //maybe instead of receivingChannelName we sould use our identity? :-??
+        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
+        $$.remote[inbound].setReceiverMode();
+
+        $$.remote[inbound].on("*", "*", "*", function (err, swarmSerialization){
+            const swarmUtils = require("swarmutils");
+            const SwarmPacker = swarmUtils.SwarmPacker;
+            let header = SwarmPacker.getHeader(swarmSerialization);
+            if(header.swarmTarget === $$.remote[inbound].getReceiveAddress() && startedSwarms[header.swarmId] === true){
+                //it is a swarm that we started
+                let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+                //we set the correct target
+                message.setMeta("target", identityOfOurSwarmEngineInstance);
+                //... and transfer to our swarm engine instance
+                self.transfer(SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType)));
+            }else{
+                self.transfer(swarmSerialization);
+            }
+        });
+    }
+
+    let identityOfOurSwarmEngineInstance;
+    let startedSwarms = {};
+    const self = this;
+    this.sendSwarm = function (swarmSerialization) {
+        const swarmUtils = require("swarmutils");
+        const SwarmPacker = swarmUtils.SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+
+        if(typeof message.publicVars === "undefined"){
+            startedSwarms[message.getMeta("swarmId")] = true;
+
+            //it is the start of swarm...
+            if(typeof identityOfOurSwarmEngineInstance === "undefined"){
+                identityOfOurSwarmEngineInstance = message.getMeta("homeSecurityContext");
+            }
+            //we change homeSecurityContext with a url in order to get back the swarm when is done.
+            message.setMeta("homeSecurityContext", $$.remote[inbound].getReceiveAddress());
+            //send the updated version of it
+            $$.remote[outbound].sendSwarm(SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType)));
+        }else{
+            //the swarm was not started from our pair swarm engine so we just send it
+            $$.remote[outbound].sendSwarm(swarmSerialization);
+        }
+    };
+
+    function generateChannelName(){
+        return Math.random().toString(36).substr(2, 9);
+    }
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                setup();
+            }
+        }
+    });
+}
+
+module.exports = RemoteChannelPairPowerCord;
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js":[function(require,module,exports){
+const inbound = "inbound";
+
+function RemoteChannelPowerCord(receivingHost, receivingChannelName){
+
+    receivingHost = receivingHost || host;
+    receivingChannelName = receivingChannelName || generateChannelName();
+
+    let setup = ()=>{
+        //injecting necessary http methods
+        require("../../psk-http-client");
+
+        //maybe instead of receivingChannelName we sould use our identity? :-??
+        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
+        $$.remote[inbound].setReceiverMode();
+
+        this.on("*", "*", "*", (err, result)=>{
+            if(!err){
+                console.log("We got a swarm for channel");
+                this.transfer(result);
+            }else{
+                console.log("Got an error from our channel", err);
+            }
+        });
+    };
+
+    this.on = function(swarmId, swarmName, swarmPhase, callback){
+        $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+    };
+
+    this.off = function(swarmId, swarmName, swarmPhase, callback){
+
+    };
+
+    this.sendSwarm = function (swarmSerialization) {
+        const SwarmPacker = require("swarmutils").SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        let target = header.swarmTarget;
+        console.log("Sending swarm to", target);
+        //test if target is an url... else complain
+        if(true){
+            $$.remote.doHttpPost(target, swarmSerialization, (err, res)=>{
+
+            });
+        }else{
+
+        }
+    };
+
+    function generateChannelName(){
+        return Math.random().toString(36).substr(2, 9);
+    }
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                setup();
+            }
+        }
+    });
+}
+
+module.exports = RemoteChannelPowerCord;
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js":[function(require,module,exports){
+(function (Buffer){
+const inbound = "inbound";
+
+function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, zeroMQAddress) {
+
+    //here are stored, for later use, fav hosts for different identities
+    const favoriteHosts = {};
+    let receivingHost = Array.isArray(communicationAddrs) && communicationAddrs.length > 0 ? communicationAddrs[0] : "http://127.0.0.1";
+    receivingChannelName = receivingChannelName || generateChannelName();
+
+    function testIfZeroMQAvailable(suplimentaryCondition){
+        let available = true;
+        let zmqModule;
+        try{
+            let zmqName = "zeromq";
+            zmqModule = require(zmqName);
+        }catch(err){
+            console.log("Zeromq not available at this moment.");
+        }
+        available = typeof zmqModule !== "undefined";
+        if(typeof suplimentaryCondition !== "undefined"){
+            available = available && suplimentaryCondition;
+        }
+        return available;
+    }
+
+    let setup = () => {
+        //injecting necessary http methods
+        require("../../psk-http-client");
+
+        const opts = {autoCreate: true, enableForward: testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined"), publicSignature: "none"};
+
+        console.log(`\n[***] Using channel "${receivingChannelName}" on "${receivingHost}".\n`);
+        //maybe instead of receivingChannelName we sould use our identity? :-??
+        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, opts);
+        $$.remote[inbound].setReceiverMode();
+
+        function toArrayBuffer(buffer) {
+            const ab = new ArrayBuffer(buffer.length);
+            const view = new Uint8Array(ab);
+            for (let i = 0; i < buffer.length; ++i) {
+                view[i] = buffer[i];
+            }
+            return ab;
+        }
+
+
+        if (testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined")) {
+            //let's connect to zmq
+            const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
+            reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
+                console.log("zeromq connection established");
+            }, (channelName, swarmSerialization) => {
+                console.log("Look", channelName, swarmSerialization);
+                handlerSwarmSerialization(swarmSerialization);
+            });
+        } else {
+            $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
+                if (err) {
+                    console.log("Got an error from our channel", err);
+                    return;
+                }
+
+                if(Buffer && Buffer.isBuffer(swarmSerialization)){
+                    swarmSerialization = toArrayBuffer(swarmSerialization);
+                }
+
+                handlerSwarmSerialization(swarmSerialization);
+            });
+        }
+    };
+
+    /* this.on = function(swarmId, swarmName, swarmPhase, callback){
+         $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+     };
+
+     this.off = function(swarmId, swarmName, swarmPhase, callback){
+
+     };*/
+
+    function getMetaFromIdentity(identity){
+        const vRegex = /([a-zA-Z0-9]*|.)*\/agent\/([a-zA-Z0-9]+(\/)*)+/g;
+
+        if(!identity.match(vRegex)){
+            throw new Error("Invalid format. (Eg. domain[.subdomain]*/agent/[organisation/]*agentId)");
+        }
+
+        const separatorKeyword = "/agent/";
+        let domain;
+        let agentIdentity;
+
+        const splitPoint = identity.indexOf(separatorKeyword);
+        if(splitPoint !== -1){
+            domain = identity.slice(0, splitPoint);
+            agentIdentity = identity.slice(splitPoint+separatorKeyword.length);
+        }
+
+        return {domain, agentIdentity};
+    }
+
+    function handlerSwarmSerialization(swarmSerialization) {
+        const swarmUtils = require("swarmutils");
+        const SwarmPacker = swarmUtils.SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        if (header.swarmTarget === $$.remote[inbound].getReceiveAddress() && startedSwarms[header.swarmId] === true) {
+            //it is a swarm that we started
+            let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+            //we set the correct target
+            message.setMeta("target", identityOfOurSwarmEngineInstance);
+            //... and transfer to our swarm engine instance
+            self.transfer(SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType)));
+        } else {
+            self.transfer(swarmSerialization);
+        }
+    }
+
+    let identityOfOurSwarmEngineInstance;
+    let startedSwarms = {};
+    const self = this;
+    this.sendSwarm = function (swarmSerialization) {
+        const swarmUtils = require("swarmutils");
+        const SwarmPacker = swarmUtils.SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+
+        if (typeof message.publicVars === "undefined") {
+            startedSwarms[message.getMeta("swarmId")] = true;
+
+            //it is the start of swarm...
+            if (typeof identityOfOurSwarmEngineInstance === "undefined") {
+                identityOfOurSwarmEngineInstance = message.getMeta("homeSecurityContext");
+            }
+            //we change homeSecurityContext with a url in order to get back the swarm when is done.
+            message.setMeta("homeSecurityContext", $$.remote[inbound].getReceiveAddress());
+
+            swarmSerialization = SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType));
+        }
+
+        let target = header.swarmTarget;
+        console.log("Sending swarm to", target);
+        const urlRegex = new RegExp(/^(www|http:|https:)+[^\s]+[\w]/);
+
+        if (urlRegex.test(target)) {
+            $$.remote.doHttpPost(target, swarmSerialization, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        } else {
+            deliverSwarmToRemoteChannel(target, swarmSerialization, 0);
+        }
+    };
+
+    function deliverSwarmToRemoteChannel(target, swarmSerialization, remoteIndex) {
+        let identityMeta;
+        try{
+            identityMeta = getMetaFromIdentity(target);
+        }catch(err){
+            //identityMeta = {};
+            console.log(err);
+        }
+
+        if (remoteIndex >= communicationAddrs.length) {
+            //end of the line
+            console.log(`Unable to deliver swarm to target "${target}" on any of the remote addresses provided.`);
+            return;
+        }
+        const currentAddr = communicationAddrs[remoteIndex];
+        //if we don't have a fav host for target then lets start discovery process...
+        const remoteChannelAddr = favoriteHosts[identityMeta.domain] || [currentAddr, "send-message/", $$.remote.base64Encode(identityMeta.domain) + "/"].join("");
+
+        $$.remote.doHttpPost(remoteChannelAddr, swarmSerialization, (err, res) => {
+            if (err) {
+                setTimeout(() => {
+                    deliverSwarmToRemoteChannel(target, swarmSerialization, ++remoteIndex);
+                }, 10);
+            } else {
+                //success: found fav host for target
+                favoriteHosts[identityMeta.domain] = remoteChannelAddr;
+                console.log("Found our fav", remoteChannelAddr, "for target", target);
+            }
+        });
+    }
+
+    function generateChannelName() {
+        return Math.random().toString(36).substr(2, 9);
+    }
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if (p === 'identity') {
+                setup();
+            }
+            return true;
+        }
+    });
+}
+
+module.exports = SmartRemoteChannelPowerCord;
+
+}).call(this,require("buffer").Buffer)
+
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","virtualmq":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js":[function(require,module,exports){
+function HostPowerCord(parent){
+
+    this.sendSwarm = function (swarmSerialization){
+        parent.postMessage(swarmSerialization, "*");
+    };
+
+    let receivedMessageHandler  = (event)=>{
+        console.log("Message received in iframe",event);
+        let swarmSerialization = event.data;
+        this.transfer(swarmSerialization);
+    };
+
+    let subscribe = () => {
+        if(!window.iframePCMessageHandler){
+            window.iframePCMessageHandler = receivedMessageHandler;
+            window.addEventListener("message",receivedMessageHandler)
+        }
+    };
+
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                subscribe.call(target);
+            }
+        }
+    });
+}
+
+
+module.exports = HostPowerCord;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js":[function(require,module,exports){
+function IframePowerCord(iframe){
+
+    let iframeSrc = iframe.src;
+
+    this.sendSwarm = function (swarmSerialization){
+        const SwarmPacker = require("swarmutils").SwarmPacker;
+
+        try {
+           SwarmPacker.getHeader(swarmSerialization);
+        }
+        catch (e) {
+            console.error("Could not deserialize swarm");
+        }
+
+        if(iframe && iframe.contentWindow){
+            iframe.contentWindow.postMessage(swarmSerialization, iframe.src);
+        }
+        else{
+            //TODO: check if the iframe/psk-app should be loaded again
+            console.error(`Iframe is no longer available. ${iframeSrc}`);
+        }
+
+    };
+
+    let receivedMessageHandler  = (event)=>{
+
+        if (event.source !== window) {
+            console.log("Message received in parent", event);
+            this.transfer(event.data);
+        }
+
+    };
+
+    let subscribe = () => {
+
+        // if(this.identity && this.identity!=="*"){
+        // }
+        // else{
+        //     //TODO: you should use a power cord capable of handling * identities.
+        //     console.error("Cannot handle identity '*'. You should use a power cord capable of handling '*' identities.")
+        // }
+
+        if(!window.iframePCMessageHandler){
+            window.iframePCMessageHandler = receivedMessageHandler;
+            window.addEventListener("message",receivedMessageHandler)
+        }
+    };
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                subscribe.call(target);
+            }
+        }
+    });
+}
+
+module.exports = IframePowerCord;
+},{"swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
 const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
     const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
@@ -12439,7 +13887,105 @@ function ServiceWorkerPC() {
 
 module.exports = ServiceWorkerPC;
 
-},{"../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
+},{"../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
+module.exports = function(swarmEngineApi){
+    const cm = require("callflow");
+    const swarmUtils = require("./swarm_template-se");
+
+    $$.swarms           = cm.createSwarmEngine("swarm", swarmUtils.getTemplateHandler(swarmEngineApi));
+    $$.swarm            = $$.swarms;
+
+    $$.swarms.startAs = function(identity, swarmName, ctor, ...params){
+        swarmEngineApi.startSwarmAs(identity, swarmName, ctor, ...params);
+    };
+};
+},{"./swarm_template-se":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/swarm_template-se.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/swarm_template-se.js":[function(require,module,exports){
+exports.getTemplateHandler = function (swarmEngine) {
+    let cm = require("callflow");
+
+    let beesHealer = require("swarmutils").beesHealer;
+    return {
+        createForObject: function (valueObject, thisObject, localId) {
+
+            function messageIdentityFilter(valueObject) {
+                return valueObject.meta.swarmId;
+            }
+
+            let swarmFunction = function (destinationContext, phaseName, ...args) {
+                //make the execution at level 0  (after all pending events) and wait to have a swarmId
+                ret.observe(function () {
+                    swarmEngine.sendSwarm(valueObject, $$.swarmEngine.EXECUTE_PHASE_COMMAND, destinationContext, phaseName, args);
+                }, null, null);
+                ret.notify();
+                return thisObject;
+            };
+
+            let asyncReturn = function (err, result) {
+
+                let destinationContext = valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
+                if (!destinationContext && valueObject.meta[$$.swarmEngine.META_WAITSTACK]) {
+                    destinationContext = valueObject.meta[$$.swarmEngine.META_WAITSTACK].pop();
+                }
+                if (!destinationContext) {
+                    destinationContext = valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
+                }
+
+                const {OwM} = require("swarmutils");
+                const swarmClone = OwM.prototype.convert(JSON.parse(JSON.stringify(valueObject)));
+
+                swarmEngine.sendSwarm(swarmClone, $$.swarmEngine.RETURN_PHASE_COMMAND, destinationContext, $$.swarmEngine.RETURN_PHASE_COMMAND, [err, result]);
+            };
+
+            function interact(phaseName, ...args) {
+                const {OwM} = require("swarmutils");
+                const swarmClone = OwM.prototype.convert(JSON.parse(JSON.stringify(valueObject)));
+                let destinationContext = valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
+
+                swarmEngine.sendSwarm(swarmClone, $$.swarmEngine.EXECUTE_INTERACT_PHASE_COMMAND, destinationContext, phaseName, args);
+            }
+
+            function home(err, result) {
+                let homeContext = valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
+                swarmEngine.sendSwarm(valueObject, $$.swarmEngine.RETURN_PHASE_COMMAND, homeContext, $$.swarmEngine.RETURN_PHASE_COMMAND, [err, result]);
+            }
+
+            function waitResults(callback, keepAliveCheck, swarm) {
+                if (!swarm) {
+                    swarm = this;
+                }
+                if (!keepAliveCheck) {
+                    keepAliveCheck = function () {
+                        return false;
+                    }
+                }
+                var inner = swarm.getInnerValue();
+                if (!inner.meta[$$.swarmEngine.META_WAITSTACK]) {
+                    inner.meta[$$.swarmEngine.META_WAITSTACK] = [];
+                    inner.meta[$$.swarmEngine.META_WAITSTACK].push($$.HRN_securityContext)
+                }
+                swarmEngine.waitForSwarm(callback, swarm, keepAliveCheck);
+            }
+
+
+            let ret = cm.createStandardAPIsForSwarms(valueObject, thisObject, localId);
+
+            ret.interact        = interact;
+            ret.swarm           = swarmFunction;
+            ret.home            = home;
+            ret.onReturn        = waitResults;
+            ret.onResult        = waitResults;
+            ret.asyncReturn     = asyncReturn;
+            ret.return          = asyncReturn;
+
+            ret.autoInit = function (someContext) {
+
+            };
+
+            return ret;
+        }
+    }
+};
+},{"callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
 let Queue = require("swarmutils").Queue;
 const maxQueueSize = 100;
 const TOKEN_PLACEHOLDER = "WEB_TOKEN_PLACEHOLDER";
@@ -13551,7 +15097,2846 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/index.js":[function(require,module,exports){
+const fs = require('fs');
+const path = require('path');
+const PoolConfig = require('./lib/PoolConfig');
+const WorkerPool = require('./lib/WorkerPool');
+const WorkerStrategies = require('./lib/WorkerStrategies');
+
+/**
+ * @throws if config is invalid, if config tries to set properties to undefined or add new properties (check PoolConfig to see solutions)
+ * @throws if providing a working dir that does not exist, the directory should be created externally
+ * @throws if trying to use a strategy that does not exist
+ */
+function createWorkerPool(poolConfig, workerCreateHelper) {
+    const newPoolConfig = PoolConfig.createByOverwritingDefaults(poolConfig);
+
+    if (newPoolConfig.workerOptions && newPoolConfig.workerOptions.cwd && !fs.existsSync(newPoolConfig.workerOptions.cwd)) {
+        throw new Error(`The provided working directory does not exists ${config.workingDir}`);
+    }
+
+    let concretePool = null;
+
+    if (newPoolConfig.workerStrategy === WorkerStrategies.THREADS) {
+        const PoolThreads = require('./lib/Pool-Threads');
+
+        concretePool = new PoolThreads(newPoolConfig, workerCreateHelper);
+    } else if (newPoolConfig.workerStrategy === WorkerStrategies.ISOLATES) {
+        const PoolIsolates = require('./lib/Pool-Isolates');
+
+        concretePool = new PoolIsolates(newPoolConfig, workerCreateHelper)
+    } else {
+        throw new TypeError(`Could not find a implementation for worker strategy "${newPoolConfig.workerStrategy}"`);
+    }
+
+    return new WorkerPool(concretePool);
+}
+
+
+module.exports = {
+    createWorkerPool,
+    PoolConfig,
+    WorkerStrategies
+};
+
+},{"./lib/Pool-Isolates":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/PoolConfig":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
+(function (setImmediate){
+const {assert} = require('./utils');
+const util = require('util');
+const {EventEmitter} = require('events');
+
+const PoolEvents = {
+    RELEASED_WORKER: 'releasedWorker'
+};
+
+/** @param {PoolConfig&PoolConfigStorage} options */
+function AbstractPool(options) {
+    EventEmitter.call(this);
+
+    let pool = [];
+    let currentPoolSize = 0;
+
+    /** @returns {Worker|null} */
+    this.getAvailableWorker = function () {
+        // find first free worker
+        const freeWorkerIndex = pool.findIndex(el => !el.isWorking);
+
+        let worker = null;
+
+        // if no free worker is available, try creating one
+        if (freeWorkerIndex === -1) {
+            _createNewWorker();
+            return null;
+        } else {
+            worker = pool[freeWorkerIndex];
+        }
+
+        if (worker === null) {
+            return null;
+        }
+
+        // if free worker exists, set its state to working
+        worker.isWorking = true;
+        return worker.workerInstance;
+    };
+
+    /** @param {Worker} worker */
+    this.returnWorker = function (worker) {
+        // find worker that matches one in the pool
+        const freeWorkerIndex = pool.findIndex(el => el.workerInstance === worker);
+
+        if (freeWorkerIndex === -1) {
+            console.error('Tried to return a worker that is not owned by the pool');
+            return;
+        }
+
+        // if worker is found, set its state to not working
+        pool[freeWorkerIndex].isWorking = false;
+        this.emit(PoolEvents.RELEASED_WORKER);
+    };
+
+    /** @param {Worker} worker */
+    this.removeWorker = function (worker) {
+        const localPoolSize = pool.length;
+
+        pool = pool.filter(poolWorker => poolWorker.workerInstance !== worker); // keep elements that are not equal to worker
+        currentPoolSize = pool.length;
+
+        assert(currentPoolSize === localPoolSize - 1, {ifFails: `Tried returning a worker that could not be found`});
+    };
+
+    this.createNewWorker = function () {
+        throw new Error('Not implemented! Overwrite this in subclass.');
+    };
+
+    const _createNewWorker = () => {
+        // using currentPoolSize instead of pool.length because the creation of workers can be asynchronous
+        // and the pool will increase only after the worker is creating, this can cause a situation where
+        // more workers are created than the maximumNumberOfWorkers
+        if (currentPoolSize >= options.maximumNumberOfWorkers) {
+            return;
+        }
+
+        currentPoolSize += 1;
+
+        this.createNewWorker((err, newWorker) => {
+            if (err) {
+                currentPoolSize -= 1;
+                console.error('Error creating a new worker', err);
+                return;
+            }
+
+            const workerObj = {
+                isWorking: false,
+                workerInstance: newWorker
+            };
+
+            pool.push(workerObj);
+
+            // createNewWorker can be synchronous (even though it uses a callback),
+            // in that case it will cause scheduling problems if not delayed
+            setImmediate(() => {
+                this.emit(PoolEvents.RELEASED_WORKER);
+            });
+        });
+    };
+
+}
+
+AbstractPool.prototype.events = PoolEvents;
+util.inherits(AbstractPool, EventEmitter);
+
+
+module.exports = AbstractPool;
+
+}).call(this,require("timers").setImmediate)
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js","events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","timers":"/home/travis/build/PrivateSky/privatesky/node_modules/timers-browserify/main.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
+const AbstractPool = require('./AbstractPool');
+const util = require('util');
+/**
+ * @param {PoolConfig&PoolConfigStorage} options
+ * @param workerCreateHelper
+ * @mixes AbstractPool
+ */
+function PoolIsolates(options, workerCreateHelper) {
+    AbstractPool.call(this, options);
+
+    this.createNewWorker = function (callback) {
+        const workerOptions = options.workerOptions;
+
+        const getIsolatesWorker = options.bootScript;
+
+        getIsolatesWorker(workerOptions)
+            .then((newWorker) => {
+
+                if (typeof workerCreateHelper === "function") {
+                    workerCreateHelper(newWorker);
+                }
+
+                callback(undefined, newWorker)
+            })
+            .catch(err => {
+                callback(err);
+            });
+    };
+
+}
+
+util.inherits(PoolIsolates, AbstractPool);
+
+module.exports = PoolIsolates;
+
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
+const AbstractPool = require('./AbstractPool');
+const util = require('util');
+
+/**
+ * @param {PoolConfig&PoolConfigStorage} options
+ * @param {function} workerCreateHelper
+ * @mixes AbstractPool
+ */
+function PoolThreads(options, workerCreateHelper) {
+    AbstractPool.call(this, options);
+
+    this.createNewWorker = function (callback) {
+        const worker_threads ='worker_threads';
+        const {Worker} = require(worker_threads);
+
+        const newWorker = new Worker(options.bootScript, options.workerOptions);
+
+        if (typeof workerCreateHelper === "function") {
+            workerCreateHelper(newWorker);
+        }
+
+        const callbackWrapper = (...args) => {
+            removeListeners();
+            callback(...args);
+        };
+
+        function onMessage(msg) {
+            if(msg !== 'ready') {
+                callbackWrapper(new Error('Build script did not respond accordingly, it might be incompatible with current version'));
+                return;
+            }
+
+            callbackWrapper(undefined, newWorker);
+        }
+
+        function removeListeners() {
+            newWorker.removeListener('message', onMessage);
+            newWorker.removeListener('error', callbackWrapper);
+            newWorker.removeListener('exit', callbackWrapper);
+        }
+
+        newWorker.on('message', onMessage);
+        newWorker.on('error', callbackWrapper);
+        newWorker.on('exit', callbackWrapper);
+    };
+
+}
+
+util.inherits(PoolThreads, AbstractPool);
+
+module.exports = PoolThreads;
+
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+const os = require('os');
+const util = require('util');
+const WorkerStrategies = require('./WorkerStrategies');
+
+function PoolConfigStorage() {
+    this.bootScript = ``;
+    this.maximumNumberOfWorkers = os.cpus().length;
+    this.workerStrategy = WorkerStrategies.THREADS;
+    this.workerOptions = {
+        eval: false
+    };
+}
+
+/**
+ * This just provides validation for properties on config
+ * Substituting this class to PoolConfigStorage should behave exactly the same effect if the config is valid
+ * @constructor
+ */
+function PoolConfig() {
+    const storage = new PoolConfigStorage();
+
+    return {
+        get bootScript() {
+            return storage.bootScript;
+        },
+        set bootScript(value) {
+            storage.bootScript = value;
+        },
+
+        get maximumNumberOfWorkers() {
+            return storage.maximumNumberOfWorkers;
+        },
+        set maximumNumberOfWorkers(value) {
+            if (!Number.isFinite(value)) {
+                throw new TypeError(`Attribute maximumNumberOfWorkers should be a finite number, got ${typeof value}`);
+            }
+
+            if (value <= 0) {
+                throw new RangeError(`Attribute maximumNumberOfWorkers should have a value bigger than 0, got ${value}`);
+            }
+
+            storage.maximumNumberOfWorkers = value;
+        },
+
+        get workerStrategy() {
+            return storage.workerStrategy
+        },
+        set workerStrategy(value) {
+            if (!Object.values(WorkerStrategies).includes(value)) {
+                throw new TypeError(`Value ${value} not allowed for workerStrategy attribute`);
+            }
+
+            storage.workerStrategy = value;
+        },
+
+        get workerOptions() {
+            return storage.workerOptions;
+        },
+        set workerOptions(value) {
+            storage.workerOptions = value;
+        },
+
+        toJSON: function () {
+            return JSON.stringify(storage);
+        },
+        [Symbol.toStringTag]: function () {
+            return storage.toString()
+        },
+        [util.inspect.custom]: function () {
+            return util.inspect(storage, {colors: true});
+        }
+    }
+}
+
+/**
+ * This utility merges a new config to a default one. It is easier to use if you want to overwrite only a subset
+ * of properties of the config.
+ * @returns {PoolConfig&PoolConfigStorage}
+ */
+PoolConfig.createByOverwritingDefaults = function (config = {}, options = {allowNewKeys: true, allowUndefined: true}) {
+    const defaultConfig = new PoolConfig();
+
+    Object.keys(config).forEach(key => {
+
+        if (!options.allowNewKeys && !defaultConfig.hasOwnProperty(key)) {
+            throw new Error(`Tried overwriting property ${key} that does not exist on PoolConfig. ` +
+                `If this is intentional, set in options argument "allowNewKeys" to true'`);
+        }
+
+        if (!options.allowUndefined && typeof config[key] === 'undefined') {
+            throw new Error(`Tried setting value of ${key} to undefined. ` +
+                'If this is intentional, set in options argument "allowUndefined" to true');
+        }
+
+        defaultConfig[key] = config[key];
+    });
+
+    return defaultConfig;
+};
+
+module.exports = PoolConfig;
+},{"./WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
+function Queue() {
+    const backingStorage = [];
+
+    Object.defineProperty(this, 'length', {
+        get() {
+            return backingStorage.length
+        },
+        set(value) {
+            backingStorage.length = value;
+        }
+    });
+
+    Object.defineProperty(this, 'head', {
+        get: () => {
+            if (backingStorage.length > 0) {
+                return backingStorage[0];
+            }
+
+            return null;
+        }
+    });
+
+    Object.defineProperty(this, 'tail', {
+        get: () => {
+            const length = backingStorage.length;
+            if (length > 0) {
+                return backingStorage[length - 1];
+            }
+
+            return null;
+        }
+    });
+
+
+    this.push = (value) => {
+        backingStorage.push(value);
+    };
+
+    this.pop = () => {
+        return backingStorage.shift();
+    };
+
+    this.front = function () {
+        return this.head;
+    };
+
+    this.isEmpty = function () {
+        return backingStorage.length === 0;
+    };
+
+    this[Symbol.iterator] = backingStorage[Symbol.iterator];
+
+    this.toString = backingStorage.toString;
+    this[Symbol.for('nodejs.util.inspect.custom')] = function() {
+        return JSON.stringify(backingStorage);
+    }
+
+}
+
+module.exports = Queue;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
+
+/** @param pool {AbstractPool} */
+function WorkerPool(pool) {
+    const {assert} = require('./utils');
+    let Queue;
+
+    try {
+        Queue = require('swarmutils').Queue;
+    } catch (e) {
+        Queue = require('./QueueShim.js');
+    }
+
+    const PoolEvents = pool.events;
+    const taskQueue = new Queue();
+
+    this.addTask = function (task, callback) {
+        const taskAccepted = this.runTaskImmediately(task, callback);
+
+        if (!taskAccepted) {
+            taskQueue.push({task, callback});
+            return false;
+        }
+
+        return true;
+    };
+
+    /**
+     * Tries to run task if a worker is available, if it is not it will simply discard the task
+     * @returns {boolean} - True if the task was given to a worker, false if no worker was available for this task
+     */
+    this.runTaskImmediately = function (task, callback) {
+        const worker = pool.getAvailableWorker();
+
+        if (!worker) {
+            return false;
+        }
+
+        addWorkerListeners(worker, callback);
+
+        worker.postMessage(task);
+        return true;
+    };
+
+    pool.on(PoolEvents.RELEASED_WORKER, () => {
+        if (taskQueue.isEmpty()) {
+            return;
+        }
+
+        const taskSize = taskQueue.length;
+        const nextTask = taskQueue.front();
+
+        const taskWasAcceptedByAWorker = this.runTaskImmediately(nextTask.task, nextTask.callback);
+
+        if (taskWasAcceptedByAWorker) {
+            taskQueue.pop();
+            const newTaskSize = taskQueue.length;
+            assert(newTaskSize === taskSize - 1, {ifFails: `The task queue size did not decrease, expected to be ${taskSize - 1} but is ${newTaskSize}`})
+        } else {
+            const newTaskSize = taskQueue.length;
+            assert(newTaskSize === taskSize, {ifFails: `The task queue size modified when it shouldn't, expected to be equal but got pair (old: ${taskSize}, new: ${newTaskSize})`});
+            // events are propagates synchronously as mentioned in documentation (https://nodejs.org/api/events.html#events_asynchronous_vs_synchronous)
+            // one reason why this can happen is if the worker is not properly marked as "not working"
+            // another one is that the queue contains a worker that is free but can't accept tasks (it might have been terminated)
+            console.error(`This should never happen and it's most likely a bug`);
+        }
+    });
+
+    /**
+     * @param {Worker} worker
+     * @param {function} callbackForListeners
+     */
+    function addWorkerListeners(worker, callbackForListeners) {
+
+        function callbackWrapper(...args) {
+            removeListeners();
+            if(args[0] instanceof Error) {
+                pool.removeWorker(worker);
+            } else {
+                pool.returnWorker(worker);
+            }
+            callbackForListeners(...args);
+        }
+
+        function onMessage(...args) {
+            if (args[0] instanceof Error) {
+                callbackWrapper(...args);
+            } else {
+                callbackWrapper(undefined, ...args);
+            }
+        }
+
+        function onError(err) {
+            callbackWrapper(err);
+        }
+
+        function onExit(code) {
+            if (code !== 0) {
+                callbackWrapper(new Error(`Worker exited unexpectedly with code ${code}`));
+            }
+        }
+
+        worker.once('message', onMessage);
+        worker.once('error', onError);
+        worker.once('exit', onExit);
+
+        function removeListeners() {
+            worker.removeListener('message', onMessage);
+            worker.removeListener('error', onError);
+            worker.removeListener('exit', onExit);
+        }
+    }
+
+}
+
+module.exports = WorkerPool;
+
+},{"./QueueShim.js":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
+const WorkerStrategies = {
+    THREADS: 'threads',
+    ISOLATES: 'isolates'
+};
+
+module.exports = Object.freeze(WorkerStrategies);
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
+function assert(condition, {ifFails}) {
+    if (condition === false) {
+        console.error(ifFails);
+    }
+}
+
+module.exports = {
+    assert
+};
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js":[function(require,module,exports){
+(function (process,Buffer,__dirname){
+const storageFolder = process.env.vmq_channel_storage || "../tmp";
+const maxQueueSize = process.env.vmq_max_queue_size || 100;
+const tokenSize = process.env.vmq_token_size || 48;
+const tokenHeaderName = process.env.vmq_token_header_name || "x-tokenHeader";
+const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
+
+const channelsFolderName = process.env.PSK_VIRTUAL_MQ_CHANNEL_FOLDER_NAME || "channels";
+const channelKeyFileName = "channel_key";
+
+const path = require("path");
+const fs = require("fs");
+const crypto = require('crypto');
+const integration = require("zmq_adapter");
+
+const Queue = require("swarmutils").Queue;
+const SwarmPacker = require("swarmutils").SwarmPacker;
+
+function ChannelsManager(server){
+
+    const rootFolder = path.join(storageFolder, channelsFolderName);
+    fs.mkdirSync(rootFolder, {recursive: true});
+
+    const channelKeys = {};
+    const queues = {};
+    const subscribers = {};
+
+
+    process.env.enable_signature_check = true;
+
+    let baseDir = __dirname;
+
+    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
+    //TODO: check for better implementation
+    if(process.cwd().indexOf(__dirname) ===-1){
+        baseDir = path.join(process.cwd(), __dirname);
+    }
+
+
+    let forwarder;
+    if(integration.testIfAvailable()){
+        forwarder = integration.getForwarderInstance(process.env.vmq_zeromq_forward_address);
+    }
+
+    function generateToken(){
+        let buffer = crypto.randomBytes(tokenSize);
+        return buffer.toString('hex');
+    }
+
+    function createChannel(name, publicKey, callback){
+        let channelFolder = path.join(rootFolder, name);
+        let keyFile = path.join(channelFolder, channelKeyFileName);
+        let token = generateToken();
+
+        if(typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        fs.mkdirSync(channelFolder);
+
+        if(fs.existsSync(keyFile)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        const config = JSON.stringify({publicKey, token});
+        fs.writeFile(keyFile, config, (err, res)=>{
+            if(!err){
+                channelKeys[name] = config;
+            }
+            return callback(err, !err ? token : undefined);
+        });
+    }
+
+    function retriveChannelDetails(channelName, callback){
+        if(typeof channelKeys[channelName] !== "undefined"){
+            return callback(null, channelKeys[channelName]);
+        }else{
+            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
+                if(res){
+                    try{
+                        channelKeys[channelName] = JSON.parse(res);
+                    }catch(e){
+                        console.log(e);
+                        return callback(e);
+                    }
+                }
+                callback(err, channelKeys[channelName]);
+            });
+        }
+    }
+
+    function forwardChannel(channelName, forward, callback){
+        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
+        fs.readFile(channelKeyFile, (err, content)=>{
+            let config;
+            try{
+                config = JSON.parse(content);
+            }catch(e){
+                return callback(e);
+            }
+
+            if(typeof config !== "undefined"){
+                config.forward = forward;
+                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args)=>{
+                    if(!err){
+                        channelKeys[channelName] = config;
+                    }
+                    callback(err, ...args);
+                });
+            }
+        });
+    }
+
+    function readBody(req, callback){
+        let data = "";
+        req.on("data", (messagePart)=>{
+            data += messagePart;
+        });
+
+        req.on("end", ()=>{
+            callback(null, data);
+        });
+
+        req.on("error", (err)=>{
+            callback(err);
+        });
+    }
+
+    function createChannelHandler(req, res){
+        const channelName = req.params.channelName;
+
+        readBody(req, (err, message)=>{
+            if(err){
+                return sendStatus(res, 400);
+            }
+
+            const publicKey = message;
+            if (typeof channelName !== "string" || channelName.length === 0 ||
+                typeof publicKey !== "string" || publicKey.length === 0) {
+                return sendStatus(res, 400);
+            }
+
+            let handler = getBasicReturnHandler(res);
+
+            createChannel(channelName, publicKey, (err, token)=>{
+                if(!err){
+                    res.setHeader('Cookie', [`${tokenHeaderName}=${token}`]);
+                }
+                handler(err, res);
+            });
+        });
+    }
+
+    function sendStatus(res, reasonCode){
+        res.statusCode = reasonCode;
+        res.end();
+    }
+
+    function getBasicReturnHandler(res){
+        return function(err, result){
+            if(err){
+                return sendStatus(res, err.code || 500);
+            }
+
+            return sendStatus(res, 200);
+        }
+    }
+
+    function enableForwarderHandler(req, res){
+        if(integration.testIfAvailable() === false){
+            return sendStatus(res, 417);
+        }
+        readBody(req, (err, message)=>{
+            const {enable} = message;
+            const channelName = req.params.channelName;
+            const signature = req.headers[signatureHeaderName];
+
+            if(typeof channelName !== "string" || typeof signature !== "string"){
+                return sendStatus(res, 400);
+            }
+
+            retriveChannelDetails(channelName, (err, details)=>{
+                if(err){
+                    return sendStatus(res, 500);
+                }else{
+                    //todo: check signature against key [details.publickey]
+
+                    if(typeof enable === "undefined" || enable){
+                        forwardChannel(channelName, true, getBasicReturnHandler(res));
+                    }else{
+                        forwardChannel(channelName, null, getBasicReturnHandler(res));
+                    }
+                }
+            });
+        });
+    }
+
+    function getQueue(name){
+        if(typeof queues[name] === "undefined"){
+            queues[name] = new Queue();
+        }
+
+        return queues[name];
+    }
+
+    function checkIfChannelExist(channelName, callback){
+        retriveChannelDetails(channelName, (err, details)=>{
+            callback(null, err ? false : true);
+        });
+    }
+
+    function writeMessage(subscribers, message){
+        let dispatched = false;
+        try {
+            while(subscribers.length>0){
+                let subscriber = subscribers.pop();
+                if(!dispatched){
+                    deliverMessage(subscriber, message);
+                    dispatched = true;
+                }else{
+                    sendStatus(subscriber, 403);
+                }
+            }
+        }catch(err) {
+            //... some subscribers could have a timeout connection
+            if(subscribers.length>0){
+                deliverMessage(subscribers, message);
+            }
+        }
+
+        return dispatched;
+    }
+
+    function readSendMessageBody(req, callback){
+        const contentType = req.headers['content-type'];
+
+        if (contentType === 'application/octet-stream') {
+            const contentLength = Number.parseInt(req.headers['content-length'], 10);
+
+            if(Number.isNaN(contentLength)){
+                let error = new Error("Wrong content length header received!");
+                error.code = 411;
+                return callback(error);
+            }
+
+            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
+                if(err) {
+                    return callback(err);
+                }
+                callback(undefined, bodyAsBuffer);
+            });
+        } else {
+            callback(new Error("Wrong message format received!"));
+        }
+
+        function streamToBuffer(stream, bufferSize, callback) {
+            const buffer = Buffer.alloc(bufferSize);
+            let currentOffset = 0;
+
+            stream.on('data', function(chunk){
+                const chunkSize = chunk.length;
+                const nextOffset = chunkSize + currentOffset;
+
+                if (currentOffset > bufferSize - 1) {
+                    stream.close();
+                    return callback(new Error('Stream is bigger than reported size'));
+                }
+
+                write2Buffer(buffer, chunk, currentOffset);
+                currentOffset = nextOffset;
+
+            });
+            stream.on('end', function(){
+                callback(undefined, buffer);
+            });
+            stream.on('error', callback);
+        }
+
+        function write2Buffer(buffer, dataToAppend, offset) {
+            const dataSize = dataToAppend.length;
+
+            for (let i = 0; i < dataSize; i++) {
+                buffer[offset++] = dataToAppend[i];
+            }
+        }
+    }
+
+    function sendMessageHandler(req, res){
+        let channelName = req.params.channelName;
+
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retriveChannelDetails(channelName, (err, details)=>{
+                    //we choose to read the body of request only after we know that we recognize the destination channel
+                    readSendMessageBody(req, (err, message)=>{
+                        if(err){
+                            //console.log(err);
+                            return sendStatus(res, 403);
+                        }
+
+                        let header;
+                        try{
+                            header = SwarmPacker.unpack(message.buffer);
+                        }catch(error){
+                            //console.log(error);
+                            return sendStatus(res, 400);
+                        }
+
+                        //TODO: to all checks based on message header
+
+                        if(integration.testIfAvailable() && details.forward){
+                            //console.log("Forwarding message <", message, "> on channel", channelName);
+                            forwarder.send(channelName, message);
+                        }else{
+                            let queue = getQueue(channelName);
+                            let subscribers = getSubscribersList(channelName);
+                            let dispatched = false;
+                            if(queue.isEmpty()){
+                                dispatched = writeMessage(subscribers, message);
+                            }
+                            if(!dispatched) {
+                                if(queue.length < maxQueueSize){
+                                    queue.push(message);
+                                }else{
+                                    //queue is full
+                                    return sendStatus(res, 429);
+                                }
+
+                                /*
+                                if(subscribers.length>0){
+                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
+                                    //happened and maybe we should try to dispatch first message from queue
+                                }
+                                */
+
+                            }
+                        }
+                        return sendStatus(res, 200);
+                    });
+                })
+            }
+        });
+    }
+
+    function getSubscribersList(channelName){
+        if(typeof subscribers[channelName] === "undefined"){
+            subscribers[channelName] = [];
+        }
+
+        return subscribers[channelName];
+    }
+
+    function deliverMessage(res, message){
+        if(Buffer.isBuffer(message)) {
+            res.setHeader('content-type', 'application/octet-stream');
+        }
+
+        if(typeof message.length !== "undefined"){
+            res.setHeader('content-length', message.length);
+        }
+
+        res.write(message);
+        sendStatus(res, 200);
+    }
+
+    function getCookie(res, cookieName){
+        let cookies = res.headers['cookie'];
+        if(typeof cookies === "undefined"){
+            return undefined;
+        }
+        if(Array.isArray(cookies)){
+            for(let i=0; i<cookies.length; i++){
+                let cookie = cookies[i];
+                if(cookie.indexOf(cookieName) !== -1){
+                    return cookie.substr(cookieName.length+1);
+                }
+            }
+        }else{
+            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
+
+            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)','i');
+            let match = cookies.match(regex);
+
+            return match && unescape(match[1]);
+        }
+    }
+
+    function receiveMessageHandler(req, res){
+        let channelName = req.params.channelName;
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retriveChannelDetails(channelName, (err, details)=>{
+                    if(err){
+                        return sendStatus(res, 500);
+                    }
+                    //TODO: check signature agains details.publickey
+
+
+                    if(details.forward){
+                        //if channel is forward it does not make sense
+                        return sendStatus(res, 409);
+                    }
+
+                    /*let signature = req.headers["signature"];
+                    if(typeof signature === "undefined"){
+                        return sendStatus(res, 403);
+                    }*/
+
+                    // let cookie = getCookie(req, tokenHeaderName);
+
+                    // if(typeof cookie === "undefined" || cookie === null){
+                    //     return sendStatus(res, 412);
+                    // }
+
+                    let queue = getQueue(channelName);
+                    let message = queue.pop();
+
+                    if(!message){
+                        getSubscribersList(channelName).push(res);
+                    }else{
+                        deliverMessage(res, message);
+                    }
+                });
+            }
+        });
+    }
+
+    server.put("/create-channel/:channelName", createChannelHandler);
+    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
+    server.post("/send-message/:channelName", sendMessageHandler);
+    server.get("/receive-message/:channelName", receiveMessageHandler);
+}
+
+module.exports = ChannelsManager;
+}).call(this,require('_process'),require("buffer").Buffer,"/modules/virtualmq")
+
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js":[function(require,module,exports){
+(function (process,Buffer){
+const fs = require('fs');
+const path = require('path');
+let rootFolder = process.env.npm_package_config_ROOT_FILE_UPLOAD || process.env.ROOT_FILE_UPLOAD || "./FileUploads";
+
+rootFolder = path.resolve(rootFolder);
+
+guid = function () {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+
+	return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+};
+
+function upload(req, callback) {
+	const readFileStream = req;
+	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+		callback(new Error("Something wrong happened"));
+		return;
+	}
+
+	const folder = Buffer.from(req.params.folder, 'base64').toString().replace('\n', '');
+	if (folder.includes('..')) {
+		return callback('err');
+	}
+	let filename = guid();
+	if (filename.split('.').length > 1) {
+		return callback('err');
+	}
+	const completeFolderPath = path.join(rootFolder, folder);
+
+	const contentType = req.headers['content-type'].split('/');
+
+	if (contentType[0] === 'image' || (contentType[0] === 'application' && contentType[1] === 'pdf')) {
+		filename += '.' + contentType[1];
+	} else {
+		return callback('err');
+	}
+	try {
+		fs.mkdirSync(completeFolderPath, {recursive: true});
+	} catch (e) {
+		return callback(e);
+	}
+	const writeStream = fs.createWriteStream(path.join(completeFolderPath, filename));
+
+	writeStream.on('finish', () => {
+		writeStream.close();
+		return callback(null, {'path': path.posix.join(folder, filename)});
+	});
+
+	writeStream.on('error', (err) => {
+		writeStream.close();
+		return callback(err);
+	});
+	req.pipe(writeStream);
+}
+
+function download(req, res, callback) {
+	const readFileStream = req;
+	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+		callback(new Error("Something wrong happened"));
+		return;
+	}
+	const folder = Buffer.from(req.params.filepath, 'base64').toString().replace('\n', '');
+
+	const completeFolderPath = path.join(rootFolder, folder);
+	if (folder.includes('..')) {
+		return callback(new Error("invalidPath"));
+	}
+	if (fs.existsSync(completeFolderPath)) {
+		const fileToSend = fs.createReadStream(completeFolderPath);
+		res.setHeader('Content-Type', `image/${folder.split('.')[1]}`);
+		return callback(null, fileToSend);
+	} else {
+		return callback(new Error("PathNotFound"));
+	}
+}
+
+function sendResult(resHandler, resultStream) {
+	resHandler.statusCode = 200;
+	resultStream.pipe(resHandler);
+	resultStream.on('finish', () => {
+		resHandler.end();
+	});
+}
+
+function FilesManager(server) {
+	//folder can be userId/tripId/...
+	server.post('/files/upload/:folder', function (req, res) {
+		upload(req, (err, result) => {
+			if (err) {
+				res.statusCode = 500;
+				res.end();
+			} else {
+				res.statusCode = 200;
+				res.end(JSON.stringify(result));
+			}
+		})
+	});
+
+	server.get('/files/download/:filepath', function (req, res) {
+		download(req, res, (err, result) => {
+			if (err) {
+				res.statusCode = 404;
+				res.end();
+			} else {
+				sendResult(res, result);
+			}
+		});
+	});
+
+	const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
+	if (typeof process.env.PSK_VIRTUAL_MQ_STATIC !== "undefined" && process.env.PSK_VIRTUAL_MQ_STATIC === "true") {
+		server.use("*", function (req, res, next) {
+			const prefix = "/directory-summary/";
+			requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
+				if (notOurResponsibility) {
+					return next();
+				}
+				targetPath = targetPath.replace(prefix, "");
+				serverTarget(targetPath);
+			});
+
+			function serverTarget(targetPath) {
+				console.log("Serving summary for dir:", targetPath);
+				fs.stat(targetPath, function (err, stats) {
+					if (err) {
+						res.statusCode = 404;
+						res.end();
+						return;
+					}
+					if (!stats.isDirectory()) {
+						res.statusCode = 403;
+						res.end();
+						return;
+					}
+
+					function send() {
+						res.statusCode = 200;
+						res.setHeader('Content-Type', "application/json");
+						//let's clean some empty objects
+						for (let prop in summary) {
+							if (Object.keys(summary[prop]).length === 0) {
+								delete summary[prop];
+							}
+						}
+
+						res.write(JSON.stringify(summary));
+						res.end();
+					}
+
+					let summary = {};
+					let directories = {};
+
+					function extractContent(currentPath) {
+						directories[currentPath] = -1;
+						let summaryId = currentPath.replace(targetPath, "");
+						summaryId = summaryId.split(path.sep).join("/");
+						if (summaryId === "") {
+							summaryId = "/";
+						}
+						//summaryId = path.basename(summaryId);
+						summary[summaryId] = {};
+
+						fs.readdir(currentPath, function (err, files) {
+							if (err) {
+								return markAsFinish(currentPath);
+							}
+							directories[currentPath] = files.length;
+							//directory empty test
+							if (files.length === 0) {
+								return markAsFinish(currentPath);
+							} else {
+								for (let i = 0; i < files.length; i++) {
+									let file = files[i];
+									const fileName = path.join(currentPath, file);
+									if (fs.statSync(fileName).isDirectory()) {
+										extractContent(fileName);
+									} else {
+										let fileContent = fs.readFileSync(fileName);
+										summary[summaryId][file] = fileContent.toString();
+									}
+									directories[currentPath]--;
+								}
+								return markAsFinish(currentPath);
+							}
+						});
+					}
+
+					function markAsFinish(targetPath) {
+						if (directories [targetPath] > 0) {
+							return;
+						}
+						delete directories [targetPath];
+						const dirsLeftToProcess = Object.keys(directories);
+						//if there are no other directories left to process
+						if (dirsLeftToProcess.length === 0) {
+							send();
+						}
+					}
+
+					extractContent(targetPath);
+				})
+			}
+
+		});
+
+		server.use("*", function (req, res, next) {
+			requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
+				if (notOurResponsibility) {
+					return next();
+				}
+				//from now on we mean to resolve the url
+				fs.stat(targetPath, function (err, stats) {
+					if (err) {
+						res.statusCode = 404;
+						res.end();
+						return;
+					}
+					if (stats.isDirectory()) {
+						let url = req.url;
+						if (url[url.length - 1] !== "/") {
+							res.writeHead(302, {
+								'Location': url + "/"
+							});
+							res.end();
+							return;
+						}
+						const defaultFileName = "index.html";
+						const defaultPath = path.join(targetPath, defaultFileName);
+						fs.stat(defaultPath, function (err) {
+							if (err) {
+								res.statusCode = 403;
+								res.end();
+								return;
+							}
+							return sendFile(res, defaultPath);
+						});
+					} else {
+						return sendFile(res, targetPath);
+					}
+				});
+			});
+		});
+
+		function sendFile(res, file) {
+			let stream = fs.createReadStream(file);
+			const mimes = require("./MimeType");
+			let ext = path.extname(file);
+			if (ext !== "") {
+				ext = ext.replace(".", "");
+				res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
+			} else {
+				res.setHeader('Content-Type', "application/octet-stream");
+			}
+			return sendResult(res, stream);
+		}
+
+		function requestValidation(req, method, urlPrefix, callback) {
+			if (typeof urlPrefix === "function") {
+				callback = urlPrefix;
+				urlPrefix = undefined;
+			}
+			if (req.method !== method) {
+				//we resolve only GET requests
+				return callback(true);
+			}
+
+			if (typeof urlPrefix === "undefined") {
+				for (let i = 0; i < lockedPathsPrefixes.length; i++) {
+					let reservedPath = lockedPathsPrefixes[i];
+					//if we find a url that starts with a reserved prefix is not our duty ro resolve
+					if (req.url.indexOf(reservedPath) === 0) {
+						return callback(true);
+					}
+				}
+			} else {
+				if (req.url.indexOf(urlPrefix) !== 0) {
+					return callback(true);
+				}
+			}
+
+			const rootFolder = server.rootFolder;
+			const path = require("path");
+			let requestedUrl = req.url;
+			if (urlPrefix) {
+				requestedUrl = requestedUrl.replace(urlPrefix, "");
+			}
+			let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+			//if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
+			if (targetPath.indexOf(rootFolder) !== 0) {
+				return callback(true);
+			}
+			callback(false, targetPath);
+		}
+	}
+}
+
+module.exports = FilesManager;
+}).call(this,require('_process'),require("buffer").Buffer)
+
+},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js":[function(require,module,exports){
+const extensionsMimeTypes = {
+    "aac": {
+        name: "audio/aac",
+        binary: true
+    },
+    "abw": {
+        name: "application/x-abiword",
+        binary: true
+    },
+    "arc": {
+        name: "application/x-freearc",
+        binary: true
+    },
+    "avi": {
+        name: "video/x-msvideo",
+        binary: true
+    },
+    "azw": {
+        name: "application/vnd.amazon.ebook",
+        binary: true
+    },
+    "bin": {
+        name: "application/octet-stream",
+        binary: true
+    }, "bmp": {
+        name: "image/bmp",
+        binary: true
+    }, "bz": {
+        name: "application/x-bzip",
+        binary: true
+    }, "bz2": {
+        name: "application/x-bzip2",
+        binary: true
+    }, "csh": {
+        name: "application/x-csh",
+        binary: false
+    }, "css": {
+        name: "text/css",
+        binary: false
+    }, "csv": {
+        name: "text/csv",
+        binary: false
+    }, "doc": {
+        name: "application/msword",
+        binary: true
+    }, "docx": {
+        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        binary: true
+    }, "eot": {
+        name: "application/vnd.ms-fontobject",
+        binary: true
+    }, "epub": {
+        name: "application/epub+zip",
+        binary: true
+    }, "gz": {
+        name: "application/gzip",
+        binary: true
+    }, "gif": {
+        name: "image/gif",
+        binary: true
+    }, "htm": {
+        name: "text/html",
+        binary: false
+    }, "html": {
+        name: "text/html",
+        binary: false
+    }, "ico": {
+        name: "image/vnd.microsoft.icon",
+        binary: true
+    }, "ics": {
+        name: "text/calendar",
+        binary: false
+    }, "jpeg": {
+        name: "image/jpeg",
+        binary: true
+    }, "jpg": {
+        name: "image/jpeg",
+        binary: true
+    }, "js": {
+        name: "text/javascript",
+        binary: false
+    }, "json": {
+        name: "application/json",
+        binary: false
+    }, "jsonld": {
+        name: "application/ld+json",
+        binary: false
+    }, "mid": {
+        name: "audio/midi",
+        binary: true
+    }, "midi": {
+        name: "audio/midi",
+        binary: true
+    }, "mjs": {
+        name: "text/javascript",
+        binary: false
+    }, "mp3": {
+        name: "audio/mpeg",
+        binary: true
+    }, "mpeg": {
+        name: "video/mpeg",
+        binary: true
+    }, "mpkg": {
+        name: "application/vnd.apple.installer+xm",
+        binary: true
+    }, "odp": {
+        name: "application/vnd.oasis.opendocument.presentation",
+        binary: true
+    }, "ods": {
+        name: "application/vnd.oasis.opendocument.spreadsheet",
+        binary: true
+    }, "odt": {
+        name: "application/vnd.oasis.opendocument.text",
+        binary: true
+    }, "oga": {
+        name: "audio/ogg",
+        binary: true
+    },
+    "ogv": {
+        name: "video/ogg",
+        binary: true
+    },
+    "ogx": {
+        name: "application/ogg",
+        binary: true
+    },
+    "opus": {
+        name: "audio/opus",
+        binary: true
+    },
+    "otf": {
+        name: "font/otf",
+        binary: true
+    },
+    "png": {
+        name: "image/png",
+        binary: true
+    },
+    "pdf": {
+        name: "application/pdf",
+        binary: true
+    },
+    "php": {
+        name: "application/php",
+        binary: false
+    },
+    "ppt": {
+        name: "application/vnd.ms-powerpoint",
+        binary: true
+    },
+    "pptx": {
+        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        binary: true
+    },
+    "rtf": {
+        name: "application/rtf",
+        binary: true
+    },
+    "sh": {
+        name: "application/x-sh",
+        binary: false
+    },
+    "svg": {
+        name: "image/svg+xml",
+        binary: false
+    },
+    "swf": {
+        name: "application/x-shockwave-flash",
+        binary: true
+    },
+    "tar": {
+        name: "application/x-tar",
+        binary: true
+    },
+    "tif": {
+        name: "image/tiff",
+        binary: true
+    },
+    "tiff": {
+        name: "image/tiff",
+        binary: true
+    },
+    "ts": {
+        name: "video/mp2t",
+        binary: true
+    },
+    "ttf": {
+        name: "font/ttf",
+        binary: true
+    },
+    "txt": {
+        name: "text/plain",
+        binary: false
+    },
+    "vsd": {
+        name: "application/vnd.visio",
+        binary: true
+    },
+    "wav": {
+        name: "audio/wav",
+        binary: true
+    },
+    "weba": {
+        name: "audio/webm",
+        binary: true
+    },
+    "webm": {
+        name: "video/webm",
+        binary: true
+    },
+    "webp": {
+        name: "image/webp",
+        binary: true
+    },
+    "woff": {
+        name: "font/woff",
+        binary: true
+    },
+    "woff2": {
+        name: "font/woff2",
+        binary: true
+    },
+    "xhtml": {
+        name: "application/xhtml+xml",
+        binary: false
+    },
+    "xls": {
+        name: "application/vnd.ms-excel",
+        binary: true
+    },
+    "xlsx": {
+        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        binary: true
+    },
+    "xml": {
+        name: "text/xml",
+        binary: false
+    },
+    "xul": {
+        name: "application/vnd.mozilla.xul+xml",
+        binary: true
+    },
+    "zip": {
+        name: "application/zip",
+        binary: true
+    },
+    "3gp": {
+        name: "video/3gpp",
+        binary: true
+    },
+    "3g2": {
+        name: "video/3gpp2",
+        binary: true
+    },
+    "7z": {
+        name: "application/x-7z-compressed",
+        binary: true
+    }
+};
+
+const defaultMimeType = {
+    name: "text/plain",
+    binary: false
+};
+module.exports.getMimeTypeFromExtension = function (extension) {
+    if (typeof extensionsMimeTypes[extension] !== "undefined") {
+        return extensionsMimeTypes[extension];
+    }
+    return defaultMimeType;
+};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
+(function (process,Buffer){
+const http = require('http');
+const {URL} = require('url');
+const swarmUtils = require('swarmutils');
+const SwarmPacker = swarmUtils.SwarmPacker;
+const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
+
+function RequestFactory(virtualMQAddress, zeroMQAddress) {
+    function createChannel(channelName, publicKey, callback) {
+        const options = {
+            path: `/create-channel/${channelName}`,
+            method: "PUT"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.write(publicKey);
+        req.end();
+    }
+
+    function createForwardChannel(channelName, publicKey, callback) {
+        const options = {
+            path: `/create-channel/${channelName}`,
+            method: "PUT"
+        };
+
+        const req = http.request(virtualMQAddress, options, (res) => {
+            this.enableForward(channelName, "justASignature", callback);
+        });
+        req.write(publicKey);
+        req.end();
+    }
+
+    function enableForward(channelName, signature, callback) {
+        const options = {
+            path: `/forward-zeromq/${channelName}`,
+            method: "POST"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.setHeader(signatureHeaderName, signature);
+        req.end();
+    }
+
+    function sendMessage(channelName, message, signature, callback) {
+        const options = {
+            path: `/send-message/${channelName}`,
+            method: "POST"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.setHeader(signatureHeaderName, signature);
+
+        let pack = SwarmPacker.pack(message);
+
+        req.setHeader("content-length", pack.byteLength);
+        req.setHeader("content-type", 'application/octet-stream');
+        req.write(Buffer.from(pack));
+        req.end();
+    }
+
+    function receiveMessage(channelName, signature, callback) {
+        const options = {
+            path: `/receive-message/${channelName}`,
+            method: "GET"
+        };
+
+        const req = http.request(virtualMQAddress, options, function (res) {
+            const utils = require("./utils");
+            utils.readMessageBufferFromStream(res, function (err, message) {
+
+                callback(err, res, (message && Buffer.isBuffer(message)) ? SwarmPacker.unpack(message.buffer) : message);
+            });
+        });
+
+        req.setHeader(signatureHeaderName, signature);
+        req.end();
+    }
+
+    function receiveMessageFromZMQ(channelName, signature, readyCallback, receivedCallback) {
+        const zmqIntegration = require("zmq_adapter");
+
+        let catchEvents = (eventType, ...args) => {
+            // console.log("Event type caught", eventType, ...args);
+            if (eventType === "connect") {
+                //connected so all good
+                readyCallback();
+            }
+        };
+
+        let consumer = zmqIntegration.createZeromqConsumer(zeroMQAddress, catchEvents);
+        consumer.subscribe(channelName, signature, (channel, receivedMessage) => {
+            receivedCallback(JSON.parse(channel.toString()).channelName, receivedMessage.buffer);
+        });
+    }
+
+    function generateMessage(swarmName, swarmPhase, args, targetAgent, returnAddress){
+        return {
+            meta:{
+                swarmId: swarmUtils.generateUid(32).toString("hex"),
+                requestId: swarmUtils.generateUid(32).toString("hex"),
+                swarmTypeName: swarmName || "testSwarmType",
+                phaseName: swarmPhase || "swarmPhaseName",
+                args: args || [],
+                command: "executeSwarmPhase",
+                target: targetAgent || "agentURL",
+                homeSecurityContext: returnAddress || "no_home_no_return"
+            }};
+    }
+
+    function getPort() {
+        try {
+            return new URL(virtualMQAddress).port;
+        } catch (e) {
+          console.error(e);
+        }
+    }
+
+    // targeted virtualmq apis
+    this.createChannel = createChannel;
+    this.createForwardChannel = createForwardChannel;
+    this.enableForward = enableForward;
+    this.sendMessage = sendMessage;
+    this.receiveMessage = receiveMessage;
+    this.receiveMessageFromZMQ = receiveMessageFromZMQ;
+
+    // utils for testing
+    if(!process.env.NODE_ENV || (process.env.NODE_ENV && !process.env.NODE_ENV.startsWith('prod'))) { // if NODE_ENV does not exist or if it exists and is not set to production
+        this.getPort = getPort;
+        this.generateMessage = generateMessage;
+    }
+}
+
+module.exports = RequestFactory;
+}).call(this,require('_process'),require("buffer").Buffer)
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/index.js":[function(require,module,exports){
+(function (process){
+const path = require("path");
+const httpWrapper = require('./libs/http-wrapper');
+const Server = httpWrapper.Server;
+const Router = httpWrapper.Router;
+const TokenBucket = require('./libs/TokenBucket');
+const START_TOKENS = 6000000;
+
+const signatureHeaderName = process.env.vmq_signature_header_name || 'x-signature';
+
+function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
+	const port = listeningPort || 8080;
+	const tokenBucket = new TokenBucket(START_TOKENS, 1, 10);
+
+	const server = new Server(sslConfig);
+	server.rootFolder = rootFolder;
+	server.listen(port, (err) => {
+		if(err){
+			console.log(err);
+			if(callback){
+				callback(err);
+			}
+		}
+	});
+
+	server.on('listening', bindFinished);
+
+	function bindFinished(err){
+		if(err) {
+			console.log(err);
+			if (callback) {
+				callback(err);
+			}
+			return;
+		}
+
+		registerEndpoints(callback);
+	}
+
+	function registerEndpoints(callback) {
+		server.use(function (req, res, next) {
+			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${signatureHeaderName}`);
+			res.setHeader('Access-Control-Allow-Credentials', true);
+			next();
+		});
+
+        server.use(function (req, res, next) {
+            const ip = res.socket.remoteAddress;
+            tokenBucket.takeToken(ip, tokenBucket.COST_MEDIUM, function(err, remainedTokens) {
+            	res.setHeader('X-RateLimit-Limit', tokenBucket.getLimitByCost(tokenBucket.COST_MEDIUM));
+            	res.setHeader('X-RateLimit-Remaining', tokenBucket.getRemainingTokenByCost(remainedTokens, tokenBucket.COST_MEDIUM));
+
+            	if(err) {
+            		if (err === TokenBucket.ERROR_LIMIT_EXCEEDED) {
+						res.statusCode = 429;
+					} else {
+						res.statusCode = 500;
+					}
+
+            		res.end();
+            		return;
+            	}
+
+            	next();
+            });
+        });
+
+		server.options('/*', function (req, res) {
+			const headers = {};
+			// IE8 does not allow domains to be specified, just the *
+			headers["Access-Control-Allow-Origin"] = req.headers.origin;
+			// headers["Access-Control-Allow-Origin"] = "*";
+			headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+			headers["Access-Control-Allow-Credentials"] = true;
+			headers["Access-Control-Max-Age"] = '3600'; //one hour
+			headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}`;
+			res.writeHead(200, headers);
+			res.end();
+		});
+
+		require("./ChannelsManager.js")(server);
+		require("./FilesManager.js")(server);
+		require("edfs-middleware").getEDFSMiddleware(server);
+		require("dossier-wizard").getDossierWizardMiddleware(server);
+
+		setTimeout(function(){
+			//allow other endpoints registration before registering fallback handler
+			server.use(function (req, res) {
+				res.statusCode = 404;
+				res.end();
+			});
+			if(callback){
+				return callback();
+			}
+		}, 100);
+	}
+	return server;
+}
+
+module.exports.createVirtualMQ = function(port, folder, sslConfig, callback){
+	if(typeof sslConfig === 'function') {
+		callback = sslConfig;
+		sslConfig = undefined;
+	}
+
+	return new HttpServer({listeningPort:port, rootFolder:folder, sslConfig}, callback);
+};
+
+module.exports.getVMQRequestFactory = function(virtualMQAddress, zeroMQAddress) {
+	const VMQRequestFactory = require('./VMQRequestFactory');
+
+	return new VMQRequestFactory(virtualMQAddress, zeroMQAddress);
+};
+
+module.exports.getHttpWrapper = function() {
+	return require('./libs/http-wrapper');
+};
+
+}).call(this,require('_process'))
+
+},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","dossier-wizard":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/index.js","edfs-middleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
+/**
+ * An implementation of the Token bucket algorithm
+ * @param startTokens - maximum number of tokens possible to obtain and the default starting value
+ * @param tokenValuePerTime - number of tokens given back for each "unitOfTime"
+ * @param unitOfTime - for each "unitOfTime" (in milliseconds) passed "tokenValuePerTime" amount of tokens will be given back
+ * @constructor
+ */
+
+function TokenBucket(startTokens = 6000, tokenValuePerTime = 10, unitOfTime = 100) {
+
+    if(typeof startTokens !== 'number' || typeof  tokenValuePerTime !== 'number' || typeof unitOfTime !== 'number') {
+        throw new Error('All parameters must be of type number');
+    }
+
+    if(isNaN(startTokens) || isNaN(tokenValuePerTime) || isNaN(unitOfTime)) {
+        throw new Error('All parameters must not be NaN');
+    }
+
+    if(startTokens <= 0 || tokenValuePerTime <= 0 || unitOfTime <= 0) {
+        throw new Error('All parameters must be bigger than 0');
+    }
+
+
+    TokenBucket.prototype.COST_LOW    = 10;  // equivalent to 10op/s with default values
+    TokenBucket.prototype.COST_MEDIUM = 100; // equivalent to 1op/s with default values
+    TokenBucket.prototype.COST_HIGH   = 500; // equivalent to 12op/minute with default values
+
+    TokenBucket.ERROR_LIMIT_EXCEEDED  = 'error_limit_exceeded';
+    TokenBucket.ERROR_BAD_ARGUMENT    = 'error_bad_argument';
+
+
+
+    const limits = {};
+
+    function takeToken(userKey, cost, callback = () => {}) {
+        if(typeof cost !== 'number' || isNaN(cost) || cost <= 0 || cost === Infinity) {
+            callback(TokenBucket.ERROR_BAD_ARGUMENT);
+            return;
+        }
+
+        const userBucket = limits[userKey];
+
+        if (userBucket) {
+            userBucket.tokens += calculateReturnTokens(userBucket.timestamp);
+            userBucket.tokens -= cost;
+
+            userBucket.timestamp = Date.now();
+
+
+
+            if (userBucket.tokens < 0) {
+                userBucket.tokens = 0;
+                callback(TokenBucket.ERROR_LIMIT_EXCEEDED, 0);
+                return;
+            }
+
+            return callback(undefined, userBucket.tokens);
+        } else {
+            limits[userKey] = new Limit(startTokens, Date.now());
+            takeToken(userKey, cost, callback);
+        }
+    }
+
+    function getLimitByCost(cost) {
+        if(startTokens === 0 || cost === 0) {
+            return 0;
+        }
+
+        return Math.floor(startTokens / cost);
+    }
+
+    function getRemainingTokenByCost(tokens, cost) {
+        if(tokens === 0 || cost === 0) {
+            return 0;
+        }
+
+        return Math.floor(tokens / cost);
+    }
+
+    function Limit(maximumTokens, timestamp) {
+        this.tokens = maximumTokens;
+        this.timestamp = timestamp;
+
+        const self = this;
+
+        return {
+            set tokens(numberOfTokens) {
+                if (numberOfTokens < 0) {
+                    numberOfTokens = -1;
+                }
+
+                if (numberOfTokens > maximumTokens) {
+                    numberOfTokens = maximumTokens;
+                }
+
+                self.tokens = numberOfTokens;
+            },
+            get tokens() {
+                return self.tokens;
+            },
+            timestamp
+        };
+    }
+
+
+    function calculateReturnTokens(timestamp) {
+        const currentTime = Date.now();
+
+        const elapsedTime = Math.floor((currentTime - timestamp) / unitOfTime);
+
+        return elapsedTime * tokenValuePerTime;
+    }
+
+    this.takeToken               = takeToken;
+    this.getLimitByCost          = getLimitByCost;
+    this.getRemainingTokenByCost = getRemainingTokenByCost;
+}
+
+module.exports = TokenBucket;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
+(function (Buffer){
+const http = require('http');
+const url = require('url');
+const stream = require('stream');
+
+/**
+ * Wraps a request and augments it with a "do" method to modify it in a "fluent builder" style
+ * @param {string} url
+ * @param {*} body
+ * @constructor
+ */
+function Request(url, body) {
+    this.request = {
+        options: url,
+        body
+    };
+
+    this.do = function (modifier) {
+        modifier(this.request);
+        return this;
+    };
+
+    this.getHttpRequest = function () {
+        return this.request;
+    };
+}
+
+
+/**
+ * Modifies request.options to contain the url parsed instead of as string
+ * @param {Object} request - Object that contains options and body
+ */
+function urlToOptions(request) {
+    const parsedUrl = url.parse(request.options);
+
+    // TODO: movie headers declaration from here
+    request.options = {
+        host: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.pathname,
+        headers: {}
+    };
+}
+
+
+/**
+ * Transforms the request.body in a type that can be sent through network if it is needed
+ * @param {Object} request - Object that contains options and body
+ */
+function serializeBody(request) {
+    if (!request.body) {
+        return;
+    }
+
+    const handler = {
+        get: function (target, name) {
+            return name in target ? target[name] : (data) => data;
+        }
+    };
+
+    const bodySerializationMapping = new Proxy({
+        'Object': (data) => JSON.stringify(data),
+    }, handler);
+
+    request.body = bodySerializationMapping[request.body.constructor.name](request.body);
+}
+
+/**
+ *
+ * @param {Object} request - Object that contains options and body
+ */
+function bodyContentLength(request) {
+    if (!request.body) {
+        return;
+    }
+
+    if (request.body.constructor.name in [ 'String', 'Buffer', 'ArrayBuffer' ]) {
+        request.options.headers['Content-Length'] = Buffer.byteLength(request.body);
+    }
+}
+
+
+function Client() {
+    /**
+     *
+     * @param {Request} customRequest
+     * @param modifiers - array of functions that modify the request
+     * @returns {Object} - with url and body properties
+     */
+    function request(customRequest, modifiers) {
+        for (let i = 0; i < modifiers.length; ++i) {
+            customRequest.do(modifiers[i]);
+        }
+
+        return customRequest.getHttpRequest();
+    }
+
+    function getReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.headers = config.headers || {};}
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+        httpRequest.end();
+
+        return httpRequest;
+    }
+
+    function postReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.method = 'POST'; },
+            (request) => {request.options.headers = config.headers || {}; },
+            serializeBody,
+            bodyContentLength
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+
+        if (config.body instanceof stream.Readable) {
+            config.body.pipe(httpRequest);
+        }
+        else {
+            httpRequest.end(packedRequest.body, config.encoding || 'utf8');
+        }
+        return httpRequest;
+    }
+
+    function deleteReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.method = 'DELETE';},
+            (request) => {request.options.headers = config.headers || {};},
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+        httpRequest.end();
+
+        return httpRequest;
+    }
+
+    this.get = getReq;
+    this.post = postReq;
+    this.delete = deleteReq;
+}
+
+/**
+ * Swap third and second parameter if only two are provided and converts arguments to array
+ * @param {Object} params
+ * @returns {Array} - arguments as array
+ */
+function parametersPreProcessing(params) {
+    const res = [];
+
+    if (typeof params[0] !== 'string') {
+        throw new Error('First parameter must be a string (url)');
+    }
+
+    const parsedUrl = url.parse(params[0]);
+
+    if (!parsedUrl.hostname) {
+        throw new Error('First argument (url) is not valid');
+    }
+
+    if (params.length >= 3) {
+        if (typeof params[1] !== 'object' || !params[1]) {
+            throw new Error('When 3 parameters are provided the second parameter must be a not null object');
+        }
+
+        if (typeof params[2] !== 'function') {
+            throw new Error('When 3 parameters are provided the third parameter must be a function');
+        }
+    }
+
+    if (params.length === 2) {
+        if (typeof params[1] !== 'function') {
+            throw new Error('When 2 parameters are provided the second one must be a function');
+        }
+
+        params[2] = params[1];
+        params[1] = {};
+    }
+
+    const properties = Object.keys(params);
+    for(let i = 0, len = properties.length; i < len; ++i) {
+        res.push(params[properties[i]]);
+    }
+
+    return res;
+}
+
+const handler = {
+    get(target, propName) {
+        if (!target[propName]) {
+            console.log(propName, "Not implemented!");
+        } else {
+            return function () {
+                const args = parametersPreProcessing(arguments);
+                return target[propName].apply(target, args);
+            };
+        }
+    }
+};
+
+module.exports = function () {
+    return new Proxy(new Client(), handler);
+};
+}).call(this,require("buffer").Buffer)
+
+},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js":[function(require,module,exports){
+const querystring = require('querystring');
+
+function matchUrl(pattern, url) {
+	const result = {
+		match: true,
+		params: {},
+		query: {}
+	};
+
+	const queryParametersStartIndex = url.indexOf('?');
+	if(queryParametersStartIndex !== -1) {
+		const urlQueryString = url.substr(queryParametersStartIndex + 1); // + 1 to ignore the '?'
+		result.query = querystring.parse(urlQueryString);
+		url = url.substr(0, queryParametersStartIndex);
+	}
+
+    const patternTokens = pattern.split('/');
+    const urlTokens = url.split('/');
+
+    if(urlTokens[urlTokens.length - 1] === '') {
+        urlTokens.pop();
+    }
+
+    if (patternTokens.length !== urlTokens.length) {
+        result.match = false;
+    }
+
+    if(patternTokens[patternTokens.length - 1] === '*') {
+        result.match = true;
+        patternTokens.pop();
+    }
+
+    for (let i = 0; i < patternTokens.length && result.match; ++i) {
+        if (patternTokens[i].startsWith(':')) {
+            result.params[patternTokens[i].substring(1)] = urlTokens[i];
+        } else if (patternTokens[i] !== urlTokens[i]) {
+            result.match = false;
+        }
+    }
+
+    return result;
+}
+
+function isTruthy(value) {
+    return !!value;
+
+}
+
+function methodMatch(pattern, method) {
+    if (!pattern || !method) {
+        return true;
+    }
+
+    return pattern === method;
+}
+
+function Middleware() {
+    const registeredMiddlewareFunctions = [];
+
+    function use(method, url, fn) {
+        method = method ? method.toLowerCase() : undefined;
+        registeredMiddlewareFunctions.push({method, url, fn});
+    }
+
+    this.use = function (...params) {
+	    let args = [ undefined, undefined, undefined ];
+
+	    switch (params.length) {
+            case 0:
+				throw Error('Use method needs at least one argument.');
+				
+            case 1:
+                if (typeof params[0] !== 'function') {
+                    throw Error('If only one argument is provided it must be a function');
+                }
+
+                args[2] = params[0];
+
+                break;
+            case 2:
+                if (typeof params[0] !== 'string' || typeof params[1] !== 'function') {
+                    throw Error('If two arguments are provided the first one must be a string (url) and the second a function');
+                }
+
+                args[1]=params[0];
+                args[2]=params[1];
+
+                break;
+            default:
+                if (typeof params[0] !== 'string' || typeof params[1] !== 'string' || typeof params[2] !== 'function') {
+                    throw Error('If three or more arguments are provided the first one must be a string (HTTP verb), the second a string (url) and the third a function');
+                }
+
+                if (!([ 'get', 'post', 'put', 'delete', 'patch', 'head', 'connect', 'options', 'trace' ].includes(params[0].toLowerCase()))) {
+                    throw new Error('If three or more arguments are provided the first one must be a HTTP verb but none could be matched');
+                }
+
+                args = params;
+
+                break;
+        }
+
+        use.apply(this, args);
+    };
+
+
+    /**
+     * Starts execution from the first registered middleware function
+     * @param {Object} req
+     * @param {Object} res
+     */
+    this.go = function go(req, res) {
+        execute(0, req.method.toLowerCase(), req.url, req, res);
+    };
+
+    /**
+     * Executes a middleware if it passes the method and url validation and calls the next one when necessary
+     * @param index
+     * @param method
+     * @param url
+     * @param params
+     */
+    function execute(index, method, url, ...params) {
+        if (!registeredMiddlewareFunctions[index]) {
+            if(index===0){
+                console.error("No handlers registered yet!");
+            }
+            return;
+        }
+
+	    const registeredMethod = registeredMiddlewareFunctions[index].method;
+	    const registeredUrl = registeredMiddlewareFunctions[index].url;
+	    const fn = registeredMiddlewareFunctions[index].fn;
+
+	    if (!methodMatch(registeredMethod, method)) {
+            execute(++index, method, url, ...params);
+            return;
+        }
+
+        if (isTruthy(registeredUrl)) {
+            const urlMatch = matchUrl(registeredUrl, url);
+
+            if (!urlMatch.match) {
+                execute(++index, method, url, ...params);
+                return;
+            }
+
+            if (params[0]) {
+                params[0].params = urlMatch.params;
+                params[0].query  = urlMatch.query;
+            }
+        }
+
+        let counter = 0;
+
+        fn(...params, (err) => {
+            counter++;
+            if (counter > 1) {
+                console.warn('You called next multiple times, only the first one will be executed');
+                return;
+            }
+
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            execute(++index, method, url, ...params);
+        });
+    }
+}
+
+module.exports = Middleware;
+
+},{"querystring":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js":[function(require,module,exports){
+function Router(server) {
+    this.use = function use(url, callback) {
+        callback(serverWrapper(url, server));
+    };
+}
+
+function serverWrapper(baseUrl, server) {
+    if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+    }
+
+    return {
+        use(url, reqResolver) {
+            server.use(baseUrl + url, reqResolver);
+        },
+        get(url, reqResolver) {
+            server.get(baseUrl + url, reqResolver);
+        },
+        post(url, reqResolver) {
+            server.post(baseUrl + url, reqResolver);
+        },
+        put(url, reqResolver) {
+            server.put(baseUrl + url, reqResolver);
+        },
+        delete(url, reqResolver) {
+            server.delete(baseUrl + url, reqResolver);
+        },
+        options(url, reqResolver) {
+            server.options(baseUrl + url, reqResolver);
+        }
+    };
+}
+
+module.exports = Router;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
+const Middleware = require('./Middleware');
+const http = require('http');
+const https = require('https');
+
+function Server(sslOptions) {
+    const middleware = new Middleware();
+    const server = _initServer(sslOptions);
+
+
+    this.use = function use(url, callback) {
+        //TODO: find a better way
+        if (arguments.length >= 2) {
+            middleware.use(url, callback);
+        } else if (arguments.length === 1) {
+            callback = url;
+            middleware.use(callback);
+        }
+
+    };
+
+
+    this.get = function getReq(reqUrl, reqResolver) {
+        middleware.use("GET", reqUrl, reqResolver);
+    };
+
+    this.post = function postReq(reqUrl, reqResolver) {
+        middleware.use("POST", reqUrl, reqResolver);
+    };
+
+    this.put = function putReq(reqUrl, reqResolver) {
+        middleware.use("PUT", reqUrl, reqResolver);
+    };
+
+    this.delete = function deleteReq(reqUrl, reqResolver) {
+        middleware.use("DELETE", reqUrl, reqResolver);
+    };
+
+    this.options = function optionsReq(reqUrl, reqResolver) {
+        middleware.use("OPTIONS", reqUrl, reqResolver);
+    };
+
+
+    /* INTERNAL METHODS */
+
+    function _initServer(sslConfig) {
+        if (sslConfig) {
+            return https.createServer(sslConfig, middleware.go);
+        } else {
+            return http.createServer(middleware.go);
+        }
+    }
+
+    return new Proxy(this, {
+       get(target, prop, receiver) {
+           if(typeof target[prop] !== "undefined") {
+               return target[prop];
+           }
+
+           if(typeof server[prop] === "function") {
+               return function(...args) {
+                   server[prop](...args);
+               }
+           } else {
+               return server[prop];
+           }
+       }
+    });
+}
+
+module.exports = Server;
+},{"./Middleware":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
+const fs = require('fs');
+const path = require('path');
+
+function setDataHandler(request, callback) {
+    let bodyContent = '';
+
+    request.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
+
+    request.on('end', function () {
+        callback(undefined, bodyContent);
+    });
+
+    request.on('error', callback);
+}
+
+function setDataHandlerMiddleware(request, response, next) {
+    if (request.headers['content-type'] !== 'application/octet-stream') {
+        setDataHandler(request, function (error, bodyContent) {
+            request.body = bodyContent;
+            next(error);
+        });
+    } else {
+        return next();
+    }
+}
+
+function sendErrorResponse(error, response, statusCode) {
+    console.error(error);
+    response.statusCode = statusCode;
+    response.end();
+}
+
+function bodyParser(req, res, next) {
+    let bodyContent = '';
+
+    req.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
+
+    req.on('end', function () {
+        req.body = bodyContent;
+        next();
+    });
+
+    req.on('error', function (err) {
+        next(err);
+    });
+}
+
+function serveStaticFile(baseFolder, ignorePath) {
+    return function (req, res) {
+        const url = req.url.substring(ignorePath.length);
+        const filePath = path.join(baseFolder, url);
+        fs.stat(filePath, (err) => {
+            if (err) {
+                res.statusCode = 404;
+                res.end();
+                return;
+            }
+
+            if (url.endsWith('.html')) {
+                res.contentType = 'text/html';
+            } else if (url.endsWith('.css')) {
+                res.contentType = 'text/css';
+            } else if (url.endsWith('.js')) {
+                res.contentType = 'text/javascript';
+            }
+
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+
+        });
+    };
+}
+
+module.exports = {setDataHandler, setDataHandlerMiddleware, sendErrorResponse, bodyParser, serveStaticFile};
+
+},{"fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js":[function(require,module,exports){
+const Client = require('./classes/Client');
+const Server = require('./classes/Server');
+const httpUtils = require('./httpUtils');
+const Router = require('./classes/Router');
+
+module.exports = {Server, Client, httpUtils, Router};
+
+
+},{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js":[function(require,module,exports){
+(function (Buffer){
+function readMessageBufferFromHTTPStream(reqORres, callback){
+    const contentType = reqORres.headers['content-type'];
+
+    if (contentType === 'application/octet-stream') {
+        const contentLength = Number.parseInt(reqORres.headers['content-length'], 10);
+
+        if(Number.isNaN(contentLength)){
+            return callback(new Error("Wrong content length header received!"));
+        }
+
+        streamToBuffer(reqORres, contentLength, (err, bodyAsBuffer) => {
+            if(err) {
+                return callback(err);
+            }
+            callback(undefined, bodyAsBuffer);
+        });
+    } else {
+        callback(new Error("Wrong message format received!"));
+    }
+
+    function streamToBuffer(stream, bufferSize, callback) {
+        const buffer = Buffer.alloc(bufferSize);
+        let currentOffset = 0;
+
+        stream.on('data', function(chunk){
+            const chunkSize = chunk.length;
+            const nextOffset = chunkSize + currentOffset;
+
+            if (currentOffset > bufferSize - 1) {
+                stream.close();
+                return callback(new Error('Stream is bigger than reported size'));
+            }
+
+            write2Buffer(buffer, chunk, currentOffset);
+            currentOffset = nextOffset;
+
+        });
+        stream.on('end', function(){
+            callback(undefined, buffer);
+        });
+        stream.on('error', callback);
+    }
+
+    function write2Buffer(buffer, dataToAppend, offset) {
+        const dataSize = dataToAppend.length;
+
+        for (let i = 0; i < dataSize; i++) {
+            buffer[offset++] = dataToAppend[i];
+        }
+    }
+}
+
+module.exports.readMessageBufferFromStream = readMessageBufferFromHTTPStream;
+}).call(this,require("buffer").Buffer)
+
+},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js":[function(require,module,exports){
+(function (process,Buffer){
+const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
+const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
+const defaultPubAddress = process.env.vmq_zeromq_pub_address || "tcp://127.0.0.1:5001";
+
+const zeroMQModuleName = "zeromq";
+let zmq;
+
+try{
+    zmq = require(zeroMQModuleName);
+}catch(err){
+    console.log("zeroMQ not available at this moment.");
+}
+
+function registerKiller(children){
+    const events = ["SIGINT", "SIGUSR1", "SIGUSR2", "uncaughtException", "SIGTERM", "SIGHUP"];
+
+    events.forEach(function(event){
+        process.on(event, function(...args){
+            children.forEach(function(child){
+                console.log("Something bad happened.", event, ...args);
+                try{
+                    child.close();
+                }catch(err){
+                    //..
+                    console.log(err);
+                }
+            });
+        });
+    });
+}
+
+function ZeromqForwarder(bindAddress){
+
+    let socket = zmq.socket("pub");
+    let initialized = false;
+
+    function connect(){
+        socket.monitor();
+        socket.connect(bindAddress);
+
+        socket.on("connect",(fd)=>{
+            console.log(`[Forwarder] connected on ${bindAddress}`);
+            initialized = true;
+            sendBuffered();
+        });
+    }
+
+    connect();
+
+    registerKiller([socket]);
+
+    const Queue = require("swarmutils").Queue;
+    let buffered = new Queue();
+
+    let sendBuffered = ()=>{
+        while(buffered.length>0){
+            this.send(...buffered.pop());
+        }
+    };
+
+    this.send = function(channel, ...args){
+        if(initialized){
+            //console.log("[Forwarder] Putting message on socket", args);
+            socket.send([channel, ...args], undefined, (...args)=>{
+                //console.log("[Forwarder] message sent");
+            });
+        }else{
+            //console.log("[Forwarder] Saving it for later");
+            buffered.push([channel, ...args]);
+        }
+    }
+}
+
+function ZeromqProxyNode(subAddress, pubAddress, signatureChecker){
+
+    const publishersNode = zmq.createSocket('xsub');
+    const subscribersNode = zmq.createSocket('xpub');
+
+    // By default xpub only signals new subscriptions
+    // Settings it to verbose = 1 , will signal on every new subscribe
+    // uncomment next lines if messages are lost
+    subscribersNode.setsockopt(zmq.ZMQ_XPUB_VERBOSE, 1);
+
+    publishersNode.on('message', deliverMessage);
+
+    function deliverMessage(channel, message){
+        //console.log(`[Proxy] - Received message on channel ${channel.toString()}`);
+        let ch = channelTranslationDictionary[channel.toString()];
+        if(ch){
+            //console.log("[Proxy] - Sending message on channel", ch);
+            subscribersNode.send([Buffer.from(ch), message]);
+        }else{
+            //console.log(`[Proxy] - message dropped!`);
+        }
+        //subscribersNode.send([channel, message]);
+    }
+
+    let channelTranslationDictionary = {};
+
+    subscribersNode.on('message', manageSubscriptions);
+
+    function manageSubscriptions(subscription){
+        //console.log("[Proxy] - manage message", subscription.toString());
+
+        let message = subscription.toString();
+        let type = subscription[0];
+        message = message.substr(1);
+
+        //console.log(`[Proxy] - Trying to send ${type==1?"subscribe":"unsubscribe"} type of message`);
+
+        if(typeof signatureChecker === "undefined"){
+            //console.log("[Proxy] - No signature checker defined then transparent proxy...", subscription);
+            publishersNode.send(subscription);
+            return;
+        }
+
+        try{
+            //console.log("[Proxy] - let's deserialize and start analize");
+            let deserializedData = JSON.parse(message);
+            //TODO: check deserializedData.signature
+            //console.log("[Proxy] - Start checking message signature");
+            signatureChecker(deserializedData.channelName, deserializedData.signature, (err, res)=>{
+                if(err){
+                    //...
+                    //console.log("Err", err);
+                }else{
+                    let newSub = Buffer.alloc(deserializedData.channelName.length+1);
+                    let ch = Buffer.from(deserializedData.channelName);
+                    if(type===1){
+                        newSub.write("01", 0, 1, "hex");
+                    }else{
+                        newSub.write("00", 0, 1, "hex");
+                    }
+
+                    ch.copy(newSub, 1);
+                    //console.log("[Proxy] - sending subscription", /*"\n\t\t", subscription.toString('hex'), "\n\t\t", newSub.toString('hex'),*/ newSub);
+                    channelTranslationDictionary[deserializedData.channelName] = message;
+                    publishersNode.send(newSub);
+                    return;
+                }
+            });
+        }catch(err){
+            if(message.toString()!==""){
+                //console.log("Something went wrong. Subscription will not be made.", err);
+            }
+        }
+    }
+
+    try{
+        publishersNode.bindSync(pubAddress);
+        subscribersNode.bindSync(subAddress);
+        console.log(`\nStarting ZeroMQ proxy on [subs:${subAddress}] [pubs:${pubAddress}]\n`);
+    }catch(err){
+        console.log("Caught error on binding", err);
+        throw new Error("No zeromq!!!");
+    }
+
+    registerKiller([publishersNode, subscribersNode]);
+}
+
+function ZeromqConsumer(bindAddress, monitorFunction){
+
+    let socket = zmq.socket("sub");
+
+    if(typeof monitorFunction === "function"){
+        let events = ["connect", "connect_delay", "connect_retry", "listen", "bind_error", "accept", "accept_error", "close", "close_error", "disconnect"];
+        socket.monitor();
+        events.forEach((eventType)=>{
+            socket.on(eventType, (...args)=>{
+                monitorFunction(eventType, ...args);
+            });
+        });
+    }
+
+    function connect(callback){
+        socket.connect(bindAddress);
+        socket.on("connect", callback);
+    }
+
+    let subscriptions = {};
+    let connected = false;
+
+    this.subscribe = function(channelName, signature, callback){
+        let subscription = JSON.stringify({channelName, signature:signature});
+        if(!subscriptions[subscription]){
+            subscriptions[subscription] = [];
+        }
+
+        subscriptions[subscription].push(callback);
+
+        if(!connected){
+            connect(()=>{
+                connected = true;
+                for(var subscription in subscriptions){
+                    socket.subscribe(subscription);
+                }
+            });
+        }else{
+            socket.subscribe(subscription);
+        }
+    };
+
+    this.close = function(){
+        socket.close();
+    };
+
+    socket.on("message", (channel, receivedMessage)=>{
+        let callbacks = subscriptions[channel];
+        if(!callbacks || callbacks.length === 0){
+            return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
+        }
+        for(let i = 0; i<callbacks.length; i++){
+            let cb = callbacks[i];
+            cb(channel, receivedMessage);
+        }
+    });
+}
+
+let instance;
+function getForwarderInstance(address){
+    if(!instance){
+        address = address || defaultForwardAddress;
+        instance = new ZeromqForwarder(address);
+    }
+    return instance;
+}
+
+function createZeromqProxyNode(subAddress, pubAddress, signatureChecker){
+    subAddress = subAddress || defaultSubAddress;
+    pubAddress = pubAddress || defaultPubAddress;
+    return new ZeromqProxyNode(subAddress, pubAddress, signatureChecker);
+}
+
+function createZeromqConsumer(bindAddress, monitorFunction){
+    return new ZeromqConsumer(bindAddress, monitorFunction);
+}
+
+function testIfAvailable(){
+    return typeof zmq !== "undefined";
+}
+
+module.exports = {
+    getForwarderInstance,
+    createZeromqConsumer,
+    createZeromqProxyNode,
+    testIfAvailable,
+    registerKiller
+};
+}).call(this,require('_process'),require("buffer").Buffer)
+
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('bn.js');
@@ -36111,6 +40496,57 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
+},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js":[function(require,module,exports){
+exports.endianness = function () { return 'LE' };
+
+exports.hostname = function () {
+    if (typeof location !== 'undefined') {
+        return location.hostname
+    }
+    else return '';
+};
+
+exports.loadavg = function () { return [] };
+
+exports.uptime = function () { return 0 };
+
+exports.freemem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.totalmem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.cpus = function () { return [] };
+
+exports.type = function () { return 'Browser' };
+
+exports.release = function () {
+    if (typeof navigator !== 'undefined') {
+        return navigator.appVersion;
+    }
+    return '';
+};
+
+exports.networkInterfaces
+= exports.getNetworkInterfaces
+= function () { return {} };
+
+exports.arch = function () { return 'javascript' };
+
+exports.platform = function () { return 'browser' };
+
+exports.tmpdir = exports.tmpDir = function () {
+    return '/tmp';
+};
+
+exports.EOL = '\n';
+
+exports.homedir = function () {
+	return '/'
+};
+
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js":[function(require,module,exports){
 'use strict';
 
@@ -52639,91 +57075,7 @@ function extend() {
     return target
 }
 
-},{}],"edfs":[function(require,module,exports){
-require("./brickTransportStrategies/brickTransportStrategiesRegistry");
-const constants = require("./moduleConstants");
-
-const or = require("overwrite-require");
-const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
-const cache = require('psk-cache').factory();
-
-if (browserContexts.indexOf($$.environmentType) !== -1) {
-    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
-} else {
-    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
-}
-
-module.exports = {
-    attachToEndpoint(endpoint) {
-        const EDFS = require("./lib/EDFS");
-        return new EDFS(endpoint, {
-            cache
-        });
-    },
-    attachWithSeed(compactSeed, callback) {
-        const SEED = require("bar").Seed;
-        let seed;
-        try {
-            seed = new SEED(compactSeed);
-        } catch (err) {
-            return callback(err);
-        }
-
-        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
-    },
-    attachWithPassword(password, callback) {
-        require("./seedCage").getSeed(password, (err, seed) => {
-            if (err) {
-                return callback(err);
-            }
-
-            this.attachWithSeed(seed, callback);
-        });
-    },
-    checkForSeedCage(callback) {
-        require("./seedCage").check(callback);
-    },
-    constants: constants
-};
-
-},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","psk-cache":"psk-cache"}],"psk-cache":[function(require,module,exports){
-const Cache = require("./lib/Cache")
-let cacheInstance;
-
-module.exports = {
-
-    /**
-     * Create a new cache instance
-     *
-     * @param {object} options
-     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
-     * @param {Number} options.limit Number of max items the cache can store per level.
-     *                               Defaults to 1000
-     * @return {Cache}
-     */
-    factory: function (options) {
-        return new Cache(options);
-    },
-
-    /**
-     * Get a reference to a singleton cache instance
-     *
-     * @param {object} options
-     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
-     * @param {Number} options.limit Number of max items the cache can store per level.
-     *                               Defaults to 1000
-     * @return {Cache}
-     */
-    getDefaultInstance: function (options) {
-        if (!cacheInstance) {
-            cacheInstance = new Cache(options);
-        }
-
-        return cacheInstance;
-    }
-};
-
-},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"pskcrypto":[function(require,module,exports){
+},{}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -52734,356 +57086,9 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/browser/sw":[function(require,module,exports){
-(function (Buffer,global){
-const SWBootScript = require("./SWBootScript");
-const server = require("ssapp-middleware").getMiddleware();
-const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
-const UtilFunctions = require("../../../utils/utilFunctions");
-const RawDossierHelper = require("./RawDossierHelper");
-const Uploader = require("./Uploader");
-const EDFS = require("edfs");
-const CONSTANTS = EDFS.constants.CSB;
-let bootScript = null;
-let rawDossierHlp = null;
-let uploader = null;
-let seedResolver = null;
-
-
-function createChannelHandler (req, res) {
-    ChannelsManager.createChannel(req.params.channelName, function (err) {
-        if (err) {
-            res.status(err.code || 500);
-
-        } else {
-            res.status(200);
-        }
-        res.end();
-    });
+},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/browser/host":[function(require,module,exports){
+module.exports = {
+    HostBootScript:require("./HostBootScript")
 }
 
-function forwardMessageHandler(req, res){
-    ChannelsManager.forwardMessage(req.params.channelName,function(err){
-        if(err){
-            res.status(err.code || 500);
-        }
-        res.end();
-    });
-}
-
-function sendMessageHandler (req, res) {
-    UtilFunctions.prepareMessage(req, function (err, bodyAsBuffer) {
-
-        if (err) {
-            res.status(err.code || 500);
-            res.end();
-        } else {
-            ChannelsManager.sendMessage(req.params.channelName, bodyAsBuffer, function (err) {
-                if (err) {
-                    res.status(err.code || 500);
-
-                } else {
-                    res.status(200);
-                }
-                res.end();
-            });
-        }
-    })
-}
-
-function receiveMessageHandler (req, res) {
-    ChannelsManager.receiveMessage(req.params.channelName, function (err, message) {
-        if (err) {
-            res.status(err.code || 500);
-        } else {
-            if (Buffer.isBuffer(message)) {
-                res.setHeader('content-type', 'application/octet-stream');
-            }
-
-            if (typeof message.length !== "undefined") {
-                res.setHeader('content-length', message.length);
-            }
-
-            res.status(200);
-            res.send(message);
-        }
-        res.end();
-    });
-}
-
-self.addEventListener('activate', function (event) {
-    console.log("Activating host service worker", event);
-    event.waitUntil(clients.claim());
-});
-
-self.addEventListener('message', function (event) {
-    if (!(event.target instanceof ServiceWorkerGlobalScope)) {
-        return;
-    }
-
-    const data = event.data;
-    const comPort = event.ports[0];
-
-    if (data.action === "activate") {
-        comPort.postMessage({status: 'empty'});
-    }
-
-    if (data.seed) {
-        // If a seed promise resolver exists
-        // it means that the state is waiting to be initialized
-        // in the fetch request event handler
-        if (seedResolver) {
-            // Resolve the seed request
-            seedResolver(data.seed);
-
-            // Prevent multiple resolves in case
-            // multiple tabs are open
-            seedResolver = null;
-            return;
-        }
-
-        if (!global.rawDossier) {
-            bootSWEnvironment(data.seed, (err) => {
-                if (err) {
-                    throw err;
-                }
-                comPort.postMessage({status: 'finished'});
-            })
-        }
-    }
-});
-
-self.addEventListener('fetch', (event) => {
-    event.respondWith(initState(event).then(server.handleEvent));
-});
-
-/**
- * Initialize the service worker state
- *
- * If the dossier isn't loaded, request a seed
- * and boot the service worker environment
- *
- * @param {FetchEvent} event
- * @return {Promise}
- */
-function initState(event) {
-    if (global.rawDossier) {
-        return Promise.resolve(event);
-    }
-
-    return requestSeedFromClient().then((seed) => {
-        return new Promise((resolve, reject) => {
-            bootSWEnvironment(seed, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-
-                resolve(event);
-            })
-        })
-    });
-}
-
-/**
- * Request a seed by posting a seed request
- * to all visible windows
- *
- * @return {Promise} The promise will be resolved
- *                   when a client will post back the
- *                   the requested seed in the
- *                   "on message" handler
- */
-function requestSeedFromClient() {
-    return clients.matchAll({
-        includeUncontrolled: true,
-        type: 'window'
-    }).then((clients) => {
-        // This promise will be resolved
-        // once the loader posts back our seed in the "on message" handler
-        let requestSeedPromise = new Promise((resolve, reject) => {
-            seedResolver = resolve;
-        })
-
-        const identity = self.registration.scope.split('/').pop();
-
-        // Request the seed
-        for (const client of clients) {
-            // Send a seed request only to visible windows
-            if (client.visibilityState !== 'visible') {
-                continue;
-            }
-
-            client.postMessage({
-                query: 'seed',
-                identity: identity,
-            });
-        }
-        return requestSeedPromise;
-    })
-}
-
-/**
- * @param {string} seed
- * @param {callback} callback
- */
-function bootSWEnvironment(seed, callback) {
-    bootScript = new SWBootScript(seed);
-    bootScript.boot((err, _rawDossier) => {
-        if(err){
-            return callback(err);
-        }
-
-        global.rawDossier = _rawDossier;
-        rawDossierHlp = new RawDossierHelper(global.rawDossier);
-        initMiddleware();
-        callback();
-    });
-}
-
-
-function initMiddleware(){
-    server.put("/create-channel/:channelName", createChannelHandler);
-    server.post("/forward-zeromq/:channelName", forwardMessageHandler);
-    server.post("/send-message/:channelName", sendMessageHandler);
-    server.get("/receive-message/:channelName", receiveMessageHandler);
-    server.post('/upload', uploadHandler);
-    server.get('/download/*', downloadHandler);
-    server.get('/apps/*', rawDossierHlp.handleLoadApp());
-    server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
-    server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
-}
-
-
-function uploadHandler (req, res) {
-    try {
-        configureUploader(req.query);
-    } catch (e) {
-        res.sendError(500, JSON.stringify(e.message), 'application/json');
-        return;
-    }
-    uploader.upload(req, function (err, uploadedFiles) {
-        if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
-            let statusCode = 400; // Validation errors
-
-            if (err instanceof Error) {
-                // This kind of errors should indicate
-                // a serious problem with the uploader
-                // and the status code should reflect that
-                statusCode = 500; // Internal "server" errors
-            }
-
-            res.sendError(statusCode, JSON.stringify(err, (key, value) => {
-                if (value instanceof Error) {
-                    return value.message;
-                }
-
-                return value;
-            }), 'application/json');
-            return;
-        }
-
-        res.status(201);
-        res.set("Content-Type", "application/json");
-        res.send(JSON.stringify(uploadedFiles));
-    });
-}
-
-function downloadHandler(req, res) {
-    let path = req.path.split('/').slice(2); // remove the "/download" part
-    path = path.filter(segment => segment.length > 0).map(segment => decodeURIComponent(segment));
-    if (!path.length) {
-        return res.sendError(404, "File not found");
-
-    }
-    path = '/' + path.join('/');
-
-    /**
-     * Convert a NodeJS stream.Readable to browser ReadableStream
-     * @param {stream.Readable} stream
-     * @return {ReadableStream}
-     */
-    function convertToNativeReadableStream(stream) {
-        const nativeStream = new ReadableStream({
-            start(controller) {
-
-                stream.on('data', (chunk) => {
-                    controller.enqueue(chunk);
-                });
-                stream.on('error', (err) => {
-                    controller.error(err);
-                })
-                stream.on('end', () => {
-                    controller.close();
-                })
-            },
-
-            cancel() {
-                stream.destroy();
-            }
-        });
-        return nativeStream;
-    }
-
-    global.rawDossier.createReadStream(path, (err, stream) => {
-        if (err instanceof Error) {
-            if (err.message.indexOf('could not be found') !== -1) {
-                return res.sendError(404, "File not found");
-            }
-
-            return res.sendError(500, err.message);
-        } else if (err) {
-            return res.sendError(500, Object.ptototype.toString.call(err));
-        }
-
-        // Extract the filename
-        const filename = path.split('/').pop();
-        const readableStream = convertToNativeReadableStream(stream);
-
-        res.status(200);
-        res.set("Content-Disposition", `attachment; filename="${filename}"`);
-        res.send(readableStream);
-    });
-}
-
-function configureUploader(config) {
-    config = config || {};
-
-    if (!config.path) {
-        throw new Error('Upload path is required. Ex: "POST /upload?path=/path/to/upload/folder"');
-    }
-
-    if (!config.input && !config.filename) {
-        throw new Error('"input" query parameter is required when doing multipart/form-data uploads or "filename" query parameter for request body uploads. Ex: POST /upload?input=files[] or POST /upload?filename=my-file.big');
-    }
-
-    let uploadPath = config.path;
-    if (uploadPath.substr(-1) !== '/') {
-        uploadPath += '/';
-    }
-
-    let allowedTypes;
-    if (typeof config.allowedTypes === 'string' && config.allowedTypes.length) {
-        allowedTypes = config.allowedTypes.split(',').filter(type => type.length > 0);
-    } else {
-        allowedTypes = [];
-    }
-    const options = {
-        inputName: config.input,
-        filename: config.filename,
-        maxSize: config.maxSize,
-        allowedMimeTypes: allowedTypes,
-        dossier: global.rawDossier,
-        uploadPath: uploadPath,
-        preventOverwrite: config.preventOverwrite
-    };
-
-    if (!uploader) {
-        uploader = new Uploader(options);
-    } else {
-        uploader.configure(options);
-    }
-}
-
-}).call(this,{"isBuffer":require("../../../../../node_modules/is-buffer/index.js")},typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"../../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","../../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","./RawDossierHelper":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","./Uploader":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/Uploader.js","edfs":"edfs","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js"])
+},{"./HostBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/host/HostBootScript.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/hostBoot.js"])

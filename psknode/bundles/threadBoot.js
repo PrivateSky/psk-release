@@ -1,10 +1,10 @@
-threadBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/threadBoot.js":[function(require,module,exports){
+threadBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/threadBoot.js":[function(require,module,exports){
 const or = require('overwrite-require');
 process.env.NO_LOGS = true;
 or.enableForEnvironment(or.constants.THREAD_ENVIRONMENT_TYPE);
 
 require("./threadBoot_intermediar");
-},{"./threadBoot_intermediar":"/opt/working_dir/privatesky/builds/tmp/threadBoot_intermediar.js","overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/builds/tmp/threadBoot_intermediar.js":[function(require,module,exports){
+},{"./threadBoot_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/threadBoot_intermediar.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/threadBoot_intermediar.js":[function(require,module,exports){
 (function (global){
 global.threadBootLoadModules = function(){ 
 
@@ -36,6 +36,10 @@ global.threadBootLoadModules = function(){
 		$$.__runtimeModules["adler32"] = require("adler32");
 	}
 
+	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
+		$$.__runtimeModules["psk-cache"] = require("psk-cache");
+	}
+
 	if(typeof $$.__runtimeModules["pskcrypto"] === "undefined"){
 		$$.__runtimeModules["pskcrypto"] = require("pskcrypto");
 	}
@@ -47,19 +51,18 @@ global.threadBootLoadModules = function(){
 	if(typeof $$.__runtimeModules["boot-script"] === "undefined"){
 		$$.__runtimeModules["boot-script"] = require("swarm-engine/bootScripts/ThreadWorkerBootScript");
 	}
-}
+};
 if (true) {
 	threadBootLoadModules();
-}; 
+}
 global.threadBootRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("threadBoot");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("threadBoot");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"adler32":"adler32","bar":"bar","bar-fs-adapter":"bar-fs-adapter","edfs":"edfs","edfs-brick-storage":"edfs-brick-storage","overwrite-require":"overwrite-require","psk-http-client":"psk-http-client","pskcrypto":"pskcrypto","swarm-engine/bootScripts/ThreadWorkerBootScript":"swarm-engine/bootScripts/ThreadWorkerBootScript","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/adler32/lib/Hash.js":[function(require,module,exports){
+},{"adler32":"adler32","bar":"bar","bar-fs-adapter":"bar-fs-adapter","edfs":"edfs","edfs-brick-storage":"edfs-brick-storage","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","pskcrypto":"pskcrypto","swarm-engine/bootScripts/ThreadWorkerBootScript":"swarm-engine/bootScripts/ThreadWorkerBootScript","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js":[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -129,7 +132,7 @@ Hash.prototype._flush = function(callback)
 };
 }).call(this,require("buffer").Buffer)
 
-},{"./algorithm":"/opt/working_dir/privatesky/modules/adler32/lib/algorithm.js","buffer":false,"crypto":false,"stream":false,"util":false}],"/opt/working_dir/privatesky/modules/adler32/lib/algorithm.js":[function(require,module,exports){
+},{"./algorithm":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js","buffer":false,"crypto":false,"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js":[function(require,module,exports){
 "use strict";
 
 /**
@@ -193,7 +196,7 @@ exports.roll = function(sum, length, oldByte, newByte)
 
 	return ((b << 16) | a) >>> 0;
 };
-},{}],"/opt/working_dir/privatesky/modules/adler32/lib/register.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/register.js":[function(require,module,exports){
 "use strict";
 
 module.exports = function()
@@ -221,7 +224,7 @@ module.exports = function()
 	}
 	.bind(crypto.createHash.bind(this));
 };
-},{"./Hash":"/opt/working_dir/privatesky/modules/adler32/lib/Hash.js","crypto":false}],"/opt/working_dir/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
+},{"./Hash":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 (function (Buffer){
 const fsModule = "fs";
 const fs = require(fsModule);
@@ -230,8 +233,6 @@ const path = require(pathModule);
 const PathAsyncIterator = require('./PathAsyncIterator');
 
 function FsAdapter() {
-
-    let pathAsyncIterator;
 
     this.getFileSize = function (filePath, callback) {
         fs.stat(filePath, (err, stats) => {
@@ -264,78 +265,31 @@ function FsAdapter() {
         });
     };
 
-    this.getFilesIterator = function(inputPath) {
+    this.getFilesIterator = function (inputPath) {
         return new PathAsyncIterator(inputPath);
     };
 
-    this.getNextFile = function (inputPath, restart, callback) {
-        if(typeof restart === "function") {
-            callback = restart;
-            restart = false;
-        }
-
-        if(restart === true) {
-            pathAsyncIterator = new PathAsyncIterator(inputPath);
-        }
-
-        pathAsyncIterator = pathAsyncIterator || new PathAsyncIterator(inputPath);
-        pathAsyncIterator.next(callback);
-    };
-
     this.appendBlockToFile = function (filePath, data, callback) {
-        const pth = constructPath(filePath);
-        if (pth !== '') {
-            fs.mkdir(pth, {recursive: true}, (err) => {
-                if (err && err.code !== "EEXIST") {
-                    return callback(err);
-                }
-
-                fs.appendFile(filePath, data, callback);
-            });
-        } else {
-            fs.appendFile(filePath, data, callback);
-        }
-    };
-
-    this.writeBlockToFile = function (filePath, data, position, length, callback) {
-        const folderPath = path.dirname(filePath);
-        fs.access(folderPath, (err) => {
+        fs.access(filePath, (err) => {
             if (err) {
-                fs.mkdir(folderPath, {recursive: true}, (err) => {
-                    if (err) {
+                fs.mkdir(path.dirname(filePath), {recursive: true}, (err) => {
+                    if (err && err.code !== "EEXIST") {
                         return callback(err);
                     }
 
-                    __writeBlock();
+                    fs.appendFile(filePath, data, callback);
                 });
             } else {
-                __writeBlock();
+                fs.appendFile(filePath, data, callback);
             }
         });
-
-        function __writeBlock() {
-            const writeStream = fs.createWriteStream(filePath, {flags: "a+", start: position});
-
-            writeStream.on("error", (err) => {
-                return callback(err);
-            });
-
-            writeStream.write(data, callback);
-        }
     };
-
-    function constructPath(filePath) {
-        let slices = filePath.split(path.sep);
-        slices.pop();
-        return slices.join(path.sep);
-    }
-
 }
 
 module.exports = FsAdapter;
 }).call(this,require("buffer").Buffer)
 
-},{"./PathAsyncIterator":"/opt/working_dir/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js","buffer":false}],"/opt/working_dir/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 const fsModule = "fs";
 const fs = require(fsModule);
 const pathModule = "path";
@@ -344,6 +298,7 @@ const TaskCounter = require("swarmutils").TaskCounter;
 
 
 function PathAsyncIterator(inputPath) {
+    inputPath = path.normalize(inputPath);
     let removablePathLen;
     const fileList = [];
     const folderList = [];
@@ -460,13 +415,16 @@ function PathAsyncIterator(inputPath) {
 }
 
 module.exports = PathAsyncIterator;
-},{"swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require('./Brick');
 const pathModule = "path";
 const path = require(pathModule);
 const isStream = require("../utils/isStream");
-const TaskCounter = require("swarmutils").TaskCounter;
+const stream = require('stream');
+const swarmutils = require("swarmutils");
+const TaskCounter = swarmutils.TaskCounter;
+const pskPth = swarmutils.path;
 const crypto = require('pskcrypto');
 const adler32 = require('adler32');
 
@@ -474,6 +432,7 @@ function Archive(archiveConfigurator) {
 
     const archiveFsAdapter = archiveConfigurator.getFsAdapter();
     const storageProvider = archiveConfigurator.getStorageProvider();
+    const cache = archiveConfigurator.getCache();
     let cachedSEED;
     let barMap;
     let cachedMapDigest;
@@ -501,242 +460,67 @@ function Archive(archiveConfigurator) {
         return cachedSEED;
     };
 
-    this.getFileHash = (fileBarPath, callback) => {
+    this.getFileHash = (barPath, callback) => {
+        barPath = pskPth.normalize(barPath);
         loadBarMapThenExecute(() => {
-            callback(undefined, __computeFileHash(fileBarPath).toString("hex"));
+            callback(undefined, __computeFileHash(barPath).toString("hex"));
         }, callback)
     };
 
-    this.getFolderHash = (folderBarPath, callback) => {
+    this.getFolderHash = (barPath, callback) => {
+        barPath = pskPth.normalize(barPath);
         loadBarMapThenExecute(() => {
-            const fileList = barMap.getFileList(folderBarPath);
-            let xor;
+            const fileList = barMap.getFileList(barPath);
+            if (fileList.length === 1) {
+                return callback(undefined, __computeFileHash(pskPth.join(barPath, fileList[0]).toString("hex")));
+            }
+            fileList.sort();
+
+            let xor = __computeFileHash(pskPth.join(barPath, fileList[0]));
             for (let i = 0; i < fileList.length - 1; i++) {
-                xor = crypto.xorBuffers(__computeFileHash(fileList[i]), __computeFileHash(fileList[i + 1]));
+                xor = crypto.xorBuffers(xor, __computeFileHash(pskPth.join(barPath, fileList[i + 1])));
             }
 
             callback(undefined, crypto.pskHash(xor, "hex"));
         }, callback);
     };
 
-    this.update = (fsPath, callback) => {
-        let blocksPositions = {};
-        let checksSumMap = barMap.getDictionaryObject();
-        let fileNameHashes = __setFromHashList();
-        let fileState = {};
-        loadBarMapThenExecute(__update, callback);
-
-        /**
-         * in this function, i do a directory traversal and process every file that i find, looking for blocks that already exists in our archive
-         * @private
-         */
-
-        function __setFromHashList() {
-            let folderHashList = {};
-            barMap.getFileList().forEach((file) => {
-                folderHashList[file.slice(file.indexOf('/'))] = new Set(barMap.getHashList(file));
-            });
-            return folderHashList;
+    this.writeFile = (barPath, data, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+            options.encrypt = true;
         }
+        barPath = pskPth.normalize(barPath);
 
-        function __readDirectoryRecursively(folderPath, sign, callback) {
-            archiveFsAdapter.getNextFile(folderPath, sign, __readFileChk);
-
-            function __readFileChk(err, file) {
-                if (err) {
-                    return callback(err);
-                }
-
-                if (typeof file === 'undefined') {
-                    return callback(undefined, blocksPositions, fileNameHashes);
-                }
-
-                const goodPath = path.posix.normalize(path.join(path.dirname(folderPath), file).split(path.sep).join(path.posix.sep));
-                archiveFsAdapter.getFileSize(goodPath, (err, size) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    __readBlock(goodPath, goodPath.slice(goodPath.indexOf('/')), size, 0, archiveConfigurator.getBufferSize(), undefined, undefined, barMap.isInHeader(goodPath), (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        __readDirectoryRecursively(folderPath, false, callback);
-                    });
-                });
-
-            }
-
-            function __readBlock(file, cutFile, fileSize, index, blockSize, currentBlockCheckSum, firstByte, alreadyInBarMap, callback) {
-                if (index >= fileSize) {
-                    if (blocksPositions[file] === undefined) {
-                        blocksPositions[file] = [];
-                    }
-                    blocksPositions[file].push({start: fileSize, end: fileSize});
-                    return callback();
-                }
-                archiveFsAdapter.readBlockFromFile(file, index, index + blockSize - 1, (err, data) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    if (currentBlockCheckSum === undefined) {
-                        currentBlockCheckSum = adler32.sum(data);
-                    } else {
-                        currentBlockCheckSum = adler32.roll(currentBlockCheckSum, blockSize, firstByte, data[blockSize - 1]);
-                    }
-                    let matchFound = false;
-                    if (checksSumMap[currentBlockCheckSum] !== undefined) {
-                        let hardDigest = crypto.pskHash(data).toString('hex');
-                        for (let k = 0; k < checksSumMap[currentBlockCheckSum].length; k++) {
-                            if (checksSumMap[currentBlockCheckSum][k] === hardDigest) {
-                                if (blocksPositions[file] === undefined) {
-                                    blocksPositions[file] = [];
-                                }
-                                blocksPositions[file].push({start: index, end: index + blockSize});
-                                // if(alreadyInBarMap === false){
-                                //     let tempBrick = new Brick();
-                                //     tempBrick.setTransformedData(data);
-                                // }
-                                fileState[file] = alreadyInBarMap;
-                                if (typeof fileNameHashes[cutFile] !== 'undefined') {
-                                    fileNameHashes[cutFile].delete(hardDigest);
-                                }
-                                matchFound = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (matchFound === false) {
-                        __readBlock(file, cutFile, fileSize, index + 1, blockSize, currentBlockCheckSum, data[0], alreadyInBarMap, callback);
-                    } else {
-                        __readBlock(file, cutFile, fileSize, index + blockSize, blockSize, undefined, undefined, alreadyInBarMap, callback);
-                    }
-                });
-            }
-
-        }
-
-        function iterateThroughOffsets(fileName, goodPath, precedence, iteratorIndex, filePositions, callback) {
-            if (iteratorIndex >= filePositions.length) {
-                return callback();
-            }
-            let positionObj = filePositions[iteratorIndex];
-            if (positionObj === undefined) {
-                return callback();
-            }
-            if (positionObj.start > precedence) {
-                archiveFsAdapter.readBlockFromFile(goodPath, precedence, positionObj.end - 1, (err, blockData) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    let bufferSize = archiveConfigurator.getBufferSize();
-                    for (let index = 0; index < blockData.length; index += bufferSize) {
-                        let brick = new Brick();
-                        brick.setTransformedData(blockData.slice(index, index + bufferSize));
-                        barMap.add(fileName, brick);
-                        storageProvider.putBrick(brick, (err) => {
-                            if (err) {
-                                return callback(err);
-                            }
-                            if (index + bufferSize >= blockData.length) {
-                                iterateThroughOffsets(fileName, goodPath, positionObj.end, iteratorIndex + 1, filePositions, callback);
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (fileState[goodPath] === false) {
-                    archiveFsAdapter.readBlockFromFile(goodPath, positionObj.start, positionObj.end - 1, (err, blockData) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        let brick = new Brick();
-                        brick.setTransformedData(blockData);
-                        barMap.add(fileName, brick);
-                        iterateThroughOffsets(fileName, goodPath, positionObj.end, iteratorIndex + 1, filePositions, callback);
-                    });
-                } else {
-                    iterateThroughOffsets(fileName, goodPath, positionObj.end, iteratorIndex + 1, filePositions, callback);
-                }
-            }
-        }
-
-        function __addBricks(positions, callback) {
-            let precedence;
-            const taskCounter = new TaskCounter((errs, results) => {
-                return callback();
-            });
-            taskCounter.increment(Object.keys(positions).length);
-            Object.keys(positions).forEach((fileName) => {
-                precedence = 0;
-                let goodPath = path.posix.normalize(fileName.split(path.sep).join(path.posix.sep));
-
-                iterateThroughOffsets(fileName, goodPath, precedence, 0, positions[fileName], (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    taskCounter.decrement(undefined, fileName);
-                });
-            });
-        }
-
-        function __deleteBricks(deletions) {
-            //de adaugat, barMap.removeBrick(filePath,brickHash);
-            Object.keys(deletions).forEach((fileName) => {
-                deletions[fileName].forEach((brickHash) => {
-                    barMap.removeBrick(fileName, brickHash);
-                });
-            });
-        }
-
-        function __update() {
-            __readDirectoryRecursively(fsPath, true, (err, positions, deletions) => {
-                if (err) {
-                    return callback(err);
-                }
-                __addBricks(positions, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    __deleteBricks(deletions);
-                    storageProvider.putBarMap(barMap, callback);
-                });
-            });
-        }
-    };
-
-    this.writeFile = (fileBarPath, data, callback) => {
         loadBarMapThenExecute(__addData, callback);
 
         function __addData() {
-            const brick = new Brick(archiveConfigurator);
             if (typeof data === "string") {
                 data = Buffer.from(data);
             }
 
-            if (!Buffer.isBuffer(data)) {
-                return callback(Error(`Type of data is ${typeof data}. Expected Buffer.`));
+            if (!isStream.isReadable(data) && !Buffer.isBuffer(data)) {
+                return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
             }
 
-            brick.setRawData(data);
-            barMap.emptyList(fileBarPath);
-            barMap.add(fileBarPath, brick);
-            storageProvider.putBrick(brick, (err) => {
+            createBricksFromData(data, barPath, archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
                 if (err) {
                     return callback(err);
                 }
 
-                storageProvider.putBarMap(barMap, (err, digest) => {
-                    if (err) {
-                        return callback(err);
-                    }
+                barMap.setConfig(archiveConfigurator);
+                if (archiveConfigurator.getMapEncryptionKey()) {
+                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
+                }
 
-                    callback(undefined, digest);
-                });
+                storageProvider.putBarMap(barMap, callback);
             });
         }
     };
 
     this.readFile = (barPath, callback) => {
+        barPath = pskPth.normalize(barPath);
         loadBarMapThenExecute(__readFile, callback);
 
         function __readFile() {
@@ -752,14 +536,12 @@ function Archive(archiveConfigurator) {
 
             function getFileRecursively(brickIndex, callback) {
                 const brickId = brickIds[brickIndex];
-                storageProvider.getBrick(brickId, (err, brick) => {
+                getBrickData(brickId, (err, data) => {
                     if (err) {
                         return callback(err);
                     }
 
-                    brick.setConfig(archiveConfigurator);
-                    brick.setTransformParameters(barMap.getTransformParameters(brickId));
-                    fileData = Buffer.concat([fileData, brick.getRawData()]);
+                    fileData = Buffer.concat([fileData, data]);
                     ++brickIndex;
 
                     if (brickIndex < brickIds.length) {
@@ -767,20 +549,68 @@ function Archive(archiveConfigurator) {
                     } else {
                         callback(undefined, fileData);
                     }
+
                 });
             }
         }
     };
 
-    this.addFile = (fsFilePath, barPath, callback) => {
-        if (typeof barPath === "function") {
-            callback = barPath;
-            barPath = fsFilePath;
+    this.createReadStream = (barPath, callback) => {
+        barPath = pskPth.normalize(barPath);
+        loadBarMapThenExecute(__prepareStream, callback);
+
+        function __prepareStream() {
+            let brickIndex = 0;
+            let brickIds;
+
+            try {
+                brickIds = barMap.getHashList(barPath);
+            } catch (err) {
+                return callback(err);
+            }
+
+            const readableStream = new stream.Readable({
+                read(size) {
+                    if (brickIndex < brickIds.length) {
+                        this.readBrickData(brickIndex++);
+                    }
+                }
+            });
+
+            // Get a brick and push it into the stream
+            readableStream.readBrickData = function (brickIndex) {
+                const brickId = brickIds[brickIndex];
+                getBrickData(brickId, (err, data) => {
+                    if (err) {
+                        this.destroy(err);
+                        return;
+                    }
+
+                    this.push(data);
+
+                    if (brickIndex >= (brickIds.length - 1)) {
+                        this.push(null);
+                    }
+                });
+            };
+
+            callback(null, readableStream);
         }
+    };
+
+    this.addFile = (fsFilePath, barPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+            options.encrypt = true;
+        }
+
+        barPath = pskPth.normalize(barPath);
+
         loadBarMapThenExecute(__addFile, callback);
 
         function __addFile() {
-            createBricks(fsFilePath, barPath, archiveConfigurator.getBufferSize(), (err) => {
+            createBricks(fsFilePath, barPath, archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
                 if (err) {
                     return callback(err);
                 }
@@ -795,33 +625,47 @@ function Archive(archiveConfigurator) {
         }
     };
 
-    /* TODO: do not create multiple BARMaps... */
-    this.addFiles = (arrWithFilePaths, barPath, callback) => {
-        let arr = arrWithFilePaths.slice();
-        let self = this;
-        function recAdd(){
-            if(arr.length){
-                let filePath = arr.pop();
+    this.addFiles = (arrWithFilePaths, barPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+            options.encrypt = true;
+        }
 
-                let fileName = path.basename(filePath) ;
-                self.addFile(filePath, barPath + "/" + fileName, function(err, res){
-                    if(err){
-                     callback(err);
-                    } else{
-                        recAdd();
+        barPath = pskPth.normalize(barPath);
+
+        let arr = arrWithFilePaths.slice();
+
+        loadBarMapThenExecute(() => {
+            recAdd()
+        }, callback);
+
+        function recAdd() {
+            if (arr.length > 0) {
+                let filePath = arr.pop();
+                let fileName = path.basename(filePath);
+
+                createBricks(filePath, pskPth.join(barPath, fileName), archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
+                    if (err) {
+                        return callback(err);
                     }
+
+                    recAdd();
                 });
             } else {
-                callback(null, true);
+                barMap.setConfig(archiveConfigurator);
+                if (archiveConfigurator.getMapEncryptionKey()) {
+                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
+                }
+                storageProvider.putBarMap(barMap, callback);
             }
         }
-        recAdd();
     };
 
     this.extractFile = (fsFilePath, barPath, callback) => {
         if (typeof barPath === "function") {
             callback = barPath;
-            barPath = fsFilePath;
+            barPath = pskPth.normalize(fsFilePath);
         }
 
 
@@ -833,14 +677,12 @@ function Archive(archiveConfigurator) {
 
             function getFileRecursively(brickIndex, callback) {
                 const brickId = brickIds[brickIndex];
-                storageProvider.getBrick(brickId, (err, brick) => {
+                getBrickData(brickId, (err, data) => {
                     if (err) {
                         return callback(err);
                     }
 
-                    brick.setConfig(archiveConfigurator);
-                    brick.setTransformParameters(barMap.getTransformParameters(brickId));
-                    archiveFsAdapter.appendBlockToFile(fsFilePath, brick.getRawData(), (err) => {
+                    archiveFsAdapter.appendBlockToFile(fsFilePath, data, (err) => {
                         if (err) {
                             return callback(err);
                         }
@@ -852,7 +694,7 @@ function Archive(archiveConfigurator) {
                             callback();
                         }
                     });
-                });
+                })
             }
         }
     };
@@ -933,17 +775,13 @@ function Archive(archiveConfigurator) {
         }
     };
 
-    this.deleteFile = (filePath, callback) => {
-        loadBarMapThenExecute(() => {
-            storageProvider.deleteFile(filePath, callback);
-        }, callback);
-    };
-
-    this.addFolder = (fsFolderPath, barPath, callback) => {
-        if (typeof barPath === "function") {
-            callback = barPath;
-            barPath = fsFolderPath;
+    this.addFolder = (fsFolderPath, barPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+            options.encrypt = true;
         }
+        barPath = pskPth.normalize(barPath);
         const filesIterator = archiveFsAdapter.getFilesIterator(fsFolderPath);
 
         loadBarMapThenExecute(__addFolder, callback);
@@ -958,8 +796,7 @@ function Archive(archiveConfigurator) {
                 }
 
                 if (typeof file !== "undefined") {
-                    const normalizedFilePath = file.split(path.sep).join("/");
-                    createBricks(path.join(rootFsPath, file), barPath + "/" + normalizedFilePath, archiveConfigurator.getBufferSize(), (err) => {
+                    createBricks(path.join(rootFsPath, file), pskPth.join(barPath, file), archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
                         if (err) {
                             return callback(err);
                         }
@@ -982,13 +819,9 @@ function Archive(archiveConfigurator) {
 
 
     this.extractFolder = (fsFolderPath, barPath, callback) => {
-        if (typeof fsFolderPath === "function") {
-            callback = fsFolderPath;
-            fsFolderPath = undefined;
-        }
         if (typeof barPath === "function") {
             callback = barPath;
-            barPath = undefined;
+            barPath = pskPth.normalize(fsFolderPath);
         }
 
         loadBarMapThenExecute(() => {
@@ -1024,13 +857,44 @@ function Archive(archiveConfigurator) {
         storageProvider.putBarMap(barMap, callback);
     };
 
-    this.listFiles = (folderBarPath, callback) => {
-        if (typeof folderBarPath === "function") {
-            callback = folderBarPath;
-            folderBarPath = undefined;
-        }
+    this.delete = (barPath, callback) => {
         loadBarMapThenExecute(() => {
-            callback(undefined, barMap.getFileList(folderBarPath));
+            barMap.delete(barPath);
+            callback();
+        }, callback);
+    };
+
+    this.listFiles = (folderBarPath, recursive, callback) => {
+        if (typeof recursive === "function") {
+            callback = recursive;
+            recursive = true;
+        } else if (typeof folderBarPath === "function") {
+            callback = folderBarPath;
+            recursive = true;
+            folderBarPath = "/";
+        }
+
+
+        loadBarMapThenExecute(() => {
+            let fileList;
+            try {
+                fileList = barMap.getFileList(folderBarPath, recursive);
+            } catch (e) {
+                return callback(e);
+            }
+
+            callback(undefined, fileList);
+        }, callback);
+    };
+
+    this.listFolders = (folderBarPath, recursive, callback) => {
+        if (typeof recursive === "function") {
+            callback = recursive;
+            recursive = true;
+        }
+
+        loadBarMapThenExecute(() => {
+            callback(undefined, barMap.getFolderList(folderBarPath, recursive));
         }, callback);
     };
 
@@ -1043,7 +907,7 @@ function Archive(archiveConfigurator) {
             loadBarMapThenExecute(__cloneBricks, callback);
 
             function __cloneBricks() {
-                const fileList = barMap.getFileList();
+                const fileList = barMap.getFileList("/");
 
                 __getFilesRecursively(fileList, 0, (err) => {
                     if (err) {
@@ -1147,8 +1011,11 @@ function Archive(archiveConfigurator) {
         });
     }
 
-    function createBricks(fsFilePath, barPath, blockSize, callback) {
-
+    function createBricks(fsFilePath, barPath, blockSize, areEncrypted, callback) {
+        if (typeof areEncrypted === "function") {
+            callback = areEncrypted;
+            areEncrypted = true;
+        }
         archiveFsAdapter.getFileSize(fsFilePath, (err, fileSize) => {
             if (err) {
                 return callback(err);
@@ -1159,10 +1026,9 @@ function Archive(archiveConfigurator) {
                 ++noBlocks;
             }
 
-            //todo: check if emptyList is called ok in this place.
-            // the scenario: adding a new file at an existing barPath should overwrite the initial content found there.
-
-            barMap.emptyList(barPath);
+            if (!barMap.isEmpty(barPath)) {
+                barMap.emptyList(barPath);
+            }
             __createBricksRecursively(0, callback);
 
             function __createBricksRecursively(blockIndex, callback) {
@@ -1171,11 +1037,10 @@ function Archive(archiveConfigurator) {
                         return callback(err);
                     }
 
+                    archiveConfigurator.setIsEncrypted(areEncrypted);
                     const brick = new Brick(archiveConfigurator);
-
                     brick.setRawData(blockData);
                     barMap.add(barPath, brick);
-
                     storageProvider.putBrick(brick, (err) => {
                         if (err) {
                             return callback(err);
@@ -1193,25 +1058,180 @@ function Archive(archiveConfigurator) {
         });
     }
 
+    /**
+     * Create bricks from a Buffer or a readable stream
+     * @param {Buffer|stream.Readable} data
+     * @param {string} barPath
+     * @param {number} blockSize
+     * @param {boolean} areEncrypted
+     * @param {callback} callback
+     */
+    function createBricksFromData(data, barPath, blockSize, areEncrypted, callback) {
+        if (typeof areEncrypted === "function") {
+            callback = areEncrypted;
+            areEncrypted = true;
+        }
+
+        if (typeof data === 'string') {
+            data = Buffer.from(data);
+        }
+
+        if (!barMap.isEmpty(barPath)) {
+            barMap.emptyList(barPath);
+        }
+
+        /**
+         * Break the Buffer into bricks
+         * @param {Buffer} data
+         * @param {number} _blockSize
+         * @param {callback} callback
+         */
+        function __createBricksFromBuffer(data, _blockSize, callback) {
+            if (typeof _blockSize === 'function') {
+                callback = _blockSize;
+                _blockSize = blockSize; // set the default blockSize
+            }
+
+            let noBlocks = Math.floor(data.length / _blockSize);
+            if ((data.length % _blockSize) > 0) {
+                ++noBlocks;
+            }
+
+            function __createBricksRecursively(blockIndex, callback) {
+                const blockData = data.slice(blockIndex * _blockSize, (blockIndex + 1) * _blockSize);
+
+                archiveConfigurator.setIsEncrypted(areEncrypted);
+                const brick = new Brick(archiveConfigurator);
+
+                brick.setRawData(blockData);
+                barMap.add(barPath, brick);
+                storageProvider.putBrick(brick, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    ++blockIndex;
+                    if (blockIndex < noBlocks) {
+                        __createBricksRecursively(blockIndex, callback);
+                    } else {
+                        callback();
+                    }
+                });
+
+            }
+
+            __createBricksRecursively(0, callback);
+        }
+
+        if (isStream.isReadable(data)) {
+            data.on('data', (chunk) => {
+                if (typeof chunk === 'string') {
+                    chunk = Buffer.from(chunk);
+                }
+                data.pause();
+
+                // When reading from a stream, set the block size to the chunk's length
+                __createBricksFromBuffer(chunk, chunk.length, (err) => {
+                    if (err) {
+                        data.destroy(err);
+                        return callback(err);
+                    }
+                    data.resume();
+                });
+            });
+            data.on('error', (err) => {
+                callback(err);
+            });
+            data.on('end', () => {
+                callback();
+            });
+        } else { // Data is buffer
+            __createBricksFromBuffer(data, (err) => {
+                callback(err);
+            });
+        }
+    }
+
+    /**
+     * @param {*} key
+     * @return {Boolean}
+     */
+    function hasInCache(key) {
+        if (!cache) {
+            return false;
+        }
+
+        return cache.has(key);
+    }
+
+    /**
+     * @param {*} key
+     * @param {*} value
+     */
+    function storeInCache(key, value) {
+        if (!cache) {
+            return;
+        }
+
+        cache.set(key, value);
+    }
+
+    /**
+     * Try and get brick data from cache
+     * Fallback to storage provide if not found in cache
+     *
+     * @param {string} hash
+     * @param {callback} callback
+     */
+    function getBrickData(hash, callback) {
+        if (!hasInCache(hash)) {
+            return storageProvider.getBrick(hash, (err, brick) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                brick.setConfig(archiveConfigurator);
+                brick.setTransformParameters(barMap.getTransformParameters(hash));
+                const data = brick.getRawData();
+                storeInCache(hash, data);
+                callback(undefined, data);
+            });
+        }
+
+        const data = cache.get(hash);
+        callback(undefined, data);
+    }
+
     function loadBarMapThenExecute(functionToBeExecuted, callback) {
-        storageProvider.getBarMap(archiveConfigurator.getMapDigest(), (err, map) => {
-            if (err) {
-                return callback(err);
-            }
+        const digest = archiveConfigurator.getMapDigest();
+        if (!digest || !hasInCache(digest)) {
+            return storageProvider.getBarMap(digest, (err, map) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            if (archiveConfigurator.getMapEncryptionKey()) {
-                map.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-            }
+                if (archiveConfigurator.getMapEncryptionKey()) {
+                    map.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
+                }
 
-            if (!map.getConfig()) {
-                map.setConfig(archiveConfigurator);
-            }
+                if (!map.getConfig()) {
+                    map.setConfig(archiveConfigurator);
+                }
 
-            map.load();
-            barMap = map;
-            storageProvider.setBarMap(barMap);
-            functionToBeExecuted();
-        });
+                map.load();
+                barMap = map;
+                if (digest) {
+                    storeInCache(digest, barMap);
+                }
+                storageProvider.setBarMap(barMap);
+                functionToBeExecuted();
+            });
+        }
+
+        const map = cache.get(digest);
+        barMap = map;
+        storageProvider.setBarMap(barMap);
+        functionToBeExecuted();
     }
 }
 
@@ -1219,13 +1239,14 @@ module.exports = Archive;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/isStream":"/opt/working_dir/privatesky/modules/bar/utils/isStream.js","./Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","adler32":"adler32","buffer":false,"pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","adler32":"adler32","buffer":false,"pskcrypto":"pskcrypto","stream":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 const Seed = require("./Seed");
 
 function ArchiveConfigurator() {
     const config = {};
+    let cache;
 
     let self = this;
     this.setBufferSize = (bufferSize) => {
@@ -1237,6 +1258,14 @@ function ArchiveConfigurator() {
 
     this.getBufferSize = () => {
         return config.bufferSize;
+    };
+
+    this.setIsEncrypted = (flag) => {
+        config.isEncrypted = flag;
+    };
+
+    this.getIsEncrypted = () => {
+        return config.isEncrypted;
     };
 
     this.setStorageProvider = (storageProviderName, ...args) => {
@@ -1349,15 +1378,15 @@ function ArchiveConfigurator() {
         config.seedEndpoint = endpoint;
     };
 
-    this.setSeedId = (id) => {
-        config.seed.setId(id);
-        this.setMapDigest(id);
+    this.setSeedKey = (key) => {
+        config.seed.setKey(key);
+        this.setMapDigest(key);
     };
 
-    this.getSeedId = () => {
+    this.getSeedKey = () => {
         loadSeed();
         if (config.seed) {
-            return config.seed.getId();
+            return config.seed.getKey();
         }
     };
 
@@ -1367,7 +1396,7 @@ function ArchiveConfigurator() {
         if (endpoint) {
             this.setStorageProvider("EDFSBrickStorage", endpoint);
         }
-        this.setMapDigest(config.seed.getId());
+        this.setMapDigest(config.seed.getKey());
     };
 
     this.getSeed = () => {
@@ -1394,19 +1423,24 @@ function ArchiveConfigurator() {
         if (!config.seedEndpoint && config.seed) {
             config.seedEndpoint = config.seed.getEndpoint();
         }
-        config.seed = new Seed(undefined, undefined, config.seedEndpoint, !!config.encryption);
-        if (config.seed.getId()) {
-            self.setMapDigest(config.seed.getId());
+        config.seed = new Seed(undefined, config.seedEndpoint);
+        if (config.seed.getKey()) {
+            self.setMapDigest(config.seed.getKey());
         }
+    };
+
+    this.setCache = (cacheInstance) => {
+        cache = cacheInstance;
+    };
+
+    this.getCache = () => {
+        return cache;
     };
 
     //--------------------------
     function loadSeed() {
         if (!config.seed) {
-            config.seed = new Seed(undefined, undefined, config.seedEndpoint, !!config.encryption);
-            if (config.seed.getId()) {
-                self.setMapDigest(config.seed.getId());
-            }
+            config.seed = new Seed(undefined, config.seedEndpoint);
         }
     }
 }
@@ -1420,7 +1454,8 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 };
 
 module.exports = ArchiveConfigurator;
-},{"./Seed":"/opt/working_dir/privatesky/modules/bar/lib/Seed.js"}],"/opt/working_dir/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+
+},{"./Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
 const crypto = require('pskcrypto');
 const BrickTransformFactory = require("./transforms/BrickTransformFactory");
 const transformFactory = new BrickTransformFactory();
@@ -1433,22 +1468,22 @@ function Brick(config) {
     let transformParameters;
     let transform = transformFactory.createBrickTransform(config);
 
-    this.setConfig = (newConfig)=> {
+    this.setConfig = (newConfig) => {
         config = newConfig;
         if (transform) {
             transform.setConfig(newConfig);
-        }else{
+        } else {
             transform = transformFactory.createBrickTransform(config);
         }
     };
 
-    this.createNewTransform = ()=> {
+    this.createNewTransform = () => {
         transform = transformFactory.createBrickTransform(config);
         transformParameters = undefined;
         transformData();
     };
 
-    this.getHash = ()=> {
+    this.getHash = () => {
         if (!hash) {
             hash = crypto.pskHash(this.getTransformedData()).toString("hex");
         }
@@ -1456,22 +1491,22 @@ function Brick(config) {
         return hash;
     };
 
-    this.getId = () => {
-        const seedId = config.getSeedId();
+    this.getKey = () => {
+        const seedId = config.getSeedKey();
         if (seedId) {
             return seedId;
         }
         return config.getMapDigest();
     };
 
-    this.setId = (id) => {
-        config.setSeedId(id);
+    this.setKey = (key) => {
+        config.setSeedKey(key);
     };
 
     this.getSeed = () => {
         return config.getSeed().toString();
     };
-    this.getAdler32 = ()=> {
+    this.getAdler32 = () => {
         return adler32.sum(this.getTransformedData());
     };
 
@@ -1482,7 +1517,7 @@ function Brick(config) {
         }
     };
 
-    this.getRawData = ()=> {
+    this.getRawData = () => {
         if (rawData) {
             return rawData;
         }
@@ -1503,11 +1538,11 @@ function Brick(config) {
         throw new Error("The brick does not contain any data.");
     };
 
-    this.setTransformedData = (data)=> {
+    this.setTransformedData = (data) => {
         transformedData = data;
     };
 
-    this.getTransformedData = ()=> {
+    this.getTransformedData = () => {
         if (!transformedData) {
             transformData();
         }
@@ -1523,14 +1558,14 @@ function Brick(config) {
         throw new Error("The brick does not contain any data.");
     };
 
-    this.getTransformParameters = ()=> {
+    this.getTransformParameters = () => {
         if (!transformedData) {
             transformData();
         }
         return transformParameters;
     };
 
-    this.setTransformParameters =  (newTransformParams) =>{
+    this.setTransformParameters = (newTransformParams) => {
         if (!newTransformParams) {
             return;
         }
@@ -1545,11 +1580,11 @@ function Brick(config) {
         });
     };
 
-    this.getRawSize = ()=> {
+    this.getRawSize = () => {
         return rawData.length;
     };
 
-    this.getTransformedSize = ()=> {
+    this.getTransformedSize = () => {
         if (!transformedData) {
             return rawData.length;
         }
@@ -1577,7 +1612,7 @@ function Brick(config) {
 
 module.exports = Brick;
 
-},{"./transforms/BrickTransformFactory":"/opt/working_dir/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"adler32","pskcrypto":"pskcrypto"}],"/opt/working_dir/privatesky/modules/bar/lib/FileBarMap.js":[function(require,module,exports){
+},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"adler32","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBarMap.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require("./Brick");
 const util = require("../utils/utilities");
@@ -1704,7 +1739,7 @@ function FileBarMap(header) {
 module.exports = FileBarMap;
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/utilities":"/opt/working_dir/privatesky/modules/bar/utils/utilities.js","./Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","buffer":false}],"/opt/working_dir/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
+},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
 (function (Buffer){
 const BarMap = require("./FileBarMap");
 const util = require("../utils/utilities");
@@ -1924,35 +1959,65 @@ module.exports = {
 };
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/AsyncDispatcher":"/opt/working_dir/privatesky/modules/bar/utils/AsyncDispatcher.js","../utils/utilities":"/opt/working_dir/privatesky/modules/bar/utils/utilities.js","./Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","./FileBarMap":"/opt/working_dir/privatesky/modules/bar/lib/FileBarMap.js","buffer":false,"fs":false}],"/opt/working_dir/privatesky/modules/bar/lib/FolderBarMap.js":[function(require,module,exports){
+},{"../utils/AsyncDispatcher":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js","../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./FileBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBarMap.js","buffer":false,"fs":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require("./Brick");
 const pathModule = "path";
-const path = require(pathModule);
+let path;
+try {
+    path = require(pathModule);
+} catch (err) {
+} finally {
+    if (typeof path === "undefined") {
+        path = {sep: "/"};
+    }
+}
 
 function FolderBarMap(header) {
     header = header || {};
-
+    const pskPath = require("swarmutils").path;
     let archiveConfig;
     let encryptionKey;
 
     this.add = (filePath, brick) => {
-        filePath = filePath.split(path.sep).join("/");
+        filePath = pskPath.normalize(filePath);
+        if (filePath === "") {
+            throw Error("Invalid path");
+        }
         this.load();
-        if (typeof header[filePath] === "undefined") {
-            header[filePath] = [];
-        }
+        const pathSegments = filePath.split("/");
+        __addFileRecursively(header, pathSegments, brick);
 
-        const brickObj = {
-            checkSum: brick.getAdler32(),
-            hash: brick.getHash()
-        };
+        function __addFileRecursively(barMapObj, splitPath, brick) {
+            let fileName = splitPath.shift();
+            if (fileName === "") {
+                fileName = splitPath.shift();
+            }
+            if (splitPath.length === 0) {
+                const brickObj = {
+                    checkSum: brick.getAdler32(),
+                    hash: brick.getHash()
+                };
 
-        const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
-        if (encKey) {
-            brickObj.key = encKey;
+                const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
+                if (encKey) {
+                    brickObj.key = encKey;
+                }
+
+
+                if (!barMapObj[fileName]) {
+                    barMapObj[fileName] = [];
+                }
+
+
+                barMapObj[fileName].push(brickObj);
+            } else {
+                if (!barMapObj[fileName]) {
+                    barMapObj[fileName] = {};
+                }
+                __addFileRecursively(barMapObj[fileName], splitPath, brick);
+            }
         }
-        header[filePath].push(brickObj);
     };
 
     this.isInHeader = (filePath) => {
@@ -1964,23 +2029,56 @@ function FolderBarMap(header) {
         header[filePath].splice(indexToRemove, 1);
     };
 
-    this.getDictionaryObject = () => {
-        let objectDict = {};
-        Object.keys(header).forEach((fileName) => {
-            let brickObjects = header[fileName];
-            for (let j = 0; j < brickObjects.length; j++) {
-                if (typeof objectDict[brickObjects[j]['checkSum']] === 'undefined') {
-                    objectDict[brickObjects[j]['checkSum']] = [];
-                }
-                objectDict[brickObjects[j]['checkSum']].push(brickObjects[j]['hash']);
+    this.delete = (barPath) => {
+        barPath = pskPath.normalize(barPath);
+
+        if (barPath === "/") {
+            header = {};
+        } else {
+            const pathSegments = barPath.split("/");
+            if (pathSegments[0] === "") {
+                pathSegments.shift();
             }
-        });
-        return objectDict;
+            __removeRecursively(header, pathSegments);
+        }
+
+        function __removeRecursively(folderObj, splitPath) {
+            const folderName = splitPath.shift();
+            if (folderObj[folderName]) {
+                if (splitPath.length === 0) {
+                    folderObj[folderName] = undefined;
+                } else {
+                    __removeRecursively(folderObj[folderName], splitPath);
+                }
+            }
+        }
     };
 
     this.getHashList = (filePath) => {
+        filePath = pskPath.normalize(filePath);
+        if (filePath === "") {
+            throw Error("Invalid path.");
+        }
         this.load();
-        return header[filePath].map(brickObj => brickObj.hash);
+        const pathSegments = filePath.split("/");
+
+        return __getHashListRecursively(header, pathSegments);
+
+        function __getHashListRecursively(barMapObj, pathSegments) {
+            let folderName = pathSegments.shift();
+            if (folderName === "") {
+                folderName = pathSegments.shift();
+            }
+            if (barMapObj[folderName]) {
+                if (pathSegments.length === 0) {
+                    return barMapObj[folderName].map(brickObj => brickObj.hash);
+                } else {
+                    return __getHashListRecursively(barMapObj[folderName], pathSegments);
+                }
+            } else {
+                throw Error(`Invalid path ${filePath}`);
+            }
+        }
     };
 
     this.getCheckSumList = (filePath) => {
@@ -1988,13 +2086,74 @@ function FolderBarMap(header) {
         return header[filePath].map(brickObj => brickObj.checkSum);
     };
 
+    this.isEmpty = (filePath) => {
+        filePath = pskPath.normalize(filePath);
+        this.load();
+
+        if (filePath === "/") {
+            return Object.keys(header).length === 0;
+        } else {
+            const pathSegments = filePath.split("/");
+            return __checkIsEmptyRecursively(header, pathSegments);
+        }
+
+        function __checkIsEmptyRecursively(folderObj, pathSegments) {
+            if (Object.keys(folderObj).length === 0) {
+                return true;
+            }
+
+            let folderName = pathSegments.shift();
+            if (folderName === "") {
+                folderName = pathSegments.shift();
+            }
+
+            if (folderObj[folderName]) {
+                if (pathSegments.length === 0) {
+                    if (Array.isArray(folderObj[folderName])) {
+                        return folderObj[folderName].length === 0;
+                    } else {
+                        return Object.keys(folderObj[folderName]).length === 0;
+                    }
+                } else {
+                    return __checkIsEmptyRecursively(folderObj[folderName], pathSegments);
+                }
+            } else {
+                return true;
+            }
+        }
+    };
+
     this.emptyList = (filePath) => {
-        header[filePath] = [];
+        filePath = pskPath.normalize(filePath);
+        this.load();
+
+        const pathSegments = filePath.split("/");
+        __emptyListRecursively(header, pathSegments);
+
+        function __emptyListRecursively(folderObj, pathSegments) {
+            let folderName = pathSegments.shift();
+            if (folderName === "") {
+                folderName = pathSegments.shift();
+            }
+
+            if (folderObj[folderName]) {
+                if (pathSegments.length === 0) {
+                    if (Array.isArray(folderObj[folderName])) {
+                        folderObj[folderName] = []
+                    } else {
+                        throw Error("Invalid path");
+                    }
+                } else {
+                    __emptyListRecursively(folderObj[folderName], pathSegments);
+                }
+            }
+        }
     };
 
 
     this.toBrick = () => {
         this.load();
+        archiveConfig.setIsEncrypted(true);
         const brick = new Brick(archiveConfig);
         if (encryptionKey) {
             brick.setTransformParameters({key: encryptionKey});
@@ -2004,12 +2163,115 @@ function FolderBarMap(header) {
     };
 
 
-    this.getFileList = (folderBarPath) => {
-        this.load();
-        if (!folderBarPath || folderBarPath === "" || folderBarPath === "/") {
-            return Object.keys(header);
+    this.getFileList = (folderBarPath, recursive) => {
+        if (typeof recursive === "undefined") {
+            recursive = true;
         }
-        return Object.keys(header).filter(fileName => fileName.includes(folderBarPath));
+        folderBarPath = pskPath.normalize(folderBarPath);
+        this.load();
+        return getFilesFromPath(header, folderBarPath, recursive);
+
+
+        function getFilesFromPath(folderObj, barPath, recursive){
+            let files = [];
+            if (barPath === "/") {
+                __getAllFiles(header, barPath);
+
+                return files;
+            } else {
+                const pathSegments = barPath.split("/");
+                __getFilesFromPath(header, pathSegments);
+
+                return files;
+            }
+
+            function __getFilesFromPath(folderObj, pathSegments) {
+                let folderName = pathSegments.shift();
+                if (folderName === "") {
+                    folderName = pathSegments.shift();
+                }
+                if (folderObj[folderName]) {
+                    if (pathSegments.length === 0) {
+                        Object.keys(folderObj[folderName]).forEach(file => {
+                            if (Array.isArray(folderObj[folderName][file])) {
+                                files.push(file);
+                            }
+                        });
+                    } else {
+                        if (recursive === true) {
+                            __getFilesFromPath(folderObj[folderName], pathSegments);
+                        }
+                    }
+                } else {
+                    throw Error(`Invalid path ${folderBarPath}`);
+                }
+            }
+
+            function __getAllFiles(folderObj, relativePath) {
+                Object.keys(folderObj).forEach(folderName => {
+                    if (folderObj[folderName]) {
+                        let newPath = pskPath.join(relativePath, folderName);
+
+                        if (Array.isArray(folderObj[folderName])) {
+                            files.push(newPath);
+                        } else {
+                            if (recursive === true) {
+                                __getAllFiles(folderObj[folderName], newPath);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    };
+
+    this.getFolderList = (barPath, recursive) => {
+        barPath = pskPath.normalize(barPath);
+        let folders = [];
+        if (barPath === "/") {
+            __getAllFolders(header, barPath, recursive);
+            return folders;
+        } else {
+            const pathSegments = barPath.split("/");
+            __getFoldersFromPath(header, pathSegments, "/", recursive);
+            return folders;
+        }
+
+        function __getAllFolders(folderObj, relativePath, recursive) {
+            Object.keys(folderObj).forEach(folderName => {
+                if (typeof folderObj[folderName] === "object" && !Array.isArray(folderObj[folderName])) {
+                    const newPath = pskPath.join(relativePath, folderName);
+                    folders.push(newPath);
+                    if (recursive === true) {
+                        __getAllFolders(folderObj[folderName], newPath);
+                    }
+                }
+            });
+        }
+
+        function __getFoldersFromPath(folderObj, pathSegments, relativePath, recursive) {
+            let folderName = pathSegments.shift();
+            if (folderName === "") {
+                folderName = pathSegments.shift();
+            }
+            if (folderObj[folderName]) {
+                const newFolderPath = pskPath.join(relativePath, folderName);
+                if (pathSegments.length === 0) {
+                    folders.push(newFolderPath);
+                    Object.keys(folderObj[folderName]).forEach(fileName => {
+                        if (typeof folderObj[folderName][fileName] === "object" && !Array.isArray(folderObj[folderName][fileName])) {
+                            const newFilePath = pskPath.join(relativePath, fileName);
+                            folders.push(newFilePath);
+                            if (recursive === true) {
+                                __getFoldersFromPath(folderObj[folderName][fileName], pathSegments, newFilePath, recursive);
+                            }
+                        }
+                    });
+                } else {
+                    __getFoldersFromPath(folderObj[folderName], pathSegments, newFolderPath, recursive);
+                }
+            }
+        }
     };
 
     this.getTransformParameters = (brickId) => {
@@ -2018,9 +2280,9 @@ function FolderBarMap(header) {
             return encryptionKey ? {key: encryptionKey} : undefined;
         }
         let bricks = [];
-        const files = this.getFileList();
+        const files = this.getFileList("/", true);
         files.forEach(file => {
-            bricks = bricks.concat(header[file]);
+            bricks = bricks.concat(getBricksForFile(file));
         });
 
         const brickObj = bricks.find(brick => {
@@ -2040,7 +2302,7 @@ function FolderBarMap(header) {
             header.setConfig(archiveConfig);
             header.setTransformParameters({key: encryptionKey});
             header = JSON.parse(header.getRawData().toString());
-        }else{
+        } else {
             if (Buffer.isBuffer(header)) {
                 header = header.toString();
             }
@@ -2067,12 +2329,39 @@ function FolderBarMap(header) {
         this.load();
         delete header[filePath];
     };
+
+    function getBricksForFile(filePath) {
+        filePath = pskPath.normalize(filePath);
+        const splitPath = filePath.split("/");
+        return __getBricksForFileRecursively(header, splitPath);
+
+
+        function __getBricksForFileRecursively(folderObj, splitPath) {
+            let folderName = splitPath.shift();
+            if (folderName === "") {
+                folderName = splitPath.shift();
+            }
+            if (folderObj[folderName]) {
+                if (splitPath.length === 0) {
+                    if (Array.isArray(folderObj[folderName])) {
+                        return folderObj[folderName];
+                    } else {
+                        throw Error("Invalid path");
+                    }
+                } else {
+                    return __getBricksForFileRecursively(folderObj[folderName], splitPath);
+                }
+            } else {
+                throw Error("Invalid path");
+            }
+        }
+    }
 }
 
 module.exports = FolderBarMap;
 }).call(this,require("buffer").Buffer)
 
-},{"./Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","buffer":false}],"/opt/working_dir/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
+},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
 const fs = require("fs");
 const path = require("path");
 const BarMap = require("./FolderBarMap");
@@ -2127,12 +2416,12 @@ function FolderBrickStorage(location) {
         const barMapBrick = barMap.toBrick();
         barMapBrick.setTransformParameters(barMap.getTransformParameters());
        
-        let brickId = barMapBrick.getId();
+        let brickId = barMapBrick.getKey();
         if (!brickId) {
             brickId = barMapBrick.getHash();
         }
 
-        barMapBrick.setId(brickId);
+        barMapBrick.setKey(brickId);
         const writeStream = fs.createWriteStream(path.join(location, brickId));
         writeStream.write(barMapBrick.getTransformedData(), (err) => {
             writeStream.end();
@@ -2171,13 +2460,14 @@ module.exports = {
         return new FolderBrickStorage(location);
     }
 };
-},{"./Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","./FolderBarMap":"/opt/working_dir/privatesky/modules/bar/lib/FolderBarMap.js","fs":false,"path":false}],"/opt/working_dir/privatesky/modules/bar/lib/Seed.js":[function(require,module,exports){
+},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./FolderBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js","fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require("pskcrypto");
+const base58 = require("./base58");
 
-function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength = 32) {
+function Seed(compactSeed, endpoint, key) {
     let seed;
-
+    const keyLen = 32;
     init();
 
     this.getCompactForm = () => {
@@ -2188,38 +2478,29 @@ function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength
         return generateCompactForm(seed);
     };
 
-    this.getLocation = () => {
-        if (!seed) {
-            throw Error("Cannot retrieve location");
-        }
-
-        return seed.endpoint + "/" + seed.id.toString("hex");
-    };
-
     this.getEndpoint = () => {
         if (!seed) {
             throw Error("Cannot retrieve endpoint");
         }
 
-        return seed.endpoint.toString();
+        return seed.endpoint;
     };
 
-    this.getId = () => {
-        if (!seed.id) {
+    this.getAnchorURL = () => {
+        if (!seed.key) {
             return;
         }
-        return seed.id.toString("hex");
+        return seed.endpoint + "/" + crypto.pskHash(seed.key, "hex");
     };
 
-    this.setId = (localId) => {
-        seed.id = localId;
+    this.getKey = () => {
+        return crypto.pskHash(seed.key, "hex");
+    };
+    this.setKey = (key) => {
+        seed.key = key;
     };
 
     this.getEncryptionKey = (algorithm) => {
-        if (seed.tag === 'r') {
-            return;
-        }
-
         return crypto.deriveKey(algorithm, generateCompactForm(seed));
     };
 
@@ -2234,24 +2515,18 @@ function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength
 
     function create() {
         const localSeed = {};
-        localSeed.id = id;
-        if (!id && usedForEncryption) {
+        localSeed.key = key;
+        if (!key) {
             //Bugfix: randomBytes in browser returns an Uint8Array object that has a wrong constructor and prototype
             //that is why we create a new instance of Buffer/Uint8Array based on the result of randomBytes
-            localSeed.id = Buffer.from(crypto.randomBytes(randomLength));
+            localSeed.key = Buffer.from(crypto.randomBytes(keyLen));
             //TODO: why don't we use ID Generator from swarmutils?
         }
 
         if (endpoint) {
             localSeed.endpoint = endpoint;
-        }else{
+        } else {
             throw Error("The SEED could not be created because an endpoint was not provided.")
-        }
-
-        if (usedForEncryption === true) {
-            localSeed.flag = 'e';
-        }else{
-            localSeed.flag = 'r';
         }
 
         return localSeed;
@@ -2262,16 +2537,15 @@ function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength
             return expandedSeed;
         }
 
-        if(!expandedSeed.id){
+        if (!expandedSeed.key) {
             throw Error("The seed does not contain an id");
         }
-        let compactSeed = expandedSeed.id.toString('base64');
+        let compactSeed = expandedSeed.key.toString("hex");
         if (expandedSeed.endpoint) {
-            compactSeed += '|' + Buffer.from(JSON.stringify(expandedSeed.endpoint)).toString('base64');
+            compactSeed += '|' + expandedSeed.endpoint.toString();
         }
 
-        compactSeed += expandedSeed.flag;
-        return Buffer.from(encodeURIComponent(compactSeed));
+        return base58.encode(compactSeed);
     }
 
     function load(compactFormSeed) {
@@ -2287,18 +2561,14 @@ function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength
             compactFormSeed = compactFormSeed.toString();
         }
 
-        const decodedCompactSeed = decodeURIComponent(compactFormSeed);
         const localSeed = {};
-        const splitCompactSeed = decodedCompactSeed.split('|');
-
-        localSeed.flag = splitCompactSeed[1][splitCompactSeed[1].length - 1];
-        splitCompactSeed[1] = splitCompactSeed[1].slice(0, -1);
-        localSeed.id = Buffer.from(splitCompactSeed[0], 'base64');
+        const splitCompactSeed = base58.decode(compactFormSeed).toString().split('|');
+        localSeed.key = Buffer.from(splitCompactSeed[0], "hex");
 
         if (splitCompactSeed[1] && splitCompactSeed[1].length > 0) {
-            localSeed.endpoint = JSON.parse(Buffer.from(splitCompactSeed[1], 'base64').toString());
+            localSeed.endpoint = splitCompactSeed[1];
         } else {
-            console.warn('Cannot find endpoint in compact seed')
+            throw new Error('Cannot find endpoint in compact seed');
         }
 
         return localSeed;
@@ -2306,9 +2576,149 @@ function Seed(compactSeed, id, endpoint, usedForEncryption  = true, randomLength
 }
 
 module.exports = Seed;
+
+
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"pskcrypto":"pskcrypto"}],"/opt/working_dir/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
+},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/base58.js","buffer":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/base58.js":[function(require,module,exports){
+(function (Buffer){
+const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const BASE = ALPHABET.length;
+const LEADER = ALPHABET.charAt(0);
+const FACTOR = Math.log(BASE) / Math.log(256); // log(BASE) / log(256), rounded up
+const iFACTOR = Math.log(256) / Math.log(BASE); // log(256) / log(BASE), rounded up
+
+const BASE_MAP = Buffer.alloc(256);
+for (let j = 0; j < BASE_MAP.length; j++) {
+    BASE_MAP[j] = 255
+}
+for (let i = 0; i < ALPHABET.length; i++) {
+    let x = ALPHABET.charAt(i);
+    let xc = x.charCodeAt(0);
+    if (BASE_MAP[xc] !== 255) {
+        throw new TypeError(x + ' is ambiguous');
+    }
+    BASE_MAP[xc] = i;
+}
+
+function encode(source) {
+    if (Array.isArray(source) || source instanceof Uint8Array || typeof source === "string") {
+        source = Buffer.from(source);
+    }
+    if (!Buffer.isBuffer(source)) {
+        throw new TypeError('Expected Buffer');
+    }
+    if (source.length === 0) {
+        return '';
+    }
+    // Skip & count leading zeroes.
+    let zeroes = 0;
+    let length = 0;
+    let pbegin = 0;
+    const pend = source.length;
+    while (pbegin !== pend && source[pbegin] === 0) {
+        pbegin++;
+        zeroes++;
+    }
+    // Allocate enough space in big-endian base58 representation.
+    const size = ((pend - pbegin) * iFACTOR + 1) >>> 0;
+    const b58 = Buffer.alloc(size);
+    // Process the bytes.
+    while (pbegin !== pend) {
+        let carry = source[pbegin];
+        // Apply "b58 = b58 * 256 + ch".
+        let i = 0;
+        for (let it1 = size - 1; (carry !== 0 || i < length) && (it1 !== -1); it1--, i++) {
+            carry += (256 * b58[it1]) >>> 0;
+            b58[it1] = (carry % BASE) >>> 0;
+            carry = (carry / BASE) >>> 0;
+        }
+        if (carry !== 0) {
+            throw new Error('Non-zero carry');
+        }
+        length = i;
+        pbegin++;
+    }
+    // Skip leading zeroes in base58 result.
+    let it2 = size - length;
+    while (it2 !== size && b58[it2] === 0) {
+        it2++;
+    }
+    // Translate the result into a string.
+    let str = LEADER.repeat(zeroes);
+    for (; it2 < size; ++it2) {
+        str += ALPHABET.charAt(b58[it2]);
+    }
+    return str;
+}
+
+function decode(source) {
+    if (typeof source !== 'string') {
+        throw new TypeError('Expected String');
+    }
+    if (source.length === 0) {
+        return Buffer.alloc(0);
+    }
+    let psz = 0;
+    // Skip leading spaces.
+    if (source[psz] === ' ') {
+        return;
+    }
+    // Skip and count leading '1's.
+    let zeroes = 0;
+    let length = 0;
+    while (source[psz] === LEADER) {
+        zeroes++;
+        psz++;
+    }
+    // Allocate enough space in big-endian base256 representation.
+    const size = (((source.length - psz) * FACTOR) + 1) >>> 0; // log(58) / log(256), rounded up.
+    const b256 = Buffer.alloc(size);
+    // Process the characters.
+    while (source[psz]) {
+        // Decode character
+        let carry = BASE_MAP[source.charCodeAt(psz)];
+        // Invalid character
+        if (carry === 255) {
+            return;
+        }
+        let i = 0;
+        for (let it3 = size - 1; (carry !== 0 || i < length) && (it3 !== -1); it3--, i++) {
+            carry += (BASE * b256[it3]) >>> 0;
+            b256[it3] = (carry % 256) >>> 0;
+            carry = (carry / 256) >>> 0;
+        }
+        if (carry !== 0) {
+            throw new Error('Non-zero carry');
+        }
+        length = i;
+        psz++;
+    }
+    // Skip trailing spaces.
+    if (source[psz] === ' ') {
+        return;
+    }
+    // Skip leading zeroes in b256.
+    let it4 = size - length;
+    while (it4 !== size && b256[it4] === 0) {
+        it4++;
+    }
+    const vch = Buffer.alloc(zeroes + (size - it4));
+    vch.fill(0x00, 0, zeroes);
+    let j = zeroes;
+    while (it4 !== size) {
+        vch[j++] = b256[it4++];
+    }
+    return vch;
+}
+
+module.exports = {
+    encode,
+    decode
+};
+}).call(this,require("buffer").Buffer)
+
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
 (function (Buffer){
 function BrickTransform(transformGenerator) {
     let directTransform;
@@ -2365,7 +2775,7 @@ module.exports = BrickTransform;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js":[function(require,module,exports){
 const CompressionGenerator = require("./CompressionGenerator");
 const EncryptionGenerator= require("./EncryptionGenerator");
 const CompressionEncryptionGenerator = require("./CompressionEncryptionGenerator");
@@ -2402,7 +2812,7 @@ function BrickTransformFactory() {
 module.exports = BrickTransformFactory;
 
 
-},{"./BrickTransform":"/opt/working_dir/privatesky/modules/bar/lib/transforms/BrickTransform.js","./CompressionEncryptionGenerator":"/opt/working_dir/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js","./CompressionGenerator":"/opt/working_dir/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/opt/working_dir/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/opt/working_dir/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js":[function(require,module,exports){
+},{"./BrickTransform":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js","./CompressionEncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js","./CompressionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js":[function(require,module,exports){
 const CompressionGenerator = require("./CompressionGenerator");
 const EncryptionGenerator = require("./EncryptionGenerator");
 
@@ -2445,7 +2855,7 @@ function CompressionEncryptionGenerator(config) {
 }
 
 module.exports = CompressionEncryptionGenerator;
-},{"./CompressionGenerator":"/opt/working_dir/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/opt/working_dir/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/opt/working_dir/privatesky/modules/bar/lib/transforms/CompressionGenerator.js":[function(require,module,exports){
+},{"./CompressionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js":[function(require,module,exports){
 const zlib = require("zlib");
 
 function CompressionGenerator(config) {
@@ -2499,7 +2909,7 @@ function CompressionGenerator(config) {
 module.exports = CompressionGenerator;
 
 
-},{"zlib":false}],"/opt/working_dir/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js":[function(require,module,exports){
+},{"zlib":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js":[function(require,module,exports){
 const crypto = require("pskcrypto");
 
 function EncryptionGenerator(config) {
@@ -2515,7 +2925,7 @@ function EncryptionGenerator(config) {
         delete decryptionParameters.data;
         return {
             data: data,
-            params:decryptionParameters
+            params: decryptionParameters
         };
     };
 
@@ -2534,10 +2944,14 @@ function EncryptionGenerator(config) {
             return;
         }
 
+        if (config.getIsEncrypted() === false) {
+            return;
+        }
+
         const encOptions = config.getEncryptionOptions();
-        if(transformParameters && transformParameters.key){
+        if (transformParameters && transformParameters.key) {
             key = transformParameters.key;
-        }else{
+        } else {
             key = pskEncryption.generateEncryptionKey(algorithm);
         }
 
@@ -2559,6 +2973,11 @@ function EncryptionGenerator(config) {
         if (!algorithm) {
             return;
         }
+
+        if (config.getIsEncrypted() === false) {
+            return;
+        }
+
         const encOptions = config.getEncryptionOptions();
         let authTagLength = 0;
         if (!config.getEncryptionOptions() || !config.getAuthTagLength()) {
@@ -2577,7 +2996,7 @@ function EncryptionGenerator(config) {
 }
 
 module.exports = EncryptionGenerator;
-},{"pskcrypto":"pskcrypto"}],"/opt/working_dir/privatesky/modules/bar/utils/AsyncDispatcher.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js":[function(require,module,exports){
 
 function AsyncDispatcher(finalCallback) {
 	let results = [];
@@ -2627,7 +3046,7 @@ function AsyncDispatcher(finalCallback) {
 }
 
 module.exports = AsyncDispatcher;
-},{}],"/opt/working_dir/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -2659,7 +3078,7 @@ module.exports = {
     isDuplex
 };
 
-},{}],"/opt/working_dir/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
 const fs = require('fs');
 const OFFSET_SIZE = 8;
 
@@ -2678,7 +3097,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBarMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":false}],"/opt/working_dir/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js":[function(require,module,exports){
+},{"fs":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js":[function(require,module,exports){
 function EDFSBrickStorage(endpoint) {
 
     const bar = require("bar");
@@ -2702,6 +3121,10 @@ function EDFSBrickStorage(endpoint) {
 
             const brick = bar.createBrick();
             brick.setTransformedData(brickData);
+
+            if (brickHash !== brick.getHash()) {
+                return callback(Error("The received data is invalid"));
+            }
             callback(undefined, brick);
         });
     };
@@ -2715,10 +3138,10 @@ function EDFSBrickStorage(endpoint) {
         const barMapBrick = barMap.toBrick();
         barMapBrick.setTransformParameters(barMap.getTransformParameters());
 
-        let brickId = barMapBrick.getId();
+        let brickId = barMapBrick.getKey();
         if (!brickId) {
             brickId = barMapBrick.getHash();
-            barMapBrick.setId(brickId);
+            barMapBrick.setKey(brickId);
         }
 
         brickTransportStrategy.getHashForAlias(brickId, (err, hashesList) => {
@@ -2781,6 +3204,9 @@ function EDFSBrickStorage(endpoint) {
 
                 const mapBrick = bar.createBrick();
                 mapBrick.setTransformedData(barMapData);
+                if (barMapId !== mapBrick.getHash()) {
+                    return callback(Error("Invalid data received"));
+                }
                 map = bar.createBarMap(mapBrick);
                 callback(undefined, map);
             });
@@ -2791,14 +3217,14 @@ function EDFSBrickStorage(endpoint) {
 module.exports = EDFSBrickStorage;
 
 
-},{"bar":"bar"}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
+},{"bar":"bar"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
 
 function FetchBrickTransportStrategy(initialConfig) {
     const url = initialConfig;
     this.send = (name, data, callback) => {
 
-        fetch(url + "/EDFS/", {
+        fetch(url + "/EDFS/"+name, {
             method: 'POST',
             mode: 'cors',
             headers: {
@@ -2809,7 +3235,10 @@ function FetchBrickTransportStrategy(initialConfig) {
             if(response.status>=400){
                 return callback(new Error(`An error occurred ${response.statusText}`))
             }
-            return response.json();
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
         }).then(function(data) {
             callback(null, data)
         }).catch(error=>{
@@ -2862,19 +3291,45 @@ function FetchBrickTransportStrategy(initialConfig) {
         });
     };
 
+    this.attachHashToAlias = (alias, name, callback) => {
+        fetch(url + '/EDFS/attachHashToAlias/' + name, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            body: alias
+        }).then(response => {
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
+        }).then(data => {
+            callback(null, data);
+        }).catch(error => {
+            callback(error);
+        })
+    }
+
     this.getLocator = () => {
         return url;
     };
 }
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
+FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
+    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+};
 
 
 module.exports = FetchBrickTransportStrategy;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
 
 function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
@@ -2911,7 +3366,8 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 };
 
 module.exports = HTTPBrickTransportStrategy;
-},{"psk-http-client":"psk-http-client"}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+},{"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+(function (Buffer){
 function BrickTransportStrategiesRegistry() {
     const strategies = {};
 
@@ -2929,7 +3385,7 @@ function BrickTransportStrategiesRegistry() {
 
     this.get = (endpoint) => {
         if (typeof endpoint !== "string" || endpoint.length === 0) {
-            throw Error("Invalid endpoint");
+            throw Error(`Invalid endpoint ${endpoint}, ${typeof endpoint} ${Buffer.isBuffer(endpoint)}`);
         }
 
         const strategyName = getStrategyNameFromEndpoint(endpoint);
@@ -2956,25 +3412,33 @@ function BrickTransportStrategiesRegistry() {
 if (!$$.brickTransportStrategiesRegistry) {
     $$.brickTransportStrategiesRegistry = new BrickTransportStrategiesRegistry();
 }
-},{}],"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
-function EDFS(endpoint) {
+}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+
+},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
+function EDFS(endpoint, options) {
+    options = options || {};
+
     const RawDossier = require("./RawDossier");
     const barModule = require("bar");
     const fsAdapter = require("bar-fs-adapter");
     const constants = require('../moduleConstants');
-    const self = this;
+    const cache = options.cache;
 
-    this.createCSB = () => {
-        return new RawDossier(endpoint);
+    this.createRawDossier = () => {
+        return new RawDossier(endpoint, undefined, cache);
     };
 
     this.createBar = () => {
         return barModule.createArchive(createArchiveConfig());
     };
 
-    this.bootCSB = (seed, callback) => {
-        const rawDossier = new RawDossier(endpoint, seed);
+    this.bootRawDossier = (seed, callback) => {
+        const rawDossier = new RawDossier(endpoint, seed, cache);
         rawDossier.start(err => callback(err, rawDossier));
+    };
+
+    this.loadRawDossier = (seed) => {
+        return new RawDossier(endpoint, seed, cache);
     };
 
     this.loadBar = (seed) => {
@@ -2987,16 +3451,20 @@ function EDFS(endpoint) {
         bar.clone(edfsBrickStorage, true, callback);
     };
 
-    this.createWallet = (templateSeed, pin, overwrite = false, callback) => {
-        const wallet = this.createCSB();
-        wallet.mount("", constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
+    this.createWallet = (templateSeed, password, overwrite, callback) => {
+        if (typeof overwrite === "function") {
+            callback = overwrite;
+            overwrite = false;
+        }
+        const wallet = this.createRawDossier();
+        wallet.mount("/" + constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
             if (err) {
                 return callback(err);
             }
 
             const seed = wallet.getSeed();
-            if (typeof pin !== "undefined") {
-                require("../seedCage").putSeed(seed, pin, overwrite, (err) => {
+            if (typeof password !== "undefined") {
+                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
@@ -3008,55 +3476,48 @@ function EDFS(endpoint) {
         }));
     };
 
-    this.loadWallet = function (walletSeed, pin, overwrite, callback) {
+    this.loadWallet = function (walletSeed, password, overwrite, callback) {
         if (typeof overwrite === "function") {
             callback = overwrite;
-            overwrite = pin;
-            pin = walletSeed;
+            overwrite = password;
+            password = walletSeed;
             walletSeed = undefined;
         }
         if (typeof walletSeed === "undefined") {
-            require("../seedCage").getSeed(pin, (err, seed) => {
+            require("../seedCage").getSeed(password, (err, seed) => {
                 if (err) {
                     return callback(err);
                 }
-                try {
-                    let wallet = this.loadBar(seed);
-                    return callback(undefined, wallet);
-                } catch (err) {
-                    return callback(err);
+                let rawDossier = this.loadRawDossier(seed);
+
+                if (!rawDossier) {
+                    return callback(new Error("RawDossier is not available"));
                 }
+                return callback(undefined, rawDossier);
+
             });
         } else {
-            let wallet;
-            try {
-                wallet = this.loadBar(walletSeed);
-                if (typeof pin !== "undefined" && pin !== null) {
-                    require("../seedCage").putSeed(walletSeed, pin, overwrite, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        callback(undefined, wallet);
-                    });
-                } else {
-                    return callback(undefined, wallet);
-                }
-            } catch (err) {
-                return callback(err);
+
+            let rawDossier = this.loadRawDossier(walletSeed);
+
+            if (!rawDossier) {
+                return callback(new Error("RawDossier is not available"));
+            }
+
+
+            if (typeof password !== "undefined" && password !== null) {
+                require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, rawDossier);
+                });
+            } else {
+                return callback(undefined, rawDossier);
             }
         }
     };
 
-    this.createBarWithConstitution = function (folderConstitution, callback) {
-        const bar = this.createBar();
-        bar.addFolder(folderConstitution, constants.CSB.CONSTITUTION_FOLDER, (err, mapDigest) => {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(undefined, bar);
-        });
-    };
 //------------------------------------------------ internal methods -------------------------------------------------
     function createArchiveConfig(seed) {
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
@@ -3067,6 +3528,7 @@ function EDFS(endpoint) {
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
         archiveConfigurator.setBufferSize(65535);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
+        archiveConfigurator.setCache(cache);
 
         if (seed) {
             archiveConfigurator.setSeed(seed);
@@ -3079,15 +3541,13 @@ function EDFS(endpoint) {
 }
 
 module.exports = EDFS;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","edfs-brick-storage":"edfs-brick-storage"}],"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
-/*
 
-Sinica: to be renamed CSBHandler. RootCSB should be deleted
-*/
-
-function RawDossier(endpoint, seed) {
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","edfs-brick-storage":"edfs-brick-storage"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
+function RawDossier(endpoint, seed, cache) {
     const barModule = require("bar");
     const constants = require("../moduleConstants").CSB;
+    const swarmutils = require("swarmutils");
+    const TaskCounter = swarmutils.TaskCounter;
     let bar = createBar(seed);
     this.getSeed = () => {
         return bar.getSeed();
@@ -3097,51 +3557,294 @@ function RawDossier(endpoint, seed) {
         createBlockchain(bar).start(callback);
     };
 
-    this.addFolder = (fsFolderPath, barPath, callback) => {
-        bar.addFolder(fsFolderPath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+    this.addFolder = (fsFolderPath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
 
-    this.addFile = (fsFilePath, barPath, callback) => {
-        bar.addFile(fsFilePath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
-    this.readFile = bar.readFile;
-
-    this.extractFolder = bar.extractFolder;
-
-    this.extractFile = bar.extractFile;
-
-    this.writeFile = (barPath, data, callback) => {
-        bar.writeFile(barPath, data, (err, barMapDigest) => callback(err, barMapDigest));
-    };
-
-    this.listFiles = bar.listFiles;
-
-    this.mount = (path, name, archiveIdentifier, callback) => {
-        bar.readFile(constants.MANIFEST_FILE, (err, data) => {
-            let manifest;
-            if (err) {
-                manifest = {};
-                manifest.mounts = [];
-            }
-
-            if (data) {
-                manifest = JSON.parse(data.toString());
-                const pathNames = manifest.mounts.filter(el => el.localPath === path);
-                const index = pathNames.findIndex(el => el === name);
-                if (index >= 0) {
-                    return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+        if (options.ignoreMounts === true) {
+            bar.addFolder(fsFolderPath, barPath, options, callback);
+        } else {
+            const splitPath = barPath.split("/");
+            const folderName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
                 }
+
+                dossierContext.archive.addFolder(fsFolderPath, dossierContext.relativePath + "/" + folderName, options, callback);
+            });
+        }
+    };
+
+    this.addFile = (fsFilePath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        if (options.ignoreMounts === true) {
+            bar.addFile(fsFilePath, barPath, options, (err, barMapDigest) => callback(err, barMapDigest));
+        } else {
+            const splitPath = barPath.split("/");
+            const fileName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                dossierContext.archive.addFile(fsFilePath, dossierContext.relativePath + "/" + fileName, options, callback);
+            });
+        }
+    };
+
+    this.readFile = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
             }
 
-            const mount = {};
-            mount.localPath = path;
-            mount.mountName = name;
-            mount.archiveIdentifier = archiveIdentifier;
+            dossierContext.archive.readFile(dossierContext.relativePath, callback);
+        });
+    };
 
-            manifest.mounts.push(mount);
+    this.createReadStream = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
 
-            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+            dossierContext.archive.createReadStream(dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFolder = (fsFolderPath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFolder(fsFolderPath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFile = (fsFilePath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFile(fsFilePath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.writeFile = (path, data, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        if (path.split("/").includes(constants.MANIFEST_FILE)) {
+            return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
+        }
+        if (options.ignoreMounts === true) {
+            bar.writeFile(path, data, options, callback);
+        } else {
+            const splitPath = path.split("/");
+            const fileName = splitPath.pop();
+            path = splitPath.join("/");
+            loadBarForPath(path, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+                if (dossierContext.readonly === true) {
+                    return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                }
+
+                dossierContext.archive.writeFile(dossierContext.relativePath + "/" + fileName, data, options, callback);
+            });
+        }
+    };
+
+    this.delete = (barPath, callback) => {
+        bar.delete(barPath, callback);
+    };
+
+    this.listFiles = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, (err, files) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                if (path !== "/" && path !== "" && typeof path !== "function") {
+                    files = files.map(file => {
+                        if (file[0] === "/") {
+                            file = file.slice(1);
+                        }
+
+                        return file;
+                    })
+                }
+
+                callback(undefined, files);
+            });
+        });
+    };
+
+    this.listFolders = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFolders(dossierContext.relativePath, (err, folders) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, folders);
+            });
+        });
+    };
+
+    this.readDir = (folderPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {
+                withFileTypes: false
+            };
+        }
+        loadBarForPath(folderPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const taskCounter = new TaskCounter((errors, results) => {
+                let entries;
+                if (options.withFileTypes === true) {
+                    entries = {};
+                    results.forEach(res=> {
+                        let entryType = Object.keys(res)[0];
+                        entries[entryType] = res[entryType];
+                    })
+                }else{
+                    entries = [];
+                    results.forEach(res => {
+                        entries = entries.concat(Object.values(res)[0])
+                    });
+                }
+
+
+                callback(undefined, entries);
+            });
+
+            taskCounter.increment(3);
+            dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                folders = folders.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {folders: folders});
+            });
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                files= files.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {files: files});
+            });
+
+            this.listMountedDossiers("/", (err, mountedDossiers) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                const mountPaths = mountedDossiers.map(dossier => {
+                    const pathSegments = dossier.path.split("/");
+                    if (pathSegments[0] === "") {
+                        pathSegments.shift();
+                    }
+                    if (pathSegments.length > 0) {
+                        return pathSegments[0];
+                    }
+                });
+
+                taskCounter.decrement(undefined, {mounts: mountPaths});
+            });
+        });
+    };
+
+    this.mount = (path, name, archiveIdentifier, readonly, callback) => {
+        if (typeof readonly === "function") {
+            callback = readonly;
+            readonly = false;
+        }
+        if (/\W-_/.test(name) === true) {
+            return callback(Error("Invalid mount name"));
+        }
+
+        bar.listFiles(path, (err, files) => {
+            if (!err && files.length > 0) {
+                return callback(Error("Tried to mount in a non-empty folder"));
+            }
+
+            bar.readFile(constants.MANIFEST_FILE, (err, data) => {
+                let manifest;
+                if (err) {
+                    manifest = {};
+                    manifest.mounts = [];
+                }
+
+                if (data) {
+                    manifest = JSON.parse(data.toString());
+                    const existingMount = manifest.mounts.find(el => el.localPath === path && el.mountName === name);
+                    if (existingMount) {
+                        return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+                    }
+                }
+
+                const mount = {};
+                mount.localPath = path;
+                mount.mountName = name;
+                mount.archiveIdentifier = archiveIdentifier;
+                mount.readonly = readonly;
+                manifest.mounts.push(mount);
+
+                bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), {encrypt: true}, callback);
+            });
         });
     };
 
@@ -3163,7 +3866,43 @@ function RawDossier(endpoint, seed) {
                 return callback(Error(`No mount point exists at path ${path}`));
             }
 
-            callback();
+            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+        });
+    };
+
+    this.listMountedDossiers = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let manifest;
+                try {
+                    manifest = JSON.parse(manifestContent.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+
+                const matchingMounts = [];
+                manifest.mounts.forEach(mount => {
+                    let sep = mount.localPath === "/" ? "" : "/";
+                    let pth = mount.localPath + sep + mount.mountName;
+
+                    if (pth.startsWith(dossierContext.relativePath)) {
+                        if (path !== "/" && path !== "" && typeof path !== "function" && pth[0] === "/") {
+                            pth = pth.slice(1);
+                        }
+
+                        matchingMounts.push({path: pth, dossierReference: mount.archiveIdentifier});
+                    }
+                });
+                callback(undefined, matchingMounts);
+            });
         });
     };
 
@@ -3196,67 +3935,116 @@ function RawDossier(endpoint, seed) {
         } else {
             archiveConfigurator.setSeed(localSeed);
         }
+        archiveConfigurator.setCache(cache);
 
         return barModule.createArchive(archiveConfigurator);
     }
 
-    this.getRawDossier = (rawDossier, path, callback) => {
-        if (path === "" || path === "/") {
-            return callback(undefined, {rawDossier, path});
+    function loadBarForPath(path, callback) {
+        if (typeof path === "function") {
+            callback = path;
+            path = "/";
         }
-        rawDossier.listFiles((err, files) => {
-            if (err) {
-                return callback(err);
+
+        __loadBarForPathRecursively(bar, "", path, false, callback);
+
+        function __loadBarForPathRecursively(archive, prefixPath, relativePath, readonly, callback) {
+            if (relativePath === "" || relativePath === "/") {
+                return callback(undefined, {archive, prefixPath, readonly, relativePath});
             }
 
-            if (files.length === 0) {
-                return callback();
-            }
-            let pathRest = [];
+            archive.listFiles((err, files) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            let barPath = files.find(barPath => barPath === path);
-            if (barPath) {
-                return callback(undefined, {rawDossier, path});
-            } else {
-                let splitPath = path.split("/");
-                rawDossier.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
-                    if (err) {
-                        return callback(err);
+                if (files.length === 0) {
+                    __searchInManifest();
+                } else {
+                    let barPath = files.find(file => {
+                        return file.includes(relativePath) || relativePath.includes(file);
+                    });
+
+                    if (barPath) {
+                        return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                    } else {
+                        __searchInManifest();
                     }
 
-                    const manifest = JSON.parse(manifestContent.toString());
-                    pathRest.unshift(splitPath.pop());
-                    while (splitPath.length > 0) {
-                        for (let mount of manifest.mounts) {
-                            const localPath = splitPath.join("/");
-                            const name = pathRest.shift();
-                            if (mount.localPath === localPath && mount.mountName === name) {
-                                const internalRawDossier = createBar(mount.archiveIdentifier);
-                                let newPath = "";
-                                if (pathRest.length > 0) {
-                                    newPath = pathRest.join("/");
-                                }
-                                return this.getRawDossier(internalRawDossier, newPath, callback);
-                            }
+                }
+
+                function __searchInManifest() {
+                    let pathRest = [];
+                    let splitPath = relativePath.split("/");
+                    if (splitPath[0] === "") {
+                        splitPath[0] = "/";
+                    }
+
+                    archive.readFile("/" + constants.MANIFEST_FILE, (err, manifestContent) => {
+                        if (err) {
+                            return callback(err);
                         }
 
+                        const manifest = JSON.parse(manifestContent.toString());
                         pathRest.unshift(splitPath.pop());
-                    }
-                    console.log(" nothing to see here");
-                    return;
-                });
-            }
-        });
-    };
+                        if (splitPath.length === 0) {
+                            return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                        }
+
+                        while (splitPath.length > 0) {
+                            let localPath;
+                            if (splitPath[0] === "/") {
+                                while (splitPath[0] === "/") {
+                                    splitPath.shift();
+                                }
+                                localPath = "/" + splitPath.join("/");
+                                splitPath.unshift("/");
+                            } else {
+                                localPath = splitPath.join("/");
+                            }
+
+                            for (let mount of manifest.mounts) {
+                                const name = pathRest[0];
+                                if (mount.localPath === localPath && mount.mountName === name) {
+                                    pathRest.shift();
+
+                                    let newPath;
+                                    if (prefixPath.endsWith("/") || prefixPath === "") {
+                                        newPath = prefixPath + localPath + "/" + name;
+                                    } else {
+                                        newPath = prefixPath + "/" + localPath + "/" + name;
+                                    }
+                                    const internalArchive = createBar(mount.archiveIdentifier);
+                                    let remainingPath = pathRest.join("/");
+                                    if (remainingPath[0] !== "/") {
+                                        //when navigate into an archive we need to ensure that the remainingPath starts with /
+                                        remainingPath = "/" + remainingPath;
+                                    }
+                                    return __loadBarForPathRecursively(internalArchive, newPath, remainingPath, mount.readonly, callback);
+                                }
+                            }
+
+                            pathRest.unshift(splitPath.pop());
+                            if (splitPath.length === 0) {
+                                return callback(Error(`Path ${path} could not be found.`));
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
 }
 
 module.exports = RawDossier;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":false,"edfs-brick-storage":"edfs-brick-storage"}],"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":false,"edfs-brick-storage":"edfs-brick-storage","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 
 module.exports = {
     CSB: {
+        CODE_FOLDER: "code",
         CONSTITUTION_FOLDER: 'constitution',
         BLOCKCHAIN_FOLDER: 'blockchain',
         APP_FOLDER: 'app',
@@ -3269,7 +4057,7 @@ module.exports = {
     }
 };
 
-},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
+},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
@@ -3361,7 +4149,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pth = "path";
 const path = require(pth);
@@ -3377,7 +4165,7 @@ const storageFileName = ".seedCage";
 const seedCagePath = path.join(storageLocation, storageFileName);
 const algorithm = "aes-256-cfb";
 
-function getSeed(pin, callback) {
+function getSeed(password, callback) {
     fs.readFile(seedCagePath, (err, encryptedSeed) => {
         if (err) {
             return callback(err);
@@ -3386,7 +4174,7 @@ function getSeed(pin, callback) {
         let seed;
         try {
             const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, pin);
+            const encKey = crypto.deriveKey(algorithm, password);
             seed = pskEncryption.decrypt(encryptedSeed, encKey).toString();
         } catch (e) {
             return callback(e);
@@ -3396,7 +4184,7 @@ function getSeed(pin, callback) {
     });
 }
 
-function putSeed(seed, pin, overwrite = false, callback) {
+function putSeed(seed, password, overwrite = false, callback) {
     fs.mkdir(storageLocation, {recursive: true}, (err) => {
         if (err) {
             return callback(err);
@@ -3426,7 +4214,7 @@ function putSeed(seed, pin, overwrite = false, callback) {
 
 
                     const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, pin);
+                    const encKey = crypto.deriveKey(algorithm, password);
                     encSeed = pskEncryption.encrypt(seed, encKey);
                     const encParameters = pskEncryption.getEncryptionParameters();
                     encSeed = Buffer.concat([encSeed, encParameters.iv]);
@@ -3460,7 +4248,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
 const or = require("overwrite-require");
 switch ($$.environmentType) {
     case or.constants.THREAD_ENVIRONMENT_TYPE:
@@ -3475,7 +4263,7 @@ switch ($$.environmentType) {
     default:
         throw new Error("No implementation of SeedCage for this env type.");
 }
-},{"./BrowserSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./BrowserSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -3484,12 +4272,14 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
+        const zmqName = "zeromq";
+        require(zmqName);
         const PSKLoggerModule = require('psklogger');
         const PSKLogger = PSKLoggerModule.PSKLogger;
 
@@ -3497,7 +4287,7 @@ if (!global.process || process.env.NO_LOGS !== 'true') {
 
         console.log('Logger init successful', process.pid);
     } catch (e) {
-        if(e.message.indexOf("psklogger")!==-1){
+        if(e.message.indexOf("psklogger")!==-1 || e.message.indexOf("zeromq")!==-1){
             console.log('Logger not available, using console');
             logger = console;
         }else{
@@ -3796,7 +4586,126 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
+},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+const DEFAULT_ITEMS_LIMIT = 1000;
+const DEFAULT_STORAGE_LEVELS = 3;
+
+/**
+ * @param {object} options
+ * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+ * @param {Number} options.limit Number of max items the cache can store per level.
+ *                               Defaults to 1000
+ */
+function Cache(options) {
+    options = options || {};
+    this.limit = parseInt(options.limit, 10) || DEFAULT_ITEMS_LIMIT;
+    this.maxLevels = parseInt(options.maxLevels, 10) || DEFAULT_STORAGE_LEVELS;
+    this.storage = null;
+
+    if (this.limit < 0) {
+        throw new Error('Limit must be a positive number');
+    }
+    if (this.maxLevels < 1) {
+        throw new Error('Cache needs at least one storage level');
+    }
+
+
+    /**
+     * Create an array of Map objects for storing items
+     *
+     * @param {Number} maxLevels
+     * @return {Array.<Map>}
+     */
+    this.createStorage = function (maxLevels) {
+        const storage = [];
+        for (let i = 0; i < maxLevels; i++) {
+            storage.push(new Map());
+        }
+
+        return storage;
+    }
+
+    this.storage = this.createStorage(this.maxLevels);
+
+    /**
+     * @param {*} key
+     * @param {*} value
+     */
+    this.set = function (key, value) {
+        if (this.cacheIsFull()) {
+            this.makeRoom();
+        }
+
+        this.storage[0].set(key, value);
+    }
+
+    /**
+     * @param {*} key
+     * @return {Boolean}
+     */
+    this.has = function (key) {
+        for (let i = 0; i < this.storage.length; i++) {
+            if (this.storage[i].has(key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param {*} key
+     * @return {*}
+     */
+    this.get = function (key) {
+        if (this.storage[0].has(key)) {
+            return this.storage[0].get(key);
+        }
+
+        return this.getFromLowerLevels(key);
+    }
+
+    /**
+     * Get an item from the lower levels.
+     * If one is found added it to the first level as well
+     *
+     * @param {*} key
+     * @return {*}
+     */
+    this.getFromLowerLevels = function (key) {
+        for (let i = 1; i < this.storage.length; i++) {
+            const storageLevel = this.storage[i];
+            if (!storageLevel.has(key)) {
+                continue;
+            }
+            const value = storageLevel.get(key);
+            this.set(key, value);
+            return value;
+        }
+    }
+
+    /**
+     * @return {Boolean}
+     */
+    this.cacheIsFull = function () {
+        return this.storage[0].size >= this.limit;
+    }
+
+    /**
+     * Move all the items down by one level
+     * and clear the first one to make room for new items
+     */
+    this.makeRoom = function () {
+        for (let i = this.storage.length - 1; i > 0; i--) {
+            this.storage[i] = this.storage[i - 1];
+        }
+        this.storage[0] = new Map();
+    }
+}
+
+module.exports = Cache;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
 /**********************  utility class **********************************/
 function RequestManager(pollingTimeOut) {
     if (!pollingTimeOut) {
@@ -4133,7 +5042,7 @@ function HttpChannelClient(remoteEndPoint, channelName, options) {
             }
         });
 
-        createRequestManager();
+        $$.remote.createRequestManager();
     };
 
     const allCatchAlls = [];
@@ -4212,7 +5121,8 @@ if (typeof $$.remote === "undefined") {
         throw new Error("Overwrite this!");
     };
 }
-},{}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
 (function (Buffer){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
@@ -4221,7 +5131,7 @@ function generateMethodForRequestWithData(httpMethod) {
         xhr.onload = function () {
             if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
                 const data = xhr.response;
-                callback(null, data);
+                callback(undefined, data);
             } else {
                 if(xhr.status>=400){
                     const error = new Error("An error occured. StatusCode: " + xhr.status);
@@ -4286,10 +5196,8 @@ $$.remote.doHttpGet = function doHttpGet(url, callback) {
     };
 
     xhr.onload = function () {
-
         if (xhr.readyState === 4 && xhr.status == "200") {
             var contentType = xhr.getResponseHeader("Content-Type");
-
             if (contentType === "application/octet-stream") {
                 let responseBuffer = this.response;
 
@@ -4298,12 +5206,11 @@ $$.remote.doHttpGet = function doHttpGet(url, callback) {
                 for (let i = 0; i < buffer.length; ++i) {
                     buffer[i] = view[i];
                 }
-                callback(null, buffer);
+                callback(undefined, buffer);
             }
             else{
-                callback(null, xhr.response);
+                callback(undefined, xhr.response);
             }
-
         } else {
             const error = new Error("An error occurred. StatusCode: " + xhr.status);
 
@@ -4332,11 +5239,11 @@ function CryptoProvider(){
         }
 
         return uid;
-    }
+    };
 
     this.signSwarm = function(swarm, agent){
         swarm.meta.signature = agent;
-    }
+    };
 }
 
 
@@ -4353,7 +5260,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
 (function (Buffer){
 require("./psk-abstract-client");
 
@@ -4426,7 +5333,7 @@ function generateMethodForRequestWithData(httpMethod) {
 			});
 			res.on('end', () => {
 				try {
-					callback(null, rawData, res.headers);
+					callback(undefined, rawData, res.headers);
 				} catch (err) {
 					return callback(err);
 				}finally {
@@ -4541,7 +5448,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require("buffer").Buffer)
 
-},{"./psk-abstract-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 (function (Buffer){
 function PskCrypto() {
     const crypto = require('crypto');
@@ -4710,7 +5617,7 @@ module.exports = new PskCrypto();
 
 }).call(this,require("buffer").Buffer)
 
-},{"./PskEncryption":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require("crypto");
 const utils = require("./utils/cryptoUtils");
@@ -4795,7 +5702,7 @@ function PskEncryption(algorithm) {
 module.exports = PskEncryption;
 }).call(this,require("buffer").Buffer)
 
-},{"./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -4820,7 +5727,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":false,"util":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 
@@ -4900,7 +5807,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -4928,7 +5835,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":false}],"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -5128,93 +6035,106 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":false}],"/opt/working_dir/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
-    if(typeof getSeed !== "function"){
-        throw new Error("getSeed missing or not a function");
-    }
-    getSeed = promisify(getSeed);
+	if (typeof getSeed !== "function") {
+		throw new Error("getSeed missing or not a function");
+	}
+	getSeed = promisify(getSeed);
 
-    if(typeof getEDFS !== "function"){
-        throw new Error("getEDFS missing or not a function");
-    }
-    getEDFS = promisify(getEDFS);
+	if (typeof getEDFS !== "function") {
+		throw new Error("getEDFS missing or not a function");
+	}
+	getEDFS = promisify(getEDFS);
 
-    if(typeof initializeSwarmEngine !== "function"){
-        throw new Error("initializeSwarmEngine missing or not a function");
-    }
-    initializeSwarmEngine = promisify(initializeSwarmEngine);
+	if (typeof initializeSwarmEngine !== "function") {
+		throw new Error("initializeSwarmEngine missing or not a function");
+	}
+	initializeSwarmEngine = promisify(initializeSwarmEngine);
 
-    if(typeof runtimeBundles !== "undefined" && !Array.isArray(runtimeBundles)){
-        throw new Error("runtimeBundles is not array");
-    }
+	if (typeof runtimeBundles !== "undefined" && !Array.isArray(runtimeBundles)) {
+		throw new Error("runtimeBundles is not array");
+	}
 
-    if(typeof constitutionBundles !== "undefined" && !Array.isArray(constitutionBundles)){
-        throw new Error("constitutionBundles is not array");
-    }
+	if (typeof constitutionBundles !== "undefined" && !Array.isArray(constitutionBundles)) {
+		throw new Error("constitutionBundles is not array");
+	}
 
-    const EDFS = require('edfs');
-    let edfs;
+	const EDFS = require('edfs');
+	let edfs;
+	const pskPath = require("swarmutils").path;
 
-    const evalBundles = async (bundles, ignore) => {
-        const listFiles = promisify(this.bar.listFiles);
-        const readFile = promisify(this.bar.readFile);
+	const evalBundles = async (bundles, ignore) => {
+		const listFiles = promisify(this.rawDossier.listFiles);
+		const readFile = promisify(this.rawDossier.readFile);
 
-        let fileList = await listFiles(EDFS.constants.CSB.CONSTITUTION_FOLDER);
-        fileList = bundles.filter(bundle => fileList.includes(`${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`))
-            .map(bundle => `${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
+		let fileList = await listFiles(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
 
-        if (fileList.length !== bundles.length) {
-            const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
-            if(!ignore){
-                throw new Error(message);
-            }else{
-                console.log(message);
+		fileList = bundles.filter(bundle => fileList.includes(bundle))
+			.map(bundle => pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
+
+		if (fileList.length !== bundles.length) {
+			const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
+			if (!ignore) {
+				throw new Error(message);
+			} else {
+				console.log(message);
+			}
+		}
+
+
+		for (let i = 0; i < fileList.length; i++) {
+			var fileContent = await readFile(fileList[i]);
+			eval(fileContent.toString());
+		}
+	};
+
+	this.boot = function (callback) {
+		const __boot = async () => {
+			const seed = await getSeed();
+			edfs = await getEDFS();
+			this.rawDossier = edfs.loadRawDossier(seed);
+			try{
+                await evalBundles(runtimeBundles);
+            }catch(err)
+            {
+                console.log(err);
             }
-        }
+			await initializeSwarmEngine();
+			if (typeof constitutionBundles !== "undefined") {
+				try{
+					await evalBundles(constitutionBundles, true);
+				}catch(err)
+				{
+					console.log(err);
+				}
+			}
+		};
 
-        for (let i = 0; i < fileList.length; i++) {
-            var fileContent = await readFile(fileList[i]);
-            eval(fileContent.toString());
-        }
-    };
-
-    this.boot = function (callback) {
-       const __boot = async () => {
-           const seed = await getSeed();
-           edfs = await getEDFS();
-           this.bar = edfs.loadBar(seed);
-           await evalBundles(runtimeBundles);
-           await initializeSwarmEngine();
-           if (typeof constitutionBundles !== "undefined") {
-               await evalBundles(constitutionBundles, true);
-           }
-        };
-
-        __boot()
-            .then(() => callback(undefined, this.bar))
-            .catch(callback);
-    };
+		__boot()
+			.then(() => callback(undefined, this.rawDossier))
+			.catch(callback);
+	};
 }
 
 function promisify(fn) {
-    return function (...args) {
-        return new Promise((resolve, reject) => {
-            fn(...args, (err, ...res) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(...res);
-                }
-            });
-        });
-    }
+	return function (...args) {
+		return new Promise((resolve, reject) => {
+			fn(...args, (err, ...res) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(...res);
+				}
+			});
+		});
+	}
 }
 
 module.exports = BootEngine;
 
-},{"edfs":"edfs"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"edfs":"edfs","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -5240,7 +6160,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -5331,7 +6251,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -5399,7 +6319,7 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -5548,7 +6468,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -5598,7 +6518,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -5654,7 +6574,81 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{"./OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+function replaceAll(str, search, replacement) {
+    return str.split(search).join(replacement);
+}
+
+function resolve(pth) {
+    let pathSegments = pth.split("/");
+    let makeAbsolute = pathSegments[0] === "" ? true : false;
+    for (let i = 0; i < pathSegments.length; i++) {
+        let segment = pathSegments[i];
+        if (segment === "..") {
+            let j = 1;
+            if (i > 0) {
+                j = j + 1;
+            } else {
+                makeAbsolute = true;
+            }
+            pathSegments.splice(i + 1 - j, j);
+            i = i - j;
+        }
+    }
+    let res = pathSegments.join("/");
+    if (makeAbsolute && res !== "") {
+        res = __ensureIsAbsolute(res);
+    }
+    return res;
+}
+
+function normalize(pth) {
+    if (typeof pth !== "string") {
+        throw new TypeError();
+    }
+    pth = replaceAll(pth, "\\", "/");
+    pth = replaceAll(pth, /[/]+/, "/");
+
+    return resolve(pth);
+}
+
+function join(...args) {
+    let pth = "";
+    for (let i = 0; i < args.length; i++) {
+        pth += "/" + args[i];
+    }
+    return normalize(pth);
+}
+
+function __ensureIsAbsolute(pth) {
+    if (pth[0] !== "/") {
+        pth = "/" + pth;
+    }
+    return pth;
+}
+
+function isAbsolute(pth) {
+    pth = normalize(pth);
+    if (pth[0] !== "/") {
+        return false;
+    }
+
+    return true;
+}
+
+function ensureIsAbsolute(pth) {
+    pth = normalize(pth);
+    return __ensureIsAbsolute(pth);
+}
+
+module.exports = {
+    normalize,
+    join,
+    isAbsolute,
+    ensureIsAbsolute
+};
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -5746,7 +6740,7 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-},{"child_process":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"child_process":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 var commands = {};
 var commands_help = {};
 
@@ -5817,7 +6811,7 @@ module.exports = {
 };
 
 
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -5885,7 +6879,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 const Queue = require("./Queue");
@@ -5991,7 +6985,30 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"adler32":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+},{}],"adler32":[function(require,module,exports){
 
 "use strict";
 
@@ -6004,12 +7021,12 @@ exports.roll = algorithm.roll.bind(algorithm);
 exports.Hash = Hash;
 exports.register = register;
 
-},{"./lib/Hash":"/opt/working_dir/privatesky/modules/adler32/lib/Hash.js","./lib/algorithm":"/opt/working_dir/privatesky/modules/adler32/lib/algorithm.js","./lib/register":"/opt/working_dir/privatesky/modules/adler32/lib/register.js"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./lib/Hash":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js","./lib/algorithm":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js","./lib/register":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/register.js"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
 };
-},{"./lib/FsAdapter":"/opt/working_dir/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
+},{"./lib/FsAdapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
 
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
 const createFolderBrickStorage = require("./lib/FolderBrickStorage").createFolderBrickStorage;
@@ -6041,53 +7058,51 @@ module.exports.Seed = require('./lib/Seed');
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/opt/working_dir/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/opt/working_dir/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/opt/working_dir/privatesky/modules/bar/lib/Brick.js","./lib/FileBrickStorage":"/opt/working_dir/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBarMap":"/opt/working_dir/privatesky/modules/bar/lib/FolderBarMap.js","./lib/FolderBrickStorage":"/opt/working_dir/privatesky/modules/bar/lib/FolderBrickStorage.js","./lib/Seed":"/opt/working_dir/privatesky/modules/bar/lib/Seed.js"}],"edfs-brick-storage":[function(require,module,exports){
+},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js","./lib/Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"edfs-brick-storage":[function(require,module,exports){
 module.exports.create = (endpoint) => {
     const EDFSBrickStorage = require("./EDFSBrickStorage");
     return new EDFSBrickStorage(endpoint)
 };
 
-},{"./EDFSBrickStorage":"/opt/working_dir/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js"}],"edfs":[function(require,module,exports){
+},{"./EDFSBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js"}],"edfs":[function(require,module,exports){
 require("./brickTransportStrategies/brickTransportStrategiesRegistry");
 const constants = require("./moduleConstants");
 
-function generateUniqueStrategyName(prefix) {
-    const randomPart = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    return prefix + "_" + randomPart;
-}
-
 const or = require("overwrite-require");
 const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+const cache = require('psk-cache').factory();
+
 if (browserContexts.indexOf($$.environmentType) !== -1) {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
-}else{
+} else {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
 }
 
 module.exports = {
     attachToEndpoint(endpoint) {
         const EDFS = require("./lib/EDFS");
-        return new EDFS(endpoint);
+        return new EDFS(endpoint, {
+            cache
+        });
     },
-    attachWithSeed(compactSeed) {
+    attachWithSeed(compactSeed, callback) {
         const SEED = require("bar").Seed;
-        const seed = new SEED(compactSeed);
-        return this.attachToEndpoint(seed.getEndpoint());
+        let seed;
+        try {
+            seed = new SEED(compactSeed);
+        } catch (err) {
+            return callback(err);
+        }
+
+        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
     },
-    attachWithPin(pin, callback) {
-        require("./seedCage").getSeed(pin, (err, seed) => {
+    attachWithPassword(password, callback) {
+        require("./seedCage").getSeed(password, (err, seed) => {
             if (err) {
                 return callback(err);
             }
 
-            let edfs;
-            try {
-                edfs = this.attachWithSeed(seed);
-            } catch (e) {
-                return callback(e);
-            }
-
-            callback(undefined, edfs);
+            this.attachWithSeed(seed, callback);
         });
     },
     checkForSeedCage(callback) {
@@ -6095,7 +7110,8 @@ module.exports = {
     },
     constants: constants
 };
-},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","bar":"bar","overwrite-require":"overwrite-require"}],"overwrite-require":[function(require,module,exports){
+
+},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":"bar","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"overwrite-require":[function(require,module,exports){
 (function (global){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -6255,7 +7271,7 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
-                    $$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
+                    //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
         }
@@ -6437,7 +7453,44 @@ module.exports = {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-http-client":[function(require,module,exports){
+},{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+const Cache = require("./lib/Cache")
+let cacheInstance;
+
+module.exports = {
+
+    /**
+     * Create a new cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    factory: function (options) {
+        return new Cache(options);
+    },
+
+    /**
+     * Get a reference to a singleton cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    getDefaultInstance: function (options) {
+        if (!cacheInstance) {
+            cacheInstance = new Cache(options);
+        }
+
+        return cacheInstance;
+    }
+};
+
+},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"psk-http-client":[function(require,module,exports){
 //to look nice the requireModule on Node
 require("./lib/psk-abstract-client");
 const or = require('overwrite-require');
@@ -6446,7 +7499,7 @@ if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
 } else {
 	require("./lib/psk-node-client");
 }
-},{"./lib/psk-abstract-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"pskcrypto":[function(require,module,exports){
+},{"./lib/psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -6457,7 +7510,7 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/ThreadWorkerBootScript":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/ThreadWorkerBootScript":[function(require,module,exports){
 function boot() {
     const worker_threads ='worker_threads';
     const {parentPort, workerData} = require(worker_threads);
@@ -6486,8 +7539,14 @@ function boot() {
     let edfs;
     function getEDFS(callback){
         const EDFS = require("edfs");
-        edfs = EDFS.attachWithSeed(getSeed());
-        callback(null, edfs);
+        EDFS.attachWithSeed(getSeed(), (err, edfsInst) => {
+            if (err) {
+                return callback(err);
+            }
+
+            edfs = edfsInst;
+            callback(null, edfs);
+        });
     }
 
     function initializeSwarmEngine(callback){
@@ -6503,7 +7562,7 @@ function boot() {
             powerCord.transfer(packedSwarm);
         });
 
-        edfs.bootCSB(workerData.constitutionSeed, (err, csbhandler) =>{
+        edfs.bootRawDossier(workerData.constitutionSeed, (err, csbhandler) =>{
             if(err){
                 $$.throwError(err);
             }
@@ -6526,7 +7585,7 @@ function boot() {
 boot();
 //module.exports = boot.toString();
 
-},{"./BootEngine.js":"/opt/working_dir/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":false,"edfs":"edfs","swarm-engine":false}],"swarmutils":[function(require,module,exports){
+},{"./BootEngine.js":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":false,"edfs":"edfs","swarm-engine":false}],"swarmutils":[function(require,module,exports){
 (function (global){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
@@ -6542,7 +7601,7 @@ module.exports.uidGenerator = uidGenerator;
 module.exports.generateUid = uidGenerator.generateUid;
 module.exports.TaskCounter = require("./lib/TaskCounter");
 module.exports.SwarmPacker = require("./lib/SwarmPacker");
-
+module.exports.path = require("./lib/path");
 module.exports.createPskConsole = function () {
   return require('./lib/pskconsole');
 };
@@ -6560,4 +7619,4 @@ if(typeof global.$$.uidGenerator == "undefined"){
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./lib/Combos":"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/pingpongFork":"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/opt/working_dir/privatesky/builds/tmp/threadBoot.js"])
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/threadBoot.js"])

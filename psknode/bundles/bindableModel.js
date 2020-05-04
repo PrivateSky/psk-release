@@ -1,4 +1,4 @@
-bindableModelRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/bindableModel_intermediar.js":[function(require,module,exports){
+bindableModelRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/bindableModel_intermediar.js":[function(require,module,exports){
 (function (global){
 global.bindableModelLoadModules = function(){ 
 
@@ -17,19 +17,18 @@ global.bindableModelLoadModules = function(){
 	if(typeof $$.__runtimeModules["psk-bindable-model"] === "undefined"){
 		$$.__runtimeModules["psk-bindable-model"] = require("psk-bindable-model");
 	}
-}
+};
 if (false) {
 	bindableModelLoadModules();
-}; 
+}
 global.bindableModelRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("bindableModel");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("bindableModel");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"overwrite-require":"overwrite-require","psk-bindable-model":"psk-bindable-model","soundpubsub":"soundpubsub","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"overwrite-require":"overwrite-require","psk-bindable-model":"psk-bindable-model","soundpubsub":"soundpubsub","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -38,12 +37,14 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
+        const zmqName = "zeromq";
+        require(zmqName);
         const PSKLoggerModule = require('psklogger');
         const PSKLogger = PSKLoggerModule.PSKLogger;
 
@@ -51,7 +52,7 @@ if (!global.process || process.env.NO_LOGS !== 'true') {
 
         console.log('Logger init successful', process.pid);
     } catch (e) {
-        if(e.message.indexOf("psklogger")!==-1){
+        if(e.message.indexOf("psklogger")!==-1 || e.message.indexOf("zeromq")!==-1){
             console.log('Logger not available, using console');
             logger = console;
         }else{
@@ -350,7 +351,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/opt/working_dir/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
+},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
 const SoundPubSub = require("soundpubsub").soundPubSub;
 const CHAIN_CHANGED = 'chainChanged';
 const WILDCARD = "*";
@@ -363,15 +364,17 @@ const compactor = function (message, channel) {
 };
 SoundPubSub.registerCompactor(CHAIN_CHANGED, compactor);
 
-let modelContor = 0;
+let modelCounter = 0;
 
 class PskBindableModel {
 
     static setModel(_model) {
         let root = undefined;
-        let targetPrefix = MODEL_PREFIX + CHAIN_SEPARATOR + modelContor + CHAIN_SEPARATOR;
+        let targetPrefix = MODEL_PREFIX + CHAIN_SEPARATOR + modelCounter + CHAIN_SEPARATOR;
         let observedChains = new Set();
-        modelContor++;
+        const expressions = {};
+
+        modelCounter++;
 
         function extendChain(parentChain, currentChain) {
             return parentChain ? parentChain + CHAIN_SEPARATOR + currentChain : currentChain
@@ -591,12 +594,100 @@ class PskBindableModel {
         }
 
         root = proxify(_model);
+
+        ////////////////////////////
+        // Model expressions support
+        ////////////////////////////
+        /**
+         * @param {string} expressionName
+         * @param {callback} callback
+         * @param {...string} var_args Variable number of chains to watch. First argument can be an array of chains
+         * @throws {Error}
+         */
+        root.addExpression = function (expressionName, callback, ...args) {
+            if (typeof expressionName !== 'string' || !expressionName.length) {
+                throw new Error("Expression name must be a valid string");
+            }
+
+            if (typeof callback !== 'function') {
+                throw new Error("Expression must have a callback");
+            }
+
+            let watchChain = [];
+            if (args.length) {
+                let chainList = args;
+
+                if (Array.isArray(chainList[0])) {
+                    chainList = chainList[0];
+                }
+
+                watchChain = chainList.filter((chain) => {
+                    return typeof chain === 'string' && chain.length;
+                });
+            }
+
+            expressions[expressionName] = {
+                watchChain,
+                callback: function () {
+                    return callback.call(root);
+                }
+            }
+        }
+
+        /**
+         * @param {string} expressionName
+         * @return {mixed}
+         * @throws {Error}
+         */
+        root.evaluateExpression = function (expressionName) {
+            if (!this.hasExpression(expressionName)) {
+                throw new Error(`Expression "${expressionName}" is not defined`);
+            }
+
+            return expressions[expressionName].callback();
+        }
+
+        /**
+         * @param {string} expressionName
+         * @return {boolean}
+         */
+        root.hasExpression = function (expressionName) {
+            if (typeof expressions[expressionName] === 'object' &&
+                typeof expressions[expressionName].callback === 'function') {
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Watch expression chains
+         *
+         * @param {string} expressionName
+         * @param {callback} callback
+         */
+        root.onChangeExpressionChain = function (expressionName, callback) {
+            if (!this.hasExpression(expressionName)) {
+                throw new Error(`Expression "${expressionName}" is not defined`);
+            }
+
+            const expr = expressions[expressionName];
+
+            if (!expr.watchChain.length) {
+                return;
+            }
+
+            for (let i = 0; i < expr.watchChain.length; i++) {
+                this.onChange(expr.watchChain[i], callback);
+            }
+        }
+
         return root;
     }
 }
 
 module.exports = PskBindableModel;
-},{"soundpubsub":"soundpubsub"}],"/opt/working_dir/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
+
+},{"soundpubsub":"soundpubsub"}],"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -971,7 +1062,7 @@ function SoundPubSub(){
 }
 
 exports.soundPubSub = new SoundPubSub();
-},{"swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -997,7 +1088,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -1088,7 +1179,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -1156,7 +1247,7 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -1305,7 +1396,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -1355,7 +1446,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -1411,7 +1502,81 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{"./OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+function replaceAll(str, search, replacement) {
+    return str.split(search).join(replacement);
+}
+
+function resolve(pth) {
+    let pathSegments = pth.split("/");
+    let makeAbsolute = pathSegments[0] === "" ? true : false;
+    for (let i = 0; i < pathSegments.length; i++) {
+        let segment = pathSegments[i];
+        if (segment === "..") {
+            let j = 1;
+            if (i > 0) {
+                j = j + 1;
+            } else {
+                makeAbsolute = true;
+            }
+            pathSegments.splice(i + 1 - j, j);
+            i = i - j;
+        }
+    }
+    let res = pathSegments.join("/");
+    if (makeAbsolute && res !== "") {
+        res = __ensureIsAbsolute(res);
+    }
+    return res;
+}
+
+function normalize(pth) {
+    if (typeof pth !== "string") {
+        throw new TypeError();
+    }
+    pth = replaceAll(pth, "\\", "/");
+    pth = replaceAll(pth, /[/]+/, "/");
+
+    return resolve(pth);
+}
+
+function join(...args) {
+    let pth = "";
+    for (let i = 0; i < args.length; i++) {
+        pth += "/" + args[i];
+    }
+    return normalize(pth);
+}
+
+function __ensureIsAbsolute(pth) {
+    if (pth[0] !== "/") {
+        pth = "/" + pth;
+    }
+    return pth;
+}
+
+function isAbsolute(pth) {
+    pth = normalize(pth);
+    if (pth[0] !== "/") {
+        return false;
+    }
+
+    return true;
+}
+
+function ensureIsAbsolute(pth) {
+    pth = normalize(pth);
+    return __ensureIsAbsolute(pth);
+}
+
+module.exports = {
+    normalize,
+    join,
+    isAbsolute,
+    ensureIsAbsolute
+};
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -1503,7 +1668,7 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-},{"child_process":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"child_process":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 var commands = {};
 var commands_help = {};
 
@@ -1574,7 +1739,7 @@ module.exports = {
 };
 
 
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -1642,7 +1807,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 const Queue = require("./Queue");
@@ -1748,7 +1913,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"overwrite-require":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"overwrite-require":[function(require,module,exports){
 (function (global){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -1908,7 +2073,7 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
-                    $$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
+                    //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
         }
@@ -2090,13 +2255,13 @@ module.exports = {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-bindable-model":[function(require,module,exports){
+},{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-bindable-model":[function(require,module,exports){
 module.exports = require("./lib/PskBindableModel");
-},{"./lib/PskBindableModel":"/opt/working_dir/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js"}],"soundpubsub":[function(require,module,exports){
+},{"./lib/PskBindableModel":"/home/travis/build/PrivateSky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js"}],"soundpubsub":[function(require,module,exports){
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-},{"./lib/soundPubSub":"/opt/working_dir/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
+},{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
 (function (global){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
@@ -2112,7 +2277,7 @@ module.exports.uidGenerator = uidGenerator;
 module.exports.generateUid = uidGenerator.generateUid;
 module.exports.TaskCounter = require("./lib/TaskCounter");
 module.exports.SwarmPacker = require("./lib/SwarmPacker");
-
+module.exports.path = require("./lib/path");
 module.exports.createPskConsole = function () {
   return require('./lib/pskconsole');
 };
@@ -2130,4 +2295,4 @@ if(typeof global.$$.uidGenerator == "undefined"){
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./lib/Combos":"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/pingpongFork":"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/opt/working_dir/privatesky/builds/tmp/bindableModel_intermediar.js"])
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/bindableModel_intermediar.js"])

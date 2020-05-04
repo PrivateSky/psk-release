@@ -1,4 +1,4 @@
-consoleToolsRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/consoleTools_intermediar.js":[function(require,module,exports){
+consoleToolsRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/consoleTools_intermediar.js":[function(require,module,exports){
 (function (global){
 global.consoleToolsLoadModules = function(){ 
 
@@ -13,421 +13,18 @@ global.consoleToolsLoadModules = function(){
 	if(typeof $$.__runtimeModules["node-fd-slicer"] === "undefined"){
 		$$.__runtimeModules["node-fd-slicer"] = require("node-fd-slicer");
 	}
-
-	if(typeof $$.__runtimeModules["csb-wizard"] === "undefined"){
-		$$.__runtimeModules["csb-wizard"] = require("csb-wizard");
-	}
-}
+};
 if (false) {
 	consoleToolsLoadModules();
-}; 
+}
 global.consoleToolsRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("consoleTools");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("consoleTools");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer-crc32":"buffer-crc32","csb-wizard":"csb-wizard","node-fd-slicer":"node-fd-slicer","pskwallet":"pskwallet"}],"/opt/working_dir/privatesky/modules/csb-wizard/CSBWizard.js":[function(require,module,exports){
-(function (__dirname){
-const path = require('path');
-const fs = require('fs');
-const VirtualMQ = require('virtualmq');
-const httpWrapper = VirtualMQ.getHttpWrapper();
-const httpUtils = httpWrapper.httpUtils;
-const Server = httpWrapper.Server;
-const crypto = require('pskcrypto');
-const interact = require('interact');
-const serverCommands = require('./utils/serverCommands');
-const executioner = require('./utils/executioner');
-const url = require('url');
-
-function CSBWizard({listeningPort, rootFolder, sslConfig}, callback) {
-	const port = listeningPort || 8081;
-	const server = new Server(sslConfig).listen(port);
-	const randSize = 32;
-	rootFolder = path.join(rootFolder, 'CSB_TMP');
-
-	console.log("Listening on port:", port);
-
-	fs.mkdir(rootFolder, {recursive: true}, (err) => {
-		if(err) {
-			throw err;
-		}
-
-		console.log("Local folder:", rootFolder);
-		registerEndpoints();
-		if(typeof callback === 'function') {
-			return callback();
-		}
-	});
-
-	function registerEndpoints() {
-		server.use((req, res, next) => {
-			res.setHeader('Access-Control-Allow-Origin', '*');
-			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-			res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Origin');
-			res.setHeader('Access-Control-Allow-Credentials', true);
-			next();
-		});
-
-		server.post('/beginCSB', (req, res) => {
-			const transactionId = crypto.randomBytes(randSize).toString('hex');
-			fs.mkdir(path.join(rootFolder, transactionId), {recursive: true}, (err) => {
-				if (err) {
-					res.statusCode = 500;
-					res.end();
-					return;
-				}
-
-				res.end(transactionId);
-			});
-		});
-
-		server.post('/attachFile', (req, res) => {
-			res.statusCode = 400;
-			res.end('Illegal url, missing transaction id');
-		});
-
-		server.post('/attachFile/:transactionId/:fileAlias', (req, res) => {
-			const transactionId = req.params.transactionId;
-			const fileObj = {
-				fileName: req.params.fileAlias,
-				stream: req
-			};
-
-			serverCommands.attachFile(path.join(rootFolder, transactionId), fileObj, (err) => {
-				if(err) {
-					if(err.code === 'EEXIST') {
-						res.statusCode = 409;
-					} else {
-						res.statusCode = 500;
-					}
-				}
-
-				res.end();
-			});
-		});
-
-		server.post('/addBackup', (req, res) => {
-			res.statusCode = 400;
-			res.end('Illegal url, missing transaction id');
-		});
-
-		server.post('/addBackup/:transactionId', httpUtils.bodyParser);
-
-		server.post('/addBackup/:transactionId', (req, res) => {
-			const transactionId = req.params.transactionId;
-
-			const backupObj = {
-				endpoint: req.body
-			};
-
-			serverCommands.addBackup(path.join(rootFolder, transactionId), backupObj, (err) => {
-				if(err) {
-					res.statusCode = 500;
-				}
-
-				res.end();
-			});
-		});
-
-		server.post('/buildCSB', (req, res) => {
-			res.statusCode = 400;
-			res.end('Illegal url, missing transaction id');
-		});
-		server.post('/buildCSB/:transactionId', httpUtils.bodyParser);
-		server.post('/buildCSB/:transactionId', (req, res) => {
-			const transactionId = req.params.transactionId;
-			executioner.executioner(path.join(rootFolder, transactionId), (err, seed) => {
-				if(err) {
-					res.statusCode = 500;
-					console.log("Error", err);
-					res.end();
-					return;
-				}
-
-				const body = JSON.parse(req.body);
-
-				if(body.url !== '' && body.channel !== '') {
-					const endpoint = new url.URL(body.url).origin;
-					const channel = body.channel;
-					const ris = interact.createRemoteInteractionSpace('remote', endpoint, channel);
-					ris.startSwarm('notifier', 'init', seed.toString());
-				}
-
-				res.end(seed.toString());
-
-			});
-		});
-
-		server.use('/web', (req, res) => {
-			res.statusCode = 303;
-			let redirectLocation = 'index.html';
-
-			if(!req.url.endsWith('/')) {
-				redirectLocation = '/web/' + redirectLocation;
-			}
-
-			res.setHeader("Location", redirectLocation);
-			res.end();
-		});
-
-		server.use('/web/*', httpUtils.serveStaticFile(path.join(__dirname, 'web'), '/web'));
-
-		server.use((req, res) => {
-			res.statusCode = 404;
-			res.end();
-		});
-	}
-}
-
-module.exports = CSBWizard;
-
-}).call(this,"/modules/csb-wizard")
-
-},{"./utils/executioner":"/opt/working_dir/privatesky/modules/csb-wizard/utils/executioner.js","./utils/serverCommands":"/opt/working_dir/privatesky/modules/csb-wizard/utils/serverCommands.js","fs":false,"interact":false,"path":false,"pskcrypto":false,"url":false,"virtualmq":false}],"/opt/working_dir/privatesky/modules/csb-wizard/utils/CommandsAssistant.js":[function(require,module,exports){
-const fs = require('fs');
-const path = require('path');
-
-function CommandsAssistant(localFolder) {
-
-	const filePath = path.join(localFolder, 'commands.json');
-
-	function loadCommands(callback) {
-		fs.mkdir(localFolder, {recursive: true}, (err) => {
-			if (err) {
-				return callback(err);
-			}
-
-			fs.readFile(filePath, (err, commands) => {
-				if (err) {
-					return callback(undefined, []);
-				}
-
-				callback(undefined, JSON.parse(commands.toString()));
-			});
-		});
-	}
-
-	function saveCommands(commandsArr, callback) {
-		fs.mkdir(localFolder, {recursive: true}, (err) => {
-			if (err) {
-				return callback(err);
-			}
-
-			fs.writeFile(filePath, JSON.stringify(commandsArr), callback);
-		});
-	}
-
-	function addCommand(command, callback) {
-		loadCommands((err, commandsArr) => {
-			if (err) {
-				return callback(err);
-			}
-
-			commandsArr.push(command);
-
-			saveCommands(commandsArr, callback);
-		});
-	}
-
-	return {
-		addCommand,
-		loadCommands
-	};
-}
-
-module.exports = CommandsAssistant;
-
-},{"fs":false,"path":false}],"/opt/working_dir/privatesky/modules/csb-wizard/utils/csbInteractions.js":[function(require,module,exports){
-const path = require('path');
-const is = require("interact").createInteractionSpace();
-
-
-function createCSB(workingDir, backups, callback) {
-    let savedSeed;
-    is.startSwarm("createCsb", "withoutPin", "", backups, workingDir, undefined, false).on({
-        printSensitiveInfo: function (seed, defaultPin) {
-            savedSeed = seed;
-        },
-        handleError: function (err) {
-            callback(err);
-        },
-        __return__: function () {
-            callback(undefined, savedSeed);
-        }
-    });
-}
-
-function attachFile(workingDir, fileName, seed, callback) {
-    is.startSwarm("attachFile", "withCSBIdentifier", seed, fileName, path.join(workingDir, fileName), workingDir).on({
-        handleError: function (err) {
-            callback(err);
-        },
-
-        __return__: function () {
-            callback();
-        }
-    });
-}
-
-function saveBackup(workingDir, seed, callback) {
-    is.startSwarm("saveBackup", "withCSBIdentifier", seed, workingDir).on({
-        handleError: function (err) {
-            callback(err);
-        },
-
-        csbBackupReport: function (result) {
-            callback(result.errors, result.successes);
-        }
-    });
-}
-
-module.exports = {
-    attachFile,
-    createCSB,
-    saveBackup
-};
-
-},{"interact":false,"path":false}],"/opt/working_dir/privatesky/modules/csb-wizard/utils/executioner.js":[function(require,module,exports){
-const csbInteraction = require('./csbInteractions');
-const CommandsAssistant = require('./CommandsAssistant');
-
-function executioner(workingDir, callback) {
-    const filteredCommands = [];
-    const backups = [];
-
-    const commandsAssistant = new CommandsAssistant(workingDir);
-    commandsAssistant.loadCommands((err, commands) => {
-        if (err) {
-            console.log();
-        }
-        for (let i = 0; i < commands.length; ++i) {
-            if (commands[i].name === 'addBackup') {
-                backups.push(commands[i].params.endpoint);
-                continue;
-            }
-
-            filteredCommands.push(commands[i]);
-        }
-
-
-        csbInteraction.createCSB(workingDir, backups, (err, seed) => {
-            if (err) {
-                return callback(err);
-            }
-
-            executeCommand(filteredCommands, seed, workingDir, 0, (err) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                csbInteraction.saveBackup(workingDir, seed, (errors, successes) => {
-                    if (errors) {
-                        return callback(errors);
-                    }
-
-                    callback(undefined, seed);
-                });
-            });
-        });
-    });
-}
-
-function executeCommand(commands, seed, workingDir, index = 0, callback) {
-    if (index === commands.length) {
-        return callback();
-    }
-
-    const match = judge(commands[index], seed, workingDir, (err) => {
-        if (err) {
-            return callback(err);
-        }
-
-        executeCommand(commands, seed, workingDir, ++index, callback);
-    });
-
-    if (!match) {
-        return callback(new Error('No match for command found' + commands[index].name));
-    }
-}
-
-function judge(command, seed, workingDir, callback) {
-    switch (command.name) {
-        case 'attachFile':
-            csbInteraction.attachFile(workingDir, command.params.fileName, seed, callback);
-            break;
-        default:
-            return false;
-    }
-
-    return true;
-}
-
-module.exports = {
-    executioner
-};
-
-},{"./CommandsAssistant":"/opt/working_dir/privatesky/modules/csb-wizard/utils/CommandsAssistant.js","./csbInteractions":"/opt/working_dir/privatesky/modules/csb-wizard/utils/csbInteractions.js"}],"/opt/working_dir/privatesky/modules/csb-wizard/utils/serverCommands.js":[function(require,module,exports){
-const fs = require("fs");
-const path = require("path");
-const url = require('url');
-
-const CommandsAssistant = require("./CommandsAssistant");
-
-function attachFile(workingDir, FileObj, callback) {
-	const cmd = {
-		name: 'attachFile',
-		params: {
-			fileName: FileObj.fileName
-		}
-	};
-
-	const commandsAssistant = new CommandsAssistant(workingDir);
-	const filePath = path.join(workingDir, FileObj.fileName);
-	fs.access(filePath, (err) => {
-		if (!err) {
-			const e = new Error('File already exists');
-			e.code = 'EEXIST';
-			return callback(e);
-		}
-
-		const file = fs.createWriteStream(filePath);
-
-		file.on('close', () => {
-			commandsAssistant.addCommand(cmd, callback);
-		});
-
-		FileObj.stream.pipe(file);
-	});
-}
-
-function addBackup(workingDir, backupObj, callback) {
-	try {
-		const endpoint = new url.URL(backupObj.endpoint).origin;
-
-		const cmd = {
-			name: 'addBackup',
-			params: {
-				endpoint: endpoint
-			}
-		};
-
-		const commandAssistant = new CommandsAssistant(workingDir);
-		commandAssistant.addCommand(cmd, callback);
-	} catch (e) {
-		return callback(e);
-	}
-}
-
-module.exports = {
-	attachFile,
-	addBackup
-};
-
-},{"./CommandsAssistant":"/opt/working_dir/privatesky/modules/csb-wizard/utils/CommandsAssistant.js","fs":false,"path":false,"url":false}],"/opt/working_dir/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
+},{"buffer-crc32":"buffer-crc32","node-fd-slicer":"node-fd-slicer","pskwallet":"pskwallet"}],"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
 module.exports = Pend;
 
 function Pend() {
@@ -484,10 +81,13 @@ function pendGo(self, fn) {
   fn(pendHold(self));
 }
 
-},{}],"/opt/working_dir/privatesky/modules/pskwallet/cmds/bar.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/bar.js":[function(require,module,exports){
 const utils = require("../utils/utils");
 
 function listFiles(alseed, folderPath) {
+    if (arguments.length === 0) {
+        throw Error("Expected at least one argument. Received zero");
+    }
     if (arguments.length === 1) {
         folderPath = alseed;
         utils.loadWallet(undefined, (err, wallet) => {
@@ -505,12 +105,12 @@ function listFiles(alseed, folderPath) {
         });
     } else {
         if (utils.isAlias(alseed)) {
-            utils.loadArchiveWithAlias(alseed, (err, bar) => {
+            utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
 
-                bar.listFiles(folderPath, (err, fileList) => {
+                rawDossier.listFiles(folderPath, (err, fileList) => {
                     if (err) {
                         throw err;
                     }
@@ -525,8 +125,8 @@ function listFiles(alseed, folderPath) {
                     throw err;
                 }
 
-                const bar = edfs.loadBar(alseed);
-                bar.listFiles(folderPath, (err, fileList) => {
+                const rawDossier = edfs.loadRawDossier(alseed);
+                rawDossier.listFiles(folderPath, (err, fileList) => {
                     if (err) {
                         throw err;
                     }
@@ -538,14 +138,17 @@ function listFiles(alseed, folderPath) {
     }
 }
 
-function extractFolder(alseed, barPath, fsFolderPath) {
+function getApp(alseed, barPath, fsFolderPath) {
+    if (arguments.length < 3) {
+        throw Error(`Expected 3 arguments. Received ${arguments.length}`);
+    }
     if (utils.isAlias(alseed)) {
-        utils.loadArchiveWithAlias(alseed, (err, bar) => {
+        utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
             if (err) {
                 throw err;
             }
 
-            bar.extractFolder(fsFolderPath, barPath, (err) => {
+            rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -560,8 +163,8 @@ function extractFolder(alseed, barPath, fsFolderPath) {
                 throw err;
             }
 
-            const bar = edfs.loadBar(alseed);
-            bar.extractFolder(fsFolderPath, barPath, (err) => {
+            const rawDossier = edfs.loadRawDossier(alseed);
+            rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -573,13 +176,16 @@ function extractFolder(alseed, barPath, fsFolderPath) {
 }
 
 function extractFile(alseed, barPath, fsFilePath) {
+    if (arguments.length < 3) {
+        throw Error(`Expected 3 arguments. Received ${arguments.length}`);
+    }
     if (utils.isAlias(alseed)) {
-        utils.loadArchiveWithAlias(alseed, (err, bar) => {
+        utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
             if (err) {
                 throw err;
             }
 
-            bar.extractFile(fsFilePath, barPath, (err) => {
+            rawDossier.extractFile(fsFilePath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -594,8 +200,8 @@ function extractFile(alseed, barPath, fsFilePath) {
                 throw err;
             }
 
-            const bar = edfs.loadBar(alseed);
-            bar.extractFile(fsFilePath, barPath, (err) => {
+            const rawDossier = edfs.loadRawDossier(alseed);
+            rawDossier.extractFile(fsFilePath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -607,22 +213,22 @@ function extractFile(alseed, barPath, fsFilePath) {
 }
 
 addCommand("list", "files", listFiles, " <archiveSeed>/<alias> <folderPath> \t\t\t\t |prints the list of all files stored at path <folderPath> inside the archive whose SEED is <archiveSeed>. If an alias is specified then the CSB's SEED is searched from the wallet.");
-addCommand("extract", "folder", extractFolder, " <archiveSeed> <archivePath> <fsFolderPath> \t\t |extracts the folder stored at <archivePath> inside the archive whose SEED is <archiveSeed> and writes all the extracted file on disk at path <fsFolderPath>");
-addCommand("extract", "file", extractFile, " <archiveSeed> <archivePath> <fsFilePath> \t\t |extracts the folder stored at <archivePath> inside the archive whose SEED is <archiveSeed> and writes all the extracted file on disk at path <fsFilePath>");
+addCommand("get", "app", getApp, " <archiveSeed>/<alias> <archivePath> <fsFolderPath> \t\t |extracts the folder stored at <archivePath> inside the archive whose SEED is <archiveSeed> and writes all the extracted file on disk at path <fsFolderPath>");
+addCommand("extract", "file", extractFile, " <archiveSeed>/<alias> <archivePath> <fsFilePath> \t\t |extracts the folder stored at <archivePath> inside the archive whose SEED is <archiveSeed> and writes all the extracted file on disk at path <fsFilePath>");
 
 
-},{"../utils/utils":"/opt/working_dir/privatesky/modules/pskwallet/utils/utils.js"}],"/opt/working_dir/privatesky/modules/pskwallet/cmds/csb.js":[function(require,module,exports){
+},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/dossier.js":[function(require,module,exports){
 const utils = require("../utils/utils");
 const AGENT_IDENTITY = require("../utils/utils").getOwnIdentity();
 
-function createCSB(domainName, constitutionPath, noSave) {
+function createDossier(domainName, constitutionPath, noSave) {
     const pth = "path";
     const path = require(pth);
     const EDFS = require("edfs");
-
     if (noSave === "nosave") {
         const edfs = utils.getInitializedEDFS();
-        edfs.createBarWithConstitution(path.resolve(constitutionPath), (err, archive) => {
+        const archive = edfs.createBar();
+        archive.addFolder(path.resolve(constitutionPath), "/", (err) => {
             if (err) {
                 throw err;
             }
@@ -631,22 +237,23 @@ function createCSB(domainName, constitutionPath, noSave) {
                 if (err) {
                     throw err;
                 }
-                console.log("The CSB was created. Its SEED is the following.");
+                console.log("The dossier was created. Its SEED is the following.");
                 console.log("SEED", archive.getSeed());
             });
         });
     } else {
-        getPin((err, pin) => {
+        getPassword((err, password) => {
             if (err) {
                 throw err;
             }
-
-            EDFS.attachWithPin(pin, (err, edfs) => {
+            EDFS.attachWithPassword(password, (err, edfs) => {
                 if (err) {
-                    throw err;
+                    console.error("Invalid password");
+                    return;
                 }
 
-                edfs.loadWallet(undefined, pin, true, (err, wallet) => {
+                console.log("Attached with password");
+                edfs.loadWallet(undefined, password, true, (err, wallet) => {
                     if (err) {
                         throw err;
                     }
@@ -667,12 +274,13 @@ function createCSB(domainName, constitutionPath, noSave) {
                                 console.log(`Domain ${domainName} already exists!`);
                                 process.exit(1);
                             }
-                            edfs.createBarWithConstitution(path.resolve(constitutionPath), (err, archive) => {
+                            const archive = edfs.createBar();
+                            archive.addFolder(path.resolve(constitutionPath), "/", (err, mapDigest) => {
                                 if (err) {
                                     throw err;
                                 }
 
-                                csb.startTransaction("StandardCSBTransactions", "addFileAnchor", domainName, "csb", archive.getSeed(), wallet.getMapDigest()).onReturn((err, res) => {
+                                csb.startTransaction("StandardCSBTransactions", "addFileAnchor", domainName, "csb", archive.getSeed()).onReturn((err, res) => {
                                     if (err) {
                                         console.error(err);
                                         process.exit(1);
@@ -734,19 +342,192 @@ function setApp(alseed, appPath) {
     }
 }
 
-addCommand("create", "csb", createCSB, "<domainName> <constitutionPath> <nosave>\t\t\t\t |creates an archive containing constitutions folder <constitutionPath> for Domain <domainName>");
-addCommand("set", "app", setApp, " <seed>/<alias> <folderPath> \t\t\t\t\t |add an app to an existing archive");
+function mount(alseed, path, name, archiveIdentifier) {
+    if (arguments.length < 3) {
+        throw Error(`Insufficient arguments. Expected at least 3. Received ${arguments.length}`);
+    }
+    if (arguments.length === 3) {
+        archiveIdentifier = name;
+        name = path;
+        path = alseed;
+        alseed = undefined;
+        utils.loadWallet((err, wallet) => {
+            if (err) {
+                throw err;
+            }
 
-},{"../utils/utils":"/opt/working_dir/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"edfs":false}],"/opt/working_dir/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
+            wallet.mount(path, name, archiveIdentifier, (err) => {
+                if (err) {
+                    throw err;
+                }
+
+                console.log("Successfully mounted");
+            });
+        });
+    } else {
+        if (utils.isAlias(alseed)) {
+            utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
+                if (err) {
+                    throw err;
+                }
+
+                rawDossier.mount(path, name, archiveIdentifier, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Successfully mounted.");
+                    process.exit(0);
+                });
+            });
+        } else {
+            utils.getEDFS(alseed, (err, edfs) => {
+                if (err) {
+                    throw err;
+                }
+
+                const rawDossier = edfs.loadRawDossier(alseed);
+                rawDossier.mount(path, name, archiveIdentifier, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Successfully mounted.");
+                });
+            });
+        }
+    }
+}
+
+function unmount(alseed, path, name) {
+    if (arguments.length < 2) {
+        throw Error(`Insufficient arguments. Expected at least 2. Received ${arguments.length}`);
+    }
+    if (arguments.length === 2) {
+        name = path;
+        path = alseed;
+        alseed = undefined;
+        utils.loadWallet((err, wallet) => {
+            if (err) {
+                throw err;
+            }
+
+            wallet.unmount(path, name, (err) => {
+                if (err) {
+                    throw err;
+                }
+
+                console.log("Successfully unmounted");
+            });
+        });
+    } else {
+        if (utils.isAlias(alseed)) {
+            utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
+                if (err) {
+                    throw err;
+                }
+
+                rawDossier.unmount(path, name, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Successfully unmounted.");
+                    process.exit(0);
+                });
+            });
+        } else {
+            utils.getEDFS(alseed, (err, edfs) => {
+                if (err) {
+                    throw err;
+                }
+
+                const rawDossier = edfs.loadRawDossier(alseed);
+                rawDossier.unmount(path, name, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Successfully unmounted.");
+                });
+            });
+        }
+    }
+}
+
+function listMounts(alseed, path) {
+    if (arguments.length < 1) {
+        throw Error(`Insufficient arguments. Expected at least 1. Received ${arguments.length}`);
+    }
+    if (arguments.length === 1) {
+        path = alseed;
+        alseed = undefined;
+        utils.loadWallet((err, wallet) => {
+            if (err) {
+                throw err;
+            }
+
+            wallet.listMountedDossiers(path, (err, mounts) => {
+                if (err) {
+                    throw err;
+                }
+
+                console.log(mounts);
+            });
+        });
+    } else {
+        if (utils.isAlias(alseed)) {
+            utils.loadArchiveWithAlias(alseed, (err, rawDossier) => {
+                if (err) {
+                    throw err;
+                }
+
+                rawDossier.listMountedDossiers(path, (err, mounts) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log(mounts);
+                    process.exit(0);
+                });
+            });
+        } else {
+            utils.getEDFS(alseed, (err, edfs) => {
+                if (err) {
+                    throw err;
+                }
+
+                const rawDossier = edfs.loadRawDossier(alseed);
+                rawDossier.listMountedDossiers(path, (err, mounts) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log(mounts);
+                });
+            });
+        }
+    }
+}
+
+addCommand("create", "dossier", createDossier, "<domainName> <constitutionPath> <nosave>\t\t\t\t |creates an archive containing constitutions folder <constitutionPath> for Domain <domainName>");
+addCommand("set", "app", setApp, " <seed>/<alias> <folderPath> \t\t\t\t\t |add an app to an existing archive");
+addCommand("mount", null, mount, "<seed>/<alias> <path> <name> <archiveIdentifier> <> \t\t\t\t |Mounts the dossier having the seed <seed> at <path>/<name>");
+addCommand("unmount", null, unmount, "<seed>/<alias> <path> <name>\t\t\t\t |Unmounts the dossier mounted at <path>/<name>");
+addCommand("list", "mounts", listMounts, "<seed>/<alias> <path>\t\t\t\t |Lists the seeds of all dossiers mounted at <path>");
+},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
 require("./wallet");
 require("./bar");
-require("./csb");
+require("./dossier");
 
-},{"./bar":"/opt/working_dir/privatesky/modules/pskwallet/cmds/bar.js","./csb":"/opt/working_dir/privatesky/modules/pskwallet/cmds/csb.js","./wallet":"/opt/working_dir/privatesky/modules/pskwallet/cmds/wallet.js"}],"/opt/working_dir/privatesky/modules/pskwallet/cmds/wallet.js":[function(require,module,exports){
+},{"./bar":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/bar.js","./dossier":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/dossier.js","./wallet":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/wallet.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/wallet.js":[function(require,module,exports){
 const consoleUtils = require("../utils/consoleUtils");
 const utils = require("../utils/utils");
 
 function createWallet(templateSeed) {
+    if (!templateSeed) {
+        throw Error("No template seed received.")
+    }
     const Seed = require("bar").Seed;
     try {
         new Seed(templateSeed);
@@ -773,26 +554,26 @@ function createWallet(templateSeed) {
     });
 
     function __createWallet(edfs, overwrite) {
-        consoleUtils.insertPassword({validationFunction: utils.validatePin}, (err, pin) => {
+        consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
             if (err) {
                 console.log(`Caught error: ${err.message}`);
                 process.exit(1);
             }
 
             consoleUtils.insertPassword({
-                prompt: "Confirm pin:",
-                validationFunction: utils.validatePin
-            }, (err, newPin) => {
+                prompt: "Confirm password:",
+                validationFunction: utils.validatePassword
+            }, (err, newPassword) => {
                 if (err) {
                     console.log(`Caught error: ${err.message}`);
                     process.exit(1);
                 }
 
-                if (pin !== newPin) {
-                    console.log("The PINs do not coincide. Try again.");
+                if (password !== newPassword) {
+                    console.log("The passwords do not coincide. Try again.");
                     __createWallet(edfs, overwrite);
                 } else {
-                    edfs.createWallet(templateSeed, pin, overwrite, (err, seed) => {
+                    edfs.createWallet(templateSeed, password, overwrite, (err, seed) => {
                         if (err) {
                             throw err;
                         }
@@ -807,6 +588,9 @@ function createWallet(templateSeed) {
 
 
 function restore(seed) {
+    if (!seed) {
+        throw Error("No seed received.")
+    }
     const EDFS = require("edfs");
     let edfs;
     try {
@@ -818,26 +602,26 @@ function restore(seed) {
     __saveSeed();
 
     function __saveSeed() {
-        consoleUtils.insertPassword({validationFunction: utils.validatePin}, (err, pin) => {
+        consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
             if (err) {
                 console.log(`Caught error: ${err.message}`);
                 process.exit(1);
             }
 
             consoleUtils.insertPassword({
-                prompt: "Confirm pin:",
-                validationFunction: utils.validatePin
-            }, (err, newPin) => {
+                prompt: "Confirm password:",
+                validationFunction: utils.validatePassword
+            }, (err, newPassword) => {
                 if (err) {
                     console.log(`Caught error: ${err.message}`);
                     process.exit(1);
                 }
 
-                if (pin !== newPin) {
-                    console.log("The PINs do not coincide. Try again.");
+                if (password !== newPassword) {
+                    console.log("The passwords do not coincide. Try again.");
                     __saveSeed();
                 } else {
-                    edfs.loadWallet(seed, pin, true, (err, wallet) => {
+                    edfs.loadWallet(seed, password, true, (err, wallet) => {
                         if (err) {
                             throw err;
                         }
@@ -850,13 +634,13 @@ function restore(seed) {
     }
 }
 
-function changePin() {
-    utils.loadWallet(undefined, (err, wallet) => {
+function changePassword() {
+    utils.loadWallet((err, wallet) => {
         if (err) {
             throw err;
         }
 
-        consoleUtils.insertPassword({prompt: "Insert a new PIN:", validationFunction: utils.validatePin}, (err, pin) => {
+        consoleUtils.insertPassword({prompt: "Insert a new password:", validationFunction: utils.validatePassword}, (err, password) => {
             if (err) {
                 throw err;
             }
@@ -866,29 +650,31 @@ function changePin() {
                     throw err;
                 }
 
-                edfs.loadWallet(wallet.getSeed(), pin, true, (err) => {
+                edfs.loadWallet(wallet.getSeed(), password, true, (err) => {
                     if (err) {
                         throw err;
                     }
 
-                    console.log("The PIN has been changed.");
+                    console.log("The password has been changed.");
                 });
             });
         });
     });
 }
 
-addCommand("create", "wallet", createWallet, "<templateSeed> \t\t\t\t\t\t |creates a clone of the CSB whose SEED is <templateSeed>");
-addCommand("restore", null, restore, "<seed> \t\t\t\t |Checks the seed is valid and allows the selection of a PIN");
-addCommand("change", "pin", changePin, "\t\t\t\t |Asks for the PIN and then allows for the selection of a new PIN");
 
-},{"../utils/consoleUtils":"/opt/working_dir/privatesky/modules/pskwallet/utils/consoleUtils.js","../utils/utils":"/opt/working_dir/privatesky/modules/pskwallet/utils/utils.js","bar":false,"edfs":false}],"/opt/working_dir/privatesky/modules/pskwallet/utils/consoleUtils.js":[function(require,module,exports){
+addCommand("create", "wallet", createWallet, "<templateSeed> \t\t\t\t\t\t |creates a clone of the CSB whose SEED is <templateSeed>");
+addCommand("restore", null, restore, "<seed> \t\t\t\t |Checks the seed is valid and allows the selection of a password");
+addCommand("change", "password", changePassword, "\t\t\t\t |Asks for the password and then allows for the selection of a new password");
+
+
+},{"../utils/consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","bar":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js":[function(require,module,exports){
 const rl = "readline";
 const readline = require(rl);
 const getPassword = require("./getPassword").readPassword;
 
 const NO_TRIES = 3;
-const DEFAULT_PROMPT = "Insert pin:";
+const DEFAULT_PROMPT = "Insert password:";
 
 function insertPassword(options, callback) {
     if (typeof options === "function") {
@@ -907,18 +693,28 @@ function insertPassword(options, callback) {
     }
 
     if (options.noTries === 0) {
-        return callback(new Error(`You have inserted an invalid pin ${NO_TRIES} times`));
+        return callback(new Error(`You have inserted an invalid password ${NO_TRIES} times`));
     } else {
-        getPassword(options.prompt,  (err, pin)=> {
-            if (options.validationFunction && !options.validationFunction(pin)) {
-                if (options.noTries !== 1) {
-                    console.log("Validation failed. Maybe you have inserted an invalid character.");
-                    console.log("Try again");
-                }
-                options.noTries--;
-                insertPassword(options, callback);
+        getPassword(options.prompt,  (err, password)=> {
+            if (options.validationFunction) {
+                options.validationFunction(password, (err, status) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    if (!status) {
+                        if (options.noTries !== 1) {
+                            console.log("Validation failed. Maybe you have inserted an invalid character.");
+                            console.log("Try again");
+                        }
+                        options.noTries--;
+                        insertPassword(options, callback);
+                    }else {
+                        callback(undefined, password);
+                    }
+                });
             } else {
-                return callback(null, pin);
+                return callback(undefined, password);
             }
         });
     }
@@ -941,7 +737,7 @@ module.exports = {
     insertPassword,
     getFeedback,
 };
-},{"./getPassword":"/opt/working_dir/privatesky/modules/pskwallet/utils/getPassword.js"}],"/opt/working_dir/privatesky/modules/pskwallet/utils/getPassword.js":[function(require,module,exports){
+},{"./getPassword":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/getPassword.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/getPassword.js":[function(require,module,exports){
 exports.readPassword = function (prompt, callback) {
     const stdin = process.stdin;
     const stdout = process.stdout;
@@ -1000,7 +796,7 @@ exports.readPassword = function (prompt, callback) {
 
     stdin.on('data', readingInput);
 };
-},{}],"/opt/working_dir/privatesky/modules/pskwallet/utils/utils.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js":[function(require,module,exports){
 (function (global){
 const consoleUtils = require("./consoleUtils");
 
@@ -1019,44 +815,81 @@ function getInitializedEDFS() {
     return EDFS.attachToEndpoint(endpoint);
 }
 
-function validatePin(pin) {
-    if (typeof pin === "undefined" || pin.length < 4) {
-        return false;
+function validatePassword(password, callback) {
+    if (typeof password === "undefined" || password.length < 4) {
+        return callback(undefined, false)
     }
 
-    //The regex below checks that the pin only contains utf-8 characters
-    return !/[\x00-\x03]|[\x05-\x07]|[\x09]|[\x0B-\x0C]|[\x0E-\x1F]/.test(pin);
+    if (/[\x00-\x03]|[\x05-\x07]/.test(password)) {
+        return callback(undefined, false);
+    }
+
+    return callback(undefined, true);
+}
+
+function checkPassword(password, callback) {
+    if (typeof password === "undefined" || password.length < 4) {
+        return callback(undefined, false)
+    }
+
+    if (/[\x00-\x03]|[\x05-\x07]/.test(password)) {
+        return callback(undefined, false);
+    }
+
+    const EDFS = require("edfs");
+    EDFS.attachWithPassword(password, (err) => {
+        if (err) {
+            return callback(undefined, false);
+        }
+
+        callback(undefined, true);
+    });
 }
 
 function getEDFS(seed, callback) {
     const EDFS = require("edfs");
-    if (!seed) {
-        getPin((err, pin) => {
+    if (typeof seed === "function") {
+        callback = seed;
+        seed = undefined;
+    }
+
+    if (typeof seed === "undefined") {
+        getPassword((err, password) => {
             if (err) {
+                console.log("Error when loading EDFs");
                 return callback(err);
             }
 
-            EDFS.attachWithPin(pin, callback);
+            EDFS.attachWithPassword(password, callback);
         });
 
     } else {
-        callback(undefined, EDFS.attachWithSeed(seed));
+        EDFS.attachWithSeed(seed, callback);
     }
 }
 
 function loadWallet(walletSeed, callback) {
+    if (typeof walletSeed === "function") {
+        callback = walletSeed;
+        walletSeed = undefined;
+    }
     getEDFS(walletSeed, (err, edfs) => {
         if (err) {
             return callback(err);
         }
 
-
-        getPin((err, pin) => {
+        getPassword((err, password) => {
             if (err) {
                 return callback(err);
             }
 
-            edfs.loadWallet(walletSeed, pin, true, callback);
+            edfs.loadWallet(walletSeed, password, true, (err, wallet) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, wallet);
+            });
         });
     });
 }
@@ -1083,7 +916,7 @@ function loadArchiveWithAlias(alias, callback) {
                         return callback(err);
                     }
 
-                    callback(undefined, edfs.loadBar(seed));
+                    callback(undefined, edfs.loadRawDossier(seed));
                 });
             });
         });
@@ -1105,38 +938,38 @@ function getOwnIdentity() {
     return "pskwallet-identity";
 }
 
-let lastPin;
+let lastPassword;
 let timeStamp;
-const PIN_LIFETIME = 5000;
-global.getPin = function (callback) {
+const PASSWORD_LIFETIME = 5000;
+global.getPassword = function (callback) {
     const currentTimestamp = new Date().getTime();
-    if (!lastPin || (currentTimestamp - timeStamp) > PIN_LIFETIME) {
-        consoleUtils.insertPassword({validationFunction: validatePin}, (err, pin) => {
+    if (!lastPassword || (currentTimestamp - timeStamp) > PASSWORD_LIFETIME) {
+        consoleUtils.insertPassword({validationFunction: checkPassword}, (err, password) => {
             if (err) {
                 return callback(err);
             }
 
-            lastPin = pin;
+            lastPassword = password;
             timeStamp = new Date().getTime();
-            callback(undefined, pin);
+            callback(undefined, password);
         });
     } else {
-        callback(undefined, lastPin);
+        callback(undefined, lastPassword);
     }
 };
 
 module.exports = {
     getInitializedEDFS,
-    validatePin,
+    validatePassword,
     isAlias,
     loadWallet,
     getEDFS,
     getOwnIdentity,
-    loadArchiveWithAlias
+    loadArchiveWithAlias,
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./consoleUtils":"/opt/working_dir/privatesky/modules/pskwallet/utils/consoleUtils.js","bar":false,"dossier":false,"edfs":false}],"buffer-crc32":[function(require,module,exports){
+},{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","bar":false,"dossier":false,"edfs":false}],"buffer-crc32":[function(require,module,exports){
 var Buffer = require('buffer').Buffer;
 
 var CRC_TABLE = [
@@ -1255,10 +1088,7 @@ crc32.unsigned = function () {
 
 module.exports = crc32;
 
-},{"buffer":false}],"csb-wizard":[function(require,module,exports){
-module.exports = require('./CSBWizard');
-
-},{"./CSBWizard":"/opt/working_dir/privatesky/modules/csb-wizard/CSBWizard.js"}],"node-fd-slicer":[function(require,module,exports){
+},{"buffer":false}],"node-fd-slicer":[function(require,module,exports){
 (function (Buffer,setImmediate){
 var fs = require('fs');
 var util = require('util');
@@ -1559,7 +1389,7 @@ function createFromFd(fd, options) {
 
 }).call(this,require("buffer").Buffer,require("timers").setImmediate)
 
-},{"./modules/node-pend":"/opt/working_dir/privatesky/modules/node-fd-slicer/modules/node-pend/index.js","buffer":false,"events":false,"fs":false,"stream":false,"timers":false,"util":false}],"pskwallet":[function(require,module,exports){
+},{"./modules/node-pend":"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js","buffer":false,"events":false,"fs":false,"stream":false,"timers":false,"util":false}],"pskwallet":[function(require,module,exports){
 (function (__dirname){
 const pskConsole = require('swarmutils').createPskConsole();
 const pathModule = "path";
@@ -1570,4 +1400,4 @@ pskConsole.runCommand();
 
 }).call(this,"/modules/pskwallet")
 
-},{"./cmds":"/opt/working_dir/privatesky/modules/pskwallet/cmds/index.js","swarmutils":false}]},{},["/opt/working_dir/privatesky/builds/tmp/consoleTools_intermediar.js"])
+},{"./cmds":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js","swarmutils":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/consoleTools_intermediar.js"])

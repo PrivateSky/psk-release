@@ -1,4 +1,4 @@
-virtualMQRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/virtualMQ.js":[function(require,module,exports){
+virtualMQRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ.js":[function(require,module,exports){
 if(typeof $$ === "undefined" || !$$.environmentType) {
     const or = require('overwrite-require');
     or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
@@ -8,7 +8,7 @@ if(typeof $$ === "undefined" || !$$.environmentType) {
 
 require("./virtualMQ_intermediar");
 require('callflow').initialise();
-},{"./virtualMQ_intermediar":"/opt/working_dir/privatesky/builds/tmp/virtualMQ_intermediar.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/builds/tmp/virtualMQ_intermediar.js":[function(require,module,exports){
+},{"./virtualMQ_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ_intermediar.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ_intermediar.js":[function(require,module,exports){
 (function (global){
 global.virtualMQLoadModules = function(){ 
 
@@ -18,6 +18,10 @@ global.virtualMQLoadModules = function(){
 
 	if(typeof $$.__runtimeModules["pskcrypto"] === "undefined"){
 		$$.__runtimeModules["pskcrypto"] = require("pskcrypto");
+	}
+
+	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
+		$$.__runtimeModules["psk-cache"] = require("psk-cache");
 	}
 
 	if(typeof $$.__runtimeModules["edfs"] === "undefined"){
@@ -63,19 +67,22 @@ global.virtualMQLoadModules = function(){
 	if(typeof $$.__runtimeModules["psk-security-context"] === "undefined"){
 		$$.__runtimeModules["psk-security-context"] = require("psk-security-context");
 	}
-}
+
+	if(typeof $$.__runtimeModules["dossier-wizard"] === "undefined"){
+		$$.__runtimeModules["dossier-wizard"] = require("dossier-wizard");
+	}
+};
 if (false) {
 	virtualMQLoadModules();
-}; 
+}
 global.virtualMQRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("virtualMQ");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("virtualMQ");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer-crc32":"buffer-crc32","callflow":"callflow","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","virtualmq":"virtualmq","zmq_adapter":"zmq_adapter"}],"/opt/working_dir/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"buffer-crc32":"buffer-crc32","callflow":"callflow","dossier-wizard":"dossier-wizard","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","virtualmq":"virtualmq","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -97,13 +104,14 @@ $$.CONSTANTS.mixIn = function(otherConstants){
     }
 }
 
-},{}],"/opt/working_dir/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
+(function (global){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
 function InterceptorRegistry() {
     const rules = new Map();
 
-     _CLASS_NAME = 'InterceptorRegistry';
+     global._CLASS_NAME = 'InterceptorRegistry';
 
     /************* PRIVATE METHODS *************/
 
@@ -289,7 +297,9 @@ exports.createInterceptorRegistry = function () {
     return new InterceptorRegistry();
 };
 
-},{}],"/opt/working_dir/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -393,7 +403,7 @@ exports.loadLibrary = function(prefixName, folder){
 }
 
 
-},{}],"/opt/working_dir/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
 
 var globalJoinCounter = 0;
 
@@ -530,7 +540,7 @@ exports.createJoinPoint = function(swarm, callback, args){
     jp.__setProxyObject(p);
     return p;
 };
-},{}],"/opt/working_dir/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
 
 var joinCounter = 0;
 
@@ -655,7 +665,7 @@ exports.createSerialJoinPoint = function(swarm, callback, args){
     jp.setProxyObject(p);
     return p;
 }
-},{}],"/opt/working_dir/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
 const OwM = require("swarmutils").OwM;
 
 const swarmDescriptionsRegistry = {};
@@ -1022,7 +1032,8 @@ exports.createSwarmEngine = function(swarmType, utils){
 };
 
 
-},{"./utilityFunctions/callflow":"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
+},{"./utilityFunctions/callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
+(function (global){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
  Contributors: Axiologic Research , PrivateSky project
@@ -1031,17 +1042,17 @@ exports.createSwarmEngine = function(swarmType, utils){
 
 var util = require("util");
 var fs = require("fs");
-cprint = console.log;
-wprint = console.warn;
-dprint = console.debug;
-eprint = console.error;
+global.cprint = console.log;
+global.wprint = console.warn;
+global.dprint = console.debug;
+global.eprint = console.error;
 
 
 /**
  * Shortcut to JSON.stringify
  * @param obj
  */
-J = function (obj) {
+global.J = function (obj) {
     return JSON.stringify(obj);
 }
 
@@ -1110,10 +1121,10 @@ exports.cleanDump = function (obj) {
  })
 
  */
-uncaughtExceptionString = "";
-uncaughtExceptionExists = false;
+global.uncaughtExceptionString = "";
+global.uncaughtExceptionExists = false;
 if(typeof globalVerbosity == 'undefined'){
-    globalVerbosity = false;
+    global.globalVerbosity = false;
 }
 
 var DEBUG_START_TIME = new Date().getTime();
@@ -1127,7 +1138,7 @@ function getDebugDelta(){
  * Debug functions, influenced by globalVerbosity global variable
  * @param txt
  */
-dprint = function (txt) {
+global.dprint = function (txt) {
     if (globalVerbosity == true) {
         if (thisAdapter.initilised ) {
             console.log("DEBUG: [" + thisAdapter.nodeName + "](" + getDebugDelta()+ "):"+txt);
@@ -1143,7 +1154,7 @@ dprint = function (txt) {
  * obsolete!?
  * @param txt
  */
-aprint = function (txt) {
+global.aprint = function (txt) {
     console.log("DEBUG: [" + thisAdapter.nodeName + "]: " + txt);
 }
 
@@ -1154,7 +1165,7 @@ aprint = function (txt) {
  * @param msg
  * @param timeout
  */
-delayExit = function (msg, retCode,timeout) {
+global.delayExit = function (msg, retCode,timeout) {
     if(retCode == undefined){
         retCode = ExitCodes.UnknownError;
     }
@@ -1218,7 +1229,9 @@ function localLog (logType, message, err) {
 // }
 
 
-},{"fs":false,"util":false}],"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"fs":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
 var beesHealer = require("swarmutils").beesHealer;
 var swarmDebug = require("./SwarmDebug");
 
@@ -1350,12 +1363,385 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 };
 
-},{"../parallelJoinPoint":"/opt/working_dir/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/opt/working_dir/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
+},{"../parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/opt/working_dir/privatesky/modules/edfs-middleware/flows/BricksManager.js":[function(require,module,exports){
+},{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/DossierWizardMiddleware.js":[function(require,module,exports){
+const URL_PREFIX = "/dossierWizard";
+
+function DossierWizardMiddleware(server) {
+    const path = require('path');
+    const fs = require('fs');
+    const VirtualMQ = require('virtualmq');
+    const httpWrapper = VirtualMQ.getHttpWrapper();
+    const httpUtils = httpWrapper.httpUtils;
+    const crypto = require('pskcrypto');
+    const serverCommands = require('./utils/serverCommands');
+    const executioner = require('./utils/executioner');
+
+    const randSize = 32;
+    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Request methods you wish to allow
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+        // Request headers you wish to allow
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
+        next();
+    });
+
+    server.post(`${URL_PREFIX}/begin`, (req, res) => {
+        const transactionId = crypto.randomBytes(randSize).toString('hex');
+        fs.mkdir(path.join(server.rootFolder, transactionId), {recursive: true}, (err) => {
+            if (err) {
+                res.statusCode = 500;
+                res.end();
+                return;
+            }
+
+            res.end(transactionId);
+        });
+    });
+
+    server.post(`${URL_PREFIX}/addFile`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/addFile/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        const fileObj = {
+            dossierPath: req.headers["x-dossier-path"],
+            stream: req
+        };
+
+        serverCommands.addFile(path.join(server.rootFolder, transactionId), fileObj, (err) => {
+            if (err) {
+                if (err.code === 'EEXIST') {
+                    res.statusCode = 409;
+                } else {
+                    res.statusCode = 500;
+                }
+            }
+
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/setEndpoint`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, httpUtils.bodyParser);
+
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        serverCommands.setEndpoint(path.join(server.rootFolder, transactionId), req.body, (err) => {
+            if (err) {
+                res.statusCode = 500;
+            }
+
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/mount`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+
+    server.post(`${URL_PREFIX}/mount/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        const mountPoint = {
+            mountPath: req.headers['x-mount-path'],
+            seed: req.headers['x-mounted-dossier-seed']
+        };
+
+        serverCommands.mount(path.join(server.rootFolder, transactionId), mountPoint, (err) => {
+            if (err) {
+                res.statusCode = 500;
+                console.log("Error", err);
+                res.end();
+                return;
+            }
+            res.end();
+        });
+    });
+
+    server.post(`${URL_PREFIX}/build`, (req, res) => {
+        res.statusCode = 400;
+        res.end('Illegal url, missing transaction id');
+    });
+    server.post(`${URL_PREFIX}/build/:transactionId`, httpUtils.bodyParser);
+    server.post(`${URL_PREFIX}/build/:transactionId`, (req, res) => {
+        const transactionId = req.params.transactionId;
+        executioner.executioner(path.join(server.rootFolder, transactionId), (err, seed) => {
+            if (err) {
+                res.statusCode = 500;
+                console.log("Error", err);
+                res.end();
+                return;
+            }
+            res.end(seed.toString());
+
+        });
+    });
+
+    server.use(`${URL_PREFIX}`, (req, res) => {
+        res.statusCode = 303;
+        let redirectLocation = 'index.html';
+
+        if (!req.url.endsWith('/')) {
+            redirectLocation = `${URL_PREFIX}/` + redirectLocation;
+        }
+
+        res.setHeader("Location", redirectLocation);
+        res.end();
+    });
+
+    server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dossier-wizard/web'), `${URL_PREFIX}/`));
+
+    server.use((req, res) => {
+        res.statusCode = 404;
+        res.end();
+    });
+}
+
+module.exports = DossierWizardMiddleware;
+
+},{"./utils/executioner":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js","./utils/serverCommands":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js","fs":false,"path":false,"pskcrypto":"pskcrypto","virtualmq":"virtualmq"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js":[function(require,module,exports){
+const fs = require('fs');
+const path = require('path');
+
+function TransactionManager(localFolder) {
+
+    const filePath = path.join(localFolder, 'commands.json');
+
+    function loadTransaction(callback) {
+        fs.mkdir(localFolder, {recursive: true}, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            fs.readFile(filePath, (err, transaction) => {
+                let transactionObj = {};
+                if (err) {
+                    return callback(undefined, transactionObj);
+                }
+
+                try {
+                    transactionObj = JSON.parse(transaction.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+                callback(undefined, transactionObj);
+            });
+        });
+    }
+
+    function saveTransaction(transaction, callback) {
+        fs.mkdir(localFolder, {recursive: true}, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            fs.writeFile(filePath, JSON.stringify(transaction), callback);
+        });
+    }
+
+    function addCommand(command, callback) {
+
+        loadTransaction((err, transaction) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof transaction.commands === "undefined") {
+                transaction.commands = [];
+            }
+
+            transaction.commands.push(command);
+
+            saveTransaction(transaction, callback);
+        });
+    }
+
+    return {
+        addCommand,
+        loadTransaction,
+        saveTransaction
+    };
+}
+
+module.exports = TransactionManager;
+
+},{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js":[function(require,module,exports){
+const EDFS = require("edfs");
+
+function createArchive(endpoint) {
+    const edfs = EDFS.attachToEndpoint(endpoint);
+    return edfs.createRawDossier();
+}
+
+function addFile(workingDir, dossierPath, archive, callback) {
+    const path = require("path");
+    archive.addFile(path.join(workingDir, path.basename(dossierPath)), dossierPath, callback);
+}
+
+function mount(workingDir, mountPath, mountName, seed, archive, callback) {
+    archive.mount(mountPath, mountName, seed, false, callback);
+}
+
+module.exports = {
+    addFile,
+    createArchive,
+    mount
+};
+},{"edfs":"edfs","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js":[function(require,module,exports){
+const dossierOperations = require('./dossierOperations');
+const TransactionManager = require('./TransactionManager');
+
+function executioner(workingDir, callback) {
+    const manager = new TransactionManager(workingDir);
+    manager.loadTransaction((err, transaction) => {
+        if (err) {
+            return callback(err);
+        }
+        let archive;
+        try {
+            archive = dossierOperations.createArchive(transaction.endpoint);
+        } catch (e) {
+            return callback(e);
+        }
+
+        executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, archive.getSeed());
+        });
+    });
+}
+
+function executeCommand(commands, archive, workingDir, index = 0, callback) {
+    if (!Array.isArray(commands)) {
+        return callback(Error(`No commands`));
+    }
+    if (index === commands.length) {
+        return callback();
+    }
+
+    const match = judge(commands[index], archive, workingDir, (err) => {
+        if (err) {
+            return callback(err);
+        }
+
+        executeCommand(commands, archive, workingDir, ++index, callback);
+    });
+
+    if (!match) {
+        return callback(new Error('No match for command found' + commands[index].name));
+    }
+}
+
+function judge(command, archive, workingDir, callback) {
+    switch (command.name) {
+        case 'addFile':
+            dossierOperations.addFile(workingDir, command.params.dossierPath, archive, callback);
+            break;
+
+        case 'mount':
+            dossierOperations.mount(workingDir, command.params.mountPath, command.params.mountName, command.params.seed, archive, callback);
+            break;
+
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+module.exports = {
+    executioner
+};
+
+},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js","./dossierOperations":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js":[function(require,module,exports){
+const fs = require("fs");
+const path = require("path");
+const url = require('url');
+
+const TransactionManager = require("./TransactionManager");
+
+function addFile(workingDir, FileObj, callback) {
+    const cmd = {
+        name: 'addFile',
+        params: {
+            dossierPath: FileObj.dossierPath
+        }
+    };
+
+    const manager = new TransactionManager(workingDir);
+    const filePath = path.join(workingDir, path.basename(FileObj.dossierPath));
+    fs.access(filePath, (err) => {
+        if (!err) {
+            const e = new Error('File already exists');
+            e.code = 'EEXIST';
+            return callback(e);
+        }
+
+        const file = fs.createWriteStream(filePath);
+
+        file.on('close', () => {
+            manager.addCommand(cmd, callback);
+        });
+
+        FileObj.stream.pipe(file);
+    });
+}
+
+function setEndpoint(workingDir, endpointObj, callback) {
+    let endpoint;
+    try {
+        endpoint = new url.URL(endpointObj).origin;
+    } catch (e) {
+        return callback(e);
+    }
+    const manager = new TransactionManager(workingDir);
+    manager.loadTransaction((err, transaction) => {
+        if (err) {
+            return callback(err);
+        }
+        transaction.endpoint = endpoint;
+
+        manager.saveTransaction(transaction, callback);
+    });
+}
+
+function mount(workingDir, mountPoint, callback) {
+    const cmd = {
+        name: 'mount',
+        params: {
+            mountPath: path.dirname(mountPoint.mountPath),
+            mountName: path.basename(mountPoint.mountPath),
+            seed: mountPoint.seed
+        }
+    };
+
+    const manager = new TransactionManager(workingDir);
+    manager.addCommand(cmd, callback);
+}
+module.exports = {
+    addFile,
+    setEndpoint,
+    mount
+};
+
+},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js","fs":false,"path":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js":[function(require,module,exports){
 const pathModule = "path";
 const path = require(pathModule);
 const fsModule = "fs";
@@ -1368,17 +1754,10 @@ const FILE_SEPARATOR = '-';
 let brickStorageFolder;
 
 $$.flow.describe("BricksManager", {
-    init: function (rootFolder, callback) {
-
-        if (!rootFolder) {
-            callback(new Error("No root folder specified!"));
-            return;
-        }
+    init: function (rootFolder) {
         rootFolder = path.resolve(rootFolder);
-        this.__ensureFolderStructure(rootFolder, (err, pth) => {
-            brickStorageFolder = rootFolder;
-            callback(err, rootFolder);
-        });
+        brickStorageFolder = rootFolder;
+        this.__ensureFolderStructure(rootFolder);
     },
     write: function (fileName, readFileStream, callback) {
         if (!this.__verifyFileName(fileName, callback)) {
@@ -1465,7 +1844,18 @@ $$.flow.describe("BricksManager", {
         return true;
     },
     __ensureFolderStructure: function (folder, callback) {
-        fs.mkdir(folder, {recursive: true}, callback);
+        try{
+            fs.mkdirSync(folder, {recursive: true});
+        }catch(err){
+            if(callback){
+                callback(err);
+            }else{
+                throw err;
+            }
+        }
+        if(callback){
+            callback();
+        }
     },
     __writeFile: function (readStream, folderPath, fileName, callback) {
         const PskHash = crypto.PskHash;
@@ -1520,7 +1910,7 @@ $$.flow.describe("BricksManager", {
     }
 });
 
-},{"pskcrypto":"pskcrypto"}],"/opt/working_dir/privatesky/modules/edfs-middleware/lib/EDFSClient.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js":[function(require,module,exports){
 require("psk-http-client");
 
 function EDFSClient(url) {
@@ -1546,12 +1936,23 @@ function EDFSClient(url) {
 }
 
 module.exports = EDFSClient;
-},{"psk-http-client":"psk-http-client"}],"/opt/working_dir/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
-require("../flows/BricksManager");
+},{"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
+const bricks_storage_folder = "brick-storage";
+const URL_PREFIX = "/EDFS";
 
 function EDFSMiddleware(server) {
+    const path = require("path");
+    require("../flows/BricksManager");
 
-    server.use('/*',function (req, res, next) {
+    let storageFolder = path.join(server.rootFolder, bricks_storage_folder);
+    if(typeof process.env.EDFS_BRICK_STORAGE_FOLDER !== "undefined"){
+        storageFolder = process.env.EDFS_BRICK_STORAGE_FOLDER;
+    }
+
+    $$.flow.start("BricksManager").init(storageFolder);
+    console.log("Bricks Storage location", storageFolder);
+
+    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         // Request methods you wish to allow
@@ -1560,10 +1961,9 @@ function EDFSMiddleware(server) {
         // Request headers you wish to allow
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
         next();
-
     });
 
-    server.post('/:fileId', (req, res) => {
+    server.post(`${URL_PREFIX}/:fileId`, (req, res) => {
         $$.flow.start("BricksManager").write(req.params.fileId, req, (err, result) => {
             res.statusCode = 201;
             if (err) {
@@ -1577,8 +1977,9 @@ function EDFSMiddleware(server) {
         });
     });
 
-    server.get('/:fileId', (req, res) => {
+    server.get(`${URL_PREFIX}/:fileId`, (req, res) => {
         res.setHeader("content-type", "application/octet-stream");
+        res.setHeader('Cache-control', 'max-age=31536000'); // set brick cache expiry to 1 year
         $$.flow.start("BricksManager").read(req.params.fileId, res, (err, result) => {
             res.statusCode = 200;
             if (err) {
@@ -1589,7 +1990,7 @@ function EDFSMiddleware(server) {
         });
     });
 
-    server.post('/attachHashToAlias/:fileId', (req, res) => {
+    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, (req, res) => {
         $$.flow.start("BricksManager").addAlias(req.params.fileId, req, (err, result) => {
             res.statusCode = 201;
             if (err) {
@@ -1603,10 +2004,10 @@ function EDFSMiddleware(server) {
         });
     });
 
-    server.get('/getVersions/:alias', (req, res) => {
+    server.get(`${URL_PREFIX}/getVersions/:alias`, (req, res) => {
         $$.flow.start("BricksManager").readVersions(req.params.alias, (err, fileHashes) => {
             res.statusCode = 200;
-            if(err) {
+            if (err) {
                 console.error(err);
                 res.statusCode = 404;
             }
@@ -1618,14 +2019,14 @@ function EDFSMiddleware(server) {
 
 module.exports = EDFSMiddleware;
 
-},{"../flows/BricksManager":"/opt/working_dir/privatesky/modules/edfs-middleware/flows/BricksManager.js"}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
+},{"../flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
 
 function FetchBrickTransportStrategy(initialConfig) {
     const url = initialConfig;
     this.send = (name, data, callback) => {
 
-        fetch(url + "/EDFS/", {
+        fetch(url + "/EDFS/"+name, {
             method: 'POST',
             mode: 'cors',
             headers: {
@@ -1636,7 +2037,10 @@ function FetchBrickTransportStrategy(initialConfig) {
             if(response.status>=400){
                 return callback(new Error(`An error occurred ${response.statusText}`))
             }
-            return response.json();
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
         }).then(function(data) {
             callback(null, data)
         }).catch(error=>{
@@ -1689,19 +2093,45 @@ function FetchBrickTransportStrategy(initialConfig) {
         });
     };
 
+    this.attachHashToAlias = (alias, name, callback) => {
+        fetch(url + '/EDFS/attachHashToAlias/' + name, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            body: alias
+        }).then(response => {
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
+        }).then(data => {
+            callback(null, data);
+        }).catch(error => {
+            callback(error);
+        })
+    }
+
     this.getLocator = () => {
         return url;
     };
 }
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
+FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
+    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+};
 
 
 module.exports = FetchBrickTransportStrategy;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
 
 function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
@@ -1738,7 +2168,8 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 };
 
 module.exports = HTTPBrickTransportStrategy;
-},{"psk-http-client":"psk-http-client"}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+},{"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+(function (Buffer){
 function BrickTransportStrategiesRegistry() {
     const strategies = {};
 
@@ -1756,7 +2187,7 @@ function BrickTransportStrategiesRegistry() {
 
     this.get = (endpoint) => {
         if (typeof endpoint !== "string" || endpoint.length === 0) {
-            throw Error("Invalid endpoint");
+            throw Error(`Invalid endpoint ${endpoint}, ${typeof endpoint} ${Buffer.isBuffer(endpoint)}`);
         }
 
         const strategyName = getStrategyNameFromEndpoint(endpoint);
@@ -1783,25 +2214,33 @@ function BrickTransportStrategiesRegistry() {
 if (!$$.brickTransportStrategiesRegistry) {
     $$.brickTransportStrategiesRegistry = new BrickTransportStrategiesRegistry();
 }
-},{}],"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
-function EDFS(endpoint) {
+}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+
+},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
+function EDFS(endpoint, options) {
+    options = options || {};
+
     const RawDossier = require("./RawDossier");
     const barModule = require("bar");
     const fsAdapter = require("bar-fs-adapter");
     const constants = require('../moduleConstants');
-    const self = this;
+    const cache = options.cache;
 
-    this.createCSB = () => {
-        return new RawDossier(endpoint);
+    this.createRawDossier = () => {
+        return new RawDossier(endpoint, undefined, cache);
     };
 
     this.createBar = () => {
         return barModule.createArchive(createArchiveConfig());
     };
 
-    this.bootCSB = (seed, callback) => {
-        const rawDossier = new RawDossier(endpoint, seed);
+    this.bootRawDossier = (seed, callback) => {
+        const rawDossier = new RawDossier(endpoint, seed, cache);
         rawDossier.start(err => callback(err, rawDossier));
+    };
+
+    this.loadRawDossier = (seed) => {
+        return new RawDossier(endpoint, seed, cache);
     };
 
     this.loadBar = (seed) => {
@@ -1814,16 +2253,20 @@ function EDFS(endpoint) {
         bar.clone(edfsBrickStorage, true, callback);
     };
 
-    this.createWallet = (templateSeed, pin, overwrite = false, callback) => {
-        const wallet = this.createCSB();
-        wallet.mount("", constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
+    this.createWallet = (templateSeed, password, overwrite, callback) => {
+        if (typeof overwrite === "function") {
+            callback = overwrite;
+            overwrite = false;
+        }
+        const wallet = this.createRawDossier();
+        wallet.mount("/" + constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
             if (err) {
                 return callback(err);
             }
 
             const seed = wallet.getSeed();
-            if (typeof pin !== "undefined") {
-                require("../seedCage").putSeed(seed, pin, overwrite, (err) => {
+            if (typeof password !== "undefined") {
+                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
@@ -1835,55 +2278,48 @@ function EDFS(endpoint) {
         }));
     };
 
-    this.loadWallet = function (walletSeed, pin, overwrite, callback) {
+    this.loadWallet = function (walletSeed, password, overwrite, callback) {
         if (typeof overwrite === "function") {
             callback = overwrite;
-            overwrite = pin;
-            pin = walletSeed;
+            overwrite = password;
+            password = walletSeed;
             walletSeed = undefined;
         }
         if (typeof walletSeed === "undefined") {
-            require("../seedCage").getSeed(pin, (err, seed) => {
+            require("../seedCage").getSeed(password, (err, seed) => {
                 if (err) {
                     return callback(err);
                 }
-                try {
-                    let wallet = this.loadBar(seed);
-                    return callback(undefined, wallet);
-                } catch (err) {
-                    return callback(err);
+                let rawDossier = this.loadRawDossier(seed);
+
+                if (!rawDossier) {
+                    return callback(new Error("RawDossier is not available"));
                 }
+                return callback(undefined, rawDossier);
+
             });
         } else {
-            let wallet;
-            try {
-                wallet = this.loadBar(walletSeed);
-                if (typeof pin !== "undefined" && pin !== null) {
-                    require("../seedCage").putSeed(walletSeed, pin, overwrite, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        callback(undefined, wallet);
-                    });
-                } else {
-                    return callback(undefined, wallet);
-                }
-            } catch (err) {
-                return callback(err);
+
+            let rawDossier = this.loadRawDossier(walletSeed);
+
+            if (!rawDossier) {
+                return callback(new Error("RawDossier is not available"));
+            }
+
+
+            if (typeof password !== "undefined" && password !== null) {
+                require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, rawDossier);
+                });
+            } else {
+                return callback(undefined, rawDossier);
             }
         }
     };
 
-    this.createBarWithConstitution = function (folderConstitution, callback) {
-        const bar = this.createBar();
-        bar.addFolder(folderConstitution, constants.CSB.CONSTITUTION_FOLDER, (err, mapDigest) => {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(undefined, bar);
-        });
-    };
 //------------------------------------------------ internal methods -------------------------------------------------
     function createArchiveConfig(seed) {
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
@@ -1894,6 +2330,7 @@ function EDFS(endpoint) {
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
         archiveConfigurator.setBufferSize(65535);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
+        archiveConfigurator.setCache(cache);
 
         if (seed) {
             archiveConfigurator.setSeed(seed);
@@ -1906,15 +2343,13 @@ function EDFS(endpoint) {
 }
 
 module.exports = EDFS;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false}],"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
-/*
 
-Sinica: to be renamed CSBHandler. RootCSB should be deleted
-*/
-
-function RawDossier(endpoint, seed) {
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
+function RawDossier(endpoint, seed, cache) {
     const barModule = require("bar");
     const constants = require("../moduleConstants").CSB;
+    const swarmutils = require("swarmutils");
+    const TaskCounter = swarmutils.TaskCounter;
     let bar = createBar(seed);
     this.getSeed = () => {
         return bar.getSeed();
@@ -1924,51 +2359,294 @@ function RawDossier(endpoint, seed) {
         createBlockchain(bar).start(callback);
     };
 
-    this.addFolder = (fsFolderPath, barPath, callback) => {
-        bar.addFolder(fsFolderPath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+    this.addFolder = (fsFolderPath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
 
-    this.addFile = (fsFilePath, barPath, callback) => {
-        bar.addFile(fsFilePath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
-    this.readFile = bar.readFile;
-
-    this.extractFolder = bar.extractFolder;
-
-    this.extractFile = bar.extractFile;
-
-    this.writeFile = (barPath, data, callback) => {
-        bar.writeFile(barPath, data, (err, barMapDigest) => callback(err, barMapDigest));
-    };
-
-    this.listFiles = bar.listFiles;
-
-    this.mount = (path, name, archiveIdentifier, callback) => {
-        bar.readFile(constants.MANIFEST_FILE, (err, data) => {
-            let manifest;
-            if (err) {
-                manifest = {};
-                manifest.mounts = [];
-            }
-
-            if (data) {
-                manifest = JSON.parse(data.toString());
-                const pathNames = manifest.mounts.filter(el => el.localPath === path);
-                const index = pathNames.findIndex(el => el === name);
-                if (index >= 0) {
-                    return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+        if (options.ignoreMounts === true) {
+            bar.addFolder(fsFolderPath, barPath, options, callback);
+        } else {
+            const splitPath = barPath.split("/");
+            const folderName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
                 }
+
+                dossierContext.archive.addFolder(fsFolderPath, dossierContext.relativePath + "/" + folderName, options, callback);
+            });
+        }
+    };
+
+    this.addFile = (fsFilePath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        if (options.ignoreMounts === true) {
+            bar.addFile(fsFilePath, barPath, options, (err, barMapDigest) => callback(err, barMapDigest));
+        } else {
+            const splitPath = barPath.split("/");
+            const fileName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                dossierContext.archive.addFile(fsFilePath, dossierContext.relativePath + "/" + fileName, options, callback);
+            });
+        }
+    };
+
+    this.readFile = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
             }
 
-            const mount = {};
-            mount.localPath = path;
-            mount.mountName = name;
-            mount.archiveIdentifier = archiveIdentifier;
+            dossierContext.archive.readFile(dossierContext.relativePath, callback);
+        });
+    };
 
-            manifest.mounts.push(mount);
+    this.createReadStream = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
 
-            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+            dossierContext.archive.createReadStream(dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFolder = (fsFolderPath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFolder(fsFolderPath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFile = (fsFilePath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFile(fsFilePath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.writeFile = (path, data, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        if (path.split("/").includes(constants.MANIFEST_FILE)) {
+            return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
+        }
+        if (options.ignoreMounts === true) {
+            bar.writeFile(path, data, options, callback);
+        } else {
+            const splitPath = path.split("/");
+            const fileName = splitPath.pop();
+            path = splitPath.join("/");
+            loadBarForPath(path, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+                if (dossierContext.readonly === true) {
+                    return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                }
+
+                dossierContext.archive.writeFile(dossierContext.relativePath + "/" + fileName, data, options, callback);
+            });
+        }
+    };
+
+    this.delete = (barPath, callback) => {
+        bar.delete(barPath, callback);
+    };
+
+    this.listFiles = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, (err, files) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                if (path !== "/" && path !== "" && typeof path !== "function") {
+                    files = files.map(file => {
+                        if (file[0] === "/") {
+                            file = file.slice(1);
+                        }
+
+                        return file;
+                    })
+                }
+
+                callback(undefined, files);
+            });
+        });
+    };
+
+    this.listFolders = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFolders(dossierContext.relativePath, (err, folders) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, folders);
+            });
+        });
+    };
+
+    this.readDir = (folderPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {
+                withFileTypes: false
+            };
+        }
+        loadBarForPath(folderPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const taskCounter = new TaskCounter((errors, results) => {
+                let entries;
+                if (options.withFileTypes === true) {
+                    entries = {};
+                    results.forEach(res=> {
+                        let entryType = Object.keys(res)[0];
+                        entries[entryType] = res[entryType];
+                    })
+                }else{
+                    entries = [];
+                    results.forEach(res => {
+                        entries = entries.concat(Object.values(res)[0])
+                    });
+                }
+
+
+                callback(undefined, entries);
+            });
+
+            taskCounter.increment(3);
+            dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                folders = folders.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {folders: folders});
+            });
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                files= files.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {files: files});
+            });
+
+            this.listMountedDossiers("/", (err, mountedDossiers) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                const mountPaths = mountedDossiers.map(dossier => {
+                    const pathSegments = dossier.path.split("/");
+                    if (pathSegments[0] === "") {
+                        pathSegments.shift();
+                    }
+                    if (pathSegments.length > 0) {
+                        return pathSegments[0];
+                    }
+                });
+
+                taskCounter.decrement(undefined, {mounts: mountPaths});
+            });
+        });
+    };
+
+    this.mount = (path, name, archiveIdentifier, readonly, callback) => {
+        if (typeof readonly === "function") {
+            callback = readonly;
+            readonly = false;
+        }
+        if (/\W-_/.test(name) === true) {
+            return callback(Error("Invalid mount name"));
+        }
+
+        bar.listFiles(path, (err, files) => {
+            if (!err && files.length > 0) {
+                return callback(Error("Tried to mount in a non-empty folder"));
+            }
+
+            bar.readFile(constants.MANIFEST_FILE, (err, data) => {
+                let manifest;
+                if (err) {
+                    manifest = {};
+                    manifest.mounts = [];
+                }
+
+                if (data) {
+                    manifest = JSON.parse(data.toString());
+                    const existingMount = manifest.mounts.find(el => el.localPath === path && el.mountName === name);
+                    if (existingMount) {
+                        return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+                    }
+                }
+
+                const mount = {};
+                mount.localPath = path;
+                mount.mountName = name;
+                mount.archiveIdentifier = archiveIdentifier;
+                mount.readonly = readonly;
+                manifest.mounts.push(mount);
+
+                bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), {encrypt: true}, callback);
+            });
         });
     };
 
@@ -1990,7 +2668,43 @@ function RawDossier(endpoint, seed) {
                 return callback(Error(`No mount point exists at path ${path}`));
             }
 
-            callback();
+            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+        });
+    };
+
+    this.listMountedDossiers = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let manifest;
+                try {
+                    manifest = JSON.parse(manifestContent.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+
+                const matchingMounts = [];
+                manifest.mounts.forEach(mount => {
+                    let sep = mount.localPath === "/" ? "" : "/";
+                    let pth = mount.localPath + sep + mount.mountName;
+
+                    if (pth.startsWith(dossierContext.relativePath)) {
+                        if (path !== "/" && path !== "" && typeof path !== "function" && pth[0] === "/") {
+                            pth = pth.slice(1);
+                        }
+
+                        matchingMounts.push({path: pth, dossierReference: mount.archiveIdentifier});
+                    }
+                });
+                callback(undefined, matchingMounts);
+            });
         });
     };
 
@@ -2023,67 +2737,116 @@ function RawDossier(endpoint, seed) {
         } else {
             archiveConfigurator.setSeed(localSeed);
         }
+        archiveConfigurator.setCache(cache);
 
         return barModule.createArchive(archiveConfigurator);
     }
 
-    this.getRawDossier = (rawDossier, path, callback) => {
-        if (path === "" || path === "/") {
-            return callback(undefined, {rawDossier, path});
+    function loadBarForPath(path, callback) {
+        if (typeof path === "function") {
+            callback = path;
+            path = "/";
         }
-        rawDossier.listFiles((err, files) => {
-            if (err) {
-                return callback(err);
+
+        __loadBarForPathRecursively(bar, "", path, false, callback);
+
+        function __loadBarForPathRecursively(archive, prefixPath, relativePath, readonly, callback) {
+            if (relativePath === "" || relativePath === "/") {
+                return callback(undefined, {archive, prefixPath, readonly, relativePath});
             }
 
-            if (files.length === 0) {
-                return callback();
-            }
-            let pathRest = [];
+            archive.listFiles((err, files) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            let barPath = files.find(barPath => barPath === path);
-            if (barPath) {
-                return callback(undefined, {rawDossier, path});
-            } else {
-                let splitPath = path.split("/");
-                rawDossier.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
-                    if (err) {
-                        return callback(err);
+                if (files.length === 0) {
+                    __searchInManifest();
+                } else {
+                    let barPath = files.find(file => {
+                        return file.includes(relativePath) || relativePath.includes(file);
+                    });
+
+                    if (barPath) {
+                        return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                    } else {
+                        __searchInManifest();
                     }
 
-                    const manifest = JSON.parse(manifestContent.toString());
-                    pathRest.unshift(splitPath.pop());
-                    while (splitPath.length > 0) {
-                        for (let mount of manifest.mounts) {
-                            const localPath = splitPath.join("/");
-                            const name = pathRest.shift();
-                            if (mount.localPath === localPath && mount.mountName === name) {
-                                const internalRawDossier = createBar(mount.archiveIdentifier);
-                                let newPath = "";
-                                if (pathRest.length > 0) {
-                                    newPath = pathRest.join("/");
-                                }
-                                return this.getRawDossier(internalRawDossier, newPath, callback);
-                            }
+                }
+
+                function __searchInManifest() {
+                    let pathRest = [];
+                    let splitPath = relativePath.split("/");
+                    if (splitPath[0] === "") {
+                        splitPath[0] = "/";
+                    }
+
+                    archive.readFile("/" + constants.MANIFEST_FILE, (err, manifestContent) => {
+                        if (err) {
+                            return callback(err);
                         }
 
+                        const manifest = JSON.parse(manifestContent.toString());
                         pathRest.unshift(splitPath.pop());
-                    }
-                    console.log(" nothing to see here");
-                    return;
-                });
-            }
-        });
-    };
+                        if (splitPath.length === 0) {
+                            return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                        }
+
+                        while (splitPath.length > 0) {
+                            let localPath;
+                            if (splitPath[0] === "/") {
+                                while (splitPath[0] === "/") {
+                                    splitPath.shift();
+                                }
+                                localPath = "/" + splitPath.join("/");
+                                splitPath.unshift("/");
+                            } else {
+                                localPath = splitPath.join("/");
+                            }
+
+                            for (let mount of manifest.mounts) {
+                                const name = pathRest[0];
+                                if (mount.localPath === localPath && mount.mountName === name) {
+                                    pathRest.shift();
+
+                                    let newPath;
+                                    if (prefixPath.endsWith("/") || prefixPath === "") {
+                                        newPath = prefixPath + localPath + "/" + name;
+                                    } else {
+                                        newPath = prefixPath + "/" + localPath + "/" + name;
+                                    }
+                                    const internalArchive = createBar(mount.archiveIdentifier);
+                                    let remainingPath = pathRest.join("/");
+                                    if (remainingPath[0] !== "/") {
+                                        //when navigate into an archive we need to ensure that the remainingPath starts with /
+                                        remainingPath = "/" + remainingPath;
+                                    }
+                                    return __loadBarForPathRecursively(internalArchive, newPath, remainingPath, mount.readonly, callback);
+                                }
+                            }
+
+                            pathRest.unshift(splitPath.pop());
+                            if (splitPath.length === 0) {
+                                return callback(Error(`Path ${path} could not be found.`));
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
 }
 
 module.exports = RawDossier;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false}],"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 
 module.exports = {
     CSB: {
+        CODE_FOLDER: "code",
         CONSTITUTION_FOLDER: 'constitution',
         BLOCKCHAIN_FOLDER: 'blockchain',
         APP_FOLDER: 'app',
@@ -2096,7 +2859,7 @@ module.exports = {
     }
 };
 
-},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
+},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
@@ -2188,7 +2951,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pth = "path";
 const path = require(pth);
@@ -2204,7 +2967,7 @@ const storageFileName = ".seedCage";
 const seedCagePath = path.join(storageLocation, storageFileName);
 const algorithm = "aes-256-cfb";
 
-function getSeed(pin, callback) {
+function getSeed(password, callback) {
     fs.readFile(seedCagePath, (err, encryptedSeed) => {
         if (err) {
             return callback(err);
@@ -2213,7 +2976,7 @@ function getSeed(pin, callback) {
         let seed;
         try {
             const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, pin);
+            const encKey = crypto.deriveKey(algorithm, password);
             seed = pskEncryption.decrypt(encryptedSeed, encKey).toString();
         } catch (e) {
             return callback(e);
@@ -2223,7 +2986,7 @@ function getSeed(pin, callback) {
     });
 }
 
-function putSeed(seed, pin, overwrite = false, callback) {
+function putSeed(seed, password, overwrite = false, callback) {
     fs.mkdir(storageLocation, {recursive: true}, (err) => {
         if (err) {
             return callback(err);
@@ -2253,7 +3016,7 @@ function putSeed(seed, pin, overwrite = false, callback) {
 
 
                     const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, pin);
+                    const encKey = crypto.deriveKey(algorithm, password);
                     encSeed = pskEncryption.encrypt(seed, encKey);
                     const encParameters = pskEncryption.getEncryptionParameters();
                     encSeed = Buffer.concat([encSeed, encParameters.iv]);
@@ -2287,7 +3050,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
 const or = require("overwrite-require");
 switch ($$.environmentType) {
     case or.constants.THREAD_ENVIRONMENT_TYPE:
@@ -2302,7 +3065,7 @@ switch ($$.environmentType) {
     default:
         throw new Error("No implementation of SeedCage for this env type.");
 }
-},{"./BrowserSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
+},{"./BrowserSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
 module.exports = Pend;
 
 function Pend() {
@@ -2359,7 +3122,7 @@ function pendGo(self, fn) {
   fn(pendHold(self));
 }
 
-},{}],"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -2368,12 +3131,14 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
+        const zmqName = "zeromq";
+        require(zmqName);
         const PSKLoggerModule = require('psklogger');
         const PSKLogger = PSKLoggerModule.PSKLogger;
 
@@ -2381,7 +3146,7 @@ if (!global.process || process.env.NO_LOGS !== 'true') {
 
         console.log('Logger init successful', process.pid);
     } catch (e) {
-        if(e.message.indexOf("psklogger")!==-1){
+        if(e.message.indexOf("psklogger")!==-1 || e.message.indexOf("zeromq")!==-1){
             console.log('Logger not available, using console');
             logger = console;
         }else{
@@ -2680,7 +3445,126 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
+},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+const DEFAULT_ITEMS_LIMIT = 1000;
+const DEFAULT_STORAGE_LEVELS = 3;
+
+/**
+ * @param {object} options
+ * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+ * @param {Number} options.limit Number of max items the cache can store per level.
+ *                               Defaults to 1000
+ */
+function Cache(options) {
+    options = options || {};
+    this.limit = parseInt(options.limit, 10) || DEFAULT_ITEMS_LIMIT;
+    this.maxLevels = parseInt(options.maxLevels, 10) || DEFAULT_STORAGE_LEVELS;
+    this.storage = null;
+
+    if (this.limit < 0) {
+        throw new Error('Limit must be a positive number');
+    }
+    if (this.maxLevels < 1) {
+        throw new Error('Cache needs at least one storage level');
+    }
+
+
+    /**
+     * Create an array of Map objects for storing items
+     *
+     * @param {Number} maxLevels
+     * @return {Array.<Map>}
+     */
+    this.createStorage = function (maxLevels) {
+        const storage = [];
+        for (let i = 0; i < maxLevels; i++) {
+            storage.push(new Map());
+        }
+
+        return storage;
+    }
+
+    this.storage = this.createStorage(this.maxLevels);
+
+    /**
+     * @param {*} key
+     * @param {*} value
+     */
+    this.set = function (key, value) {
+        if (this.cacheIsFull()) {
+            this.makeRoom();
+        }
+
+        this.storage[0].set(key, value);
+    }
+
+    /**
+     * @param {*} key
+     * @return {Boolean}
+     */
+    this.has = function (key) {
+        for (let i = 0; i < this.storage.length; i++) {
+            if (this.storage[i].has(key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param {*} key
+     * @return {*}
+     */
+    this.get = function (key) {
+        if (this.storage[0].has(key)) {
+            return this.storage[0].get(key);
+        }
+
+        return this.getFromLowerLevels(key);
+    }
+
+    /**
+     * Get an item from the lower levels.
+     * If one is found added it to the first level as well
+     *
+     * @param {*} key
+     * @return {*}
+     */
+    this.getFromLowerLevels = function (key) {
+        for (let i = 1; i < this.storage.length; i++) {
+            const storageLevel = this.storage[i];
+            if (!storageLevel.has(key)) {
+                continue;
+            }
+            const value = storageLevel.get(key);
+            this.set(key, value);
+            return value;
+        }
+    }
+
+    /**
+     * @return {Boolean}
+     */
+    this.cacheIsFull = function () {
+        return this.storage[0].size >= this.limit;
+    }
+
+    /**
+     * Move all the items down by one level
+     * and clear the first one to make room for new items
+     */
+    this.makeRoom = function () {
+        for (let i = this.storage.length - 1; i > 0; i--) {
+            this.storage[i] = this.storage[i - 1];
+        }
+        this.storage[0] = new Map();
+    }
+}
+
+module.exports = Cache;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
 /**********************  utility class **********************************/
 function RequestManager(pollingTimeOut) {
     if (!pollingTimeOut) {
@@ -3017,7 +3901,7 @@ function HttpChannelClient(remoteEndPoint, channelName, options) {
             }
         });
 
-        createRequestManager();
+        $$.remote.createRequestManager();
     };
 
     const allCatchAlls = [];
@@ -3096,7 +3980,8 @@ if (typeof $$.remote === "undefined") {
         throw new Error("Overwrite this!");
     };
 }
-},{}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
 (function (Buffer){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
@@ -3105,7 +3990,7 @@ function generateMethodForRequestWithData(httpMethod) {
         xhr.onload = function () {
             if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
                 const data = xhr.response;
-                callback(null, data);
+                callback(undefined, data);
             } else {
                 if(xhr.status>=400){
                     const error = new Error("An error occured. StatusCode: " + xhr.status);
@@ -3170,10 +4055,8 @@ $$.remote.doHttpGet = function doHttpGet(url, callback) {
     };
 
     xhr.onload = function () {
-
         if (xhr.readyState === 4 && xhr.status == "200") {
             var contentType = xhr.getResponseHeader("Content-Type");
-
             if (contentType === "application/octet-stream") {
                 let responseBuffer = this.response;
 
@@ -3182,12 +4065,11 @@ $$.remote.doHttpGet = function doHttpGet(url, callback) {
                 for (let i = 0; i < buffer.length; ++i) {
                     buffer[i] = view[i];
                 }
-                callback(null, buffer);
+                callback(undefined, buffer);
             }
             else{
-                callback(null, xhr.response);
+                callback(undefined, xhr.response);
             }
-
         } else {
             const error = new Error("An error occurred. StatusCode: " + xhr.status);
 
@@ -3216,11 +4098,11 @@ function CryptoProvider(){
         }
 
         return uid;
-    }
+    };
 
     this.signSwarm = function(swarm, agent){
         swarm.meta.signature = agent;
-    }
+    };
 }
 
 
@@ -3237,7 +4119,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
 (function (Buffer){
 require("./psk-abstract-client");
 
@@ -3310,7 +4192,7 @@ function generateMethodForRequestWithData(httpMethod) {
 			});
 			res.on('end', () => {
 				try {
-					callback(null, rawData, res.headers);
+					callback(undefined, rawData, res.headers);
 				} catch (err) {
 					return callback(err);
 				}finally {
@@ -3425,21 +4307,21 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require("buffer").Buffer)
 
-},{"./psk-abstract-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
+},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
 function Agent(agentId, publicKey){
     this.agentId = agentId;
     this.publicKey = publicKey;
 }
 
 module.exports = Agent;
-},{}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/EncryptedSecret.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js":[function(require,module,exports){
 function EncryptedSecret(encryptedData, agentId){
     this.encryptedData = encryptedData;
     this.agentId = agentId;
 }
 
 module.exports = EncryptedSecret;
-},{}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/PSKSignature.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js":[function(require,module,exports){
 function PSKSignature(message, signature, type, agentId) {
     this.message = message;
     this.signature = signature;
@@ -3448,7 +4330,7 @@ function PSKSignature(message, signature, type, agentId) {
 }
 
 module.exports = PSKSignature;
-},{}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js":[function(require,module,exports){
 function RawCSBSecurityContext(parentSecurityContext) {
     this.generateIdentity = parentSecurityContext.generateIdentity;
     this.getCurrentAgentIdentity = parentSecurityContext.getCurrentAgentIdentity;
@@ -3460,7 +4342,7 @@ function RawCSBSecurityContext(parentSecurityContext) {
 }
 
 module.exports = RawCSBSecurityContext;
-},{}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js":[function(require,module,exports){
 const SecurityContext = require("./SecurityContext");
 
 function RootCSBSecurityContext() {
@@ -3476,7 +4358,7 @@ function RootCSBSecurityContext() {
 }
 
 module.exports = RootCSBSecurityContext;
-},{"./SecurityContext":"/opt/working_dir/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"/opt/working_dir/privatesky/modules/psk-security-context/lib/SecurityContext.js":[function(require,module,exports){
+},{"./SecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/SecurityContext.js":[function(require,module,exports){
 const crypto = require("pskcrypto");
 const swarmUtils = require("swarmutils");
 const PSKSignature = require("./PSKSignature");
@@ -3585,7 +4467,7 @@ function SecurityContext() {
 
 module.exports = SecurityContext;
 
-},{"./Agent":"/opt/working_dir/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/opt/working_dir/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/opt/working_dir/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 (function (Buffer){
 function PskCrypto() {
     const crypto = require('crypto');
@@ -3754,7 +4636,7 @@ module.exports = new PskCrypto();
 
 }).call(this,require("buffer").Buffer)
 
-},{"./PskEncryption":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require("crypto");
 const utils = require("./utils/cryptoUtils");
@@ -3839,7 +4721,7 @@ function PskEncryption(algorithm) {
 module.exports = PskEncryption;
 }).call(this,require("buffer").Buffer)
 
-},{"./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -3864,7 +4746,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":false,"util":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 
@@ -3944,7 +4826,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -3972,7 +4854,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":false}],"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -4172,7 +5054,7 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":false}],"/opt/working_dir/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -4547,7 +5429,7 @@ function SoundPubSub(){
 }
 
 exports.soundPubSub = new SoundPubSub();
-},{"swarmutils":"swarmutils"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -4573,7 +5455,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -4664,7 +5546,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -4732,7 +5614,7 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -4881,7 +5763,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -4931,7 +5813,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -4987,7 +5869,81 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js"}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{"./OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+function replaceAll(str, search, replacement) {
+    return str.split(search).join(replacement);
+}
+
+function resolve(pth) {
+    let pathSegments = pth.split("/");
+    let makeAbsolute = pathSegments[0] === "" ? true : false;
+    for (let i = 0; i < pathSegments.length; i++) {
+        let segment = pathSegments[i];
+        if (segment === "..") {
+            let j = 1;
+            if (i > 0) {
+                j = j + 1;
+            } else {
+                makeAbsolute = true;
+            }
+            pathSegments.splice(i + 1 - j, j);
+            i = i - j;
+        }
+    }
+    let res = pathSegments.join("/");
+    if (makeAbsolute && res !== "") {
+        res = __ensureIsAbsolute(res);
+    }
+    return res;
+}
+
+function normalize(pth) {
+    if (typeof pth !== "string") {
+        throw new TypeError();
+    }
+    pth = replaceAll(pth, "\\", "/");
+    pth = replaceAll(pth, /[/]+/, "/");
+
+    return resolve(pth);
+}
+
+function join(...args) {
+    let pth = "";
+    for (let i = 0; i < args.length; i++) {
+        pth += "/" + args[i];
+    }
+    return normalize(pth);
+}
+
+function __ensureIsAbsolute(pth) {
+    if (pth[0] !== "/") {
+        pth = "/" + pth;
+    }
+    return pth;
+}
+
+function isAbsolute(pth) {
+    pth = normalize(pth);
+    if (pth[0] !== "/") {
+        return false;
+    }
+
+    return true;
+}
+
+function ensureIsAbsolute(pth) {
+    pth = normalize(pth);
+    return __ensureIsAbsolute(pth);
+}
+
+module.exports = {
+    normalize,
+    join,
+    isAbsolute,
+    ensureIsAbsolute
+};
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -5079,7 +6035,7 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-},{"child_process":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"child_process":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 var commands = {};
 var commands_help = {};
 
@@ -5150,7 +6106,7 @@ module.exports = {
 };
 
 
-},{}],"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -5218,7 +6174,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":false}],"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 const Queue = require("./Queue");
@@ -5324,7 +6280,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/virtualmq/ChannelsManager.js":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js":[function(require,module,exports){
 (function (Buffer,__dirname){
 const storageFolder = process.env.vmq_channel_storage || "../tmp";
 const maxQueueSize = process.env.vmq_max_queue_size || 100;
@@ -5332,7 +6288,7 @@ const tokenSize = process.env.vmq_token_size || 48;
 const tokenHeaderName = process.env.vmq_token_header_name || "x-tokenHeader";
 const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
 
-const channelsFolderName = "channels";
+const channelsFolderName = process.env.PSK_VIRTUAL_MQ_CHANNEL_FOLDER_NAME || "channels";
 const channelKeyFileName = "channel_key";
 
 const path = require("path");
@@ -5364,7 +6320,10 @@ function ChannelsManager(server){
     }
 
 
-    const forwarder = integration.getForwarderInstance(process.env.vmq_zeromq_forward_address);
+    let forwarder;
+    if(integration.testIfAvailable()){
+        forwarder = integration.getForwarderInstance(process.env.vmq_zeromq_forward_address);
+    }
 
     function generateToken(){
         let buffer = crypto.randomBytes(tokenSize);
@@ -5405,7 +6364,12 @@ function ChannelsManager(server){
         }else{
             fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
                 if(res){
-                    channelKeys[channelName] = JSON.parse(res);
+                    try{
+                        channelKeys[channelName] = JSON.parse(res);
+                    }catch(e){
+                        console.log(e);
+                        return callback(e);
+                    }
                 }
                 callback(err, channelKeys[channelName]);
             });
@@ -5441,11 +6405,11 @@ function ChannelsManager(server){
         });
 
         req.on("end", ()=>{
-           callback(null, data);
+            callback(null, data);
         });
 
         req.on("error", (err)=>{
-           callback(err);
+            callback(err);
         });
     }
 
@@ -5490,7 +6454,9 @@ function ChannelsManager(server){
     }
 
     function enableForwarderHandler(req, res){
-
+        if(integration.testIfAvailable() === false){
+            return sendStatus(res, 417);
+        }
         readBody(req, (err, message)=>{
             const {enable} = message;
             const channelName = req.params.channelName;
@@ -5631,7 +6597,7 @@ function ChannelsManager(server){
 
                         //TODO: to all checks based on message header
 
-                        if(details.forward){
+                        if(integration.testIfAvailable() && details.forward){
                             //console.log("Forwarding message <", message, "> on channel", channelName);
                             forwarder.send(channelName, message);
                         }else{
@@ -5759,7 +6725,583 @@ function ChannelsManager(server){
 module.exports = ChannelsManager;
 }).call(this,require("buffer").Buffer,"/modules/virtualmq")
 
-},{"buffer":false,"crypto":false,"fs":false,"path":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/opt/working_dir/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
+},{"buffer":false,"crypto":false,"fs":false,"path":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js":[function(require,module,exports){
+(function (Buffer){
+const fs = require('fs');
+const path = require('path');
+let rootFolder = process.env.npm_package_config_ROOT_FILE_UPLOAD || process.env.ROOT_FILE_UPLOAD || "./FileUploads";
+
+rootFolder = path.resolve(rootFolder);
+
+guid = function () {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+
+	return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+};
+
+function upload(req, callback) {
+	const readFileStream = req;
+	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+		callback(new Error("Something wrong happened"));
+		return;
+	}
+
+	const folder = Buffer.from(req.params.folder, 'base64').toString().replace('\n', '');
+	if (folder.includes('..')) {
+		return callback('err');
+	}
+	let filename = guid();
+	if (filename.split('.').length > 1) {
+		return callback('err');
+	}
+	const completeFolderPath = path.join(rootFolder, folder);
+
+	const contentType = req.headers['content-type'].split('/');
+
+	if (contentType[0] === 'image' || (contentType[0] === 'application' && contentType[1] === 'pdf')) {
+		filename += '.' + contentType[1];
+	} else {
+		return callback('err');
+	}
+	try {
+		fs.mkdirSync(completeFolderPath, {recursive: true});
+	} catch (e) {
+		return callback(e);
+	}
+	const writeStream = fs.createWriteStream(path.join(completeFolderPath, filename));
+
+	writeStream.on('finish', () => {
+		writeStream.close();
+		return callback(null, {'path': path.posix.join(folder, filename)});
+	});
+
+	writeStream.on('error', (err) => {
+		writeStream.close();
+		return callback(err);
+	});
+	req.pipe(writeStream);
+}
+
+function download(req, res, callback) {
+	const readFileStream = req;
+	if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+		callback(new Error("Something wrong happened"));
+		return;
+	}
+	const folder = Buffer.from(req.params.filepath, 'base64').toString().replace('\n', '');
+
+	const completeFolderPath = path.join(rootFolder, folder);
+	if (folder.includes('..')) {
+		return callback(new Error("invalidPath"));
+	}
+	if (fs.existsSync(completeFolderPath)) {
+		const fileToSend = fs.createReadStream(completeFolderPath);
+		res.setHeader('Content-Type', `image/${folder.split('.')[1]}`);
+		return callback(null, fileToSend);
+	} else {
+		return callback(new Error("PathNotFound"));
+	}
+}
+
+function sendResult(resHandler, resultStream) {
+	resHandler.statusCode = 200;
+	resultStream.pipe(resHandler);
+	resultStream.on('finish', () => {
+		resHandler.end();
+	});
+}
+
+function FilesManager(server) {
+	//folder can be userId/tripId/...
+	server.post('/files/upload/:folder', function (req, res) {
+		upload(req, (err, result) => {
+			if (err) {
+				res.statusCode = 500;
+				res.end();
+			} else {
+				res.statusCode = 200;
+				res.end(JSON.stringify(result));
+			}
+		})
+	});
+
+	server.get('/files/download/:filepath', function (req, res) {
+		download(req, res, (err, result) => {
+			if (err) {
+				res.statusCode = 404;
+				res.end();
+			} else {
+				sendResult(res, result);
+			}
+		});
+	});
+
+	const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
+	if (typeof process.env.PSK_VIRTUAL_MQ_STATIC !== "undefined" && process.env.PSK_VIRTUAL_MQ_STATIC === "true") {
+		server.use("*", function (req, res, next) {
+			const prefix = "/directory-summary/";
+			requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
+				if (notOurResponsibility) {
+					return next();
+				}
+				targetPath = targetPath.replace(prefix, "");
+				serverTarget(targetPath);
+			});
+
+			function serverTarget(targetPath) {
+				console.log("Serving summary for dir:", targetPath);
+				fs.stat(targetPath, function (err, stats) {
+					if (err) {
+						res.statusCode = 404;
+						res.end();
+						return;
+					}
+					if (!stats.isDirectory()) {
+						res.statusCode = 403;
+						res.end();
+						return;
+					}
+
+					function send() {
+						res.statusCode = 200;
+						res.setHeader('Content-Type', "application/json");
+						//let's clean some empty objects
+						for (let prop in summary) {
+							if (Object.keys(summary[prop]).length === 0) {
+								delete summary[prop];
+							}
+						}
+
+						res.write(JSON.stringify(summary));
+						res.end();
+					}
+
+					let summary = {};
+					let directories = {};
+
+					function extractContent(currentPath) {
+						directories[currentPath] = -1;
+						let summaryId = currentPath.replace(targetPath, "");
+						summaryId = summaryId.split(path.sep).join("/");
+						if (summaryId === "") {
+							summaryId = "/";
+						}
+						//summaryId = path.basename(summaryId);
+						summary[summaryId] = {};
+
+						fs.readdir(currentPath, function (err, files) {
+							if (err) {
+								return markAsFinish(currentPath);
+							}
+							directories[currentPath] = files.length;
+							//directory empty test
+							if (files.length === 0) {
+								return markAsFinish(currentPath);
+							} else {
+								for (let i = 0; i < files.length; i++) {
+									let file = files[i];
+									const fileName = path.join(currentPath, file);
+									if (fs.statSync(fileName).isDirectory()) {
+										extractContent(fileName);
+									} else {
+										let fileContent = fs.readFileSync(fileName);
+										summary[summaryId][file] = fileContent.toString();
+									}
+									directories[currentPath]--;
+								}
+								return markAsFinish(currentPath);
+							}
+						});
+					}
+
+					function markAsFinish(targetPath) {
+						if (directories [targetPath] > 0) {
+							return;
+						}
+						delete directories [targetPath];
+						const dirsLeftToProcess = Object.keys(directories);
+						//if there are no other directories left to process
+						if (dirsLeftToProcess.length === 0) {
+							send();
+						}
+					}
+
+					extractContent(targetPath);
+				})
+			}
+
+		});
+
+		server.use("*", function (req, res, next) {
+			requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
+				if (notOurResponsibility) {
+					return next();
+				}
+				//from now on we mean to resolve the url
+				fs.stat(targetPath, function (err, stats) {
+					if (err) {
+						res.statusCode = 404;
+						res.end();
+						return;
+					}
+					if (stats.isDirectory()) {
+						let url = req.url;
+						if (url[url.length - 1] !== "/") {
+							res.writeHead(302, {
+								'Location': url + "/"
+							});
+							res.end();
+							return;
+						}
+						const defaultFileName = "index.html";
+						const defaultPath = path.join(targetPath, defaultFileName);
+						fs.stat(defaultPath, function (err) {
+							if (err) {
+								res.statusCode = 403;
+								res.end();
+								return;
+							}
+							return sendFile(res, defaultPath);
+						});
+					} else {
+						return sendFile(res, targetPath);
+					}
+				});
+			});
+		});
+
+		function sendFile(res, file) {
+			let stream = fs.createReadStream(file);
+			const mimes = require("./MimeType");
+			let ext = path.extname(file);
+			if (ext !== "") {
+				ext = ext.replace(".", "");
+				res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
+			} else {
+				res.setHeader('Content-Type', "application/octet-stream");
+			}
+			return sendResult(res, stream);
+		}
+
+		function requestValidation(req, method, urlPrefix, callback) {
+			if (typeof urlPrefix === "function") {
+				callback = urlPrefix;
+				urlPrefix = undefined;
+			}
+			if (req.method !== method) {
+				//we resolve only GET requests
+				return callback(true);
+			}
+
+			if (typeof urlPrefix === "undefined") {
+				for (let i = 0; i < lockedPathsPrefixes.length; i++) {
+					let reservedPath = lockedPathsPrefixes[i];
+					//if we find a url that starts with a reserved prefix is not our duty ro resolve
+					if (req.url.indexOf(reservedPath) === 0) {
+						return callback(true);
+					}
+				}
+			} else {
+				if (req.url.indexOf(urlPrefix) !== 0) {
+					return callback(true);
+				}
+			}
+
+			const rootFolder = server.rootFolder;
+			const path = require("path");
+			let requestedUrl = req.url;
+			if (urlPrefix) {
+				requestedUrl = requestedUrl.replace(urlPrefix, "");
+			}
+			let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+			//if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
+			if (targetPath.indexOf(rootFolder) !== 0) {
+				return callback(true);
+			}
+			callback(false, targetPath);
+		}
+	}
+}
+
+module.exports = FilesManager;
+}).call(this,require("buffer").Buffer)
+
+},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js","buffer":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js":[function(require,module,exports){
+const extensionsMimeTypes = {
+    "aac": {
+        name: "audio/aac",
+        binary: true
+    },
+    "abw": {
+        name: "application/x-abiword",
+        binary: true
+    },
+    "arc": {
+        name: "application/x-freearc",
+        binary: true
+    },
+    "avi": {
+        name: "video/x-msvideo",
+        binary: true
+    },
+    "azw": {
+        name: "application/vnd.amazon.ebook",
+        binary: true
+    },
+    "bin": {
+        name: "application/octet-stream",
+        binary: true
+    }, "bmp": {
+        name: "image/bmp",
+        binary: true
+    }, "bz": {
+        name: "application/x-bzip",
+        binary: true
+    }, "bz2": {
+        name: "application/x-bzip2",
+        binary: true
+    }, "csh": {
+        name: "application/x-csh",
+        binary: false
+    }, "css": {
+        name: "text/css",
+        binary: false
+    }, "csv": {
+        name: "text/csv",
+        binary: false
+    }, "doc": {
+        name: "application/msword",
+        binary: true
+    }, "docx": {
+        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        binary: true
+    }, "eot": {
+        name: "application/vnd.ms-fontobject",
+        binary: true
+    }, "epub": {
+        name: "application/epub+zip",
+        binary: true
+    }, "gz": {
+        name: "application/gzip",
+        binary: true
+    }, "gif": {
+        name: "image/gif",
+        binary: true
+    }, "htm": {
+        name: "text/html",
+        binary: false
+    }, "html": {
+        name: "text/html",
+        binary: false
+    }, "ico": {
+        name: "image/vnd.microsoft.icon",
+        binary: true
+    }, "ics": {
+        name: "text/calendar",
+        binary: false
+    }, "jpeg": {
+        name: "image/jpeg",
+        binary: true
+    }, "jpg": {
+        name: "image/jpeg",
+        binary: true
+    }, "js": {
+        name: "text/javascript",
+        binary: false
+    }, "json": {
+        name: "application/json",
+        binary: false
+    }, "jsonld": {
+        name: "application/ld+json",
+        binary: false
+    }, "mid": {
+        name: "audio/midi",
+        binary: true
+    }, "midi": {
+        name: "audio/midi",
+        binary: true
+    }, "mjs": {
+        name: "text/javascript",
+        binary: false
+    }, "mp3": {
+        name: "audio/mpeg",
+        binary: true
+    }, "mpeg": {
+        name: "video/mpeg",
+        binary: true
+    }, "mpkg": {
+        name: "application/vnd.apple.installer+xm",
+        binary: true
+    }, "odp": {
+        name: "application/vnd.oasis.opendocument.presentation",
+        binary: true
+    }, "ods": {
+        name: "application/vnd.oasis.opendocument.spreadsheet",
+        binary: true
+    }, "odt": {
+        name: "application/vnd.oasis.opendocument.text",
+        binary: true
+    }, "oga": {
+        name: "audio/ogg",
+        binary: true
+    },
+    "ogv": {
+        name: "video/ogg",
+        binary: true
+    },
+    "ogx": {
+        name: "application/ogg",
+        binary: true
+    },
+    "opus": {
+        name: "audio/opus",
+        binary: true
+    },
+    "otf": {
+        name: "font/otf",
+        binary: true
+    },
+    "png": {
+        name: "image/png",
+        binary: true
+    },
+    "pdf": {
+        name: "application/pdf",
+        binary: true
+    },
+    "php": {
+        name: "application/php",
+        binary: false
+    },
+    "ppt": {
+        name: "application/vnd.ms-powerpoint",
+        binary: true
+    },
+    "pptx": {
+        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        binary: true
+    },
+    "rtf": {
+        name: "application/rtf",
+        binary: true
+    },
+    "sh": {
+        name: "application/x-sh",
+        binary: false
+    },
+    "svg": {
+        name: "image/svg+xml",
+        binary: false
+    },
+    "swf": {
+        name: "application/x-shockwave-flash",
+        binary: true
+    },
+    "tar": {
+        name: "application/x-tar",
+        binary: true
+    },
+    "tif": {
+        name: "image/tiff",
+        binary: true
+    },
+    "tiff": {
+        name: "image/tiff",
+        binary: true
+    },
+    "ts": {
+        name: "video/mp2t",
+        binary: true
+    },
+    "ttf": {
+        name: "font/ttf",
+        binary: true
+    },
+    "txt": {
+        name: "text/plain",
+        binary: false
+    },
+    "vsd": {
+        name: "application/vnd.visio",
+        binary: true
+    },
+    "wav": {
+        name: "audio/wav",
+        binary: true
+    },
+    "weba": {
+        name: "audio/webm",
+        binary: true
+    },
+    "webm": {
+        name: "video/webm",
+        binary: true
+    },
+    "webp": {
+        name: "image/webp",
+        binary: true
+    },
+    "woff": {
+        name: "font/woff",
+        binary: true
+    },
+    "woff2": {
+        name: "font/woff2",
+        binary: true
+    },
+    "xhtml": {
+        name: "application/xhtml+xml",
+        binary: false
+    },
+    "xls": {
+        name: "application/vnd.ms-excel",
+        binary: true
+    },
+    "xlsx": {
+        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        binary: true
+    },
+    "xml": {
+        name: "text/xml",
+        binary: false
+    },
+    "xul": {
+        name: "application/vnd.mozilla.xul+xml",
+        binary: true
+    },
+    "zip": {
+        name: "application/zip",
+        binary: true
+    },
+    "3gp": {
+        name: "video/3gpp",
+        binary: true
+    },
+    "3g2": {
+        name: "video/3gpp2",
+        binary: true
+    },
+    "7z": {
+        name: "application/x-7z-compressed",
+        binary: true
+    }
+};
+
+const defaultMimeType = {
+    name: "text/plain",
+    binary: false
+};
+module.exports.getMimeTypeFromExtension = function (extension) {
+    if (typeof extensionsMimeTypes[extension] !== "undefined") {
+        return extensionsMimeTypes[extension];
+    }
+    return defaultMimeType;
+};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
 (function (Buffer){
 const http = require('http');
 const {URL} = require('url');
@@ -5895,92 +7437,7 @@ function RequestFactory(virtualMQAddress, zeroMQAddress) {
 module.exports = RequestFactory;
 }).call(this,require("buffer").Buffer)
 
-},{"./utils":"/opt/working_dir/privatesky/modules/virtualmq/utils.js","buffer":false,"http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/opt/working_dir/privatesky/modules/virtualmq/fileManager.js":[function(require,module,exports){
-(function (Buffer){
-const fs = require('fs');
-const path = require('path');
-let rootFolder = process.env.npm_package_config_ROOT_FILE_UPLOAD || process.env.ROOT_FILE_UPLOAD || "./FileUploads";
-
-rootFolder = path.resolve(rootFolder);
-
-guid = function() {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
-    }
-
-    return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-};
-
-module.exports.upload = function (req, callback) {
-    const readFileStream = req;
-    if(!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function"){
-        callback(new Error("Something wrong happened"));
-        return;
-    }
-
-    const folder = Buffer.from(req.params.folder, 'base64').toString().replace('\n', '');
-    if (folder.includes('..')){
-        return callback('err');
-    }
-    let filename = guid();
-    if (filename.split('.').length > 1){
-        return callback('err');
-    }
-    const completeFolderPath = path.join( rootFolder, folder );
-
-    const contentType = req.headers['content-type'].split('/');
-
-    if (contentType[0] === 'image' || ( contentType[0] === 'application' && contentType[1] === 'pdf') ) {
-        filename += '.' + contentType[1];
-    }else {
-        return callback('err');
-    }
-    try {
-        fs.mkdirSync(completeFolderPath, { recursive: true });
-    }catch (e) {
-        return callback(e);
-    }
-    const writeStream = fs.createWriteStream( path.join(completeFolderPath, filename));
-
-    writeStream.on('finish', () => {
-        writeStream.close();
-        return callback(null, {'path': path.posix.join(folder,filename)});
-    });
-
-    writeStream.on('error', (err) => {
-        writeStream.close();
-        return callback(err);
-    });
-    req.pipe(writeStream);
-};
-
-module.exports.download = function (req, res, callback) {
-    const readFileStream = req;
-    if(!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function"){
-        callback(new Error("Something wrong happened"));
-        return;
-    }
-    const folder = Buffer.from(req.params.filepath, 'base64').toString().replace('\n', '');
-
-    const completeFolderPath = path.join( rootFolder, folder );
-    if (folder.includes('..')){
-        return callback('err');
-    }
-    if (fs.existsSync(completeFolderPath)) {
-        const fileToSend = fs.createReadStream(completeFolderPath);
-        res.setHeader('Content-Type', `image/${folder.split('.')[1]}`);
-        return callback(null, fileToSend);
-    }
-    else {
-        return callback('err');
-    }
-};
-
-}).call(this,require("buffer").Buffer)
-
-},{"buffer":false,"fs":false,"path":false}],"/opt/working_dir/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","buffer":false,"http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
 /**
  * An implementation of the Token bucket algorithm
  * @param startTokens - maximum number of tokens possible to obtain and the default starting value
@@ -6101,7 +7558,7 @@ function TokenBucket(startTokens = 6000, tokenValuePerTime = 10, unitOfTime = 10
 
 module.exports = TokenBucket;
 
-},{}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
 (function (Buffer){
 const http = require('http');
 const url = require('url');
@@ -6315,7 +7772,7 @@ module.exports = function () {
 };
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"http":false,"stream":false,"url":false}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js":[function(require,module,exports){
+},{"buffer":false,"http":false,"stream":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js":[function(require,module,exports){
 const querystring = require('querystring');
 
 function matchUrl(pattern, url) {
@@ -6490,7 +7947,7 @@ function Middleware() {
 
 module.exports = Middleware;
 
-},{"querystring":false}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js":[function(require,module,exports){
+},{"querystring":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js":[function(require,module,exports){
 function Router(server) {
     this.use = function use(url, callback) {
         callback(serverWrapper(url, server));
@@ -6526,7 +7983,7 @@ function serverWrapper(baseUrl, server) {
 
 module.exports = Router;
 
-},{}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
 const Middleware = require('./Middleware');
 const http = require('http');
 const https = require('https');
@@ -6597,7 +8054,7 @@ function Server(sslOptions) {
 }
 
 module.exports = Server;
-},{"./Middleware":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js","http":false,"https":false}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
+},{"./Middleware":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js","http":false,"https":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
 const fs = require('fs');
 const path = require('path');
 
@@ -6677,7 +8134,7 @@ function serveStaticFile(baseFolder, ignorePath) {
 
 module.exports = {setDataHandler, setDataHandlerMiddleware, sendErrorResponse, bodyParser, serveStaticFile};
 
-},{"fs":false,"path":false}],"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js":[function(require,module,exports){
+},{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js":[function(require,module,exports){
 const Client = require('./classes/Client');
 const Server = require('./classes/Server');
 const httpUtils = require('./httpUtils');
@@ -6686,7 +8143,7 @@ const Router = require('./classes/Router');
 module.exports = {Server, Client, httpUtils, Router};
 
 
-},{"./classes/Client":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js"}],"/opt/working_dir/privatesky/modules/virtualmq/utils.js":[function(require,module,exports){
+},{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js":[function(require,module,exports){
 (function (Buffer){
 function readMessageBufferFromHTTPStream(reqORres, callback){
     const contentType = reqORres.headers['content-type'];
@@ -6743,7 +8200,30 @@ function readMessageBufferFromHTTPStream(reqORres, callback){
 module.exports.readMessageBufferFromStream = readMessageBufferFromHTTPStream;
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"buffer-crc32":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+},{}],"buffer-crc32":[function(require,module,exports){
 var Buffer = require('buffer').Buffer;
 
 var CRC_TABLE = [
@@ -6863,6 +8343,7 @@ crc32.unsigned = function () {
 module.exports = crc32;
 
 },{"buffer":false}],"callflow":[function(require,module,exports){
+(function (global){
 function initialise() {
     if($$.callflow){
         throw new Error("Callflow already initialized!");
@@ -6908,7 +8389,7 @@ function initialise() {
 
     $$.loadLibrary = require("./lib/loadLibrary").loadLibrary;
 
-    requireLibrary = function(name){
+    global.requireLibrary = function(name){
         //var absolutePath = path.resolve(  $$.__global.__loadLibraryRoot + name);
         return $$.loadLibrary(name,name);
     };
@@ -6946,55 +8427,66 @@ module.exports = {
     createStandardAPIsForSwarms: require("./lib/utilityFunctions/base").createForObject,
     initialise: initialise
 };
-},{"./constants":"/opt/working_dir/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/opt/working_dir/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/opt/working_dir/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/opt/working_dir/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/opt/working_dir/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/opt/working_dir/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/opt/working_dir/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":false,"path":false,"soundpubsub":"soundpubsub"}],"edfs-middleware":[function(require,module,exports){
-module.exports.getEDFSMiddleware = () => require("./lib/EDFSMiddleware");
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":false,"path":false,"soundpubsub":"soundpubsub"}],"dossier-wizard":[function(require,module,exports){
+(function (__dirname){
+if (!process.env.PSK_ROOT_INSTALATION_FOLDER) {
+    process.env.PSK_ROOT_INSTALATION_FOLDER = path.resolve("." + __dirname + "/../..");
+}
+module.exports.getDossierWizardMiddleware = require("./DossierWizardMiddleware");
+
+
+}).call(this,"/modules/dossier-wizard")
+
+},{"./DossierWizardMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/DossierWizardMiddleware.js"}],"edfs-middleware":[function(require,module,exports){
+module.exports.getEDFSMiddleware = require("./lib/EDFSMiddleware");
 module.exports.createEDFSClient = (url) => {
     const EDFSClient = require("./lib/EDFSClient");
     return new EDFSClient(url);
 };
 
 
-},{"./lib/EDFSClient":"/opt/working_dir/privatesky/modules/edfs-middleware/lib/EDFSClient.js","./lib/EDFSMiddleware":"/opt/working_dir/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js"}],"edfs":[function(require,module,exports){
+},{"./lib/EDFSClient":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js","./lib/EDFSMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js"}],"edfs":[function(require,module,exports){
 require("./brickTransportStrategies/brickTransportStrategiesRegistry");
 const constants = require("./moduleConstants");
 
-function generateUniqueStrategyName(prefix) {
-    const randomPart = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    return prefix + "_" + randomPart;
-}
-
 const or = require("overwrite-require");
 const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+const cache = require('psk-cache').factory();
+
 if (browserContexts.indexOf($$.environmentType) !== -1) {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
-}else{
+} else {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
 }
 
 module.exports = {
     attachToEndpoint(endpoint) {
         const EDFS = require("./lib/EDFS");
-        return new EDFS(endpoint);
+        return new EDFS(endpoint, {
+            cache
+        });
     },
-    attachWithSeed(compactSeed) {
+    attachWithSeed(compactSeed, callback) {
         const SEED = require("bar").Seed;
-        const seed = new SEED(compactSeed);
-        return this.attachToEndpoint(seed.getEndpoint());
+        let seed;
+        try {
+            seed = new SEED(compactSeed);
+        } catch (err) {
+            return callback(err);
+        }
+
+        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
     },
-    attachWithPin(pin, callback) {
-        require("./seedCage").getSeed(pin, (err, seed) => {
+    attachWithPassword(password, callback) {
+        require("./seedCage").getSeed(password, (err, seed) => {
             if (err) {
                 return callback(err);
             }
 
-            let edfs;
-            try {
-                edfs = this.attachWithSeed(seed);
-            } catch (e) {
-                return callback(e);
-            }
-
-            callback(undefined, edfs);
+            this.attachWithSeed(seed, callback);
         });
     },
     checkForSeedCage(callback) {
@@ -7002,7 +8494,8 @@ module.exports = {
     },
     constants: constants
 };
-},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","bar":false,"overwrite-require":"overwrite-require"}],"node-fd-slicer":[function(require,module,exports){
+
+},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"node-fd-slicer":[function(require,module,exports){
 (function (Buffer,setImmediate){
 var fs = require('fs');
 var util = require('util');
@@ -7303,7 +8796,7 @@ function createFromFd(fd, options) {
 
 }).call(this,require("buffer").Buffer,require("timers").setImmediate)
 
-},{"./modules/node-pend":"/opt/working_dir/privatesky/modules/node-fd-slicer/modules/node-pend/index.js","buffer":false,"events":false,"fs":false,"stream":false,"timers":false,"util":false}],"overwrite-require":[function(require,module,exports){
+},{"./modules/node-pend":"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js","buffer":false,"events":false,"fs":false,"stream":false,"timers":false,"util":false}],"overwrite-require":[function(require,module,exports){
 (function (global){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -7463,7 +8956,7 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
-                    $$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
+                    //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
         }
@@ -7645,7 +9138,44 @@ module.exports = {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-http-client":[function(require,module,exports){
+},{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+const Cache = require("./lib/Cache")
+let cacheInstance;
+
+module.exports = {
+
+    /**
+     * Create a new cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    factory: function (options) {
+        return new Cache(options);
+    },
+
+    /**
+     * Get a reference to a singleton cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    getDefaultInstance: function (options) {
+        if (!cacheInstance) {
+            cacheInstance = new Cache(options);
+        }
+
+        return cacheInstance;
+    }
+};
+
+},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"psk-http-client":[function(require,module,exports){
 //to look nice the requireModule on Node
 require("./lib/psk-abstract-client");
 const or = require('overwrite-require');
@@ -7654,7 +9184,7 @@ if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
 } else {
 	require("./lib/psk-node-client");
 }
-},{"./lib/psk-abstract-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/opt/working_dir/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-security-context":[function(require,module,exports){
+},{"./lib/psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-security-context":[function(require,module,exports){
 const RawCSBSecurityContext = require("./lib/RawCSBSecurityContext");
 const RootCSBSecurityContext = require("./lib/RootCSBSecurityContext");
 const SecurityContext = require("./lib/SecurityContext");
@@ -7681,7 +9211,7 @@ module.exports.createPSKSignature = (serializedPSKSignature) => {
     return new PSKSignature(serializedPSKSignature);
 };
 
-},{"./lib/EncryptedSecret":"/opt/working_dir/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/opt/working_dir/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/opt/working_dir/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/opt/working_dir/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/opt/working_dir/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"pskcrypto":[function(require,module,exports){
+},{"./lib/EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -7692,11 +9222,11 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"soundpubsub":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"soundpubsub":[function(require,module,exports){
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-},{"./lib/soundPubSub":"/opt/working_dir/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
+},{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
 (function (global){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
@@ -7712,7 +9242,7 @@ module.exports.uidGenerator = uidGenerator;
 module.exports.generateUid = uidGenerator.generateUid;
 module.exports.TaskCounter = require("./lib/TaskCounter");
 module.exports.SwarmPacker = require("./lib/SwarmPacker");
-
+module.exports.path = require("./lib/path");
 module.exports.createPskConsole = function () {
   return require('./lib/pskconsole');
 };
@@ -7730,45 +9260,22 @@ if(typeof global.$$.uidGenerator == "undefined"){
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./lib/Combos":"/opt/working_dir/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/opt/working_dir/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/opt/working_dir/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/opt/working_dir/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/opt/working_dir/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/opt/working_dir/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/pingpongFork":"/opt/working_dir/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/opt/working_dir/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/opt/working_dir/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/opt/working_dir/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"virtualmq":[function(require,module,exports){
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"virtualmq":[function(require,module,exports){
 const path = require("path");
 const httpWrapper = require('./libs/http-wrapper');
-const EDFSMiddleware = require("edfs-middleware").getEDFSMiddleware();
 const Server = httpWrapper.Server;
 const Router = httpWrapper.Router;
 const TokenBucket = require('./libs/TokenBucket');
+const START_TOKENS = 6000000;
 
 const signatureHeaderName = process.env.vmq_signature_header_name || 'x-signature';
 
-function VirtualMQ({listeningPort, rootFolder, sslConfig}, callback) {
+function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const port = listeningPort || 8080;
-	const tokenBucket = new TokenBucket(600000, 1, 10);
-	const CSB_storage_folder = "uploads";
-
-	let bindFinish = (err)=>{
-		if(err){
-			console.log(err);
-			if(callback){
-				callback(err);
-			}
-			return;
-		}
-
-		this.close = server.close;
-		$$.flow.start("BricksManager").init(path.join(rootFolder, CSB_storage_folder), function (err, result) {
-			if (err) {
-				throw err;
-			} else {
-				console.log("BricksManager is using folder", result);
-				registerEndpoints();
-				if (callback) {
-					callback();
-				}
-			}
-		});
-	};
+	const tokenBucket = new TokenBucket(START_TOKENS, 1, 10);
 
 	const server = new Server(sslConfig);
+	server.rootFolder = rootFolder;
 	server.listen(port, (err) => {
 		if(err){
 			console.log(err);
@@ -7778,14 +9285,21 @@ function VirtualMQ({listeningPort, rootFolder, sslConfig}, callback) {
 		}
 	});
 
-	server.on('listening', bindFinish);
+	server.on('listening', bindFinished);
 
-	function registerEndpoints() {
-		const router = new Router(server);
-		router.use("/EDFS", (newServer) => {
-			new EDFSMiddleware(newServer);
-		});
+	function bindFinished(err){
+		if(err) {
+			console.log(err);
+			if (callback) {
+				callback(err);
+			}
+			return;
+		}
 
+		registerEndpoints(callback);
+	}
+
+	function registerEndpoints(callback) {
 		server.use(function (req, res, next) {
 			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -7796,7 +9310,6 @@ function VirtualMQ({listeningPort, rootFolder, sslConfig}, callback) {
 
         server.use(function (req, res, next) {
             const ip = res.socket.remoteAddress;
-
             tokenBucket.takeToken(ip, tokenBucket.COST_MEDIUM, function(err, remainedTokens) {
             	res.setHeader('X-RateLimit-Limit', tokenBucket.getLimitByCost(tokenBucket.COST_MEDIUM));
             	res.setHeader('X-RateLimit-Remaining', tokenBucket.getRemainingTokenByCost(remainedTokens, tokenBucket.COST_MEDIUM));
@@ -7816,37 +9329,6 @@ function VirtualMQ({listeningPort, rootFolder, sslConfig}, callback) {
             });
         });
 
-		//folder can be userId/tripId/...
-		server.post('/files/upload/:folder', function (req,res) {
-			let fileManager = require('./fileManager');
-			fileManager.upload(req, (err, result)=>{
-				if(err){
-					res.statusCode = 500;
-					res.end();
-				}else{
-					res.statusCode = 200;
-					res.end(JSON.stringify(result));
-				}
-			})
-		});
-
-		server.get('/files/download/:filepath', function (req,res) {
-			let fileManager = require('./fileManager');
-			fileManager.download(req, res, (err, result)=>{
-				if(err){
-					res.statusCode = 404;
-					res.end();
-				}else{
-					res.statusCode = 200;
-					result.pipe(res);
-					result.on('finish', () => {
-						res.end();
-					})
-				}
-			})
-		});
-
-
 		server.options('/*', function (req, res) {
 			const headers = {};
 			// IE8 does not allow domains to be specified, just the *
@@ -7861,12 +9343,22 @@ function VirtualMQ({listeningPort, rootFolder, sslConfig}, callback) {
 		});
 
 		require("./ChannelsManager.js")(server);
+		require("./FilesManager.js")(server);
+		require("edfs-middleware").getEDFSMiddleware(server);
+		require("dossier-wizard").getDossierWizardMiddleware(server);
 
-		server.use(function (req, res) {
-			res.statusCode = 404;
-			res.end();
-		});
+		setTimeout(function(){
+			//allow other endpoints registration before registering fallback handler
+			server.use(function (req, res) {
+				res.statusCode = 404;
+				res.end();
+			});
+			if(callback){
+				return callback();
+			}
+		}, 100);
 	}
+	return server;
 }
 
 module.exports.createVirtualMQ = function(port, folder, sslConfig, callback){
@@ -7875,7 +9367,7 @@ module.exports.createVirtualMQ = function(port, folder, sslConfig, callback){
 		sslConfig = undefined;
 	}
 
-	return new VirtualMQ({listeningPort:port, rootFolder:folder, sslConfig}, callback);
+	return new HttpServer({listeningPort:port, rootFolder:folder, sslConfig}, callback);
 };
 
 module.exports.getVMQRequestFactory = function(virtualMQAddress, zeroMQAddress) {
@@ -7888,14 +9380,20 @@ module.exports.getHttpWrapper = function() {
 	return require('./libs/http-wrapper');
 };
 
-},{"./ChannelsManager.js":"/opt/working_dir/privatesky/modules/virtualmq/ChannelsManager.js","./VMQRequestFactory":"/opt/working_dir/privatesky/modules/virtualmq/VMQRequestFactory.js","./fileManager":"/opt/working_dir/privatesky/modules/virtualmq/fileManager.js","./libs/TokenBucket":"/opt/working_dir/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/opt/working_dir/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","edfs-middleware":"edfs-middleware","path":false}],"zmq_adapter":[function(require,module,exports){
+},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/FilesManager.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","dossier-wizard":"dossier-wizard","edfs-middleware":"edfs-middleware","path":false}],"zmq_adapter":[function(require,module,exports){
 (function (Buffer){
 const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
 const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
 const defaultPubAddress = process.env.vmq_zeromq_pub_address || "tcp://127.0.0.1:5001";
 
 const zeroMQModuleName = "zeromq";
-let zmq = require(zeroMQModuleName);
+let zmq;
+
+try{
+    zmq = require(zeroMQModuleName);
+}catch(err){
+    console.log("zeroMQ not available at this moment.");
+}
 
 function registerKiller(children){
     const events = ["SIGINT", "SIGUSR1", "SIGUSR2", "uncaughtException", "SIGTERM", "SIGHUP"];
@@ -8091,37 +9589,47 @@ function ZeromqConsumer(bindAddress, monitorFunction){
     };
 
     socket.on("message", (channel, receivedMessage)=>{
-       let callbacks = subscriptions[channel];
-       if(!callbacks || callbacks.length === 0){
-           return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
-       }
-       for(let i = 0; i<callbacks.length; i++){
-           let cb = callbacks[i];
-           cb(channel, receivedMessage);
-       }
+        let callbacks = subscriptions[channel];
+        if(!callbacks || callbacks.length === 0){
+            return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
+        }
+        for(let i = 0; i<callbacks.length; i++){
+            let cb = callbacks[i];
+            cb(channel, receivedMessage);
+        }
     });
 }
 
 let instance;
-module.exports.getForwarderInstance = function(address){
+function getForwarderInstance(address){
     if(!instance){
         address = address || defaultForwardAddress;
         instance = new ZeromqForwarder(address);
     }
     return instance;
-};
+}
 
-module.exports.createZeromqProxyNode = function(subAddress, pubAddress, signatureChecker){
+function createZeromqProxyNode(subAddress, pubAddress, signatureChecker){
     subAddress = subAddress || defaultSubAddress;
     pubAddress = pubAddress || defaultPubAddress;
     return new ZeromqProxyNode(subAddress, pubAddress, signatureChecker);
-};
+}
 
-module.exports.createZeromqConsumer = function(bindAddress, monitorFunction){
+function createZeromqConsumer(bindAddress, monitorFunction){
     return new ZeromqConsumer(bindAddress, monitorFunction);
-};
+}
 
-module.exports.registerKiller = registerKiller;
+function testIfAvailable(){
+    return typeof zmq !== "undefined";
+}
+
+module.exports = {
+    getForwarderInstance,
+    createZeromqConsumer,
+    createZeromqProxyNode,
+    testIfAvailable,
+    registerKiller
+};
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"swarmutils":"swarmutils"}]},{},["/opt/working_dir/privatesky/builds/tmp/virtualMQ.js"])
+},{"buffer":false,"swarmutils":"swarmutils"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ.js"])

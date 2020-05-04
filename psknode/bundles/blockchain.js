@@ -1,23 +1,22 @@
-blockchainRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/blockchain_intermediar.js":[function(require,module,exports){
+blockchainRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/blockchain_intermediar.js":[function(require,module,exports){
 (function (global){
 global.blockchainLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["blockchain"] === "undefined"){
 		$$.__runtimeModules["blockchain"] = require("blockchain");
 	}
-}
+};
 if (false) {
 	blockchainLoadModules();
-}; 
+}
 global.blockchainRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("blockchain");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("blockchain");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"blockchain":"blockchain"}],"/opt/working_dir/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
+},{"blockchain":"blockchain"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -176,7 +175,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"./transactionsUtil":"/opt/working_dir/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":false}],"/opt/working_dir/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
+},{"./transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
 function PulseUtil(signer, currentPulseNumber, block, newTransactions, vsd, top, last) {
     this.signer         = signer;               //a.k.a. delegatedAgentName
     this.currentPulse   = currentPulseNumber;
@@ -200,7 +199,7 @@ function PulseHistory(){
 module.exports.createPulseHistory = function () {
     return new PulseHistory();
 }
-},{}],"/opt/working_dir/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
 /*
 consensus helper functions when working with transactions
 */
@@ -228,7 +227,7 @@ module.exports.orderCRTransactions = function (pset) { //order in place the pset
     return arr;
 }
 
-},{"pskcrypto":false}],"/opt/working_dir/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
+},{"pskcrypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
 var CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -275,7 +274,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js","callflow":false}],"/opt/working_dir/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","callflow":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -322,7 +321,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js","callflow":false}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","callflow":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
 
 $$.asset.describe("ACLScope", {
     public:{
@@ -345,7 +344,7 @@ $$.asset.describe("ACLScope", {
         return true;
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
 
 $$.asset.describe("Agent", {
     public:{
@@ -371,7 +370,7 @@ $$.asset.describe("Agent", {
 
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
 
 $$.asset.describe("Backup", {
     public:{
@@ -385,7 +384,7 @@ $$.asset.describe("Backup", {
     }
 });
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
 $$.asset.describe("BarAnchor", {
     public: {
         alias: "string",
@@ -412,7 +411,7 @@ $$.asset.describe("BarAnchor", {
         this.writeList.push(agentId);
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
 
 $$.asset.describe("CSBMeta", {
 	public:{
@@ -435,7 +434,7 @@ $$.asset.describe("CSBMeta", {
 
 });
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
 
 $$.asset.describe("DomainConfig", {
     public:{
@@ -477,7 +476,7 @@ $$.asset.describe("DomainConfig", {
         this.workerStrategy = workerStrategy;
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
 
 $$.asset.describe("DomainReference", {
     public:{
@@ -503,7 +502,7 @@ $$.asset.describe("DomainReference", {
         return this.workspace;
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
 $$.asset.describe("FileAnchor", {
     public: {
         alias: "string",
@@ -522,7 +521,7 @@ $$.asset.describe("FileAnchor", {
 });
 
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
 
 $$.asset.describe("key", {
     public:{
@@ -536,7 +535,7 @@ $$.asset.describe("key", {
         this.value = value;
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
 module.exports = $$.library(function(){
     require("./DomainReference");
     require("./DomainConfig");
@@ -549,7 +548,7 @@ module.exports = $$.library(function(){
     require("./FileAnchor");
     require('./CSBMeta');
 });
-},{"../transactions/transactions":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
+},{"../transactions/transactions":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
 if($$.swarms){
     $$.swarms.describe("transactionHandler", {
         start: function (identity, transactionName, methodName, ...args) {
@@ -561,7 +560,7 @@ if($$.swarms){
     });
 }
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Agents", {
@@ -582,7 +581,7 @@ $$.transaction.describe("Agents", {
     getAgents: sharedPhases.getAllAssetsFactory('global.Agent')
 });
 
-},{"./sharedPhases":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("DomainConfigTransaction", {
@@ -616,7 +615,7 @@ $$.transaction.describe("DomainConfigTransaction", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainConfig')
 });
 
-},{"./sharedPhases":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Domain", {
@@ -719,7 +718,7 @@ $$.transaction.describe("Domain", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainReference')
 });
 
-},{"./sharedPhases":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
 /**
  * FIXME
  * The first block in the blockchain is 0.
@@ -739,13 +738,13 @@ $$.transaction.describe("TooShortBlockChainWorkaroundDeleteThis", {
         this.commit();
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
 require('./domainTransaction');
 require('./agentTransaction');
 require('./standardCSBTransactions');
 require('./domainConfigTransaction');
 require('./firstTransactionWorkaroundDeleteThis');
-},{"./agentTransaction":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
+},{"./agentTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
 module.exports = {
     getAssetFactory: function(assetType) {
         return function(alias) {
@@ -769,7 +768,7 @@ module.exports = {
         };
     }
 };
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
 $$.transaction.describe("StandardCSBTransactions", {
     addBarAnchor: function (mountPoint, barMapDigest) {
         this.transaction.createAsset("BarAnchor", "init", mountPoint, barMapDigest);
@@ -814,7 +813,7 @@ $$.transaction.describe("StandardCSBTransactions", {
         }
     }
 });
-},{}],"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
 $$.transaction.describe("transactions", {
     updateKey: function (key, value) {
         var transaction = $$.blockchain.beginTransaction(this);
@@ -871,7 +870,7 @@ usages:
 
  */
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
 module.exports = {
     ALIAS:"alias",
     ALIASES : '/aliases',
@@ -886,7 +885,7 @@ module.exports = {
     SWARMID:"swarmId",
     SWARMTYPE:"swarmTypeName"
 };
-},{}],"/opt/working_dir/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
 module.exports = {
     createBlockchain:function(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, loadDefaultConstitution, forcedBoot){
         return require("./pskdb").startDefaultDB(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, loadDefaultConstitution, forcedBoot);
@@ -943,7 +942,7 @@ module.exports = {
         return require("./strategies/votingStrategies/votingStrategiesRegistry").createVotingStrategy(name,...args);
     }
 }
-},{"./pskdb":"/opt/working_dir/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/opt/working_dir/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","pskcrypto":false}],"/opt/working_dir/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
+},{"./pskdb":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","pskcrypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
 const bm = require('../moduleExports');
 const beesHealer = require("swarmutils").beesHealer;
 var CNST = require("../moduleConstants");
@@ -1147,7 +1146,7 @@ function Transaction(blockchain, pdsHandler, transactionSwarm, worldStateCache, 
 }
 
 module.exports = Blockchain;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/opt/working_dir/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/opt/working_dir/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":false}],"/opt/working_dir/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
 const Blockchain = require('./Blockchain');
 
 module.exports = {
@@ -1176,7 +1175,7 @@ module.exports = {
     }
 };
 
-},{"../defaultConstitution/assets/index":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/opt/working_dir/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/opt/working_dir/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/opt/working_dir/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/opt/working_dir/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
+},{"../defaultConstitution/assets/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 let cutil = require("../OBFT/transactionsUtil");
 // let bm = require("../moduleExports");
@@ -1570,7 +1569,7 @@ function VerificationKeySpaceHandler(parentStorage, worldStateCache, blockchain)
 exports.newPSKDB = function (worldStateCache, historyStorage) {
     return new PSKDB(worldStateCache, historyStorage);
 };
-},{"../OBFT/transactionsUtil":"/opt/working_dir/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/opt/working_dir/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/opt/working_dir/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
 let CNST=require("../../moduleConstants");
 let cache = {};
 
@@ -1645,7 +1644,7 @@ module.exports = {
     }
 };
 
-},{"../../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js"}],"/opt/working_dir/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
+},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
 
 var CNST = require("../../moduleConstants");
 
@@ -1753,7 +1752,7 @@ module.exports = {
         return new Registry();
     }
 }
-},{"../../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js"}],"/opt/working_dir/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
+},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -1988,7 +1987,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"../OBFT/transactionsUtil":"/opt/working_dir/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":false}],"/opt/working_dir/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
 var mod = require("../../moduleExports");
 
 function DirectCommitAlgorithm() {
@@ -2065,7 +2064,7 @@ module.exports = {
         }
     }
 };
-},{"../../OBFT/OBFTImplementation":"/opt/working_dir/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/opt/working_dir/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/opt/working_dir/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
+},{"../../OBFT/OBFTImplementation":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function BarHistoryStorage(archive) {
@@ -2138,7 +2137,7 @@ function BarHistoryStorage(archive) {
 }
 
 module.exports = BarHistoryStorage;
-},{"./LatestHashTracker":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function FsHistoryStorage(folder) {
@@ -2243,7 +2242,7 @@ function FsHistoryStorage(folder) {
 
 module.exports = FsHistoryStorage;
 
-},{"./LatestHashTracker":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":false}],"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":false}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
 function LatestHashTracker() {
     let hlb = "none";
     let maxBlockNumber = 0;
@@ -2260,7 +2259,7 @@ function LatestHashTracker() {
 }
 
 module.exports = LatestHashTracker;
-},{}],"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function MemoryHistoryStorage() {
@@ -2287,7 +2286,7 @@ function MemoryHistoryStorage() {
 }
 
 module.exports = MemoryHistoryStorage;
-},{"./LatestHashTracker":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
 const FsHistoryStorage = require("./FsHistoryStorage");
 const MemoryHistoryStorage = require("./MemoryHistoryStorage");
 const BarHistoryStorage = require("./BarHistoryStorage");
@@ -2306,7 +2305,7 @@ module.exports = {
         }
     }
 };
-},{"./BarHistoryStorage":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/opt/working_dir/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/opt/working_dir/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
+},{"./BarHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
 const mc = require("../../moduleConstants");
 let pulseUtil = require("../../OBFT/PulseUtil");
 
@@ -2369,7 +2368,7 @@ module.exports = {
         }
     }
 }
-},{"../../OBFT/PulseUtil":"/opt/working_dir/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js"}],"/opt/working_dir/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
+},{"../../OBFT/PulseUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
 function PermissiveSignatureProvider(){
     /*
     return a signature of message ms for agent agentId
@@ -2396,7 +2395,7 @@ module.exports = {
     }
 }
 
-},{}],"/opt/working_dir/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
 
 function SimpleMajoritarianStrategy(shareHoldersCounter){
     this.refreshShares = function(){
@@ -2446,7 +2445,7 @@ module.exports = {
         }
     }
 }
-},{}],"/opt/working_dir/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
 (function (setImmediate){
 const mc = require("../../moduleConstants");
 
@@ -2604,7 +2603,7 @@ module.exports = {
 };
 }).call(this,require("timers").setImmediate)
 
-},{"../../moduleConstants":"/opt/working_dir/privatesky/modules/blockchain/moduleConstants.js","fs":false,"timers":false}],"blockchain":[function(require,module,exports){
+},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","fs":false,"timers":false}],"blockchain":[function(require,module,exports){
 ___DISABLE_OBSOLETE_ZIP_ARCHIVER_WAIT_FOR_BARS = true;
 //require("../../../psknode/bundles/pskruntime.js");
 var callflowModule = require("callflow");
@@ -2618,4 +2617,4 @@ $$.transaction      = $$.transactions;
 module.exports = require('./moduleExports');
 
 
-},{"./blockchainSwarmTypes/asset_swarm_template":"/opt/working_dir/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/opt/working_dir/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/opt/working_dir/privatesky/modules/blockchain/moduleExports.js","callflow":false}]},{},["/opt/working_dir/privatesky/builds/tmp/blockchain_intermediar.js"])
+},{"./blockchainSwarmTypes/asset_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","callflow":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/blockchain_intermediar.js"])

@@ -1,4 +1,4 @@
-isolatesBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/working_dir/privatesky/builds/tmp/isolatesBoot_intermediar.js":[function(require,module,exports){
+isolatesBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/isolatesBoot_intermediar.js":[function(require,module,exports){
 (function (global){
 global.isolatesBootLoadModules = function(){ 
 
@@ -10,6 +10,10 @@ global.isolatesBootLoadModules = function(){
 		$$.__runtimeModules["edfs"] = require("edfs");
 	}
 
+	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
+		$$.__runtimeModules["psk-cache"] = require("psk-cache");
+	}
+
 	if(typeof $$.__runtimeModules["pskcrypto"] === "undefined"){
 		$$.__runtimeModules["pskcrypto"] = require("pskcrypto");
 	}
@@ -17,26 +21,25 @@ global.isolatesBootLoadModules = function(){
 	if(typeof $$.__runtimeModules["boot-script"] === "undefined"){
 		$$.__runtimeModules["boot-script"] = require("swarm-engine/bootScripts/IsolateBootScript");
 	}
-}
+};
 if (true) {
 	isolatesBootLoadModules();
-}; 
+}
 global.isolatesBootRequire = require;
-if (typeof $$ !== "undefined") {            
-    $$.requireBundle("isolatesBoot");
-    };
-    
-    
+if (typeof $$ !== "undefined") {
+	$$.requireBundle("isolatesBoot");
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"edfs":"edfs","overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine/bootScripts/IsolateBootScript":"swarm-engine/bootScripts/IsolateBootScript"}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
+},{"edfs":"edfs","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarm-engine/bootScripts/IsolateBootScript":"swarm-engine/bootScripts/IsolateBootScript"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
 
 function FetchBrickTransportStrategy(initialConfig) {
     const url = initialConfig;
     this.send = (name, data, callback) => {
 
-        fetch(url + "/EDFS/", {
+        fetch(url + "/EDFS/"+name, {
             method: 'POST',
             mode: 'cors',
             headers: {
@@ -47,7 +50,10 @@ function FetchBrickTransportStrategy(initialConfig) {
             if(response.status>=400){
                 return callback(new Error(`An error occurred ${response.statusText}`))
             }
-            return response.json();
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
         }).then(function(data) {
             callback(null, data)
         }).catch(error=>{
@@ -100,19 +106,45 @@ function FetchBrickTransportStrategy(initialConfig) {
         });
     };
 
+    this.attachHashToAlias = (alias, name, callback) => {
+        fetch(url + '/EDFS/attachHashToAlias/' + name, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            body: alias
+        }).then(response => {
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
+        }).then(data => {
+            callback(null, data);
+        }).catch(error => {
+            callback(error);
+        })
+    }
+
     this.getLocator = () => {
         return url;
     };
 }
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
+FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
+    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+};
 
 
 module.exports = FetchBrickTransportStrategy;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
 
 function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
@@ -149,7 +181,8 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 };
 
 module.exports = HTTPBrickTransportStrategy;
-},{"psk-http-client":false}],"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+},{"psk-http-client":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
+(function (Buffer){
 function BrickTransportStrategiesRegistry() {
     const strategies = {};
 
@@ -167,7 +200,7 @@ function BrickTransportStrategiesRegistry() {
 
     this.get = (endpoint) => {
         if (typeof endpoint !== "string" || endpoint.length === 0) {
-            throw Error("Invalid endpoint");
+            throw Error(`Invalid endpoint ${endpoint}, ${typeof endpoint} ${Buffer.isBuffer(endpoint)}`);
         }
 
         const strategyName = getStrategyNameFromEndpoint(endpoint);
@@ -194,25 +227,33 @@ function BrickTransportStrategiesRegistry() {
 if (!$$.brickTransportStrategiesRegistry) {
     $$.brickTransportStrategiesRegistry = new BrickTransportStrategiesRegistry();
 }
-},{}],"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
-function EDFS(endpoint) {
+}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+
+},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
+function EDFS(endpoint, options) {
+    options = options || {};
+
     const RawDossier = require("./RawDossier");
     const barModule = require("bar");
     const fsAdapter = require("bar-fs-adapter");
     const constants = require('../moduleConstants');
-    const self = this;
+    const cache = options.cache;
 
-    this.createCSB = () => {
-        return new RawDossier(endpoint);
+    this.createRawDossier = () => {
+        return new RawDossier(endpoint, undefined, cache);
     };
 
     this.createBar = () => {
         return barModule.createArchive(createArchiveConfig());
     };
 
-    this.bootCSB = (seed, callback) => {
-        const rawDossier = new RawDossier(endpoint, seed);
+    this.bootRawDossier = (seed, callback) => {
+        const rawDossier = new RawDossier(endpoint, seed, cache);
         rawDossier.start(err => callback(err, rawDossier));
+    };
+
+    this.loadRawDossier = (seed) => {
+        return new RawDossier(endpoint, seed, cache);
     };
 
     this.loadBar = (seed) => {
@@ -225,16 +266,20 @@ function EDFS(endpoint) {
         bar.clone(edfsBrickStorage, true, callback);
     };
 
-    this.createWallet = (templateSeed, pin, overwrite = false, callback) => {
-        const wallet = this.createCSB();
-        wallet.mount("", constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
+    this.createWallet = (templateSeed, password, overwrite, callback) => {
+        if (typeof overwrite === "function") {
+            callback = overwrite;
+            overwrite = false;
+        }
+        const wallet = this.createRawDossier();
+        wallet.mount("/" + constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
             if (err) {
                 return callback(err);
             }
 
             const seed = wallet.getSeed();
-            if (typeof pin !== "undefined") {
-                require("../seedCage").putSeed(seed, pin, overwrite, (err) => {
+            if (typeof password !== "undefined") {
+                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
@@ -246,55 +291,48 @@ function EDFS(endpoint) {
         }));
     };
 
-    this.loadWallet = function (walletSeed, pin, overwrite, callback) {
+    this.loadWallet = function (walletSeed, password, overwrite, callback) {
         if (typeof overwrite === "function") {
             callback = overwrite;
-            overwrite = pin;
-            pin = walletSeed;
+            overwrite = password;
+            password = walletSeed;
             walletSeed = undefined;
         }
         if (typeof walletSeed === "undefined") {
-            require("../seedCage").getSeed(pin, (err, seed) => {
+            require("../seedCage").getSeed(password, (err, seed) => {
                 if (err) {
                     return callback(err);
                 }
-                try {
-                    let wallet = this.loadBar(seed);
-                    return callback(undefined, wallet);
-                } catch (err) {
-                    return callback(err);
+                let rawDossier = this.loadRawDossier(seed);
+
+                if (!rawDossier) {
+                    return callback(new Error("RawDossier is not available"));
                 }
+                return callback(undefined, rawDossier);
+
             });
         } else {
-            let wallet;
-            try {
-                wallet = this.loadBar(walletSeed);
-                if (typeof pin !== "undefined" && pin !== null) {
-                    require("../seedCage").putSeed(walletSeed, pin, overwrite, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        callback(undefined, wallet);
-                    });
-                } else {
-                    return callback(undefined, wallet);
-                }
-            } catch (err) {
-                return callback(err);
+
+            let rawDossier = this.loadRawDossier(walletSeed);
+
+            if (!rawDossier) {
+                return callback(new Error("RawDossier is not available"));
+            }
+
+
+            if (typeof password !== "undefined" && password !== null) {
+                require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, rawDossier);
+                });
+            } else {
+                return callback(undefined, rawDossier);
             }
         }
     };
 
-    this.createBarWithConstitution = function (folderConstitution, callback) {
-        const bar = this.createBar();
-        bar.addFolder(folderConstitution, constants.CSB.CONSTITUTION_FOLDER, (err, mapDigest) => {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(undefined, bar);
-        });
-    };
 //------------------------------------------------ internal methods -------------------------------------------------
     function createArchiveConfig(seed) {
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
@@ -305,6 +343,7 @@ function EDFS(endpoint) {
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
         archiveConfigurator.setBufferSize(65535);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
+        archiveConfigurator.setCache(cache);
 
         if (seed) {
             archiveConfigurator.setSeed(seed);
@@ -317,15 +356,13 @@ function EDFS(endpoint) {
 }
 
 module.exports = EDFS;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false}],"/opt/working_dir/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
-/*
 
-Sinica: to be renamed CSBHandler. RootCSB should be deleted
-*/
-
-function RawDossier(endpoint, seed) {
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
+function RawDossier(endpoint, seed, cache) {
     const barModule = require("bar");
     const constants = require("../moduleConstants").CSB;
+    const swarmutils = require("swarmutils");
+    const TaskCounter = swarmutils.TaskCounter;
     let bar = createBar(seed);
     this.getSeed = () => {
         return bar.getSeed();
@@ -335,51 +372,294 @@ function RawDossier(endpoint, seed) {
         createBlockchain(bar).start(callback);
     };
 
-    this.addFolder = (fsFolderPath, barPath, callback) => {
-        bar.addFolder(fsFolderPath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+    this.addFolder = (fsFolderPath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
 
-    this.addFile = (fsFilePath, barPath, callback) => {
-        bar.addFile(fsFilePath, barPath, (err, barMapDigest) => callback(err, barMapDigest));
-    };
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
-    this.readFile = bar.readFile;
-
-    this.extractFolder = bar.extractFolder;
-
-    this.extractFile = bar.extractFile;
-
-    this.writeFile = (barPath, data, callback) => {
-        bar.writeFile(barPath, data, (err, barMapDigest) => callback(err, barMapDigest));
-    };
-
-    this.listFiles = bar.listFiles;
-
-    this.mount = (path, name, archiveIdentifier, callback) => {
-        bar.readFile(constants.MANIFEST_FILE, (err, data) => {
-            let manifest;
-            if (err) {
-                manifest = {};
-                manifest.mounts = [];
-            }
-
-            if (data) {
-                manifest = JSON.parse(data.toString());
-                const pathNames = manifest.mounts.filter(el => el.localPath === path);
-                const index = pathNames.findIndex(el => el === name);
-                if (index >= 0) {
-                    return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+        if (options.ignoreMounts === true) {
+            bar.addFolder(fsFolderPath, barPath, options, callback);
+        } else {
+            const splitPath = barPath.split("/");
+            const folderName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
                 }
+
+                dossierContext.archive.addFolder(fsFolderPath, dossierContext.relativePath + "/" + folderName, options, callback);
+            });
+        }
+    };
+
+    this.addFile = (fsFilePath, barPath, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        if (options.ignoreMounts === true) {
+            bar.addFile(fsFilePath, barPath, options, (err, barMapDigest) => callback(err, barMapDigest));
+        } else {
+            const splitPath = barPath.split("/");
+            const fileName = splitPath.pop();
+            barPath = splitPath.join("/");
+            loadBarForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                dossierContext.archive.addFile(fsFilePath, dossierContext.relativePath + "/" + fileName, options, callback);
+            });
+        }
+    };
+
+    this.readFile = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
             }
 
-            const mount = {};
-            mount.localPath = path;
-            mount.mountName = name;
-            mount.archiveIdentifier = archiveIdentifier;
+            dossierContext.archive.readFile(dossierContext.relativePath, callback);
+        });
+    };
 
-            manifest.mounts.push(mount);
+    this.createReadStream = (fileBarPath, callback) => {
+        loadBarForPath(fileBarPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
 
-            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+            dossierContext.archive.createReadStream(dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFolder = (fsFolderPath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFolder(fsFolderPath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.extractFile = (fsFilePath, barPath, callback) => {
+        loadBarForPath(barPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.extractFile(fsFilePath, dossierContext.relativePath, callback);
+        });
+    };
+
+    this.writeFile = (path, data, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: true};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        if (path.split("/").includes(constants.MANIFEST_FILE)) {
+            return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
+        }
+        if (options.ignoreMounts === true) {
+            bar.writeFile(path, data, options, callback);
+        } else {
+            const splitPath = path.split("/");
+            const fileName = splitPath.pop();
+            path = splitPath.join("/");
+            loadBarForPath(path, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+                if (dossierContext.readonly === true) {
+                    return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                }
+
+                dossierContext.archive.writeFile(dossierContext.relativePath + "/" + fileName, data, options, callback);
+            });
+        }
+    };
+
+    this.delete = (barPath, callback) => {
+        bar.delete(barPath, callback);
+    };
+
+    this.listFiles = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, (err, files) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                if (path !== "/" && path !== "" && typeof path !== "function") {
+                    files = files.map(file => {
+                        if (file[0] === "/") {
+                            file = file.slice(1);
+                        }
+
+                        return file;
+                    })
+                }
+
+                callback(undefined, files);
+            });
+        });
+    };
+
+    this.listFolders = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.listFolders(dossierContext.relativePath, (err, folders) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, folders);
+            });
+        });
+    };
+
+    this.readDir = (folderPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {
+                withFileTypes: false
+            };
+        }
+        loadBarForPath(folderPath, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const taskCounter = new TaskCounter((errors, results) => {
+                let entries;
+                if (options.withFileTypes === true) {
+                    entries = {};
+                    results.forEach(res=> {
+                        let entryType = Object.keys(res)[0];
+                        entries[entryType] = res[entryType];
+                    })
+                }else{
+                    entries = [];
+                    results.forEach(res => {
+                        entries = entries.concat(Object.values(res)[0])
+                    });
+                }
+
+
+                callback(undefined, entries);
+            });
+
+            taskCounter.increment(3);
+            dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                folders = folders.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {folders: folders});
+            });
+
+            dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                files= files.map(folder => {
+                    if (folder[0] === "/") {
+                        return folder.slice(1);
+                    }
+                });
+                taskCounter.decrement(undefined, {files: files});
+            });
+
+            this.listMountedDossiers("/", (err, mountedDossiers) => {
+                if (err) {
+                    taskCounter.decrement(undefined, {});
+                    return;
+                }
+
+                const mountPaths = mountedDossiers.map(dossier => {
+                    const pathSegments = dossier.path.split("/");
+                    if (pathSegments[0] === "") {
+                        pathSegments.shift();
+                    }
+                    if (pathSegments.length > 0) {
+                        return pathSegments[0];
+                    }
+                });
+
+                taskCounter.decrement(undefined, {mounts: mountPaths});
+            });
+        });
+    };
+
+    this.mount = (path, name, archiveIdentifier, readonly, callback) => {
+        if (typeof readonly === "function") {
+            callback = readonly;
+            readonly = false;
+        }
+        if (/\W-_/.test(name) === true) {
+            return callback(Error("Invalid mount name"));
+        }
+
+        bar.listFiles(path, (err, files) => {
+            if (!err && files.length > 0) {
+                return callback(Error("Tried to mount in a non-empty folder"));
+            }
+
+            bar.readFile(constants.MANIFEST_FILE, (err, data) => {
+                let manifest;
+                if (err) {
+                    manifest = {};
+                    manifest.mounts = [];
+                }
+
+                if (data) {
+                    manifest = JSON.parse(data.toString());
+                    const existingMount = manifest.mounts.find(el => el.localPath === path && el.mountName === name);
+                    if (existingMount) {
+                        return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
+                    }
+                }
+
+                const mount = {};
+                mount.localPath = path;
+                mount.mountName = name;
+                mount.archiveIdentifier = archiveIdentifier;
+                mount.readonly = readonly;
+                manifest.mounts.push(mount);
+
+                bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), {encrypt: true}, callback);
+            });
         });
     };
 
@@ -401,7 +681,43 @@ function RawDossier(endpoint, seed) {
                 return callback(Error(`No mount point exists at path ${path}`));
             }
 
-            callback();
+            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
+        });
+    };
+
+    this.listMountedDossiers = (path, callback) => {
+        loadBarForPath(path, (err, dossierContext) => {
+            if (err) {
+                return callback(err);
+            }
+
+            dossierContext.archive.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let manifest;
+                try {
+                    manifest = JSON.parse(manifestContent.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+
+                const matchingMounts = [];
+                manifest.mounts.forEach(mount => {
+                    let sep = mount.localPath === "/" ? "" : "/";
+                    let pth = mount.localPath + sep + mount.mountName;
+
+                    if (pth.startsWith(dossierContext.relativePath)) {
+                        if (path !== "/" && path !== "" && typeof path !== "function" && pth[0] === "/") {
+                            pth = pth.slice(1);
+                        }
+
+                        matchingMounts.push({path: pth, dossierReference: mount.archiveIdentifier});
+                    }
+                });
+                callback(undefined, matchingMounts);
+            });
         });
     };
 
@@ -434,67 +750,116 @@ function RawDossier(endpoint, seed) {
         } else {
             archiveConfigurator.setSeed(localSeed);
         }
+        archiveConfigurator.setCache(cache);
 
         return barModule.createArchive(archiveConfigurator);
     }
 
-    this.getRawDossier = (rawDossier, path, callback) => {
-        if (path === "" || path === "/") {
-            return callback(undefined, {rawDossier, path});
+    function loadBarForPath(path, callback) {
+        if (typeof path === "function") {
+            callback = path;
+            path = "/";
         }
-        rawDossier.listFiles((err, files) => {
-            if (err) {
-                return callback(err);
+
+        __loadBarForPathRecursively(bar, "", path, false, callback);
+
+        function __loadBarForPathRecursively(archive, prefixPath, relativePath, readonly, callback) {
+            if (relativePath === "" || relativePath === "/") {
+                return callback(undefined, {archive, prefixPath, readonly, relativePath});
             }
 
-            if (files.length === 0) {
-                return callback();
-            }
-            let pathRest = [];
+            archive.listFiles((err, files) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            let barPath = files.find(barPath => barPath === path);
-            if (barPath) {
-                return callback(undefined, {rawDossier, path});
-            } else {
-                let splitPath = path.split("/");
-                rawDossier.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
-                    if (err) {
-                        return callback(err);
+                if (files.length === 0) {
+                    __searchInManifest();
+                } else {
+                    let barPath = files.find(file => {
+                        return file.includes(relativePath) || relativePath.includes(file);
+                    });
+
+                    if (barPath) {
+                        return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                    } else {
+                        __searchInManifest();
                     }
 
-                    const manifest = JSON.parse(manifestContent.toString());
-                    pathRest.unshift(splitPath.pop());
-                    while (splitPath.length > 0) {
-                        for (let mount of manifest.mounts) {
-                            const localPath = splitPath.join("/");
-                            const name = pathRest.shift();
-                            if (mount.localPath === localPath && mount.mountName === name) {
-                                const internalRawDossier = createBar(mount.archiveIdentifier);
-                                let newPath = "";
-                                if (pathRest.length > 0) {
-                                    newPath = pathRest.join("/");
-                                }
-                                return this.getRawDossier(internalRawDossier, newPath, callback);
-                            }
+                }
+
+                function __searchInManifest() {
+                    let pathRest = [];
+                    let splitPath = relativePath.split("/");
+                    if (splitPath[0] === "") {
+                        splitPath[0] = "/";
+                    }
+
+                    archive.readFile("/" + constants.MANIFEST_FILE, (err, manifestContent) => {
+                        if (err) {
+                            return callback(err);
                         }
 
+                        const manifest = JSON.parse(manifestContent.toString());
                         pathRest.unshift(splitPath.pop());
-                    }
-                    console.log(" nothing to see here");
-                    return;
-                });
-            }
-        });
-    };
+                        if (splitPath.length === 0) {
+                            return callback(undefined, {archive, prefixPath, readonly, relativePath});
+                        }
+
+                        while (splitPath.length > 0) {
+                            let localPath;
+                            if (splitPath[0] === "/") {
+                                while (splitPath[0] === "/") {
+                                    splitPath.shift();
+                                }
+                                localPath = "/" + splitPath.join("/");
+                                splitPath.unshift("/");
+                            } else {
+                                localPath = splitPath.join("/");
+                            }
+
+                            for (let mount of manifest.mounts) {
+                                const name = pathRest[0];
+                                if (mount.localPath === localPath && mount.mountName === name) {
+                                    pathRest.shift();
+
+                                    let newPath;
+                                    if (prefixPath.endsWith("/") || prefixPath === "") {
+                                        newPath = prefixPath + localPath + "/" + name;
+                                    } else {
+                                        newPath = prefixPath + "/" + localPath + "/" + name;
+                                    }
+                                    const internalArchive = createBar(mount.archiveIdentifier);
+                                    let remainingPath = pathRest.join("/");
+                                    if (remainingPath[0] !== "/") {
+                                        //when navigate into an archive we need to ensure that the remainingPath starts with /
+                                        remainingPath = "/" + remainingPath;
+                                    }
+                                    return __loadBarForPathRecursively(internalArchive, newPath, remainingPath, mount.readonly, callback);
+                                }
+                            }
+
+                            pathRest.unshift(splitPath.pop());
+                            if (splitPath.length === 0) {
+                                return callback(Error(`Path ${path} could not be found.`));
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
 }
 
 module.exports = RawDossier;
-},{"../moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false}],"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false,"swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 
 module.exports = {
     CSB: {
+        CODE_FOLDER: "code",
         CONSTITUTION_FOLDER: 'constitution',
         BLOCKCHAIN_FOLDER: 'blockchain',
         APP_FOLDER: 'app',
@@ -507,7 +872,7 @@ module.exports = {
     }
 };
 
-},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
+},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
@@ -599,7 +964,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
 (function (Buffer){
 const pth = "path";
 const path = require(pth);
@@ -615,7 +980,7 @@ const storageFileName = ".seedCage";
 const seedCagePath = path.join(storageLocation, storageFileName);
 const algorithm = "aes-256-cfb";
 
-function getSeed(pin, callback) {
+function getSeed(password, callback) {
     fs.readFile(seedCagePath, (err, encryptedSeed) => {
         if (err) {
             return callback(err);
@@ -624,7 +989,7 @@ function getSeed(pin, callback) {
         let seed;
         try {
             const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, pin);
+            const encKey = crypto.deriveKey(algorithm, password);
             seed = pskEncryption.decrypt(encryptedSeed, encKey).toString();
         } catch (e) {
             return callback(e);
@@ -634,7 +999,7 @@ function getSeed(pin, callback) {
     });
 }
 
-function putSeed(seed, pin, overwrite = false, callback) {
+function putSeed(seed, password, overwrite = false, callback) {
     fs.mkdir(storageLocation, {recursive: true}, (err) => {
         if (err) {
             return callback(err);
@@ -664,7 +1029,7 @@ function putSeed(seed, pin, overwrite = false, callback) {
 
 
                     const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, pin);
+                    const encKey = crypto.deriveKey(algorithm, password);
                     encSeed = pskEncryption.encrypt(seed, encKey);
                     const encParameters = pskEncryption.getEncryptionParameters();
                     encSeed = Buffer.concat([encSeed, encParameters.iv]);
@@ -698,7 +1063,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
 const or = require("overwrite-require");
 switch ($$.environmentType) {
     case or.constants.THREAD_ENVIRONMENT_TYPE:
@@ -713,7 +1078,7 @@ switch ($$.environmentType) {
     default:
         throw new Error("No implementation of SeedCage for this env type.");
 }
-},{"./BrowserSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./BrowserSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -722,12 +1087,14 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
+        const zmqName = "zeromq";
+        require(zmqName);
         const PSKLoggerModule = require('psklogger');
         const PSKLogger = PSKLoggerModule.PSKLogger;
 
@@ -735,7 +1102,7 @@ if (!global.process || process.env.NO_LOGS !== 'true') {
 
         console.log('Logger init successful', process.pid);
     } catch (e) {
-        if(e.message.indexOf("psklogger")!==-1){
+        if(e.message.indexOf("psklogger")!==-1 || e.message.indexOf("zeromq")!==-1){
             console.log('Logger not available, using console');
             logger = console;
         }else{
@@ -1034,7 +1401,126 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+const DEFAULT_ITEMS_LIMIT = 1000;
+const DEFAULT_STORAGE_LEVELS = 3;
+
+/**
+ * @param {object} options
+ * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+ * @param {Number} options.limit Number of max items the cache can store per level.
+ *                               Defaults to 1000
+ */
+function Cache(options) {
+    options = options || {};
+    this.limit = parseInt(options.limit, 10) || DEFAULT_ITEMS_LIMIT;
+    this.maxLevels = parseInt(options.maxLevels, 10) || DEFAULT_STORAGE_LEVELS;
+    this.storage = null;
+
+    if (this.limit < 0) {
+        throw new Error('Limit must be a positive number');
+    }
+    if (this.maxLevels < 1) {
+        throw new Error('Cache needs at least one storage level');
+    }
+
+
+    /**
+     * Create an array of Map objects for storing items
+     *
+     * @param {Number} maxLevels
+     * @return {Array.<Map>}
+     */
+    this.createStorage = function (maxLevels) {
+        const storage = [];
+        for (let i = 0; i < maxLevels; i++) {
+            storage.push(new Map());
+        }
+
+        return storage;
+    }
+
+    this.storage = this.createStorage(this.maxLevels);
+
+    /**
+     * @param {*} key
+     * @param {*} value
+     */
+    this.set = function (key, value) {
+        if (this.cacheIsFull()) {
+            this.makeRoom();
+        }
+
+        this.storage[0].set(key, value);
+    }
+
+    /**
+     * @param {*} key
+     * @return {Boolean}
+     */
+    this.has = function (key) {
+        for (let i = 0; i < this.storage.length; i++) {
+            if (this.storage[i].has(key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param {*} key
+     * @return {*}
+     */
+    this.get = function (key) {
+        if (this.storage[0].has(key)) {
+            return this.storage[0].get(key);
+        }
+
+        return this.getFromLowerLevels(key);
+    }
+
+    /**
+     * Get an item from the lower levels.
+     * If one is found added it to the first level as well
+     *
+     * @param {*} key
+     * @return {*}
+     */
+    this.getFromLowerLevels = function (key) {
+        for (let i = 1; i < this.storage.length; i++) {
+            const storageLevel = this.storage[i];
+            if (!storageLevel.has(key)) {
+                continue;
+            }
+            const value = storageLevel.get(key);
+            this.set(key, value);
+            return value;
+        }
+    }
+
+    /**
+     * @return {Boolean}
+     */
+    this.cacheIsFull = function () {
+        return this.storage[0].size >= this.limit;
+    }
+
+    /**
+     * Move all the items down by one level
+     * and clear the first one to make room for new items
+     */
+    this.makeRoom = function () {
+        for (let i = this.storage.length - 1; i > 0; i--) {
+            this.storage[i] = this.storage[i - 1];
+        }
+        this.storage[0] = new Map();
+    }
+}
+
+module.exports = Cache;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 (function (Buffer){
 function PskCrypto() {
     const crypto = require('crypto');
@@ -1203,7 +1689,7 @@ module.exports = new PskCrypto();
 
 }).call(this,require("buffer").Buffer)
 
-},{"./PskEncryption":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require("crypto");
 const utils = require("./utils/cryptoUtils");
@@ -1288,7 +1774,7 @@ function PskEncryption(algorithm) {
 module.exports = PskEncryption;
 }).call(this,require("buffer").Buffer)
 
-},{"./utils/cryptoUtils":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -1313,7 +1799,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":false,"util":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require('crypto');
 
@@ -1393,7 +1879,7 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"crypto":false}],"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -1421,7 +1907,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":false}],"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -1621,47 +2107,68 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":false}],"edfs":[function(require,module,exports){
+},{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+},{}],"edfs":[function(require,module,exports){
 require("./brickTransportStrategies/brickTransportStrategiesRegistry");
 const constants = require("./moduleConstants");
 
-function generateUniqueStrategyName(prefix) {
-    const randomPart = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    return prefix + "_" + randomPart;
-}
-
 const or = require("overwrite-require");
 const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+const cache = require('psk-cache').factory();
+
 if (browserContexts.indexOf($$.environmentType) !== -1) {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
-}else{
+} else {
     $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
 }
 
 module.exports = {
     attachToEndpoint(endpoint) {
         const EDFS = require("./lib/EDFS");
-        return new EDFS(endpoint);
+        return new EDFS(endpoint, {
+            cache
+        });
     },
-    attachWithSeed(compactSeed) {
+    attachWithSeed(compactSeed, callback) {
         const SEED = require("bar").Seed;
-        const seed = new SEED(compactSeed);
-        return this.attachToEndpoint(seed.getEndpoint());
+        let seed;
+        try {
+            seed = new SEED(compactSeed);
+        } catch (err) {
+            return callback(err);
+        }
+
+        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
     },
-    attachWithPin(pin, callback) {
-        require("./seedCage").getSeed(pin, (err, seed) => {
+    attachWithPassword(password, callback) {
+        require("./seedCage").getSeed(password, (err, seed) => {
             if (err) {
                 return callback(err);
             }
 
-            let edfs;
-            try {
-                edfs = this.attachWithSeed(seed);
-            } catch (e) {
-                return callback(e);
-            }
-
-            callback(undefined, edfs);
+            this.attachWithSeed(seed, callback);
         });
     },
     checkForSeedCage(callback) {
@@ -1669,7 +2176,8 @@ module.exports = {
     },
     constants: constants
 };
-},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/opt/working_dir/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/opt/working_dir/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/opt/working_dir/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/opt/working_dir/privatesky/modules/edfs/seedCage/index.js","bar":false,"overwrite-require":"overwrite-require"}],"overwrite-require":[function(require,module,exports){
+
+},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"overwrite-require":[function(require,module,exports){
 (function (global){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -1829,7 +2337,7 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
-                    $$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
+                    //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
         }
@@ -2011,7 +2519,44 @@ module.exports = {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/working_dir/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/working_dir/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"pskcrypto":[function(require,module,exports){
+},{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+const Cache = require("./lib/Cache")
+let cacheInstance;
+
+module.exports = {
+
+    /**
+     * Create a new cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    factory: function (options) {
+        return new Cache(options);
+    },
+
+    /**
+     * Get a reference to a singleton cache instance
+     *
+     * @param {object} options
+     * @param {Number} options.maxLevels Number of storage levels. Defaults to 3
+     * @param {Number} options.limit Number of max items the cache can store per level.
+     *                               Defaults to 1000
+     * @return {Cache}
+     */
+    getDefaultInstance: function (options) {
+        if (!cacheInstance) {
+            cacheInstance = new Cache(options);
+        }
+
+        return cacheInstance;
+    }
+};
+
+},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -2022,14 +2567,15 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/opt/working_dir/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/opt/working_dir/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/opt/working_dir/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/IsolateBootScript":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/IsolateBootScript":[function(require,module,exports){
 
 async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
     const swarmUtils = require('swarmutils');
     const beesHealer = swarmUtils.beesHealer;
     const OwM = swarmUtils.OwM;
     const SwarmPacker = swarmUtils.SwarmPacker;
-    const IsolatedVM = require('pskisolates');
+    const pskIsolatesModuleName = "pskisolates";
+    const IsolatedVM = require(pskIsolatesModuleName);
     const {EventEmitter} = require('events');
 
     const config = IsolatedVM.IsolateConfig.defaultConfig;
@@ -2116,4 +2662,4 @@ async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
 
 module.exports = getIsolatesWorker;
 
-},{"events":false,"fs":false,"pskisolates":false,"swarmutils":false}]},{},["/opt/working_dir/privatesky/builds/tmp/isolatesBoot_intermediar.js"])
+},{"events":false,"fs":false,"swarmutils":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/isolatesBoot_intermediar.js"])
