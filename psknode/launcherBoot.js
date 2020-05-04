@@ -3401,33 +3401,7 @@ $$.flow.describe("BricksManager", {
     }
 });
 
-},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js":[function(require,module,exports){
-require("psk-http-client");
-
-function EDFSClient(url) {
-    this.attachAlias = (fileName, alias, callback) => {
-        $$.remote.doHttpPost(url + "/EDFS/attachHashToAlias/" + fileName, alias, callback);
-    };
-
-    this.writeToAlias = (alias, data, callback) => {
-        $$.remote.doHttpPost(url + "/EDFS/alias/" + alias, data, callback);
-    };
-
-    this.readFromAlias = (alias, callback) => {
-        $$.remote.doHttpGet(url + "/EDFS/alias/" + alias, callback);
-    };
-
-    this.writeFile = (fileName, data, callback) => {
-        $$.remote.doHttpPost(url + "/EDFS/" + fileName, data, callback);
-    };
-
-    this.readFile = (fileName, callback) => {
-        $$.remote.doHttpGet(url + "/EDFS/" + fileName, callback);
-    };
-}
-
-module.exports = EDFSClient;
-},{"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
 const bricks_storage_folder = "brick-storage";
 const URL_PREFIX = "/EDFS";
 
@@ -8019,14 +7993,11 @@ module.exports.create = (endpoint) => {
 };
 
 },{"./EDFSBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/EDFSBrickStorage.js"}],"edfs-middleware":[function(require,module,exports){
-module.exports.getEDFSMiddleware = require("./lib/EDFSMiddleware");
-module.exports.createEDFSClient = (url) => {
-    const EDFSClient = require("./lib/EDFSClient");
-    return new EDFSClient(url);
-};
+module.exports = require("./lib/EDFSMiddleware");
 
 
-},{"./lib/EDFSClient":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSClient.js","./lib/EDFSMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js"}],"edfs":[function(require,module,exports){
+
+},{"./lib/EDFSMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js"}],"edfs":[function(require,module,exports){
 require("./brickTransportStrategies/brickTransportStrategiesRegistry");
 const constants = require("./moduleConstants");
 
