@@ -1,4 +1,4 @@
-virtualMQRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ.js":[function(require,module,exports){
+pskWebServerRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/pskWebServer.js":[function(require,module,exports){
 if(typeof $$ === "undefined" || !$$.environmentType) {
     const or = require('overwrite-require');
     or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
@@ -6,11 +6,11 @@ if(typeof $$ === "undefined" || !$$.environmentType) {
     console.log('VirtualMQ running in test environment');
 }
 
-require("./virtualMQ_intermediar");
+require("./pskWebServer_intermediar");
 require('callflow').initialise();
-},{"./virtualMQ_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ_intermediar.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ_intermediar.js":[function(require,module,exports){
+},{"./pskWebServer_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/pskWebServer_intermediar.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/pskWebServer_intermediar.js":[function(require,module,exports){
 (function (global){
-global.virtualMQLoadModules = function(){ 
+global.pskWebServerLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["overwrite-require"] === "undefined"){
 		$$.__runtimeModules["overwrite-require"] = require("overwrite-require");
@@ -73,11 +73,11 @@ global.virtualMQLoadModules = function(){
 	}
 };
 if (false) {
-	virtualMQLoadModules();
+	pskWebServerLoadModules();
 }
-global.virtualMQRequire = require;
+global.pskWebServerRequire = require;
 if (typeof $$ !== "undefined") {
-	$$.requireBundle("virtualMQ");
+	$$.requireBundle("pskWebServer");
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -9557,4 +9557,4 @@ module.exports = {
 };
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"swarmutils":"swarmutils"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/virtualMQ.js"])
+},{"buffer":false,"swarmutils":"swarmutils"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/pskWebServer.js"])
