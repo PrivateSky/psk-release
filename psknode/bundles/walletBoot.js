@@ -9446,7 +9446,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
         if (testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined")) {
             //let's connect to zmq
-            const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
+            const reqFactory = require("psk-webserver").getVMQRequestFactory(receivingHost, zeroMQAddress);
             reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
                 console.log("zeromq connection established");
             }, (channelName, swarmSerialization) => {
@@ -9600,7 +9600,7 @@ module.exports = SmartRemoteChannelPowerCord;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":false,"swarmutils":"swarmutils","virtualmq":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js":[function(require,module,exports){
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":false,"psk-webserver":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js":[function(require,module,exports){
 function HostPowerCord(parent){
 
     this.sendSwarm = function (swarmSerialization){

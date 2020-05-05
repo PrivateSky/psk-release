@@ -1,18 +1,16 @@
 const path = require("path");
 require("../../core/utils/pingpongFork").enableLifeLine();
-
 require(path.join(__dirname, '../../bundles/virtualMQ.js'));
 require(path.join(__dirname, '../../bundles/edfsBar.js'));
 require(path.join(__dirname, '../../bundles/consoleTools'));
 
-const VirtualMQ = require('virtualmq');
+const VirtualMQ = require('psk-webserver');
 const fs = require('fs');
 const sslFolder = "../../conf/ssl";
 
 function startServer() {
     let sslConfig = undefined;
     let config = VirtualMQ.getServerConfig();
-    console.log("Config", config);
     console.log('[VirtualMQ] Using certificates from path', path.resolve(sslFolder));
 
     try {

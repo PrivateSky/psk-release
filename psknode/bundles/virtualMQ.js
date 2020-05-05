@@ -28,8 +28,8 @@ global.virtualMQLoadModules = function(){
 		$$.__runtimeModules["edfs"] = require("edfs");
 	}
 
-	if(typeof $$.__runtimeModules["virtualmq"] === "undefined"){
-		$$.__runtimeModules["virtualmq"] = require("virtualmq");
+	if(typeof $$.__runtimeModules["psk-webserver"] === "undefined"){
+		$$.__runtimeModules["psk-webserver"] = require("psk-webserver");
 	}
 
 	if(typeof $$.__runtimeModules["buffer-crc32"] === "undefined"){
@@ -82,7 +82,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer-crc32":"buffer-crc32","callflow":"callflow","dossier-wizard":"dossier-wizard","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","virtualmq":"virtualmq","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"buffer-crc32":"buffer-crc32","callflow":"callflow","dossier-wizard":"dossier-wizard","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","psk-webserver":"psk-webserver","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -1374,7 +1374,7 @@ const URL_PREFIX = "/dossierWizard";
 function DossierWizardMiddleware(server) {
     const path = require('path');
     const fs = require('fs');
-    const VirtualMQ = require('virtualmq');
+    const VirtualMQ = require('psk-webserver');
     const httpWrapper = VirtualMQ.getHttpWrapper();
     const httpUtils = httpWrapper.httpUtils;
     const crypto = require('pskcrypto');
@@ -1513,7 +1513,7 @@ function DossierWizardMiddleware(server) {
 
 module.exports = DossierWizardMiddleware;
 
-},{"./utils/executioner":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js","./utils/serverCommands":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js","fs":false,"path":false,"pskcrypto":"pskcrypto","virtualmq":"virtualmq"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js":[function(require,module,exports){
+},{"./utils/executioner":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js","./utils/serverCommands":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/serverCommands.js","fs":false,"path":false,"psk-webserver":"psk-webserver","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js":[function(require,module,exports){
 const fs = require('fs');
 const path = require('path');
 
@@ -4445,7 +4445,1856 @@ function SecurityContext() {
 
 module.exports = SecurityContext;
 
-},{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js":[function(require,module,exports){
+(function (Buffer,__dirname){
+const path = require("path");
+const fs = require("fs");
+const crypto = require('crypto');
+const integration = require("zmq_adapter");
+
+const Queue = require("swarmutils").Queue;
+const SwarmPacker = require("swarmutils").SwarmPacker;
+
+function ChannelsManager(server){
+    const utils = require("./utils");
+    const config = utils.getServerConfig();
+    const channelKeyFileName = "channel_key";
+
+    const rootFolder = path.join(config.storage, config.endpointsConfig.virtualMQ.channelsFolderName);
+    fs.mkdirSync(rootFolder, {recursive: true});
+
+    const channelKeys = {};
+    const queues = {};
+    const subscribers = {};
+
+    let baseDir = __dirname;
+
+    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
+    //TODO: check for better implementation
+    if(process.cwd().indexOf(__dirname) ===-1){
+        baseDir = path.join(process.cwd(), __dirname);
+    }
+
+
+    let forwarder;
+    if(integration.testIfAvailable()){
+        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
+    }
+
+    function generateToken(){
+        let buffer = crypto.randomBytes(config.endpointsConfig.virtualMQ.tokenSize);
+        return buffer.toString('hex');
+    }
+
+    function createChannel(name, publicKey, callback){
+        let channelFolder = path.join(rootFolder, name);
+        let keyFile = path.join(channelFolder, channelKeyFileName);
+        let token = generateToken();
+
+        if(typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        fs.mkdirSync(channelFolder);
+
+        if(fs.existsSync(keyFile)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        const config = JSON.stringify({publicKey, token});
+        fs.writeFile(keyFile, config, (err, res)=>{
+            if(!err){
+                channelKeys[name] = config;
+            }
+            return callback(err, !err ? token : undefined);
+        });
+    }
+
+    function retrieveChannelDetails(channelName, callback){
+        if(typeof channelKeys[channelName] !== "undefined"){
+            return callback(null, channelKeys[channelName]);
+        }else{
+            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
+                if(res){
+                    try{
+                        channelKeys[channelName] = JSON.parse(res);
+                    }catch(e){
+                        console.log(e);
+                        return callback(e);
+                    }
+                }
+                callback(err, channelKeys[channelName]);
+            });
+        }
+    }
+
+    function forwardChannel(channelName, forward, callback){
+        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
+        fs.readFile(channelKeyFile, (err, content)=>{
+            let config;
+            try{
+                config = JSON.parse(content);
+            }catch(e){
+                return callback(e);
+            }
+
+            if(typeof config !== "undefined"){
+                config.forward = forward;
+                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args)=>{
+                    if(!err){
+                        channelKeys[channelName] = config;
+                    }
+                    callback(err, ...args);
+                });
+            }
+        });
+    }
+
+    function readBody(req, callback){
+        let data = "";
+        req.on("data", (messagePart)=>{
+            data += messagePart;
+        });
+
+        req.on("end", ()=>{
+            callback(null, data);
+        });
+
+        req.on("error", (err)=>{
+            callback(err);
+        });
+    }
+
+    function createChannelHandler(req, res){
+        const channelName = req.params.channelName;
+
+        readBody(req, (err, message)=>{
+            if(err){
+                return sendStatus(res, 400);
+            }
+
+            const publicKey = message;
+            if (typeof channelName !== "string" || channelName.length === 0 ||
+                typeof publicKey !== "string" || publicKey.length === 0) {
+                return sendStatus(res, 400);
+            }
+
+            let handler = getBasicReturnHandler(res);
+
+            createChannel(channelName, publicKey, (err, token)=>{
+                if(!err){
+                    res.setHeader('Cookie', [`${config.endpointsConfig.virtualMQ.tokenSize}=${token}`]);
+                }
+                handler(err, res);
+            });
+        });
+    }
+
+    function sendStatus(res, reasonCode){
+        res.statusCode = reasonCode;
+        res.end();
+    }
+
+    function getBasicReturnHandler(res){
+        return function(err, result){
+            if(err){
+                return sendStatus(res, err.code || 500);
+            }
+
+            return sendStatus(res, 200);
+        }
+    }
+
+    function enableForwarderHandler(req, res){
+        if(integration.testIfAvailable() === false){
+            return sendStatus(res, 417);
+        }
+        readBody(req, (err, message)=>{
+            const {enable} = message;
+            const channelName = req.params.channelName;
+            const signature = req.headers[config.endpointsConfig.virtualMQ.signatureHeaderName];
+
+            if(typeof channelName !== "string" || typeof signature !== "string"){
+                return sendStatus(res, 400);
+            }
+
+            retrieveChannelDetails(channelName, (err, details)=>{
+                if(err){
+                    return sendStatus(res, 500);
+                }else{
+                    //todo: check signature against key [details.publickey]
+
+                    if(typeof enable === "undefined" || enable){
+                        forwardChannel(channelName, true, getBasicReturnHandler(res));
+                    }else{
+                        forwardChannel(channelName, null, getBasicReturnHandler(res));
+                    }
+                }
+            });
+        });
+    }
+
+    function getQueue(name){
+        if(typeof queues[name] === "undefined"){
+            queues[name] = new Queue();
+        }
+
+        return queues[name];
+    }
+
+    function checkIfChannelExist(channelName, callback){
+        retrieveChannelDetails(channelName, (err, details)=>{
+            callback(null, err ? false : true);
+        });
+    }
+
+    function writeMessage(subscribers, message){
+        let dispatched = false;
+        try {
+            while(subscribers.length>0){
+                let subscriber = subscribers.pop();
+                if(!dispatched){
+                    deliverMessage(subscriber, message);
+                    dispatched = true;
+                }else{
+                    sendStatus(subscriber, 403);
+                }
+            }
+        }catch(err) {
+            //... some subscribers could have a timeout connection
+            if(subscribers.length>0){
+                deliverMessage(subscribers, message);
+            }
+        }
+
+        return dispatched;
+    }
+
+    function readSendMessageBody(req, callback){
+        const contentType = req.headers['content-type'];
+
+        if (contentType === 'application/octet-stream') {
+            const contentLength = Number.parseInt(req.headers['content-length'], 10);
+
+            if(Number.isNaN(contentLength)){
+                let error = new Error("Wrong content length header received!");
+                error.code = 411;
+                return callback(error);
+            }
+
+            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
+                if(err) {
+                    return callback(err);
+                }
+                callback(undefined, bodyAsBuffer);
+            });
+        } else {
+            callback(new Error("Wrong message format received!"));
+        }
+
+        function streamToBuffer(stream, bufferSize, callback) {
+            const buffer = Buffer.alloc(bufferSize);
+            let currentOffset = 0;
+
+            stream.on('data', function(chunk){
+                const chunkSize = chunk.length;
+                const nextOffset = chunkSize + currentOffset;
+
+                if (currentOffset > bufferSize - 1) {
+                    stream.close();
+                    return callback(new Error('Stream is bigger than reported size'));
+                }
+
+                write2Buffer(buffer, chunk, currentOffset);
+                currentOffset = nextOffset;
+
+            });
+            stream.on('end', function(){
+                callback(undefined, buffer);
+            });
+            stream.on('error', callback);
+        }
+
+        function write2Buffer(buffer, dataToAppend, offset) {
+            const dataSize = dataToAppend.length;
+
+            for (let i = 0; i < dataSize; i++) {
+                buffer[offset++] = dataToAppend[i];
+            }
+        }
+    }
+
+    function sendMessageHandler(req, res){
+        let channelName = req.params.channelName;
+
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retrieveChannelDetails(channelName, (err, details)=>{
+                    //we choose to read the body of request only after we know that we recognize the destination channel
+                    readSendMessageBody(req, (err, message)=>{
+                        if(err){
+                            //console.log(err);
+                            return sendStatus(res, 403);
+                        }
+
+                        let header;
+                        try{
+                            header = SwarmPacker.unpack(message.buffer);
+                        }catch(error){
+                            //console.log(error);
+                            return sendStatus(res, 400);
+                        }
+
+                        //TODO: to all checks based on message header
+
+                        if(integration.testIfAvailable() && details.forward){
+                            //console.log("Forwarding message <", message, "> on channel", channelName);
+                            forwarder.send(channelName, message);
+                        }else{
+                            let queue = getQueue(channelName);
+                            let subscribers = getSubscribersList(channelName);
+                            let dispatched = false;
+                            if(queue.isEmpty()){
+                                dispatched = writeMessage(subscribers, message);
+                            }
+                            if(!dispatched) {
+                                if(queue.length < config.endpointsConfig.virtualMQ.maxSize){
+                                    queue.push(message);
+                                }else{
+                                    //queue is full
+                                    return sendStatus(res, 429);
+                                }
+
+                                /*
+                                if(subscribers.length>0){
+                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
+                                    //happened and maybe we should try to dispatch first message from queue
+                                }
+                                */
+
+                            }
+                        }
+                        return sendStatus(res, 200);
+                    });
+                })
+            }
+        });
+    }
+
+    function getSubscribersList(channelName){
+        if(typeof subscribers[channelName] === "undefined"){
+            subscribers[channelName] = [];
+        }
+
+        return subscribers[channelName];
+    }
+
+    function deliverMessage(res, message){
+        if(Buffer.isBuffer(message)) {
+            res.setHeader('content-type', 'application/octet-stream');
+        }
+
+        if(typeof message.length !== "undefined"){
+            res.setHeader('content-length', message.length);
+        }
+
+        res.write(message);
+        sendStatus(res, 200);
+    }
+
+    function getCookie(res, cookieName){
+        let cookies = res.headers['cookie'];
+        if(typeof cookies === "undefined"){
+            return undefined;
+        }
+        if(Array.isArray(cookies)){
+            for(let i=0; i<cookies.length; i++){
+                let cookie = cookies[i];
+                if(cookie.indexOf(cookieName) !== -1){
+                    return cookie.substr(cookieName.length+1);
+                }
+            }
+        }else{
+            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
+
+            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)','i');
+            let match = cookies.match(regex);
+
+            return match && unescape(match[1]);
+        }
+    }
+
+    function receiveMessageHandler(req, res){
+        let channelName = req.params.channelName;
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retrieveChannelDetails(channelName, (err, details)=>{
+                    if(err){
+                        return sendStatus(res, 500);
+                    }
+                    //TODO: check signature agains details.publickey
+
+
+                    if(details.forward){
+                        //if channel is forward it does not make sense
+                        return sendStatus(res, 409);
+                    }
+
+                    /*let signature = req.headers["signature"];
+                    if(typeof signature === "undefined"){
+                        return sendStatus(res, 403);
+                    }*/
+
+                    // let cookie = getCookie(req, tokenHeaderName);
+
+                    // if(typeof cookie === "undefined" || cookie === null){
+                    //     return sendStatus(res, 412);
+                    // }
+
+                    let queue = getQueue(channelName);
+                    let message = queue.pop();
+
+                    if(!message){
+                        getSubscribersList(channelName).push(res);
+                    }else{
+                        deliverMessage(res, message);
+                    }
+                });
+            }
+        });
+    }
+
+    server.put("/create-channel/:channelName", createChannelHandler);
+    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
+    server.post("/send-message/:channelName", sendMessageHandler);
+    server.get("/receive-message/:channelName", receiveMessageHandler);
+}
+
+module.exports = ChannelsManager;
+}).call(this,require("buffer").Buffer,"/modules/psk-webserver")
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","buffer":false,"crypto":false,"fs":false,"path":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js":[function(require,module,exports){
+const extensionsMimeTypes = {
+    "aac": {
+        name: "audio/aac",
+        binary: true
+    },
+    "abw": {
+        name: "application/x-abiword",
+        binary: true
+    },
+    "arc": {
+        name: "application/x-freearc",
+        binary: true
+    },
+    "avi": {
+        name: "video/x-msvideo",
+        binary: true
+    },
+    "azw": {
+        name: "application/vnd.amazon.ebook",
+        binary: true
+    },
+    "bin": {
+        name: "application/octet-stream",
+        binary: true
+    }, "bmp": {
+        name: "image/bmp",
+        binary: true
+    }, "bz": {
+        name: "application/x-bzip",
+        binary: true
+    }, "bz2": {
+        name: "application/x-bzip2",
+        binary: true
+    }, "csh": {
+        name: "application/x-csh",
+        binary: false
+    }, "css": {
+        name: "text/css",
+        binary: false
+    }, "csv": {
+        name: "text/csv",
+        binary: false
+    }, "doc": {
+        name: "application/msword",
+        binary: true
+    }, "docx": {
+        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        binary: true
+    }, "eot": {
+        name: "application/vnd.ms-fontobject",
+        binary: true
+    }, "epub": {
+        name: "application/epub+zip",
+        binary: true
+    }, "gz": {
+        name: "application/gzip",
+        binary: true
+    }, "gif": {
+        name: "image/gif",
+        binary: true
+    }, "htm": {
+        name: "text/html",
+        binary: false
+    }, "html": {
+        name: "text/html",
+        binary: false
+    }, "ico": {
+        name: "image/vnd.microsoft.icon",
+        binary: true
+    }, "ics": {
+        name: "text/calendar",
+        binary: false
+    }, "jpeg": {
+        name: "image/jpeg",
+        binary: true
+    }, "jpg": {
+        name: "image/jpeg",
+        binary: true
+    }, "js": {
+        name: "text/javascript",
+        binary: false
+    }, "json": {
+        name: "application/json",
+        binary: false
+    }, "jsonld": {
+        name: "application/ld+json",
+        binary: false
+    }, "mid": {
+        name: "audio/midi",
+        binary: true
+    }, "midi": {
+        name: "audio/midi",
+        binary: true
+    }, "mjs": {
+        name: "text/javascript",
+        binary: false
+    }, "mp3": {
+        name: "audio/mpeg",
+        binary: true
+    }, "mpeg": {
+        name: "video/mpeg",
+        binary: true
+    }, "mpkg": {
+        name: "application/vnd.apple.installer+xm",
+        binary: true
+    }, "odp": {
+        name: "application/vnd.oasis.opendocument.presentation",
+        binary: true
+    }, "ods": {
+        name: "application/vnd.oasis.opendocument.spreadsheet",
+        binary: true
+    }, "odt": {
+        name: "application/vnd.oasis.opendocument.text",
+        binary: true
+    }, "oga": {
+        name: "audio/ogg",
+        binary: true
+    },
+    "ogv": {
+        name: "video/ogg",
+        binary: true
+    },
+    "ogx": {
+        name: "application/ogg",
+        binary: true
+    },
+    "opus": {
+        name: "audio/opus",
+        binary: true
+    },
+    "otf": {
+        name: "font/otf",
+        binary: true
+    },
+    "png": {
+        name: "image/png",
+        binary: true
+    },
+    "pdf": {
+        name: "application/pdf",
+        binary: true
+    },
+    "php": {
+        name: "application/php",
+        binary: false
+    },
+    "ppt": {
+        name: "application/vnd.ms-powerpoint",
+        binary: true
+    },
+    "pptx": {
+        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        binary: true
+    },
+    "rtf": {
+        name: "application/rtf",
+        binary: true
+    },
+    "sh": {
+        name: "application/x-sh",
+        binary: false
+    },
+    "svg": {
+        name: "image/svg+xml",
+        binary: false
+    },
+    "swf": {
+        name: "application/x-shockwave-flash",
+        binary: true
+    },
+    "tar": {
+        name: "application/x-tar",
+        binary: true
+    },
+    "tif": {
+        name: "image/tiff",
+        binary: true
+    },
+    "tiff": {
+        name: "image/tiff",
+        binary: true
+    },
+    "ts": {
+        name: "video/mp2t",
+        binary: true
+    },
+    "ttf": {
+        name: "font/ttf",
+        binary: true
+    },
+    "txt": {
+        name: "text/plain",
+        binary: false
+    },
+    "vsd": {
+        name: "application/vnd.visio",
+        binary: true
+    },
+    "wav": {
+        name: "audio/wav",
+        binary: true
+    },
+    "weba": {
+        name: "audio/webm",
+        binary: true
+    },
+    "webm": {
+        name: "video/webm",
+        binary: true
+    },
+    "webp": {
+        name: "image/webp",
+        binary: true
+    },
+    "woff": {
+        name: "font/woff",
+        binary: true
+    },
+    "woff2": {
+        name: "font/woff2",
+        binary: true
+    },
+    "xhtml": {
+        name: "application/xhtml+xml",
+        binary: false
+    },
+    "xls": {
+        name: "application/vnd.ms-excel",
+        binary: true
+    },
+    "xlsx": {
+        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        binary: true
+    },
+    "xml": {
+        name: "text/xml",
+        binary: false
+    },
+    "xul": {
+        name: "application/vnd.mozilla.xul+xml",
+        binary: true
+    },
+    "zip": {
+        name: "application/zip",
+        binary: true
+    },
+    "3gp": {
+        name: "video/3gpp",
+        binary: true
+    },
+    "3g2": {
+        name: "video/3gpp2",
+        binary: true
+    },
+    "7z": {
+        name: "application/x-7z-compressed",
+        binary: true
+    }
+};
+
+const defaultMimeType = {
+    name: "text/plain",
+    binary: false
+};
+module.exports.getMimeTypeFromExtension = function (extension) {
+    if (typeof extensionsMimeTypes[extension] !== "undefined") {
+        return extensionsMimeTypes[extension];
+    }
+    return defaultMimeType;
+};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
+(function (__dirname){
+function ServerConfig(conf) {
+    const path = require("path");
+    const defaultConf = {
+        storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
+        "port": 8080,
+        "zeromqForwardAddress": "tcp://127.0.0.1:5001",
+        "endpoints":["virtualMQ", "staticServer", "edfs", "filesManager", "dossierWizard"],
+        "endpointsConfig": {
+            "virtualMQ": {
+                "channelsFolderName": "channels",
+                "maxSize": 100,
+                "tokenSize": 48,
+                "tokenHeaderName": "x-tokenHeader",
+                "signatureHeaderName": "x-signature",
+                "enableSignatureCheck": true
+            }
+        }
+    };
+    conf = conf || {};
+    conf = Object.assign(defaultConf, conf);
+    return conf;
+}
+
+module.exports = ServerConfig;
+}).call(this,"/modules/psk-webserver")
+
+},{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js":[function(require,module,exports){
+function StaticServer(server) {
+    const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
+    const fs = require("fs");
+    const path = require("path");
+    server.use("*", function (req, res, next) {
+        const prefix = "/directory-summary/";
+        requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            targetPath = targetPath.replace(prefix, "");
+            serverTarget(targetPath);
+        });
+
+        function serverTarget(targetPath) {
+            console.log("Serving summary for dir:", targetPath);
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (!stats.isDirectory()) {
+                    res.statusCode = 403;
+                    res.end();
+                    return;
+                }
+
+                function send() {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', "application/json");
+                    //let's clean some empty objects
+                    for (let prop in summary) {
+                        if (Object.keys(summary[prop]).length === 0) {
+                            delete summary[prop];
+                        }
+                    }
+
+                    res.write(JSON.stringify(summary));
+                    res.end();
+                }
+
+                let summary = {};
+                let directories = {};
+
+                function extractContent(currentPath) {
+                    directories[currentPath] = -1;
+                    let summaryId = currentPath.replace(targetPath, "");
+                    summaryId = summaryId.split(path.sep).join("/");
+                    if (summaryId === "") {
+                        summaryId = "/";
+                    }
+                    //summaryId = path.basename(summaryId);
+                    summary[summaryId] = {};
+
+                    fs.readdir(currentPath, function (err, files) {
+                        if (err) {
+                            return markAsFinish(currentPath);
+                        }
+                        directories[currentPath] = files.length;
+                        //directory empty test
+                        if (files.length === 0) {
+                            return markAsFinish(currentPath);
+                        } else {
+                            for (let i = 0; i < files.length; i++) {
+                                let file = files[i];
+                                const fileName = path.join(currentPath, file);
+                                if (fs.statSync(fileName).isDirectory()) {
+                                    extractContent(fileName);
+                                } else {
+                                    let fileContent = fs.readFileSync(fileName);
+                                    summary[summaryId][file] = fileContent.toString();
+                                }
+                                directories[currentPath]--;
+                            }
+                            return markAsFinish(currentPath);
+                        }
+                    });
+                }
+
+                function markAsFinish(targetPath) {
+                    if (directories [targetPath] > 0) {
+                        return;
+                    }
+                    delete directories [targetPath];
+                    const dirsLeftToProcess = Object.keys(directories);
+                    //if there are no other directories left to process
+                    if (dirsLeftToProcess.length === 0) {
+                        send();
+                    }
+                }
+
+                extractContent(targetPath);
+            })
+        }
+
+    });
+
+    server.use("*", function (req, res, next) {
+        requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            //from now on we mean to resolve the url
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (stats.isDirectory()) {
+                    let url = req.url;
+                    if (url[url.length - 1] !== "/") {
+                        res.writeHead(302, {
+                            'Location': url + "/"
+                        });
+                        res.end();
+                        return;
+                    }
+                    const defaultFileName = "index.html";
+                    const defaultPath = path.join(targetPath, defaultFileName);
+                    fs.stat(defaultPath, function (err) {
+                        if (err) {
+                            res.statusCode = 403;
+                            res.end();
+                            return;
+                        }
+                        return sendFile(res, defaultPath);
+                    });
+                } else {
+                    return sendFile(res, targetPath);
+                }
+            });
+        });
+    });
+
+    function sendFile(res, file) {
+        let stream = fs.createReadStream(file);
+        const mimes = require("./MimeType");
+        let ext = path.extname(file);
+        if (ext !== "") {
+            ext = ext.replace(".", "");
+            res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
+        } else {
+            res.setHeader('Content-Type', "application/octet-stream");
+        }
+        res.statusCode = 200;
+        stream.pipe(res);
+        stream.on('finish', () => {
+            res.end();
+        });
+    }
+
+    function requestValidation(req, method, urlPrefix, callback) {
+        if (typeof urlPrefix === "function") {
+            callback = urlPrefix;
+            urlPrefix = undefined;
+        }
+        if (req.method !== method) {
+            //we resolve only GET requests
+            return callback(true);
+        }
+
+        if (typeof urlPrefix === "undefined") {
+            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
+                let reservedPath = lockedPathsPrefixes[i];
+                //if we find a url that starts with a reserved prefix is not our duty ro resolve
+                if (req.url.indexOf(reservedPath) === 0) {
+                    return callback(true);
+                }
+            }
+        } else {
+            if (req.url.indexOf(urlPrefix) !== 0) {
+                return callback(true);
+            }
+        }
+
+        const rootFolder = server.rootFolder;
+        const path = require("path");
+        let requestedUrl = req.url;
+        if (urlPrefix) {
+            requestedUrl = requestedUrl.replace(urlPrefix, "");
+        }
+        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+        //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
+        if (targetPath.indexOf(rootFolder) !== 0) {
+            return callback(true);
+        }
+        callback(false, targetPath);
+    }
+}
+
+module.exports = StaticServer;
+},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js","fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
+(function (Buffer){
+const http = require('http');
+const {URL} = require('url');
+const swarmUtils = require('swarmutils');
+const SwarmPacker = swarmUtils.SwarmPacker;
+const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
+
+function RequestFactory(virtualMQAddress, zeroMQAddress) {
+    function createChannel(channelName, publicKey, callback) {
+        const options = {
+            path: `/create-channel/${channelName}`,
+            method: "PUT"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.write(publicKey);
+        req.end();
+    }
+
+    function createForwardChannel(channelName, publicKey, callback) {
+        const options = {
+            path: `/create-channel/${channelName}`,
+            method: "PUT"
+        };
+
+        const req = http.request(virtualMQAddress, options, (res) => {
+            this.enableForward(channelName, "justASignature", callback);
+        });
+        req.write(publicKey);
+        req.end();
+    }
+
+    function enableForward(channelName, signature, callback) {
+        const options = {
+            path: `/forward-zeromq/${channelName}`,
+            method: "POST"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.setHeader(signatureHeaderName, signature);
+        req.end();
+    }
+
+    function sendMessage(channelName, message, signature, callback) {
+        const options = {
+            path: `/send-message/${channelName}`,
+            method: "POST"
+        };
+
+        const req = http.request(virtualMQAddress, options, callback);
+        req.setHeader(signatureHeaderName, signature);
+
+        let pack = SwarmPacker.pack(message);
+
+        req.setHeader("content-length", pack.byteLength);
+        req.setHeader("content-type", 'application/octet-stream');
+        req.write(Buffer.from(pack));
+        req.end();
+    }
+
+    function receiveMessage(channelName, signature, callback) {
+        const options = {
+            path: `/receive-message/${channelName}`,
+            method: "GET"
+        };
+
+        const req = http.request(virtualMQAddress, options, function (res) {
+            const utils = require("./utils");
+            utils.readMessageBufferFromStream(res, function (err, message) {
+
+                callback(err, res, (message && Buffer.isBuffer(message)) ? SwarmPacker.unpack(message.buffer) : message);
+            });
+        });
+
+        req.setHeader(signatureHeaderName, signature);
+        req.end();
+    }
+
+    function receiveMessageFromZMQ(channelName, signature, readyCallback, receivedCallback) {
+        const zmqIntegration = require("zmq_adapter");
+
+        let catchEvents = (eventType, ...args) => {
+            // console.log("Event type caught", eventType, ...args);
+            if (eventType === "connect") {
+                //connected so all good
+                readyCallback();
+            }
+        };
+
+        let consumer = zmqIntegration.createZeromqConsumer(zeroMQAddress, catchEvents);
+        consumer.subscribe(channelName, signature, (channel, receivedMessage) => {
+            receivedCallback(JSON.parse(channel.toString()).channelName, receivedMessage.buffer);
+        });
+    }
+
+    function generateMessage(swarmName, swarmPhase, args, targetAgent, returnAddress){
+        return {
+            meta:{
+                swarmId: swarmUtils.generateUid(32).toString("hex"),
+                requestId: swarmUtils.generateUid(32).toString("hex"),
+                swarmTypeName: swarmName || "testSwarmType",
+                phaseName: swarmPhase || "swarmPhaseName",
+                args: args || [],
+                command: "executeSwarmPhase",
+                target: targetAgent || "agentURL",
+                homeSecurityContext: returnAddress || "no_home_no_return"
+            }};
+    }
+
+    function getPort() {
+        try {
+            return new URL(virtualMQAddress).port;
+        } catch (e) {
+          console.error(e);
+        }
+    }
+
+    // targeted virtualmq apis
+    this.createChannel = createChannel;
+    this.createForwardChannel = createForwardChannel;
+    this.enableForward = enableForward;
+    this.sendMessage = sendMessage;
+    this.receiveMessage = receiveMessage;
+    this.receiveMessageFromZMQ = receiveMessageFromZMQ;
+
+    // utils for testing
+    if(!process.env.NODE_ENV || (process.env.NODE_ENV && !process.env.NODE_ENV.startsWith('prod'))) { // if NODE_ENV does not exist or if it exists and is not set to production
+        this.getPort = getPort;
+        this.generateMessage = generateMessage;
+    }
+}
+
+module.exports = RequestFactory;
+}).call(this,require("buffer").Buffer)
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","buffer":false,"http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js":[function(require,module,exports){
+/**
+ * An implementation of the Token bucket algorithm
+ * @param startTokens - maximum number of tokens possible to obtain and the default starting value
+ * @param tokenValuePerTime - number of tokens given back for each "unitOfTime"
+ * @param unitOfTime - for each "unitOfTime" (in milliseconds) passed "tokenValuePerTime" amount of tokens will be given back
+ * @constructor
+ */
+
+function TokenBucket(startTokens = 6000, tokenValuePerTime = 10, unitOfTime = 100) {
+
+    if(typeof startTokens !== 'number' || typeof  tokenValuePerTime !== 'number' || typeof unitOfTime !== 'number') {
+        throw new Error('All parameters must be of type number');
+    }
+
+    if(isNaN(startTokens) || isNaN(tokenValuePerTime) || isNaN(unitOfTime)) {
+        throw new Error('All parameters must not be NaN');
+    }
+
+    if(startTokens <= 0 || tokenValuePerTime <= 0 || unitOfTime <= 0) {
+        throw new Error('All parameters must be bigger than 0');
+    }
+
+
+    TokenBucket.prototype.COST_LOW    = 10;  // equivalent to 10op/s with default values
+    TokenBucket.prototype.COST_MEDIUM = 100; // equivalent to 1op/s with default values
+    TokenBucket.prototype.COST_HIGH   = 500; // equivalent to 12op/minute with default values
+
+    TokenBucket.ERROR_LIMIT_EXCEEDED  = 'error_limit_exceeded';
+    TokenBucket.ERROR_BAD_ARGUMENT    = 'error_bad_argument';
+
+
+
+    const limits = {};
+
+    function takeToken(userKey, cost, callback = () => {}) {
+        if(typeof cost !== 'number' || isNaN(cost) || cost <= 0 || cost === Infinity) {
+            callback(TokenBucket.ERROR_BAD_ARGUMENT);
+            return;
+        }
+
+        const userBucket = limits[userKey];
+
+        if (userBucket) {
+            userBucket.tokens += calculateReturnTokens(userBucket.timestamp);
+            userBucket.tokens -= cost;
+
+            userBucket.timestamp = Date.now();
+
+
+
+            if (userBucket.tokens < 0) {
+                userBucket.tokens = 0;
+                callback(TokenBucket.ERROR_LIMIT_EXCEEDED, 0);
+                return;
+            }
+
+            return callback(undefined, userBucket.tokens);
+        } else {
+            limits[userKey] = new Limit(startTokens, Date.now());
+            takeToken(userKey, cost, callback);
+        }
+    }
+
+    function getLimitByCost(cost) {
+        if(startTokens === 0 || cost === 0) {
+            return 0;
+        }
+
+        return Math.floor(startTokens / cost);
+    }
+
+    function getRemainingTokenByCost(tokens, cost) {
+        if(tokens === 0 || cost === 0) {
+            return 0;
+        }
+
+        return Math.floor(tokens / cost);
+    }
+
+    function Limit(maximumTokens, timestamp) {
+        this.tokens = maximumTokens;
+        this.timestamp = timestamp;
+
+        const self = this;
+
+        return {
+            set tokens(numberOfTokens) {
+                if (numberOfTokens < 0) {
+                    numberOfTokens = -1;
+                }
+
+                if (numberOfTokens > maximumTokens) {
+                    numberOfTokens = maximumTokens;
+                }
+
+                self.tokens = numberOfTokens;
+            },
+            get tokens() {
+                return self.tokens;
+            },
+            timestamp
+        };
+    }
+
+
+    function calculateReturnTokens(timestamp) {
+        const currentTime = Date.now();
+
+        const elapsedTime = Math.floor((currentTime - timestamp) / unitOfTime);
+
+        return elapsedTime * tokenValuePerTime;
+    }
+
+    this.takeToken               = takeToken;
+    this.getLimitByCost          = getLimitByCost;
+    this.getRemainingTokenByCost = getRemainingTokenByCost;
+}
+
+module.exports = TokenBucket;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
+(function (Buffer){
+const http = require('http');
+const url = require('url');
+const stream = require('stream');
+
+/**
+ * Wraps a request and augments it with a "do" method to modify it in a "fluent builder" style
+ * @param {string} url
+ * @param {*} body
+ * @constructor
+ */
+function Request(url, body) {
+    this.request = {
+        options: url,
+        body
+    };
+
+    this.do = function (modifier) {
+        modifier(this.request);
+        return this;
+    };
+
+    this.getHttpRequest = function () {
+        return this.request;
+    };
+}
+
+
+/**
+ * Modifies request.options to contain the url parsed instead of as string
+ * @param {Object} request - Object that contains options and body
+ */
+function urlToOptions(request) {
+    const parsedUrl = url.parse(request.options);
+
+    // TODO: movie headers declaration from here
+    request.options = {
+        host: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.pathname,
+        headers: {}
+    };
+}
+
+
+/**
+ * Transforms the request.body in a type that can be sent through network if it is needed
+ * @param {Object} request - Object that contains options and body
+ */
+function serializeBody(request) {
+    if (!request.body) {
+        return;
+    }
+
+    const handler = {
+        get: function (target, name) {
+            return name in target ? target[name] : (data) => data;
+        }
+    };
+
+    const bodySerializationMapping = new Proxy({
+        'Object': (data) => JSON.stringify(data),
+    }, handler);
+
+    request.body = bodySerializationMapping[request.body.constructor.name](request.body);
+}
+
+/**
+ *
+ * @param {Object} request - Object that contains options and body
+ */
+function bodyContentLength(request) {
+    if (!request.body) {
+        return;
+    }
+
+    if (request.body.constructor.name in [ 'String', 'Buffer', 'ArrayBuffer' ]) {
+        request.options.headers['Content-Length'] = Buffer.byteLength(request.body);
+    }
+}
+
+
+function Client() {
+    /**
+     *
+     * @param {Request} customRequest
+     * @param modifiers - array of functions that modify the request
+     * @returns {Object} - with url and body properties
+     */
+    function request(customRequest, modifiers) {
+        for (let i = 0; i < modifiers.length; ++i) {
+            customRequest.do(modifiers[i]);
+        }
+
+        return customRequest.getHttpRequest();
+    }
+
+    function getReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.headers = config.headers || {};}
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+        httpRequest.end();
+
+        return httpRequest;
+    }
+
+    function postReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.method = 'POST'; },
+            (request) => {request.options.headers = config.headers || {}; },
+            serializeBody,
+            bodyContentLength
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+
+        if (config.body instanceof stream.Readable) {
+            config.body.pipe(httpRequest);
+        }
+        else {
+            httpRequest.end(packedRequest.body, config.encoding || 'utf8');
+        }
+        return httpRequest;
+    }
+
+    function deleteReq(url, config, callback) {
+        const modifiers = [
+            urlToOptions,
+            (request) => {request.options.method = 'DELETE';},
+            (request) => {request.options.headers = config.headers || {};},
+        ];
+
+        const packedRequest = request(new Request(url, config.body), modifiers);
+        const httpRequest = http.request(packedRequest.options, callback);
+        httpRequest.end();
+
+        return httpRequest;
+    }
+
+    this.get = getReq;
+    this.post = postReq;
+    this.delete = deleteReq;
+}
+
+/**
+ * Swap third and second parameter if only two are provided and converts arguments to array
+ * @param {Object} params
+ * @returns {Array} - arguments as array
+ */
+function parametersPreProcessing(params) {
+    const res = [];
+
+    if (typeof params[0] !== 'string') {
+        throw new Error('First parameter must be a string (url)');
+    }
+
+    const parsedUrl = url.parse(params[0]);
+
+    if (!parsedUrl.hostname) {
+        throw new Error('First argument (url) is not valid');
+    }
+
+    if (params.length >= 3) {
+        if (typeof params[1] !== 'object' || !params[1]) {
+            throw new Error('When 3 parameters are provided the second parameter must be a not null object');
+        }
+
+        if (typeof params[2] !== 'function') {
+            throw new Error('When 3 parameters are provided the third parameter must be a function');
+        }
+    }
+
+    if (params.length === 2) {
+        if (typeof params[1] !== 'function') {
+            throw new Error('When 2 parameters are provided the second one must be a function');
+        }
+
+        params[2] = params[1];
+        params[1] = {};
+    }
+
+    const properties = Object.keys(params);
+    for(let i = 0, len = properties.length; i < len; ++i) {
+        res.push(params[properties[i]]);
+    }
+
+    return res;
+}
+
+const handler = {
+    get(target, propName) {
+        if (!target[propName]) {
+            console.log(propName, "Not implemented!");
+        } else {
+            return function () {
+                const args = parametersPreProcessing(arguments);
+                return target[propName].apply(target, args);
+            };
+        }
+    }
+};
+
+module.exports = function () {
+    return new Proxy(new Client(), handler);
+};
+}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"http":false,"stream":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Middleware.js":[function(require,module,exports){
+const querystring = require('querystring');
+
+function matchUrl(pattern, url) {
+	const result = {
+		match: true,
+		params: {},
+		query: {}
+	};
+
+	const queryParametersStartIndex = url.indexOf('?');
+	if(queryParametersStartIndex !== -1) {
+		const urlQueryString = url.substr(queryParametersStartIndex + 1); // + 1 to ignore the '?'
+		result.query = querystring.parse(urlQueryString);
+		url = url.substr(0, queryParametersStartIndex);
+	}
+
+    const patternTokens = pattern.split('/');
+    const urlTokens = url.split('/');
+
+    if(urlTokens[urlTokens.length - 1] === '') {
+        urlTokens.pop();
+    }
+
+    if (patternTokens.length !== urlTokens.length) {
+        result.match = false;
+    }
+
+    if(patternTokens[patternTokens.length - 1] === '*') {
+        result.match = true;
+        patternTokens.pop();
+    }
+
+    for (let i = 0; i < patternTokens.length && result.match; ++i) {
+        if (patternTokens[i].startsWith(':')) {
+            result.params[patternTokens[i].substring(1)] = urlTokens[i];
+        } else if (patternTokens[i] !== urlTokens[i]) {
+            result.match = false;
+        }
+    }
+
+    return result;
+}
+
+function isTruthy(value) {
+    return !!value;
+
+}
+
+function methodMatch(pattern, method) {
+    if (!pattern || !method) {
+        return true;
+    }
+
+    return pattern === method;
+}
+
+function Middleware() {
+    const registeredMiddlewareFunctions = [];
+
+    function use(method, url, fn) {
+        method = method ? method.toLowerCase() : undefined;
+        registeredMiddlewareFunctions.push({method, url, fn});
+    }
+
+    this.use = function (...params) {
+	    let args = [ undefined, undefined, undefined ];
+
+	    switch (params.length) {
+            case 0:
+				throw Error('Use method needs at least one argument.');
+				
+            case 1:
+                if (typeof params[0] !== 'function') {
+                    throw Error('If only one argument is provided it must be a function');
+                }
+
+                args[2] = params[0];
+
+                break;
+            case 2:
+                if (typeof params[0] !== 'string' || typeof params[1] !== 'function') {
+                    throw Error('If two arguments are provided the first one must be a string (url) and the second a function');
+                }
+
+                args[1]=params[0];
+                args[2]=params[1];
+
+                break;
+            default:
+                if (typeof params[0] !== 'string' || typeof params[1] !== 'string' || typeof params[2] !== 'function') {
+                    throw Error('If three or more arguments are provided the first one must be a string (HTTP verb), the second a string (url) and the third a function');
+                }
+
+                if (!([ 'get', 'post', 'put', 'delete', 'patch', 'head', 'connect', 'options', 'trace' ].includes(params[0].toLowerCase()))) {
+                    throw new Error('If three or more arguments are provided the first one must be a HTTP verb but none could be matched');
+                }
+
+                args = params;
+
+                break;
+        }
+
+        use.apply(this, args);
+    };
+
+
+    /**
+     * Starts execution from the first registered middleware function
+     * @param {Object} req
+     * @param {Object} res
+     */
+    this.go = function go(req, res) {
+        execute(0, req.method.toLowerCase(), req.url, req, res);
+    };
+
+    /**
+     * Executes a middleware if it passes the method and url validation and calls the next one when necessary
+     * @param index
+     * @param method
+     * @param url
+     * @param params
+     */
+    function execute(index, method, url, ...params) {
+        if (!registeredMiddlewareFunctions[index]) {
+            if(index===0){
+                console.error("No handlers registered yet!");
+            }
+            return;
+        }
+
+	    const registeredMethod = registeredMiddlewareFunctions[index].method;
+	    const registeredUrl = registeredMiddlewareFunctions[index].url;
+	    const fn = registeredMiddlewareFunctions[index].fn;
+
+	    if (!methodMatch(registeredMethod, method)) {
+            execute(++index, method, url, ...params);
+            return;
+        }
+
+        if (isTruthy(registeredUrl)) {
+            const urlMatch = matchUrl(registeredUrl, url);
+
+            if (!urlMatch.match) {
+                execute(++index, method, url, ...params);
+                return;
+            }
+
+            if (params[0]) {
+                params[0].params = urlMatch.params;
+                params[0].query  = urlMatch.query;
+            }
+        }
+
+        let counter = 0;
+
+        fn(...params, (err) => {
+            counter++;
+            if (counter > 1) {
+                console.warn('You called next multiple times, only the first one will be executed');
+                return;
+            }
+
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            execute(++index, method, url, ...params);
+        });
+    }
+}
+
+module.exports = Middleware;
+
+},{"querystring":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Router.js":[function(require,module,exports){
+function Router(server) {
+    this.use = function use(url, callback) {
+        callback(serverWrapper(url, server));
+    };
+}
+
+function serverWrapper(baseUrl, server) {
+    if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+    }
+
+    return {
+        use(url, reqResolver) {
+            server.use(baseUrl + url, reqResolver);
+        },
+        get(url, reqResolver) {
+            server.get(baseUrl + url, reqResolver);
+        },
+        post(url, reqResolver) {
+            server.post(baseUrl + url, reqResolver);
+        },
+        put(url, reqResolver) {
+            server.put(baseUrl + url, reqResolver);
+        },
+        delete(url, reqResolver) {
+            server.delete(baseUrl + url, reqResolver);
+        },
+        options(url, reqResolver) {
+            server.options(baseUrl + url, reqResolver);
+        }
+    };
+}
+
+module.exports = Router;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
+const Middleware = require('./Middleware');
+const http = require('http');
+const https = require('https');
+
+function Server(sslOptions) {
+    const middleware = new Middleware();
+    const server = _initServer(sslOptions);
+
+
+    this.use = function use(url, callback) {
+        //TODO: find a better way
+        if (arguments.length >= 2) {
+            middleware.use(url, callback);
+        } else if (arguments.length === 1) {
+            callback = url;
+            middleware.use(callback);
+        }
+
+    };
+
+
+    this.get = function getReq(reqUrl, reqResolver) {
+        middleware.use("GET", reqUrl, reqResolver);
+    };
+
+    this.post = function postReq(reqUrl, reqResolver) {
+        middleware.use("POST", reqUrl, reqResolver);
+    };
+
+    this.put = function putReq(reqUrl, reqResolver) {
+        middleware.use("PUT", reqUrl, reqResolver);
+    };
+
+    this.delete = function deleteReq(reqUrl, reqResolver) {
+        middleware.use("DELETE", reqUrl, reqResolver);
+    };
+
+    this.options = function optionsReq(reqUrl, reqResolver) {
+        middleware.use("OPTIONS", reqUrl, reqResolver);
+    };
+
+
+    /* INTERNAL METHODS */
+
+    function _initServer(sslConfig) {
+        if (sslConfig) {
+            return https.createServer(sslConfig, middleware.go);
+        } else {
+            return http.createServer(middleware.go);
+        }
+    }
+
+    return new Proxy(this, {
+       get(target, prop, receiver) {
+           if(typeof target[prop] !== "undefined") {
+               return target[prop];
+           }
+
+           if(typeof server[prop] === "function") {
+               return function(...args) {
+                   server[prop](...args);
+               }
+           } else {
+               return server[prop];
+           }
+       }
+    });
+}
+
+module.exports = Server;
+},{"./Middleware":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Middleware.js","http":false,"https":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
+const fs = require('fs');
+const path = require('path');
+
+function setDataHandler(request, callback) {
+    let bodyContent = '';
+
+    request.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
+
+    request.on('end', function () {
+        callback(undefined, bodyContent);
+    });
+
+    request.on('error', callback);
+}
+
+function setDataHandlerMiddleware(request, response, next) {
+    if (request.headers['content-type'] !== 'application/octet-stream') {
+        setDataHandler(request, function (error, bodyContent) {
+            request.body = bodyContent;
+            next(error);
+        });
+    } else {
+        return next();
+    }
+}
+
+function sendErrorResponse(error, response, statusCode) {
+    console.error(error);
+    response.statusCode = statusCode;
+    response.end();
+}
+
+function bodyParser(req, res, next) {
+    let bodyContent = '';
+
+    req.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
+
+    req.on('end', function () {
+        req.body = bodyContent;
+        next();
+    });
+
+    req.on('error', function (err) {
+        next(err);
+    });
+}
+
+function serveStaticFile(baseFolder, ignorePath) {
+    return function (req, res) {
+        const url = req.url.substring(ignorePath.length);
+        const filePath = path.join(baseFolder, url);
+        fs.stat(filePath, (err) => {
+            if (err) {
+                res.statusCode = 404;
+                res.end();
+                return;
+            }
+
+            if (url.endsWith('.html')) {
+                res.contentType = 'text/html';
+            } else if (url.endsWith('.css')) {
+                res.contentType = 'text/css';
+            } else if (url.endsWith('.js')) {
+                res.contentType = 'text/javascript';
+            }
+
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+
+        });
+    };
+}
+
+module.exports = {setDataHandler, setDataHandlerMiddleware, sendErrorResponse, bodyParser, serveStaticFile};
+
+},{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js":[function(require,module,exports){
+const Client = require('./classes/Client');
+const Server = require('./classes/Server');
+const httpUtils = require('./httpUtils');
+const Router = require('./classes/Router');
+
+module.exports = {Server, Client, httpUtils, Router};
+
+
+},{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js":[function(require,module,exports){
+(function (Buffer,__dirname){
+function readMessageBufferFromHTTPStream(reqORres, callback){
+    const contentType = reqORres.headers['content-type'];
+
+    if (contentType === 'application/octet-stream') {
+        const contentLength = Number.parseInt(reqORres.headers['content-length'], 10);
+
+        if(Number.isNaN(contentLength)){
+            return callback(new Error("Wrong content length header received!"));
+        }
+
+        streamToBuffer(reqORres, contentLength, (err, bodyAsBuffer) => {
+            if(err) {
+                return callback(err);
+            }
+            callback(undefined, bodyAsBuffer);
+        });
+    } else {
+        callback(new Error("Wrong message format received!"));
+    }
+
+    function streamToBuffer(stream, bufferSize, callback) {
+        const buffer = Buffer.alloc(bufferSize);
+        let currentOffset = 0;
+
+        stream.on('data', function(chunk){
+            const chunkSize = chunk.length;
+            const nextOffset = chunkSize + currentOffset;
+
+            if (currentOffset > bufferSize - 1) {
+                stream.close();
+                return callback(new Error('Stream is bigger than reported size'));
+            }
+
+            write2Buffer(buffer, chunk, currentOffset);
+            currentOffset = nextOffset;
+
+        });
+        stream.on('end', function(){
+            callback(undefined, buffer);
+        });
+        stream.on('error', callback);
+    }
+
+    function write2Buffer(buffer, dataToAppend, offset) {
+        const dataSize = dataToAppend.length;
+
+        for (let i = 0; i < dataSize; i++) {
+            buffer[offset++] = dataToAppend[i];
+        }
+    }
+}
+
+let serverConf;
+const ServerConfig = require("./ServerConfig");
+function getServerConfig() {
+    if (typeof serverConf === "undefined") {
+        const fs = require("fs");
+        const path = require("path");
+        const pskRootInstallFolder = path.resolve("." + __dirname + "/../..");
+        try {
+            serverConf = fs.readFileSync(path.join(pskRootInstallFolder, "conf", "server.json"));
+            serverConf = JSON.parse(serverConf.toString());
+        } catch (e) {
+            serverConf = undefined;
+        }
+    }
+
+    return new ServerConfig(serverConf);
+}
+
+module.exports = {
+    readMessageBufferFromHTTPStream,
+    getServerConfig
+};
+}).call(this,require("buffer").Buffer,"/modules/psk-webserver")
+
+},{"./ServerConfig":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js","buffer":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 (function (Buffer){
 function PskCrypto() {
     const crypto = require('crypto');
@@ -6258,1857 +8107,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js":[function(require,module,exports){
-(function (Buffer,__dirname){
-const path = require("path");
-const fs = require("fs");
-const crypto = require('crypto');
-const integration = require("zmq_adapter");
-
-const Queue = require("swarmutils").Queue;
-const SwarmPacker = require("swarmutils").SwarmPacker;
-
-function ChannelsManager(server){
-    const utils = require("./utils");
-    const config = utils.getServerConfig();
-    const channelKeyFileName = "channel_key";
-
-    const rootFolder = path.join(config.storage, config.endpointsConfig.virtualMQ.channelsFolderName);
-    fs.mkdirSync(rootFolder, {recursive: true});
-
-    const channelKeys = {};
-    const queues = {};
-    const subscribers = {};
-
-    let baseDir = __dirname;
-
-    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
-    //TODO: check for better implementation
-    if(process.cwd().indexOf(__dirname) ===-1){
-        baseDir = path.join(process.cwd(), __dirname);
-    }
-
-
-    let forwarder;
-    if(integration.testIfAvailable()){
-        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
-    }
-
-    function generateToken(){
-        let buffer = crypto.randomBytes(config.endpointsConfig.virtualMQ.tokenSize);
-        return buffer.toString('hex');
-    }
-
-    function createChannel(name, publicKey, callback){
-        let channelFolder = path.join(rootFolder, name);
-        let keyFile = path.join(channelFolder, channelKeyFileName);
-        let token = generateToken();
-
-        if(typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)){
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        fs.mkdirSync(channelFolder);
-
-        if(fs.existsSync(keyFile)){
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        const config = JSON.stringify({publicKey, token});
-        fs.writeFile(keyFile, config, (err, res)=>{
-            if(!err){
-                channelKeys[name] = config;
-            }
-            return callback(err, !err ? token : undefined);
-        });
-    }
-
-    function retrieveChannelDetails(channelName, callback){
-        if(typeof channelKeys[channelName] !== "undefined"){
-            return callback(null, channelKeys[channelName]);
-        }else{
-            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
-                if(res){
-                    try{
-                        channelKeys[channelName] = JSON.parse(res);
-                    }catch(e){
-                        console.log(e);
-                        return callback(e);
-                    }
-                }
-                callback(err, channelKeys[channelName]);
-            });
-        }
-    }
-
-    function forwardChannel(channelName, forward, callback){
-        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
-        fs.readFile(channelKeyFile, (err, content)=>{
-            let config;
-            try{
-                config = JSON.parse(content);
-            }catch(e){
-                return callback(e);
-            }
-
-            if(typeof config !== "undefined"){
-                config.forward = forward;
-                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args)=>{
-                    if(!err){
-                        channelKeys[channelName] = config;
-                    }
-                    callback(err, ...args);
-                });
-            }
-        });
-    }
-
-    function readBody(req, callback){
-        let data = "";
-        req.on("data", (messagePart)=>{
-            data += messagePart;
-        });
-
-        req.on("end", ()=>{
-            callback(null, data);
-        });
-
-        req.on("error", (err)=>{
-            callback(err);
-        });
-    }
-
-    function createChannelHandler(req, res){
-        const channelName = req.params.channelName;
-
-        readBody(req, (err, message)=>{
-            if(err){
-                return sendStatus(res, 400);
-            }
-
-            const publicKey = message;
-            if (typeof channelName !== "string" || channelName.length === 0 ||
-                typeof publicKey !== "string" || publicKey.length === 0) {
-                return sendStatus(res, 400);
-            }
-
-            let handler = getBasicReturnHandler(res);
-
-            createChannel(channelName, publicKey, (err, token)=>{
-                if(!err){
-                    res.setHeader('Cookie', [`${config.endpointsConfig.virtualMQ.tokenSize}=${token}`]);
-                }
-                handler(err, res);
-            });
-        });
-    }
-
-    function sendStatus(res, reasonCode){
-        res.statusCode = reasonCode;
-        res.end();
-    }
-
-    function getBasicReturnHandler(res){
-        return function(err, result){
-            if(err){
-                return sendStatus(res, err.code || 500);
-            }
-
-            return sendStatus(res, 200);
-        }
-    }
-
-    function enableForwarderHandler(req, res){
-        if(integration.testIfAvailable() === false){
-            return sendStatus(res, 417);
-        }
-        readBody(req, (err, message)=>{
-            const {enable} = message;
-            const channelName = req.params.channelName;
-            const signature = req.headers[config.endpointsConfig.virtualMQ.signatureHeaderName];
-
-            if(typeof channelName !== "string" || typeof signature !== "string"){
-                return sendStatus(res, 400);
-            }
-
-            retrieveChannelDetails(channelName, (err, details)=>{
-                if(err){
-                    return sendStatus(res, 500);
-                }else{
-                    //todo: check signature against key [details.publickey]
-
-                    if(typeof enable === "undefined" || enable){
-                        forwardChannel(channelName, true, getBasicReturnHandler(res));
-                    }else{
-                        forwardChannel(channelName, null, getBasicReturnHandler(res));
-                    }
-                }
-            });
-        });
-    }
-
-    function getQueue(name){
-        if(typeof queues[name] === "undefined"){
-            queues[name] = new Queue();
-        }
-
-        return queues[name];
-    }
-
-    function checkIfChannelExist(channelName, callback){
-        retrieveChannelDetails(channelName, (err, details)=>{
-            callback(null, err ? false : true);
-        });
-    }
-
-    function writeMessage(subscribers, message){
-        let dispatched = false;
-        try {
-            while(subscribers.length>0){
-                let subscriber = subscribers.pop();
-                if(!dispatched){
-                    deliverMessage(subscriber, message);
-                    dispatched = true;
-                }else{
-                    sendStatus(subscriber, 403);
-                }
-            }
-        }catch(err) {
-            //... some subscribers could have a timeout connection
-            if(subscribers.length>0){
-                deliverMessage(subscribers, message);
-            }
-        }
-
-        return dispatched;
-    }
-
-    function readSendMessageBody(req, callback){
-        const contentType = req.headers['content-type'];
-
-        if (contentType === 'application/octet-stream') {
-            const contentLength = Number.parseInt(req.headers['content-length'], 10);
-
-            if(Number.isNaN(contentLength)){
-                let error = new Error("Wrong content length header received!");
-                error.code = 411;
-                return callback(error);
-            }
-
-            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
-                if(err) {
-                    return callback(err);
-                }
-                callback(undefined, bodyAsBuffer);
-            });
-        } else {
-            callback(new Error("Wrong message format received!"));
-        }
-
-        function streamToBuffer(stream, bufferSize, callback) {
-            const buffer = Buffer.alloc(bufferSize);
-            let currentOffset = 0;
-
-            stream.on('data', function(chunk){
-                const chunkSize = chunk.length;
-                const nextOffset = chunkSize + currentOffset;
-
-                if (currentOffset > bufferSize - 1) {
-                    stream.close();
-                    return callback(new Error('Stream is bigger than reported size'));
-                }
-
-                write2Buffer(buffer, chunk, currentOffset);
-                currentOffset = nextOffset;
-
-            });
-            stream.on('end', function(){
-                callback(undefined, buffer);
-            });
-            stream.on('error', callback);
-        }
-
-        function write2Buffer(buffer, dataToAppend, offset) {
-            const dataSize = dataToAppend.length;
-
-            for (let i = 0; i < dataSize; i++) {
-                buffer[offset++] = dataToAppend[i];
-            }
-        }
-    }
-
-    function sendMessageHandler(req, res){
-        let channelName = req.params.channelName;
-
-        checkIfChannelExist(channelName, (err, exists)=>{
-            if(!exists){
-                return sendStatus(res, 403);
-            }else{
-                retrieveChannelDetails(channelName, (err, details)=>{
-                    //we choose to read the body of request only after we know that we recognize the destination channel
-                    readSendMessageBody(req, (err, message)=>{
-                        if(err){
-                            //console.log(err);
-                            return sendStatus(res, 403);
-                        }
-
-                        let header;
-                        try{
-                            header = SwarmPacker.unpack(message.buffer);
-                        }catch(error){
-                            //console.log(error);
-                            return sendStatus(res, 400);
-                        }
-
-                        //TODO: to all checks based on message header
-
-                        if(integration.testIfAvailable() && details.forward){
-                            //console.log("Forwarding message <", message, "> on channel", channelName);
-                            forwarder.send(channelName, message);
-                        }else{
-                            let queue = getQueue(channelName);
-                            let subscribers = getSubscribersList(channelName);
-                            let dispatched = false;
-                            if(queue.isEmpty()){
-                                dispatched = writeMessage(subscribers, message);
-                            }
-                            if(!dispatched) {
-                                if(queue.length < config.endpointsConfig.virtualMQ.maxSize){
-                                    queue.push(message);
-                                }else{
-                                    //queue is full
-                                    return sendStatus(res, 429);
-                                }
-
-                                /*
-                                if(subscribers.length>0){
-                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
-                                    //happened and maybe we should try to dispatch first message from queue
-                                }
-                                */
-
-                            }
-                        }
-                        return sendStatus(res, 200);
-                    });
-                })
-            }
-        });
-    }
-
-    function getSubscribersList(channelName){
-        if(typeof subscribers[channelName] === "undefined"){
-            subscribers[channelName] = [];
-        }
-
-        return subscribers[channelName];
-    }
-
-    function deliverMessage(res, message){
-        if(Buffer.isBuffer(message)) {
-            res.setHeader('content-type', 'application/octet-stream');
-        }
-
-        if(typeof message.length !== "undefined"){
-            res.setHeader('content-length', message.length);
-        }
-
-        res.write(message);
-        sendStatus(res, 200);
-    }
-
-    function getCookie(res, cookieName){
-        let cookies = res.headers['cookie'];
-        if(typeof cookies === "undefined"){
-            return undefined;
-        }
-        if(Array.isArray(cookies)){
-            for(let i=0; i<cookies.length; i++){
-                let cookie = cookies[i];
-                if(cookie.indexOf(cookieName) !== -1){
-                    return cookie.substr(cookieName.length+1);
-                }
-            }
-        }else{
-            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
-
-            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)','i');
-            let match = cookies.match(regex);
-
-            return match && unescape(match[1]);
-        }
-    }
-
-    function receiveMessageHandler(req, res){
-        let channelName = req.params.channelName;
-        checkIfChannelExist(channelName, (err, exists)=>{
-            if(!exists){
-                return sendStatus(res, 403);
-            }else{
-                retrieveChannelDetails(channelName, (err, details)=>{
-                    if(err){
-                        return sendStatus(res, 500);
-                    }
-                    //TODO: check signature agains details.publickey
-
-
-                    if(details.forward){
-                        //if channel is forward it does not make sense
-                        return sendStatus(res, 409);
-                    }
-
-                    /*let signature = req.headers["signature"];
-                    if(typeof signature === "undefined"){
-                        return sendStatus(res, 403);
-                    }*/
-
-                    // let cookie = getCookie(req, tokenHeaderName);
-
-                    // if(typeof cookie === "undefined" || cookie === null){
-                    //     return sendStatus(res, 412);
-                    // }
-
-                    let queue = getQueue(channelName);
-                    let message = queue.pop();
-
-                    if(!message){
-                        getSubscribersList(channelName).push(res);
-                    }else{
-                        deliverMessage(res, message);
-                    }
-                });
-            }
-        });
-    }
-
-    server.put("/create-channel/:channelName", createChannelHandler);
-    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
-    server.post("/send-message/:channelName", sendMessageHandler);
-    server.get("/receive-message/:channelName", receiveMessageHandler);
-}
-
-module.exports = ChannelsManager;
-}).call(this,require("buffer").Buffer,"/modules/virtualmq")
-
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","buffer":false,"crypto":false,"fs":false,"path":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js":[function(require,module,exports){
-const extensionsMimeTypes = {
-    "aac": {
-        name: "audio/aac",
-        binary: true
-    },
-    "abw": {
-        name: "application/x-abiword",
-        binary: true
-    },
-    "arc": {
-        name: "application/x-freearc",
-        binary: true
-    },
-    "avi": {
-        name: "video/x-msvideo",
-        binary: true
-    },
-    "azw": {
-        name: "application/vnd.amazon.ebook",
-        binary: true
-    },
-    "bin": {
-        name: "application/octet-stream",
-        binary: true
-    }, "bmp": {
-        name: "image/bmp",
-        binary: true
-    }, "bz": {
-        name: "application/x-bzip",
-        binary: true
-    }, "bz2": {
-        name: "application/x-bzip2",
-        binary: true
-    }, "csh": {
-        name: "application/x-csh",
-        binary: false
-    }, "css": {
-        name: "text/css",
-        binary: false
-    }, "csv": {
-        name: "text/csv",
-        binary: false
-    }, "doc": {
-        name: "application/msword",
-        binary: true
-    }, "docx": {
-        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        binary: true
-    }, "eot": {
-        name: "application/vnd.ms-fontobject",
-        binary: true
-    }, "epub": {
-        name: "application/epub+zip",
-        binary: true
-    }, "gz": {
-        name: "application/gzip",
-        binary: true
-    }, "gif": {
-        name: "image/gif",
-        binary: true
-    }, "htm": {
-        name: "text/html",
-        binary: false
-    }, "html": {
-        name: "text/html",
-        binary: false
-    }, "ico": {
-        name: "image/vnd.microsoft.icon",
-        binary: true
-    }, "ics": {
-        name: "text/calendar",
-        binary: false
-    }, "jpeg": {
-        name: "image/jpeg",
-        binary: true
-    }, "jpg": {
-        name: "image/jpeg",
-        binary: true
-    }, "js": {
-        name: "text/javascript",
-        binary: false
-    }, "json": {
-        name: "application/json",
-        binary: false
-    }, "jsonld": {
-        name: "application/ld+json",
-        binary: false
-    }, "mid": {
-        name: "audio/midi",
-        binary: true
-    }, "midi": {
-        name: "audio/midi",
-        binary: true
-    }, "mjs": {
-        name: "text/javascript",
-        binary: false
-    }, "mp3": {
-        name: "audio/mpeg",
-        binary: true
-    }, "mpeg": {
-        name: "video/mpeg",
-        binary: true
-    }, "mpkg": {
-        name: "application/vnd.apple.installer+xm",
-        binary: true
-    }, "odp": {
-        name: "application/vnd.oasis.opendocument.presentation",
-        binary: true
-    }, "ods": {
-        name: "application/vnd.oasis.opendocument.spreadsheet",
-        binary: true
-    }, "odt": {
-        name: "application/vnd.oasis.opendocument.text",
-        binary: true
-    }, "oga": {
-        name: "audio/ogg",
-        binary: true
-    },
-    "ogv": {
-        name: "video/ogg",
-        binary: true
-    },
-    "ogx": {
-        name: "application/ogg",
-        binary: true
-    },
-    "opus": {
-        name: "audio/opus",
-        binary: true
-    },
-    "otf": {
-        name: "font/otf",
-        binary: true
-    },
-    "png": {
-        name: "image/png",
-        binary: true
-    },
-    "pdf": {
-        name: "application/pdf",
-        binary: true
-    },
-    "php": {
-        name: "application/php",
-        binary: false
-    },
-    "ppt": {
-        name: "application/vnd.ms-powerpoint",
-        binary: true
-    },
-    "pptx": {
-        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        binary: true
-    },
-    "rtf": {
-        name: "application/rtf",
-        binary: true
-    },
-    "sh": {
-        name: "application/x-sh",
-        binary: false
-    },
-    "svg": {
-        name: "image/svg+xml",
-        binary: false
-    },
-    "swf": {
-        name: "application/x-shockwave-flash",
-        binary: true
-    },
-    "tar": {
-        name: "application/x-tar",
-        binary: true
-    },
-    "tif": {
-        name: "image/tiff",
-        binary: true
-    },
-    "tiff": {
-        name: "image/tiff",
-        binary: true
-    },
-    "ts": {
-        name: "video/mp2t",
-        binary: true
-    },
-    "ttf": {
-        name: "font/ttf",
-        binary: true
-    },
-    "txt": {
-        name: "text/plain",
-        binary: false
-    },
-    "vsd": {
-        name: "application/vnd.visio",
-        binary: true
-    },
-    "wav": {
-        name: "audio/wav",
-        binary: true
-    },
-    "weba": {
-        name: "audio/webm",
-        binary: true
-    },
-    "webm": {
-        name: "video/webm",
-        binary: true
-    },
-    "webp": {
-        name: "image/webp",
-        binary: true
-    },
-    "woff": {
-        name: "font/woff",
-        binary: true
-    },
-    "woff2": {
-        name: "font/woff2",
-        binary: true
-    },
-    "xhtml": {
-        name: "application/xhtml+xml",
-        binary: false
-    },
-    "xls": {
-        name: "application/vnd.ms-excel",
-        binary: true
-    },
-    "xlsx": {
-        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        binary: true
-    },
-    "xml": {
-        name: "text/xml",
-        binary: false
-    },
-    "xul": {
-        name: "application/vnd.mozilla.xul+xml",
-        binary: true
-    },
-    "zip": {
-        name: "application/zip",
-        binary: true
-    },
-    "3gp": {
-        name: "video/3gpp",
-        binary: true
-    },
-    "3g2": {
-        name: "video/3gpp2",
-        binary: true
-    },
-    "7z": {
-        name: "application/x-7z-compressed",
-        binary: true
-    }
-};
-
-const defaultMimeType = {
-    name: "text/plain",
-    binary: false
-};
-module.exports.getMimeTypeFromExtension = function (extension) {
-    if (typeof extensionsMimeTypes[extension] !== "undefined") {
-        return extensionsMimeTypes[extension];
-    }
-    return defaultMimeType;
-};
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ServerConfig.js":[function(require,module,exports){
-(function (__dirname){
-function ServerConfig(conf) {
-    const path = require("path");
-    const defaultConf = {
-        storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
-        "port": 8080,
-        "zeromqForwardAddress": "tcp://127.0.0.1:5001",
-        "endpoints":["virtualMQ", "staticServer", "edfs", "filesManager", "dossierWizard"],
-        "endpointsConfig": {
-            "virtualMQ": {
-                "channelsFolderName": "channels",
-                "maxSize": 100,
-                "tokenSize": 48,
-                "tokenHeaderName": "x-tokenHeader",
-                "signatureHeaderName": "x-signature",
-                "enableSignatureCheck": true
-            }
-        }
-    };
-    conf = conf || {};
-    conf = Object.assign(defaultConf, conf);
-    return conf;
-}
-
-module.exports = ServerConfig;
-}).call(this,"/modules/virtualmq")
-
-},{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/StaticServer.js":[function(require,module,exports){
-function StaticServer(server) {
-    const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
-    const fs = require("fs");
-    const path = require("path");
-    server.use("*", function (req, res, next) {
-        const prefix = "/directory-summary/";
-        requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
-            if (notOurResponsibility) {
-                return next();
-            }
-            targetPath = targetPath.replace(prefix, "");
-            serverTarget(targetPath);
-        });
-
-        function serverTarget(targetPath) {
-            console.log("Serving summary for dir:", targetPath);
-            fs.stat(targetPath, function (err, stats) {
-                if (err) {
-                    res.statusCode = 404;
-                    res.end();
-                    return;
-                }
-                if (!stats.isDirectory()) {
-                    res.statusCode = 403;
-                    res.end();
-                    return;
-                }
-
-                function send() {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', "application/json");
-                    //let's clean some empty objects
-                    for (let prop in summary) {
-                        if (Object.keys(summary[prop]).length === 0) {
-                            delete summary[prop];
-                        }
-                    }
-
-                    res.write(JSON.stringify(summary));
-                    res.end();
-                }
-
-                let summary = {};
-                let directories = {};
-
-                function extractContent(currentPath) {
-                    directories[currentPath] = -1;
-                    let summaryId = currentPath.replace(targetPath, "");
-                    summaryId = summaryId.split(path.sep).join("/");
-                    if (summaryId === "") {
-                        summaryId = "/";
-                    }
-                    //summaryId = path.basename(summaryId);
-                    summary[summaryId] = {};
-
-                    fs.readdir(currentPath, function (err, files) {
-                        if (err) {
-                            return markAsFinish(currentPath);
-                        }
-                        directories[currentPath] = files.length;
-                        //directory empty test
-                        if (files.length === 0) {
-                            return markAsFinish(currentPath);
-                        } else {
-                            for (let i = 0; i < files.length; i++) {
-                                let file = files[i];
-                                const fileName = path.join(currentPath, file);
-                                if (fs.statSync(fileName).isDirectory()) {
-                                    extractContent(fileName);
-                                } else {
-                                    let fileContent = fs.readFileSync(fileName);
-                                    summary[summaryId][file] = fileContent.toString();
-                                }
-                                directories[currentPath]--;
-                            }
-                            return markAsFinish(currentPath);
-                        }
-                    });
-                }
-
-                function markAsFinish(targetPath) {
-                    if (directories [targetPath] > 0) {
-                        return;
-                    }
-                    delete directories [targetPath];
-                    const dirsLeftToProcess = Object.keys(directories);
-                    //if there are no other directories left to process
-                    if (dirsLeftToProcess.length === 0) {
-                        send();
-                    }
-                }
-
-                extractContent(targetPath);
-            })
-        }
-
-    });
-
-    server.use("*", function (req, res, next) {
-        requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
-            if (notOurResponsibility) {
-                return next();
-            }
-            //from now on we mean to resolve the url
-            fs.stat(targetPath, function (err, stats) {
-                if (err) {
-                    res.statusCode = 404;
-                    res.end();
-                    return;
-                }
-                if (stats.isDirectory()) {
-                    let url = req.url;
-                    if (url[url.length - 1] !== "/") {
-                        res.writeHead(302, {
-                            'Location': url + "/"
-                        });
-                        res.end();
-                        return;
-                    }
-                    const defaultFileName = "index.html";
-                    const defaultPath = path.join(targetPath, defaultFileName);
-                    fs.stat(defaultPath, function (err) {
-                        if (err) {
-                            res.statusCode = 403;
-                            res.end();
-                            return;
-                        }
-                        return sendFile(res, defaultPath);
-                    });
-                } else {
-                    return sendFile(res, targetPath);
-                }
-            });
-        });
-    });
-
-    function sendFile(res, file) {
-        let stream = fs.createReadStream(file);
-        const mimes = require("./MimeType");
-        let ext = path.extname(file);
-        if (ext !== "") {
-            ext = ext.replace(".", "");
-            res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
-        } else {
-            res.setHeader('Content-Type', "application/octet-stream");
-        }
-        res.statusCode = 200;
-        stream.pipe(res);
-        stream.on('finish', () => {
-            res.end();
-        });
-    }
-
-    function requestValidation(req, method, urlPrefix, callback) {
-        if (typeof urlPrefix === "function") {
-            callback = urlPrefix;
-            urlPrefix = undefined;
-        }
-        if (req.method !== method) {
-            //we resolve only GET requests
-            return callback(true);
-        }
-
-        if (typeof urlPrefix === "undefined") {
-            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
-                let reservedPath = lockedPathsPrefixes[i];
-                //if we find a url that starts with a reserved prefix is not our duty ro resolve
-                if (req.url.indexOf(reservedPath) === 0) {
-                    return callback(true);
-                }
-            }
-        } else {
-            if (req.url.indexOf(urlPrefix) !== 0) {
-                return callback(true);
-            }
-        }
-
-        const rootFolder = server.rootFolder;
-        const path = require("path");
-        let requestedUrl = req.url;
-        if (urlPrefix) {
-            requestedUrl = requestedUrl.replace(urlPrefix, "");
-        }
-        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
-        //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
-        if (targetPath.indexOf(rootFolder) !== 0) {
-            return callback(true);
-        }
-        callback(false, targetPath);
-    }
-}
-
-module.exports = StaticServer;
-},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/MimeType.js","fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js":[function(require,module,exports){
-(function (Buffer){
-const http = require('http');
-const {URL} = require('url');
-const swarmUtils = require('swarmutils');
-const SwarmPacker = swarmUtils.SwarmPacker;
-const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
-
-function RequestFactory(virtualMQAddress, zeroMQAddress) {
-    function createChannel(channelName, publicKey, callback) {
-        const options = {
-            path: `/create-channel/${channelName}`,
-            method: "PUT"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.write(publicKey);
-        req.end();
-    }
-
-    function createForwardChannel(channelName, publicKey, callback) {
-        const options = {
-            path: `/create-channel/${channelName}`,
-            method: "PUT"
-        };
-
-        const req = http.request(virtualMQAddress, options, (res) => {
-            this.enableForward(channelName, "justASignature", callback);
-        });
-        req.write(publicKey);
-        req.end();
-    }
-
-    function enableForward(channelName, signature, callback) {
-        const options = {
-            path: `/forward-zeromq/${channelName}`,
-            method: "POST"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.setHeader(signatureHeaderName, signature);
-        req.end();
-    }
-
-    function sendMessage(channelName, message, signature, callback) {
-        const options = {
-            path: `/send-message/${channelName}`,
-            method: "POST"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.setHeader(signatureHeaderName, signature);
-
-        let pack = SwarmPacker.pack(message);
-
-        req.setHeader("content-length", pack.byteLength);
-        req.setHeader("content-type", 'application/octet-stream');
-        req.write(Buffer.from(pack));
-        req.end();
-    }
-
-    function receiveMessage(channelName, signature, callback) {
-        const options = {
-            path: `/receive-message/${channelName}`,
-            method: "GET"
-        };
-
-        const req = http.request(virtualMQAddress, options, function (res) {
-            const utils = require("./utils");
-            utils.readMessageBufferFromStream(res, function (err, message) {
-
-                callback(err, res, (message && Buffer.isBuffer(message)) ? SwarmPacker.unpack(message.buffer) : message);
-            });
-        });
-
-        req.setHeader(signatureHeaderName, signature);
-        req.end();
-    }
-
-    function receiveMessageFromZMQ(channelName, signature, readyCallback, receivedCallback) {
-        const zmqIntegration = require("zmq_adapter");
-
-        let catchEvents = (eventType, ...args) => {
-            // console.log("Event type caught", eventType, ...args);
-            if (eventType === "connect") {
-                //connected so all good
-                readyCallback();
-            }
-        };
-
-        let consumer = zmqIntegration.createZeromqConsumer(zeroMQAddress, catchEvents);
-        consumer.subscribe(channelName, signature, (channel, receivedMessage) => {
-            receivedCallback(JSON.parse(channel.toString()).channelName, receivedMessage.buffer);
-        });
-    }
-
-    function generateMessage(swarmName, swarmPhase, args, targetAgent, returnAddress){
-        return {
-            meta:{
-                swarmId: swarmUtils.generateUid(32).toString("hex"),
-                requestId: swarmUtils.generateUid(32).toString("hex"),
-                swarmTypeName: swarmName || "testSwarmType",
-                phaseName: swarmPhase || "swarmPhaseName",
-                args: args || [],
-                command: "executeSwarmPhase",
-                target: targetAgent || "agentURL",
-                homeSecurityContext: returnAddress || "no_home_no_return"
-            }};
-    }
-
-    function getPort() {
-        try {
-            return new URL(virtualMQAddress).port;
-        } catch (e) {
-          console.error(e);
-        }
-    }
-
-    // targeted virtualmq apis
-    this.createChannel = createChannel;
-    this.createForwardChannel = createForwardChannel;
-    this.enableForward = enableForward;
-    this.sendMessage = sendMessage;
-    this.receiveMessage = receiveMessage;
-    this.receiveMessageFromZMQ = receiveMessageFromZMQ;
-
-    // utils for testing
-    if(!process.env.NODE_ENV || (process.env.NODE_ENV && !process.env.NODE_ENV.startsWith('prod'))) { // if NODE_ENV does not exist or if it exists and is not set to production
-        this.getPort = getPort;
-        this.generateMessage = generateMessage;
-    }
-}
-
-module.exports = RequestFactory;
-}).call(this,require("buffer").Buffer)
-
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","buffer":false,"http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js":[function(require,module,exports){
-/**
- * An implementation of the Token bucket algorithm
- * @param startTokens - maximum number of tokens possible to obtain and the default starting value
- * @param tokenValuePerTime - number of tokens given back for each "unitOfTime"
- * @param unitOfTime - for each "unitOfTime" (in milliseconds) passed "tokenValuePerTime" amount of tokens will be given back
- * @constructor
- */
-
-function TokenBucket(startTokens = 6000, tokenValuePerTime = 10, unitOfTime = 100) {
-
-    if(typeof startTokens !== 'number' || typeof  tokenValuePerTime !== 'number' || typeof unitOfTime !== 'number') {
-        throw new Error('All parameters must be of type number');
-    }
-
-    if(isNaN(startTokens) || isNaN(tokenValuePerTime) || isNaN(unitOfTime)) {
-        throw new Error('All parameters must not be NaN');
-    }
-
-    if(startTokens <= 0 || tokenValuePerTime <= 0 || unitOfTime <= 0) {
-        throw new Error('All parameters must be bigger than 0');
-    }
-
-
-    TokenBucket.prototype.COST_LOW    = 10;  // equivalent to 10op/s with default values
-    TokenBucket.prototype.COST_MEDIUM = 100; // equivalent to 1op/s with default values
-    TokenBucket.prototype.COST_HIGH   = 500; // equivalent to 12op/minute with default values
-
-    TokenBucket.ERROR_LIMIT_EXCEEDED  = 'error_limit_exceeded';
-    TokenBucket.ERROR_BAD_ARGUMENT    = 'error_bad_argument';
-
-
-
-    const limits = {};
-
-    function takeToken(userKey, cost, callback = () => {}) {
-        if(typeof cost !== 'number' || isNaN(cost) || cost <= 0 || cost === Infinity) {
-            callback(TokenBucket.ERROR_BAD_ARGUMENT);
-            return;
-        }
-
-        const userBucket = limits[userKey];
-
-        if (userBucket) {
-            userBucket.tokens += calculateReturnTokens(userBucket.timestamp);
-            userBucket.tokens -= cost;
-
-            userBucket.timestamp = Date.now();
-
-
-
-            if (userBucket.tokens < 0) {
-                userBucket.tokens = 0;
-                callback(TokenBucket.ERROR_LIMIT_EXCEEDED, 0);
-                return;
-            }
-
-            return callback(undefined, userBucket.tokens);
-        } else {
-            limits[userKey] = new Limit(startTokens, Date.now());
-            takeToken(userKey, cost, callback);
-        }
-    }
-
-    function getLimitByCost(cost) {
-        if(startTokens === 0 || cost === 0) {
-            return 0;
-        }
-
-        return Math.floor(startTokens / cost);
-    }
-
-    function getRemainingTokenByCost(tokens, cost) {
-        if(tokens === 0 || cost === 0) {
-            return 0;
-        }
-
-        return Math.floor(tokens / cost);
-    }
-
-    function Limit(maximumTokens, timestamp) {
-        this.tokens = maximumTokens;
-        this.timestamp = timestamp;
-
-        const self = this;
-
-        return {
-            set tokens(numberOfTokens) {
-                if (numberOfTokens < 0) {
-                    numberOfTokens = -1;
-                }
-
-                if (numberOfTokens > maximumTokens) {
-                    numberOfTokens = maximumTokens;
-                }
-
-                self.tokens = numberOfTokens;
-            },
-            get tokens() {
-                return self.tokens;
-            },
-            timestamp
-        };
-    }
-
-
-    function calculateReturnTokens(timestamp) {
-        const currentTime = Date.now();
-
-        const elapsedTime = Math.floor((currentTime - timestamp) / unitOfTime);
-
-        return elapsedTime * tokenValuePerTime;
-    }
-
-    this.takeToken               = takeToken;
-    this.getLimitByCost          = getLimitByCost;
-    this.getRemainingTokenByCost = getRemainingTokenByCost;
-}
-
-module.exports = TokenBucket;
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
-(function (Buffer){
-const http = require('http');
-const url = require('url');
-const stream = require('stream');
-
-/**
- * Wraps a request and augments it with a "do" method to modify it in a "fluent builder" style
- * @param {string} url
- * @param {*} body
- * @constructor
- */
-function Request(url, body) {
-    this.request = {
-        options: url,
-        body
-    };
-
-    this.do = function (modifier) {
-        modifier(this.request);
-        return this;
-    };
-
-    this.getHttpRequest = function () {
-        return this.request;
-    };
-}
-
-
-/**
- * Modifies request.options to contain the url parsed instead of as string
- * @param {Object} request - Object that contains options and body
- */
-function urlToOptions(request) {
-    const parsedUrl = url.parse(request.options);
-
-    // TODO: movie headers declaration from here
-    request.options = {
-        host: parsedUrl.hostname,
-        port: parsedUrl.port,
-        path: parsedUrl.pathname,
-        headers: {}
-    };
-}
-
-
-/**
- * Transforms the request.body in a type that can be sent through network if it is needed
- * @param {Object} request - Object that contains options and body
- */
-function serializeBody(request) {
-    if (!request.body) {
-        return;
-    }
-
-    const handler = {
-        get: function (target, name) {
-            return name in target ? target[name] : (data) => data;
-        }
-    };
-
-    const bodySerializationMapping = new Proxy({
-        'Object': (data) => JSON.stringify(data),
-    }, handler);
-
-    request.body = bodySerializationMapping[request.body.constructor.name](request.body);
-}
-
-/**
- *
- * @param {Object} request - Object that contains options and body
- */
-function bodyContentLength(request) {
-    if (!request.body) {
-        return;
-    }
-
-    if (request.body.constructor.name in [ 'String', 'Buffer', 'ArrayBuffer' ]) {
-        request.options.headers['Content-Length'] = Buffer.byteLength(request.body);
-    }
-}
-
-
-function Client() {
-    /**
-     *
-     * @param {Request} customRequest
-     * @param modifiers - array of functions that modify the request
-     * @returns {Object} - with url and body properties
-     */
-    function request(customRequest, modifiers) {
-        for (let i = 0; i < modifiers.length; ++i) {
-            customRequest.do(modifiers[i]);
-        }
-
-        return customRequest.getHttpRequest();
-    }
-
-    function getReq(url, config, callback) {
-        const modifiers = [
-            urlToOptions,
-            (request) => {request.options.headers = config.headers || {};}
-        ];
-
-        const packedRequest = request(new Request(url, config.body), modifiers);
-        const httpRequest = http.request(packedRequest.options, callback);
-        httpRequest.end();
-
-        return httpRequest;
-    }
-
-    function postReq(url, config, callback) {
-        const modifiers = [
-            urlToOptions,
-            (request) => {request.options.method = 'POST'; },
-            (request) => {request.options.headers = config.headers || {}; },
-            serializeBody,
-            bodyContentLength
-        ];
-
-        const packedRequest = request(new Request(url, config.body), modifiers);
-        const httpRequest = http.request(packedRequest.options, callback);
-
-        if (config.body instanceof stream.Readable) {
-            config.body.pipe(httpRequest);
-        }
-        else {
-            httpRequest.end(packedRequest.body, config.encoding || 'utf8');
-        }
-        return httpRequest;
-    }
-
-    function deleteReq(url, config, callback) {
-        const modifiers = [
-            urlToOptions,
-            (request) => {request.options.method = 'DELETE';},
-            (request) => {request.options.headers = config.headers || {};},
-        ];
-
-        const packedRequest = request(new Request(url, config.body), modifiers);
-        const httpRequest = http.request(packedRequest.options, callback);
-        httpRequest.end();
-
-        return httpRequest;
-    }
-
-    this.get = getReq;
-    this.post = postReq;
-    this.delete = deleteReq;
-}
-
-/**
- * Swap third and second parameter if only two are provided and converts arguments to array
- * @param {Object} params
- * @returns {Array} - arguments as array
- */
-function parametersPreProcessing(params) {
-    const res = [];
-
-    if (typeof params[0] !== 'string') {
-        throw new Error('First parameter must be a string (url)');
-    }
-
-    const parsedUrl = url.parse(params[0]);
-
-    if (!parsedUrl.hostname) {
-        throw new Error('First argument (url) is not valid');
-    }
-
-    if (params.length >= 3) {
-        if (typeof params[1] !== 'object' || !params[1]) {
-            throw new Error('When 3 parameters are provided the second parameter must be a not null object');
-        }
-
-        if (typeof params[2] !== 'function') {
-            throw new Error('When 3 parameters are provided the third parameter must be a function');
-        }
-    }
-
-    if (params.length === 2) {
-        if (typeof params[1] !== 'function') {
-            throw new Error('When 2 parameters are provided the second one must be a function');
-        }
-
-        params[2] = params[1];
-        params[1] = {};
-    }
-
-    const properties = Object.keys(params);
-    for(let i = 0, len = properties.length; i < len; ++i) {
-        res.push(params[properties[i]]);
-    }
-
-    return res;
-}
-
-const handler = {
-    get(target, propName) {
-        if (!target[propName]) {
-            console.log(propName, "Not implemented!");
-        } else {
-            return function () {
-                const args = parametersPreProcessing(arguments);
-                return target[propName].apply(target, args);
-            };
-        }
-    }
-};
-
-module.exports = function () {
-    return new Proxy(new Client(), handler);
-};
-}).call(this,require("buffer").Buffer)
-
-},{"buffer":false,"http":false,"stream":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js":[function(require,module,exports){
-const querystring = require('querystring');
-
-function matchUrl(pattern, url) {
-	const result = {
-		match: true,
-		params: {},
-		query: {}
-	};
-
-	const queryParametersStartIndex = url.indexOf('?');
-	if(queryParametersStartIndex !== -1) {
-		const urlQueryString = url.substr(queryParametersStartIndex + 1); // + 1 to ignore the '?'
-		result.query = querystring.parse(urlQueryString);
-		url = url.substr(0, queryParametersStartIndex);
-	}
-
-    const patternTokens = pattern.split('/');
-    const urlTokens = url.split('/');
-
-    if(urlTokens[urlTokens.length - 1] === '') {
-        urlTokens.pop();
-    }
-
-    if (patternTokens.length !== urlTokens.length) {
-        result.match = false;
-    }
-
-    if(patternTokens[patternTokens.length - 1] === '*') {
-        result.match = true;
-        patternTokens.pop();
-    }
-
-    for (let i = 0; i < patternTokens.length && result.match; ++i) {
-        if (patternTokens[i].startsWith(':')) {
-            result.params[patternTokens[i].substring(1)] = urlTokens[i];
-        } else if (patternTokens[i] !== urlTokens[i]) {
-            result.match = false;
-        }
-    }
-
-    return result;
-}
-
-function isTruthy(value) {
-    return !!value;
-
-}
-
-function methodMatch(pattern, method) {
-    if (!pattern || !method) {
-        return true;
-    }
-
-    return pattern === method;
-}
-
-function Middleware() {
-    const registeredMiddlewareFunctions = [];
-
-    function use(method, url, fn) {
-        method = method ? method.toLowerCase() : undefined;
-        registeredMiddlewareFunctions.push({method, url, fn});
-    }
-
-    this.use = function (...params) {
-	    let args = [ undefined, undefined, undefined ];
-
-	    switch (params.length) {
-            case 0:
-				throw Error('Use method needs at least one argument.');
-				
-            case 1:
-                if (typeof params[0] !== 'function') {
-                    throw Error('If only one argument is provided it must be a function');
-                }
-
-                args[2] = params[0];
-
-                break;
-            case 2:
-                if (typeof params[0] !== 'string' || typeof params[1] !== 'function') {
-                    throw Error('If two arguments are provided the first one must be a string (url) and the second a function');
-                }
-
-                args[1]=params[0];
-                args[2]=params[1];
-
-                break;
-            default:
-                if (typeof params[0] !== 'string' || typeof params[1] !== 'string' || typeof params[2] !== 'function') {
-                    throw Error('If three or more arguments are provided the first one must be a string (HTTP verb), the second a string (url) and the third a function');
-                }
-
-                if (!([ 'get', 'post', 'put', 'delete', 'patch', 'head', 'connect', 'options', 'trace' ].includes(params[0].toLowerCase()))) {
-                    throw new Error('If three or more arguments are provided the first one must be a HTTP verb but none could be matched');
-                }
-
-                args = params;
-
-                break;
-        }
-
-        use.apply(this, args);
-    };
-
-
-    /**
-     * Starts execution from the first registered middleware function
-     * @param {Object} req
-     * @param {Object} res
-     */
-    this.go = function go(req, res) {
-        execute(0, req.method.toLowerCase(), req.url, req, res);
-    };
-
-    /**
-     * Executes a middleware if it passes the method and url validation and calls the next one when necessary
-     * @param index
-     * @param method
-     * @param url
-     * @param params
-     */
-    function execute(index, method, url, ...params) {
-        if (!registeredMiddlewareFunctions[index]) {
-            if(index===0){
-                console.error("No handlers registered yet!");
-            }
-            return;
-        }
-
-	    const registeredMethod = registeredMiddlewareFunctions[index].method;
-	    const registeredUrl = registeredMiddlewareFunctions[index].url;
-	    const fn = registeredMiddlewareFunctions[index].fn;
-
-	    if (!methodMatch(registeredMethod, method)) {
-            execute(++index, method, url, ...params);
-            return;
-        }
-
-        if (isTruthy(registeredUrl)) {
-            const urlMatch = matchUrl(registeredUrl, url);
-
-            if (!urlMatch.match) {
-                execute(++index, method, url, ...params);
-                return;
-            }
-
-            if (params[0]) {
-                params[0].params = urlMatch.params;
-                params[0].query  = urlMatch.query;
-            }
-        }
-
-        let counter = 0;
-
-        fn(...params, (err) => {
-            counter++;
-            if (counter > 1) {
-                console.warn('You called next multiple times, only the first one will be executed');
-                return;
-            }
-
-            if (err) {
-                console.error(err);
-                return;
-            }
-
-            execute(++index, method, url, ...params);
-        });
-    }
-}
-
-module.exports = Middleware;
-
-},{"querystring":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js":[function(require,module,exports){
-function Router(server) {
-    this.use = function use(url, callback) {
-        callback(serverWrapper(url, server));
-    };
-}
-
-function serverWrapper(baseUrl, server) {
-    if (baseUrl.endsWith('/')) {
-        baseUrl = baseUrl.substring(0, baseUrl.length - 1);
-    }
-
-    return {
-        use(url, reqResolver) {
-            server.use(baseUrl + url, reqResolver);
-        },
-        get(url, reqResolver) {
-            server.get(baseUrl + url, reqResolver);
-        },
-        post(url, reqResolver) {
-            server.post(baseUrl + url, reqResolver);
-        },
-        put(url, reqResolver) {
-            server.put(baseUrl + url, reqResolver);
-        },
-        delete(url, reqResolver) {
-            server.delete(baseUrl + url, reqResolver);
-        },
-        options(url, reqResolver) {
-            server.options(baseUrl + url, reqResolver);
-        }
-    };
-}
-
-module.exports = Router;
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
-const Middleware = require('./Middleware');
-const http = require('http');
-const https = require('https');
-
-function Server(sslOptions) {
-    const middleware = new Middleware();
-    const server = _initServer(sslOptions);
-
-
-    this.use = function use(url, callback) {
-        //TODO: find a better way
-        if (arguments.length >= 2) {
-            middleware.use(url, callback);
-        } else if (arguments.length === 1) {
-            callback = url;
-            middleware.use(callback);
-        }
-
-    };
-
-
-    this.get = function getReq(reqUrl, reqResolver) {
-        middleware.use("GET", reqUrl, reqResolver);
-    };
-
-    this.post = function postReq(reqUrl, reqResolver) {
-        middleware.use("POST", reqUrl, reqResolver);
-    };
-
-    this.put = function putReq(reqUrl, reqResolver) {
-        middleware.use("PUT", reqUrl, reqResolver);
-    };
-
-    this.delete = function deleteReq(reqUrl, reqResolver) {
-        middleware.use("DELETE", reqUrl, reqResolver);
-    };
-
-    this.options = function optionsReq(reqUrl, reqResolver) {
-        middleware.use("OPTIONS", reqUrl, reqResolver);
-    };
-
-
-    /* INTERNAL METHODS */
-
-    function _initServer(sslConfig) {
-        if (sslConfig) {
-            return https.createServer(sslConfig, middleware.go);
-        } else {
-            return http.createServer(middleware.go);
-        }
-    }
-
-    return new Proxy(this, {
-       get(target, prop, receiver) {
-           if(typeof target[prop] !== "undefined") {
-               return target[prop];
-           }
-
-           if(typeof server[prop] === "function") {
-               return function(...args) {
-                   server[prop](...args);
-               }
-           } else {
-               return server[prop];
-           }
-       }
-    });
-}
-
-module.exports = Server;
-},{"./Middleware":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Middleware.js","http":false,"https":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
-const fs = require('fs');
-const path = require('path');
-
-function setDataHandler(request, callback) {
-    let bodyContent = '';
-
-    request.on('data', function (dataChunk) {
-        bodyContent += dataChunk;
-    });
-
-    request.on('end', function () {
-        callback(undefined, bodyContent);
-    });
-
-    request.on('error', callback);
-}
-
-function setDataHandlerMiddleware(request, response, next) {
-    if (request.headers['content-type'] !== 'application/octet-stream') {
-        setDataHandler(request, function (error, bodyContent) {
-            request.body = bodyContent;
-            next(error);
-        });
-    } else {
-        return next();
-    }
-}
-
-function sendErrorResponse(error, response, statusCode) {
-    console.error(error);
-    response.statusCode = statusCode;
-    response.end();
-}
-
-function bodyParser(req, res, next) {
-    let bodyContent = '';
-
-    req.on('data', function (dataChunk) {
-        bodyContent += dataChunk;
-    });
-
-    req.on('end', function () {
-        req.body = bodyContent;
-        next();
-    });
-
-    req.on('error', function (err) {
-        next(err);
-    });
-}
-
-function serveStaticFile(baseFolder, ignorePath) {
-    return function (req, res) {
-        const url = req.url.substring(ignorePath.length);
-        const filePath = path.join(baseFolder, url);
-        fs.stat(filePath, (err) => {
-            if (err) {
-                res.statusCode = 404;
-                res.end();
-                return;
-            }
-
-            if (url.endsWith('.html')) {
-                res.contentType = 'text/html';
-            } else if (url.endsWith('.css')) {
-                res.contentType = 'text/css';
-            } else if (url.endsWith('.js')) {
-                res.contentType = 'text/javascript';
-            }
-
-            const fileStream = fs.createReadStream(filePath);
-            fileStream.pipe(res);
-
-        });
-    };
-}
-
-module.exports = {setDataHandler, setDataHandlerMiddleware, sendErrorResponse, bodyParser, serveStaticFile};
-
-},{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js":[function(require,module,exports){
-const Client = require('./classes/Client');
-const Server = require('./classes/Server');
-const httpUtils = require('./httpUtils');
-const Router = require('./classes/Router');
-
-module.exports = {Server, Client, httpUtils, Router};
-
-
-},{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js":[function(require,module,exports){
-(function (Buffer,__dirname){
-function readMessageBufferFromHTTPStream(reqORres, callback){
-    const contentType = reqORres.headers['content-type'];
-
-    if (contentType === 'application/octet-stream') {
-        const contentLength = Number.parseInt(reqORres.headers['content-length'], 10);
-
-        if(Number.isNaN(contentLength)){
-            return callback(new Error("Wrong content length header received!"));
-        }
-
-        streamToBuffer(reqORres, contentLength, (err, bodyAsBuffer) => {
-            if(err) {
-                return callback(err);
-            }
-            callback(undefined, bodyAsBuffer);
-        });
-    } else {
-        callback(new Error("Wrong message format received!"));
-    }
-
-    function streamToBuffer(stream, bufferSize, callback) {
-        const buffer = Buffer.alloc(bufferSize);
-        let currentOffset = 0;
-
-        stream.on('data', function(chunk){
-            const chunkSize = chunk.length;
-            const nextOffset = chunkSize + currentOffset;
-
-            if (currentOffset > bufferSize - 1) {
-                stream.close();
-                return callback(new Error('Stream is bigger than reported size'));
-            }
-
-            write2Buffer(buffer, chunk, currentOffset);
-            currentOffset = nextOffset;
-
-        });
-        stream.on('end', function(){
-            callback(undefined, buffer);
-        });
-        stream.on('error', callback);
-    }
-
-    function write2Buffer(buffer, dataToAppend, offset) {
-        const dataSize = dataToAppend.length;
-
-        for (let i = 0; i < dataSize; i++) {
-            buffer[offset++] = dataToAppend[i];
-        }
-    }
-}
-
-let serverConf;
-const ServerConfig = require("./ServerConfig");
-function getServerConfig() {
-    if (typeof serverConf === "undefined") {
-        const fs = require("fs");
-        const path = require("path");
-        const pskRootInstallFolder = path.resolve("." + __dirname + "/../..");
-        console.log("psk root install folder", pskRootInstallFolder);
-        try {
-            serverConf = fs.readFileSync(path.join(pskRootInstallFolder, "conf", "server.json"));
-            serverConf = JSON.parse(serverConf.toString());
-        } catch (e) {
-            serverConf = undefined;
-        }
-    }
-
-    return new ServerConfig(serverConf);
-}
-
-module.exports = {
-    readMessageBufferFromHTTPStream,
-    getServerConfig
-};
-}).call(this,require("buffer").Buffer,"/modules/virtualmq")
-
-},{"./ServerConfig":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ServerConfig.js","buffer":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -9116,56 +9115,7 @@ module.exports.createPSKSignature = (serializedPSKSignature) => {
     return new PSKSignature(serializedPSKSignature);
 };
 
-},{"./lib/EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"pskcrypto":[function(require,module,exports){
-const PskCrypto = require("./lib/PskCrypto");
-const ssutil = require("./signsensusDS/ssutil");
-
-module.exports = PskCrypto;
-
-module.exports.hashValues = ssutil.hashValues;
-
-module.exports.DuplexStream = require("./lib/utils/DuplexStream");
-
-module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"soundpubsub":[function(require,module,exports){
-module.exports = {
-					soundPubSub: require("./lib/soundPubSub").soundPubSub
-};
-},{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
-(function (global){
-module.exports.OwM = require("./lib/OwM");
-module.exports.beesHealer = require("./lib/beesHealer");
-
-const uidGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
-
-module.exports.safe_uuid = require("./lib/safe-uuid").init(uidGenerator);
-
-module.exports.Queue = require("./lib/Queue");
-module.exports.combos = require("./lib/Combos");
-
-module.exports.uidGenerator = uidGenerator;
-module.exports.generateUid = uidGenerator.generateUid;
-module.exports.TaskCounter = require("./lib/TaskCounter");
-module.exports.SwarmPacker = require("./lib/SwarmPacker");
-module.exports.path = require("./lib/path");
-module.exports.createPskConsole = function () {
-  return require('./lib/pskconsole');
-};
-
-module.exports.pingPongFork = require('./lib/pingpongFork');
-
-
-if(typeof global.$$ == "undefined"){
-  global.$$ = {};
-}
-
-if(typeof global.$$.uidGenerator == "undefined"){
-    $$.uidGenerator = module.exports.safe_uuid;
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"virtualmq":[function(require,module,exports){
+},{"./lib/EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"psk-webserver":[function(require,module,exports){
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
 const TokenBucket = require('./libs/TokenBucket');
@@ -9306,7 +9256,56 @@ module.exports.getServerConfig = function () {
 	return utils.getServerConfig();
 };
 
-},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/ChannelsManager.js","./StaticServer":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/virtualmq/utils.js","dossier-wizard":"dossier-wizard","edfs-middleware":"edfs-middleware"}],"zmq_adapter":[function(require,module,exports){
+},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./StaticServer":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","dossier-wizard":"dossier-wizard","edfs-middleware":"edfs-middleware"}],"pskcrypto":[function(require,module,exports){
+const PskCrypto = require("./lib/PskCrypto");
+const ssutil = require("./signsensusDS/ssutil");
+
+module.exports = PskCrypto;
+
+module.exports.hashValues = ssutil.hashValues;
+
+module.exports.DuplexStream = require("./lib/utils/DuplexStream");
+
+module.exports.isStream = require("./lib/utils/isStream");
+},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"soundpubsub":[function(require,module,exports){
+module.exports = {
+					soundPubSub: require("./lib/soundPubSub").soundPubSub
+};
+},{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"swarmutils":[function(require,module,exports){
+(function (global){
+module.exports.OwM = require("./lib/OwM");
+module.exports.beesHealer = require("./lib/beesHealer");
+
+const uidGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
+
+module.exports.safe_uuid = require("./lib/safe-uuid").init(uidGenerator);
+
+module.exports.Queue = require("./lib/Queue");
+module.exports.combos = require("./lib/Combos");
+
+module.exports.uidGenerator = uidGenerator;
+module.exports.generateUid = uidGenerator.generateUid;
+module.exports.TaskCounter = require("./lib/TaskCounter");
+module.exports.SwarmPacker = require("./lib/SwarmPacker");
+module.exports.path = require("./lib/path");
+module.exports.createPskConsole = function () {
+  return require('./lib/pskconsole');
+};
+
+module.exports.pingPongFork = require('./lib/pingpongFork');
+
+
+if(typeof global.$$ == "undefined"){
+  global.$$ = {};
+}
+
+if(typeof global.$$.uidGenerator == "undefined"){
+    $$.uidGenerator = module.exports.safe_uuid;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"zmq_adapter":[function(require,module,exports){
 (function (Buffer){
 const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
 const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
