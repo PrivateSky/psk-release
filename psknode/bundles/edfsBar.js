@@ -4010,7 +4010,7 @@ function RawDossier(endpoint, seed, cache) {
             taskCounter.increment(3);
             dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {folders:[]});
                     return;
                 }
 
@@ -4018,27 +4018,31 @@ function RawDossier(endpoint, seed, cache) {
                     if (folder[0] === "/") {
                         return folder.slice(1);
                     }
+
+                    return folder;
                 });
                 taskCounter.decrement(undefined, {folders: folders});
             });
 
             dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {files: []});
                     return;
                 }
 
-                files= files.map(folder => {
-                    if (folder[0] === "/") {
-                        return folder.slice(1);
+                files = files.map(file => {
+                    if (file[0] === "/") {
+                        return file.slice(1);
                     }
+
+                    return file;
                 });
                 taskCounter.decrement(undefined, {files: files});
             });
 
             this.listMountedDossiers("/", (err, mountedDossiers) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {mounts: []});
                     return;
                 }
 

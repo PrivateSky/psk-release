@@ -2536,7 +2536,7 @@ function RawDossier(endpoint, seed, cache) {
             taskCounter.increment(3);
             dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {folders:[]});
                     return;
                 }
 
@@ -2544,27 +2544,31 @@ function RawDossier(endpoint, seed, cache) {
                     if (folder[0] === "/") {
                         return folder.slice(1);
                     }
+
+                    return folder;
                 });
                 taskCounter.decrement(undefined, {folders: folders});
             });
 
             dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {files: []});
                     return;
                 }
 
-                files= files.map(folder => {
-                    if (folder[0] === "/") {
-                        return folder.slice(1);
+                files = files.map(file => {
+                    if (file[0] === "/") {
+                        return file.slice(1);
                     }
+
+                    return file;
                 });
                 taskCounter.decrement(undefined, {files: files});
             });
 
             this.listMountedDossiers("/", (err, mountedDossiers) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {});
+                    taskCounter.decrement(undefined, {mounts: []});
                     return;
                 }
 
@@ -6269,7 +6273,7 @@ function ChannelsManager(server){
     const config = utils.getServerConfig();
     const channelKeyFileName = "channel_key";
 
-    const rootFolder = path.join(config.getStorage(), config.getChannelsFolderName());
+    const rootFolder = path.join(config.storage, config.endpointsConfig.virtualMQ.channelsFolderName);
     fs.mkdirSync(rootFolder, {recursive: true});
 
     const channelKeys = {};
@@ -6287,11 +6291,11 @@ function ChannelsManager(server){
 
     let forwarder;
     if(integration.testIfAvailable()){
-        forwarder = integration.getForwarderInstance(config.getZeromqForwardAddress());
+        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
     }
 
     function generateToken(){
-        let buffer = crypto.randomBytes(config.getTokenSize());
+        let buffer = crypto.randomBytes(config.endpointsConfig.virtualMQ.tokenSize);
         return buffer.toString('hex');
     }
 
@@ -6323,7 +6327,7 @@ function ChannelsManager(server){
         });
     }
 
-    function retriveChannelDetails(channelName, callback){
+    function retrieveChannelDetails(channelName, callback){
         if(typeof channelKeys[channelName] !== "undefined"){
             return callback(null, channelKeys[channelName]);
         }else{
@@ -6396,7 +6400,7 @@ function ChannelsManager(server){
 
             createChannel(channelName, publicKey, (err, token)=>{
                 if(!err){
-                    res.setHeader('Cookie', [`${config.getTokenSize()}=${token}`]);
+                    res.setHeader('Cookie', [`${config.endpointsConfig.virtualMQ.tokenSize}=${token}`]);
                 }
                 handler(err, res);
             });
@@ -6425,13 +6429,13 @@ function ChannelsManager(server){
         readBody(req, (err, message)=>{
             const {enable} = message;
             const channelName = req.params.channelName;
-            const signature = req.headers[config.getSignatureHeaderName()];
+            const signature = req.headers[config.endpointsConfig.virtualMQ.signatureHeaderName];
 
             if(typeof channelName !== "string" || typeof signature !== "string"){
                 return sendStatus(res, 400);
             }
 
-            retriveChannelDetails(channelName, (err, details)=>{
+            retrieveChannelDetails(channelName, (err, details)=>{
                 if(err){
                     return sendStatus(res, 500);
                 }else{
@@ -6456,7 +6460,7 @@ function ChannelsManager(server){
     }
 
     function checkIfChannelExist(channelName, callback){
-        retriveChannelDetails(channelName, (err, details)=>{
+        retrieveChannelDetails(channelName, (err, details)=>{
             callback(null, err ? false : true);
         });
     }
@@ -6544,7 +6548,7 @@ function ChannelsManager(server){
             if(!exists){
                 return sendStatus(res, 403);
             }else{
-                retriveChannelDetails(channelName, (err, details)=>{
+                retrieveChannelDetails(channelName, (err, details)=>{
                     //we choose to read the body of request only after we know that we recognize the destination channel
                     readSendMessageBody(req, (err, message)=>{
                         if(err){
@@ -6573,7 +6577,7 @@ function ChannelsManager(server){
                                 dispatched = writeMessage(subscribers, message);
                             }
                             if(!dispatched) {
-                                if(queue.length < config.getMaxQueueSize()){
+                                if(queue.length < config.endpointsConfig.virtualMQ.maxSize){
                                     queue.push(message);
                                 }else{
                                     //queue is full
@@ -6645,7 +6649,7 @@ function ChannelsManager(server){
             if(!exists){
                 return sendStatus(res, 403);
             }else{
-                retriveChannelDetails(channelName, (err, details)=>{
+                retrieveChannelDetails(channelName, (err, details)=>{
                     if(err){
                         return sendStatus(res, 500);
                     }
@@ -6969,7 +6973,8 @@ function ServerConfig(conf) {
         storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
-        "endpoints": {
+        "endpoints":["virtualMQ", "staticServer", "edfs", "filesManager", "dossierWizard"],
+        "endpointsConfig": {
             "virtualMQ": {
                 "channelsFolderName": "channels",
                 "maxSize": 100,
@@ -6977,95 +6982,12 @@ function ServerConfig(conf) {
                 "tokenHeaderName": "x-tokenHeader",
                 "signatureHeaderName": "x-signature",
                 "enableSignatureCheck": true
-            },
-            "staticServer": true,
-            "edfs": true,
-            "filesManager": true,
-            "dossierWizard": true
-
+            }
         }
     };
-    conf = conf || defaultConf;
-
-    this.getStorage = () => {
-        if (typeof conf.storage === "undefined") {
-            return defaultConf.storage;
-        }
-
-        return conf.storage;
-    };
-
-    this.getPort = () => {
-        if (typeof conf.port === "undefined") {
-            return defaultConf.port;
-        }
-
-        return conf.port;
-    };
-
-    this.getZeromqForwardAddress = () => {
-        if (typeof conf.zeromqForwardAddress === "undefined")  {
-            return defaultConf.zeromqForwardAddress;
-        }
-
-        return conf.zeromqForwardAddress;
-    };
-
-    this.getChannelsFolderName = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.channelsFolderName === "undefined") {
-            return defaultConf.endpoints.virtualMQ.channelsFolderName;
-        }
-
-        return conf.endpoints.virtualMQ.channelsFolderName;
-    };
-
-    this.getTokenSize = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.tokenSize === "undefined") {
-            return defaultConf.endpoints.virtualMQ.tokenSize;
-        }
-
-        return conf.endpoints.virtualMQ.tokenSize;
-    };
-
-    this.getTokenHeaderName = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.tokenHeaderName === "undefined") {
-            return defaultConf.endpoints.virtualMQ.tokenHeaderName;
-        }
-
-        return conf.endpoints.virtualMQ.tokenHeaderName;
-    };
-
-    this.getSignatureHeaderName = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.signatureHeaderName === "undefined") {
-            return defaultConf.endpoints.virtualMQ.signatureHeaderName;
-        }
-
-        return conf.endpoints.virtualMQ.signatureHeaderName;
-    };
-
-    this.signatureCheckIsEnabled = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.enableSignatureCheck === "undefined") {
-            return defaultConf.endpoints.virtualMQ.enableSignatureCheck;
-        }
-
-        return conf.endpoints.virtualMQ.enableSignatureCheck;
-    };
-
-    this.getMaxQueueSize = () => {
-        if (typeof conf.endpoints === "undefined" || typeof conf.endpoints.virtualMQ ==="undefined" || typeof conf.endpoints.virtualMQ.maxSize === "undefined") {
-            return defaultConf.endpoints.virtualMQ.maxSize;
-        }
-
-        return conf.endpoints.virtualMQ.maxSize;
-    };
-
-    this.getEnabledMiddlewareList = () => {
-        if (typeof conf.endpoints === "undefined") {
-            return Object.keys(defaultConf.endpoints);
-        }
-
-        return Object.keys(conf.endpoints);
-    };
+    conf = conf || {};
+    conf = Object.assign(defaultConf, conf);
+    return conf;
 }
 
 module.exports = ServerConfig;
@@ -8166,11 +8088,12 @@ const ServerConfig = require("./ServerConfig");
 function getServerConfig() {
     if (typeof serverConf === "undefined") {
         const fs = require("fs");
-        const path = require("path")
+        const path = require("path");
         const pskRootInstallFolder = path.resolve("." + __dirname + "/../..");
+        console.log("psk root install folder", pskRootInstallFolder);
         try {
             serverConf = fs.readFileSync(path.join(pskRootInstallFolder, "conf", "server.json"));
-            serverConf = JSON.parse(config.toString());
+            serverConf = JSON.parse(serverConf.toString());
         } catch (e) {
             serverConf = undefined;
         }
@@ -9247,7 +9170,6 @@ const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
 const TokenBucket = require('./libs/TokenBucket');
 const START_TOKENS = 6000000;
-const signatureHeaderName = process.env.vmq_signature_header_name || 'x-signature';
 
 function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const port = listeningPort || 8080;
@@ -9284,7 +9206,7 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 		server.use(function (req, res, next) {
 			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${signatureHeaderName}`);
+			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${conf.endpointsConfig.virtualMQ.signatureHeaderName}`);
 			res.setHeader('Access-Control-Allow-Credentials', true);
 			next();
 		});
@@ -9318,12 +9240,12 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 			headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
 			headers["Access-Control-Allow-Credentials"] = true;
 			headers["Access-Control-Max-Age"] = '3600'; //one hour
-			headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}}`;
+			headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, ${conf.endpointsConfig.virtualMQ.signatureHeaderName}}`;
 			res.writeHead(200, headers);
 			res.end();
 		});
 
-		const middlewareList = conf.getEnabledMiddlewareList();
+		const middlewareList = conf.endpoints;
 		middlewareList.forEach(middleware => {
 			switch(middleware){
 				case "virtualMQ":
