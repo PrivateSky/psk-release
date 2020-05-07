@@ -448,9 +448,11 @@ function Archive(archiveConfigurator) {
     const archiveFsAdapter = archiveConfigurator.getFsAdapter();
     const storageProvider = archiveConfigurator.getStorageProvider();
     const cache = archiveConfigurator.getCache();
+
     let cachedSEED;
     let barMap;
     let cachedMapDigest;
+    let validator;
 
     this.getMapDigest = () => {
         if (cachedMapDigest) {
@@ -511,26 +513,35 @@ function Archive(archiveConfigurator) {
         loadBarMapThenExecute(__addData, callback);
 
         function __addData() {
+            archiveConfigurator.setIsEncrypted(options.encrypt);
+            const bufferSize = archiveConfigurator.getBufferSize();
+
             if (typeof data === "string") {
                 data = Buffer.from(data);
             }
 
-            if (!isStream.isReadable(data) && !Buffer.isBuffer(data)) {
-                return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
+
+            if (Buffer.isBuffer(data)) {
+                let bricks;
+                try {
+                    bricks = createBricksFromBuffer(data, bufferSize);
+                } catch (e) {
+                    return callback(e);
+                }
+                return updateBar(barPath, bricks, callback);
             }
 
-            createBricksFromData(data, barPath, archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
-                if (err) {
-                    return callback(err);
-                }
+            if (isStream.isReadable(data)) {
+                return createBricksFromStream(data, bufferSize, (err, bricks) => {
+                    if (err) {
+                        return callback(err);
+                    }
 
-                barMap.setConfig(archiveConfigurator);
-                if (archiveConfigurator.getMapEncryptionKey()) {
-                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                }
+                    updateBar(barPath, bricks, callback);
+                });
+            }
 
-                storageProvider.putBarMap(barMap, callback);
-            });
+            return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
         }
     };
 
@@ -988,6 +999,15 @@ function Archive(archiveConfigurator) {
         });
     };
 
+    /**
+     * @param {object} _validator
+     * @param {callback} _validator.writeRule Writes validator
+     * @param {callback} _validator.readRule Reads validator
+     */
+    this.setValidator = (_validator) => {
+        validator = _validator;
+    };
+
     //------------------------------------------- internal methods -----------------------------------------------------
 
     function __computeFileHash(fileBarPath) {
@@ -1074,97 +1094,94 @@ function Archive(archiveConfigurator) {
     }
 
     /**
-     * Create bricks from a Buffer or a readable stream
-     * @param {Buffer|stream.Readable} data
-     * @param {string} barPath
+     * Create bricks from a Buffer
+     * @param {Buffer} buffer
      * @param {number} blockSize
-     * @param {boolean} areEncrypted
+     * @return {Array<Brick>}
+     */
+    function createBricksFromBuffer(buffer, blockSize) {
+        let noBlocks = Math.floor(buffer.length / blockSize);
+        if ((buffer.length % blockSize) > 0) {
+            ++noBlocks;
+        }
+
+        const bricks = [];
+        for (let blockIndex = 0; blockIndex < noBlocks; blockIndex++) {
+            const blockData = buffer.slice(blockIndex * blockSize, (blockIndex + 1) * blockSize);
+
+            const brick = new Brick(archiveConfigurator);
+            brick.setRawData(blockData);
+            bricks.push(brick);
+        }
+
+        return bricks;
+    }
+
+    /**
+     * Create bricks from a Stream
+     * @param {stream.Readable} stream
+     * @param {number} blockSize
+     * @param {callback|undefined} callback
+     */
+    function createBricksFromStream(stream, blockSize, callback) {
+        let bricks = [];
+        stream.on('data', (chunk) => {
+            if (typeof chunk === 'string') {
+                chunk = Buffer.from(chunk);
+            }
+
+            let chunkBricks = createBricksFromBuffer(chunk, chunk.length);
+            bricks = bricks.concat(chunkBricks);
+        });
+        stream.on('error', (err) => {
+            callback(err);
+        });
+        stream.on('end', () => {
+            callback(undefined, bricks);
+        });
+    }
+
+    /**
+     * @param {string} barPath
+     * @param {Array<Brick} bricks
      * @param {callback} callback
      */
-    function createBricksFromData(data, barPath, blockSize, areEncrypted, callback) {
-        if (typeof areEncrypted === "function") {
-            callback = areEncrypted;
-            areEncrypted = true;
-        }
-
-        if (typeof data === 'string') {
-            data = Buffer.from(data);
-        }
-
+    function updateBar(barPath, bricks, callback) {
         if (!barMap.isEmpty(barPath)) {
             barMap.emptyList(barPath);
         }
 
-        /**
-         * Break the Buffer into bricks
-         * @param {Buffer} data
-         * @param {number} _blockSize
-         * @param {callback} callback
-         */
-        function __createBricksFromBuffer(data, _blockSize, callback) {
-            if (typeof _blockSize === 'function') {
-                callback = _blockSize;
-                _blockSize = blockSize; // set the default blockSize
-            }
-
-            let noBlocks = Math.floor(data.length / _blockSize);
-            if ((data.length % _blockSize) > 0) {
-                ++noBlocks;
-            }
-
-            function __createBricksRecursively(blockIndex, callback) {
-                const blockData = data.slice(blockIndex * _blockSize, (blockIndex + 1) * _blockSize);
-
-                archiveConfigurator.setIsEncrypted(areEncrypted);
-                const brick = new Brick(archiveConfigurator);
-
-                brick.setRawData(blockData);
-                barMap.add(barPath, brick);
-                storageProvider.putBrick(brick, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    ++blockIndex;
-                    if (blockIndex < noBlocks) {
-                        __createBricksRecursively(blockIndex, callback);
-                    } else {
-                        callback();
-                    }
-                });
-
-            }
-
-            __createBricksRecursively(0, callback);
+        for (let brick of bricks) {
+            barMap.add(barPath, brick);
         }
 
-        if (isStream.isReadable(data)) {
-            data.on('data', (chunk) => {
-                if (typeof chunk === 'string') {
-                    chunk = Buffer.from(chunk);
-                }
-                data.pause();
+        function __saveBricks(bricks, callback) {
+            const brick = bricks.shift();
 
-                // When reading from a stream, set the block size to the chunk's length
-                __createBricksFromBuffer(chunk, chunk.length, (err) => {
-                    if (err) {
-                        data.destroy(err);
-                        return callback(err);
-                    }
-                    data.resume();
-                });
-            });
-            data.on('error', (err) => {
-                callback(err);
-            });
-            data.on('end', () => {
-                callback();
-            });
-        } else { // Data is buffer
-            __createBricksFromBuffer(data, (err) => {
-                callback(err);
-            });
+            if (!brick) {
+                return storageProvider.putBarMap(barMap, callback);
+            }
+
+            storageProvider.putBrick(brick, (err) => {
+                if (err) {
+                    return callback(err);
+                };
+
+                __saveBricks(bricks, callback);
+            })
         }
+
+        if (!validator || typeof validator.writeRule !== 'function') {
+            return __saveBricks(bricks, callback);
+        }
+
+        validator.writeRule.call(this, barMap, barPath, bricks, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            __saveBricks(bricks, callback);
+        });
     }
 
     /**
@@ -2374,6 +2391,7 @@ function FolderBarMap(header) {
 }
 
 module.exports = FolderBarMap;
+
 }).call(this,require("buffer").Buffer)
 
 },{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
@@ -4636,7 +4654,16 @@ function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
 
     this.send = (name, data, callback) => {
-        $$.remote.doHttpPost(endpoint + "/EDFS/" + name, data, callback);
+        $$.remote.doHttpPost(endpoint + "/EDFS/" + name, data, (err, brickDigest) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                brickDigest = JSON.parse(brickDigest);
+            } catch (e) {}
+            callback(undefined, brickDigest);
+        });
     };
 
     this.get = (name, callback) => {
@@ -4667,6 +4694,7 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 };
 
 module.exports = HTTPBrickTransportStrategy;
+
 },{"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
 (function (Buffer){
 function BrickTransportStrategiesRegistry() {
@@ -4849,7 +4877,8 @@ function RawDossier(endpoint, seed, cache) {
     const constants = require("../moduleConstants").CSB;
     const swarmutils = require("swarmutils");
     const TaskCounter = swarmutils.TaskCounter;
-    let bar = createBar(seed);
+    const bar = createBar(seed);
+
     this.getSeed = () => {
         return bar.getSeed();
     };
@@ -5210,6 +5239,16 @@ function RawDossier(endpoint, seed, cache) {
             });
         });
     };
+
+
+    /**
+     * @param {object} validator
+     * @param {callback} validator.writeRule Writes validator
+     * @param {callback} validator.readRule Reads validator
+     */
+    this.setValidator = (validator) => {
+        bar.setValidator(validator);
+    }
 
     //------------------------------------------------- internal functions ---------------------------------------------
     function createBlockchain(bar) {

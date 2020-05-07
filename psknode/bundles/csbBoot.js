@@ -151,7 +151,16 @@ function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
 
     this.send = (name, data, callback) => {
-        $$.remote.doHttpPost(endpoint + "/EDFS/" + name, data, callback);
+        $$.remote.doHttpPost(endpoint + "/EDFS/" + name, data, (err, brickDigest) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                brickDigest = JSON.parse(brickDigest);
+            } catch (e) {}
+            callback(undefined, brickDigest);
+        });
     };
 
     this.get = (name, callback) => {
@@ -182,6 +191,7 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 };
 
 module.exports = HTTPBrickTransportStrategy;
+
 },{"psk-http-client":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
 (function (Buffer){
 function BrickTransportStrategiesRegistry() {
@@ -364,7 +374,8 @@ function RawDossier(endpoint, seed, cache) {
     const constants = require("../moduleConstants").CSB;
     const swarmutils = require("swarmutils");
     const TaskCounter = swarmutils.TaskCounter;
-    let bar = createBar(seed);
+    const bar = createBar(seed);
+
     this.getSeed = () => {
         return bar.getSeed();
     };
@@ -725,6 +736,16 @@ function RawDossier(endpoint, seed, cache) {
             });
         });
     };
+
+
+    /**
+     * @param {object} validator
+     * @param {callback} validator.writeRule Writes validator
+     * @param {callback} validator.readRule Reads validator
+     */
+    this.setValidator = (validator) => {
+        bar.setValidator(validator);
+    }
 
     //------------------------------------------------- internal functions ---------------------------------------------
     function createBlockchain(bar) {
