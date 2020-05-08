@@ -3694,10 +3694,9 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 		const listFiles = promisify(this.rawDossier.listFiles);
 		const readFile = promisify(this.rawDossier.readFile);
 
-		let fileList = await listFiles(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
-
-		fileList = bundles.filter(bundle => fileList.includes(bundle))
-			.map(bundle => pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
+		let fileList = await listFiles(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
+		fileList = bundles.filter(bundle => fileList.includes(bundle) || fileList.includes(`/${bundle}`))
+			.map(bundle => pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
 
 		if (fileList.length !== bundles.length) {
 			const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
@@ -4049,7 +4048,7 @@ function plugPowerCords() {
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
                 const rawDossier = self.edfs.loadRawDossier(self.seed);
-                rawDossier.readFile(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
                     if (err) {
                         throw err;
                     }
@@ -5756,8 +5755,13 @@ function normalize(pth) {
 function join(...args) {
     let pth = "";
     for (let i = 0; i < args.length; i++) {
-        pth += "/" + args[i];
+        if (i !== 0 && args[i - 1] !== "") {
+            pth += "/";
+        }
+
+        pth += args[i];
     }
+
     return normalize(pth);
 }
 
@@ -5782,11 +5786,75 @@ function ensureIsAbsolute(pth) {
     return __ensureIsAbsolute(pth);
 }
 
+function isSubpath(path, subPath) {
+    path = normalize(path);
+    subPath = normalize(subPath);
+    let result = false;
+    if (path.indexOf(subPath) === 0) {
+        let char = path[subPath.length];
+        if (char === "" || char === "/" || subPath === "/") {
+            result = true;
+        }
+    }
+
+    return result;
+}
+
+function dirname(path) {
+    if (path === "/") {
+        return path;
+    }
+    const pathSegments = path.split("/");
+    pathSegments.pop();
+    return ensureIsAbsolute(pathSegments.join("/"));
+}
+
+function basename(path) {
+    if (path === "/") {
+        return path;
+    }
+    return path.split("/").pop;
+}
+
+function relative(from, to) {
+    from = normalize(from);
+    to = normalize(to);
+
+    const fromSegments = from.split("/");
+    const toSegments = to.split("/");
+    let splitIndex;
+    for (let i = 0; i < fromSegments.length; i++) {
+        if (fromSegments[i] !== toSegments[i]) {
+            break;
+        }
+        splitIndex = i;
+    }
+
+    if (typeof splitIndex === "undefined") {
+        throw Error(`The paths <${from}> and <${to}> have nothing in common`);
+    }
+
+    splitIndex++;
+    let relativePath = [];
+    for (let i = splitIndex; i < fromSegments.length; i++) {
+        relativePath.push("..");
+    }
+    for (let i = splitIndex; i < toSegments.length; i++) {
+        relativePath.push(toSegments[i]);
+    }
+
+    return relativePath.join("/");
+}
+
 module.exports = {
     normalize,
     join,
     isAbsolute,
-    ensureIsAbsolute
+    ensureIsAbsolute,
+    isSubpath,
+    dirname,
+    basename,
+    relative
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){

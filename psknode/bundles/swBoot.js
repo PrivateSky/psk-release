@@ -557,9 +557,9 @@ function Archive(archiveConfigurator) {
 
         function __readFile() {
             let fileData = Buffer.alloc(0);
-            let brickIds;
+            let bricksMeta;
             try {
-                brickIds = barMap.getHashList(barPath);
+                bricksMeta = barMap.getBricksMeta(barPath);
             } catch (err) {
                 return callback(err);
             }
@@ -567,8 +567,8 @@ function Archive(archiveConfigurator) {
             getFileRecursively(0, callback);
 
             function getFileRecursively(brickIndex, callback) {
-                const brickId = brickIds[brickIndex];
-                getBrickData(brickId, (err, data) => {
+                const brickMeta = bricksMeta[brickIndex];
+                getBrickData(brickMeta, (err, data) => {
                     if (err) {
                         return callback(err);
                     }
@@ -576,7 +576,7 @@ function Archive(archiveConfigurator) {
                     fileData = Buffer.concat([fileData, data]);
                     ++brickIndex;
 
-                    if (brickIndex < brickIds.length) {
+                    if (brickIndex < bricksMeta.length) {
                         getFileRecursively(brickIndex, callback);
                     } else {
                         callback(undefined, fileData);
@@ -593,17 +593,17 @@ function Archive(archiveConfigurator) {
 
         function __prepareStream() {
             let brickIndex = 0;
-            let brickIds;
+            let bricksMeta;
 
             try {
-                brickIds = barMap.getHashList(barPath);
+                bricksMeta = barMap.getBricksMeta(barPath);
             } catch (err) {
                 return callback(err);
             }
 
             const readableStream = new stream.Readable({
                 read(size) {
-                    if (brickIndex < brickIds.length) {
+                    if (brickIndex < bricksMeta.length) {
                         this.readBrickData(brickIndex++);
                     }
                 }
@@ -611,8 +611,8 @@ function Archive(archiveConfigurator) {
 
             // Get a brick and push it into the stream
             readableStream.readBrickData = function (brickIndex) {
-                const brickId = brickIds[brickIndex];
-                getBrickData(brickId, (err, data) => {
+                const brickMeta = bricksMeta[brickIndex];
+                getBrickData(brickMeta, (err, data) => {
                     if (err) {
                         this.destroy(err);
                         return;
@@ -620,7 +620,7 @@ function Archive(archiveConfigurator) {
 
                     this.push(data);
 
-                    if (brickIndex >= (brickIds.length - 1)) {
+                    if (brickIndex >= (bricksMeta.length - 1)) {
                         this.push(null);
                     }
                 });
@@ -704,12 +704,12 @@ function Archive(archiveConfigurator) {
         loadBarMapThenExecute(__extractFile, callback);
 
         function __extractFile() {
-            const brickIds = barMap.getHashList(barPath);
+            const bricksMeta = barMap.getBricksMeta(barPath);
             getFileRecursively(0, callback);
 
             function getFileRecursively(brickIndex, callback) {
-                const brickId = brickIds[brickIndex];
-                getBrickData(brickId, (err, data) => {
+                const brickMeta = bricksMeta[brickIndex];
+                getBrickData(brickMeta, (err, data) => {
                     if (err) {
                         return callback(err);
                     }
@@ -720,7 +720,7 @@ function Archive(archiveConfigurator) {
                         }
 
                         ++brickIndex;
-                        if (brickIndex < brickIds.length) {
+                        if (brickIndex < bricksMeta.length) {
                             getFileRecursively(brickIndex, callback);
                         } else {
                             callback();
@@ -896,13 +896,13 @@ function Archive(archiveConfigurator) {
         }, callback);
     };
 
-    this.listFiles = (folderBarPath, recursive, callback) => {
-        if (typeof recursive === "function") {
-            callback = recursive;
-            recursive = true;
+    this.listFiles = (folderBarPath, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {recursive:true};
         } else if (typeof folderBarPath === "function") {
             callback = folderBarPath;
-            recursive = true;
+            options = {recursive: true};
             folderBarPath = "/";
         }
 
@@ -910,7 +910,7 @@ function Archive(archiveConfigurator) {
         loadBarMapThenExecute(() => {
             let fileList;
             try {
-                fileList = barMap.getFileList(folderBarPath, recursive);
+                fileList = barMap.getFileList(folderBarPath, options.recursive);
             } catch (e) {
                 return callback(e);
             }
@@ -956,7 +956,14 @@ function Archive(archiveConfigurator) {
 
             function __getFilesRecursively(fileList, fileIndex, callback) {
                 const filePath = fileList[fileIndex];
-                __getBricksRecursively(filePath, barMap.getHashList(filePath), 0, (err) => {
+                let bricksMeta;
+                try {
+                    bricksMeta = bricksMeta.getBricksMeta(filePath);
+                } catch (e){
+                    return callback(e);
+                }
+
+                __getBricksRecursively(filePath, bricksMeta, 0, (err) => {
                     if (err) {
                         return callback(err);
                     }
@@ -969,15 +976,13 @@ function Archive(archiveConfigurator) {
                 });
             }
 
-            function __getBricksRecursively(filePath, brickList, brickIndex, callback) {
-                storageProvider.getBrick(brickList[brickIndex], (err, brick) => {
+            function __getBricksRecursively(filePath, bricksMeta, brickIndex, callback) {
+                storageProvider.getBrick(bricksMeta[brickIndex].hash, (err, brick) => {
                     if (err) {
                         return callback(err);
                     }
 
-                    if (barMap.getTransformParameters(brickList[brickIndex])) {
-                        brick.setTransformParameters(barMap.getTransformParameters(brickList[brickIndex]));
-                    }
+                    brick.setTransformParameters(barMap.getTransformParameters(bricksMeta[brickIndex]));
                     __addBrickToTarget(brick, callback);
                 });
 
@@ -994,11 +999,11 @@ function Archive(archiveConfigurator) {
                             return callback(err);
                         }
 
-                        if (brickIndex === brickList.length) {
+                        if (brickIndex === bricksMeta.length) {
                             return callback();
                         }
 
-                        __getBricksRecursively(filePath, brickList, brickIndex, callback);
+                        __getBricksRecursively(filePath, bricksMeta, brickIndex, callback);
                     });
                 }
             }
@@ -1017,7 +1022,7 @@ function Archive(archiveConfigurator) {
     //------------------------------------------- internal methods -----------------------------------------------------
 
     function __computeFileHash(fileBarPath) {
-        const hashList = barMap.getHashList(fileBarPath);
+        const hashList = barMap.getBricksMeta(fileBarPath).map(brickMeta => brickMeta.hash);
         const PskHash = crypto.PskHash;
         const pskHash = new PskHash();
         hashList.forEach(hash => {
@@ -1218,25 +1223,25 @@ function Archive(archiveConfigurator) {
      * Try and get brick data from cache
      * Fallback to storage provide if not found in cache
      *
-     * @param {string} hash
+     * @param {string} brickMeta
      * @param {callback} callback
      */
-    function getBrickData(hash, callback) {
-        if (!hasInCache(hash)) {
-            return storageProvider.getBrick(hash, (err, brick) => {
+    function getBrickData(brickMeta, callback) {
+        if (!hasInCache(brickMeta.hash)) {
+            return storageProvider.getBrick(brickMeta.hash, (err, brick) => {
                 if (err) {
                     return callback(err);
                 }
 
                 brick.setConfig(archiveConfigurator);
-                brick.setTransformParameters(barMap.getTransformParameters(hash));
+                brick.setTransformParameters(barMap.getTransformParameters(brickMeta));
                 const data = brick.getRawData();
-                storeInCache(hash, data);
+                storeInCache(brickMeta.hash, data);
                 callback(undefined, data);
             });
         }
 
-        const data = cache.get(hash);
+        const data = cache.get(brickMeta.hash);
         callback(undefined, data);
     }
 
@@ -2070,32 +2075,38 @@ function FolderBarMap(header) {
     this.delete = (barPath) => {
         barPath = pskPath.normalize(barPath);
 
-        if (barPath === "/") {
-            header = {};
-        } else {
-            const pathSegments = barPath.split("/");
-            if (pathSegments[0] === "") {
-                pathSegments.shift();
+        function deletePath(targetObj, path) {
+            if (path === "") {
+                header = {};
+            } else {
+                delete targetObj[path];
             }
-            __removeRecursively(header, pathSegments);
         }
 
-        function __removeRecursively(folderObj, splitPath) {
-            const folderName = splitPath.shift();
-            if (folderObj[folderName]) {
-                if (splitPath.length === 0) {
-                    folderObj[folderName] = undefined;
-                } else {
-                    __removeRecursively(folderObj[folderName], splitPath);
-                }
-            }
+        const pathSegments = barPath.split("/");
+        let path = pathSegments.pop();
+        deletePath(navigate(pathSegments.join("/")), path);
+    };
+
+    this.getBricksMeta = (filePath) => {
+        const pathSegments = filePath.split("/");
+        const fileName = pathSegments.pop();
+        let fileBricks = navigate(pathSegments.join("/"));
+        fileBricks = fileBricks[fileName];
+        if (typeof fileBricks === "undefined") {
+            throw Error(`Path <${filePath}> not found`);
         }
+        if (!Array.isArray(fileBricks) && typeof fileBricks === "object") {
+            throw Error(`Path <${filePath}> is a folder`);
+        }
+
+        return fileBricks;
     };
 
     this.getHashList = (filePath) => {
         filePath = pskPath.normalize(filePath);
         if (filePath === "") {
-            throw Error("Invalid path.");
+            throw Error(`Invalid path ${filePath}.`);
         }
         this.load();
         const pathSegments = filePath.split("/");
@@ -2179,7 +2190,7 @@ function FolderBarMap(header) {
                     if (Array.isArray(folderObj[folderName])) {
                         folderObj[folderName] = []
                     } else {
-                        throw Error("Invalid path");
+                        throw Error(`Invalid path ${filePath}`);
                     }
                 } else {
                     __emptyListRecursively(folderObj[folderName], pathSegments);
@@ -2207,129 +2218,83 @@ function FolderBarMap(header) {
         }
         folderBarPath = pskPath.normalize(folderBarPath);
         this.load();
-        return getFilesFromPath(header, folderBarPath, recursive);
+        let files = [];
 
-
-        function getFilesFromPath(folderObj, barPath, recursive){
-            let files = [];
-            if (barPath === "/") {
-                __getAllFiles(header, barPath);
-
-                return files;
-            } else {
-                const pathSegments = barPath.split("/");
-                __getFilesFromPath(header, pathSegments);
-
-                return files;
-            }
-
-            function __getFilesFromPath(folderObj, pathSegments) {
-                let folderName = pathSegments.shift();
-                if (folderName === "") {
-                    folderName = pathSegments.shift();
-                }
-                if (folderObj[folderName]) {
-                    if (pathSegments.length === 0) {
-                        Object.keys(folderObj[folderName]).forEach(file => {
-                            if (Array.isArray(folderObj[folderName][file])) {
-                                files.push(file);
-                            }
-                        });
-                    } else {
+        function printFiles(targetObj, currentPath) {
+            for (let prop in targetObj) {
+                if (Array.isArray(targetObj[prop])) {
+                    let filePath = pskPath.join(currentPath, prop);
+                    files.push(filePath);
+                } else {
+                    if (typeof targetObj[prop] === "object") {
                         if (recursive === true) {
-                            __getFilesFromPath(folderObj[folderName], pathSegments);
+                            printFiles(targetObj[prop], pskPath.join(currentPath, prop));
+                        }
+                    } else {
+                        throw Error("BarMap corrupted.");
+                    }
+                }
+            }
+        }
+
+        printFiles(navigate(folderBarPath), "");
+        return files;
+    };
+
+    function navigate(toPath) {
+        let target = header;
+        let segments = toPath.split("/");
+        for (let i in segments) {
+            let segment = segments[i];
+            if (segment !== "") {
+                if (typeof target[segment] !== "undefined") {
+                    if (!Array.isArray(target[segment]) && typeof target[segment] === "object") {
+                        target = target[segment];
+                    } else {
+                        if (Array.isArray(target[segment]) && i < segments.length) {
+                            throw Error(`Path ${toPath} is not valid!`);
                         }
                     }
                 } else {
-                    throw Error(`Invalid path ${folderBarPath}`);
+                    return undefined;
                 }
             }
-
-            function __getAllFiles(folderObj, relativePath) {
-                Object.keys(folderObj).forEach(folderName => {
-                    if (folderObj[folderName]) {
-                        let newPath = pskPath.join(relativePath, folderName);
-
-                        if (Array.isArray(folderObj[folderName])) {
-                            files.push(newPath);
-                        } else {
-                            if (recursive === true) {
-                                __getAllFiles(folderObj[folderName], newPath);
-                            }
-                        }
-                    }
-                });
-            }
         }
-    };
+
+        return target;
+    }
 
     this.getFolderList = (barPath, recursive) => {
-        barPath = pskPath.normalize(barPath);
         let folders = [];
-        if (barPath === "/") {
-            __getAllFolders(header, barPath, recursive);
-            return folders;
-        } else {
-            const pathSegments = barPath.split("/");
-            __getFoldersFromPath(header, pathSegments, "/", recursive);
-            return folders;
-        }
 
-        function __getAllFolders(folderObj, relativePath, recursive) {
-            Object.keys(folderObj).forEach(folderName => {
-                if (typeof folderObj[folderName] === "object" && !Array.isArray(folderObj[folderName])) {
-                    const newPath = pskPath.join(relativePath, folderName);
-                    folders.push(newPath);
+        function printFolders(targetObj, currentPath) {
+            for (let prop in targetObj) {
+                if (typeof targetObj[prop] === "object" && !Array.isArray(targetObj[prop])) {
+                    folders.push(pskPath.join(currentPath, prop));
                     if (recursive === true) {
-                        __getAllFolders(folderObj[folderName], newPath);
+                        printFolders(targetObj[prop], pskPath.join(currentPath, prop));
+                    }
+                } else {
+                    if (!Array.isArray(targetObj[prop])) {
+                        throw Error("BarMap corrupted.");
                     }
                 }
-            });
+            }
         }
 
-        function __getFoldersFromPath(folderObj, pathSegments, relativePath, recursive) {
-            let folderName = pathSegments.shift();
-            if (folderName === "") {
-                folderName = pathSegments.shift();
-            }
-            if (folderObj[folderName]) {
-                const newFolderPath = pskPath.join(relativePath, folderName);
-                if (pathSegments.length === 0) {
-                    folders.push(newFolderPath);
-                    Object.keys(folderObj[folderName]).forEach(fileName => {
-                        if (typeof folderObj[folderName][fileName] === "object" && !Array.isArray(folderObj[folderName][fileName])) {
-                            const newFilePath = pskPath.join(relativePath, fileName);
-                            folders.push(newFilePath);
-                            if (recursive === true) {
-                                __getFoldersFromPath(folderObj[folderName][fileName], pathSegments, newFilePath, recursive);
-                            }
-                        }
-                    });
-                } else {
-                    __getFoldersFromPath(folderObj[folderName], pathSegments, newFolderPath, recursive);
-                }
-            }
-        }
+        printFolders(navigate(barPath), "");
+        return folders;
     };
 
-    this.getTransformParameters = (brickId) => {
+    this.getTransformParameters = (brickMeta) => {
         this.load();
-        if (!brickId) {
+        if (typeof brickMeta === "undefined") {
             return encryptionKey ? {key: encryptionKey} : undefined;
         }
-        let bricks = [];
-        const files = this.getFileList("/", true);
-        files.forEach(file => {
-            bricks = bricks.concat(getBricksForFile(file));
-        });
-
-        const brickObj = bricks.find(brick => {
-            return brick.hash === brickId;
-        });
 
         const addTransformData = {};
-        if (brickObj.key) {
-            addTransformData.key = Buffer.from(brickObj.key);
+        if (brickMeta.key) {
+            addTransformData.key = Buffer.from(brickMeta.key);
         }
 
         return addTransformData;
@@ -2367,33 +2332,6 @@ function FolderBarMap(header) {
         this.load();
         delete header[filePath];
     };
-
-    function getBricksForFile(filePath) {
-        filePath = pskPath.normalize(filePath);
-        const splitPath = filePath.split("/");
-        return __getBricksForFileRecursively(header, splitPath);
-
-
-        function __getBricksForFileRecursively(folderObj, splitPath) {
-            let folderName = splitPath.shift();
-            if (folderName === "") {
-                folderName = splitPath.shift();
-            }
-            if (folderObj[folderName]) {
-                if (splitPath.length === 0) {
-                    if (Array.isArray(folderObj[folderName])) {
-                        return folderObj[folderName];
-                    } else {
-                        throw Error("Invalid path");
-                    }
-                } else {
-                    return __getBricksForFileRecursively(folderObj[folderName], splitPath);
-                }
-            } else {
-                throw Error("Invalid path");
-            }
-        }
-    }
 }
 
 module.exports = FolderBarMap;
@@ -7461,6 +7399,7 @@ function EDFS(endpoint, options) {
     const barModule = require("bar");
     const fsAdapter = require("bar-fs-adapter");
     const constants = require('../moduleConstants');
+    const pskPath = require("swarmutils").path;
     const cache = options.cache;
 
     this.createRawDossier = () => {
@@ -7496,7 +7435,7 @@ function EDFS(endpoint, options) {
             overwrite = false;
         }
         const wallet = this.createRawDossier();
-        wallet.mount("/" + constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER, templateSeed, (err => {
+        wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
             if (err) {
                 return callback(err);
             }
@@ -7581,14 +7520,174 @@ function EDFS(endpoint, options) {
 
 module.exports = EDFS;
 
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
+const MANIFEST_PATH = "/manifest";
+
+function Manifest(archive, callback) {
+    const pskPath = require("swarmutils").path;
+    let manifest;
+    let temporary = {};
+    let manifestHandler = {};
+
+
+    manifestHandler.mount = function (path, archiveIdentifier, options, callback) {
+        if (typeof options === "function") {
+            callback = options;
+            options = {persist: true};
+        }
+
+        if (typeof options === "undefined") {
+            options = {persist: true};
+        }
+        // if (/\W-_/.test(name) === true) {
+        //     return callback(Error("Invalid mount name"));
+        // }
+
+        for (let mountingPoint in manifest.mounts) {
+            if (pskPath.isSubpath(path, mountingPoint) || pskPath.isSubpath(path, mountingPoint)) {
+                return callback(Error(`Mount not allowed. Already exist a mount for ${mountingPoint}`));
+            }
+        }
+
+        manifest.mounts[path] = archiveIdentifier;
+        if (options.persist === true) {
+            return persist(callback);
+        } else {
+            temporary[path] = true;
+        }
+
+        callback(undefined);
+    };
+
+    manifestHandler.unmount = function (path, callback) {
+        if (typeof manifest.mounts[path] === "undefined") {
+            return callback(Error(`No mount found at path ${path}`));
+        }
+
+        delete manifest.mounts[path];
+
+        if (temporary[path]) {
+            delete temporary[path];
+        } else {
+            persist(callback);
+        }
+    };
+
+    manifestHandler.getArchiveIdentifier = function (path, callback) {
+        if (typeof manifest.mounts[path] === "undefined") {
+            return callback(Error(`No mount found at path ${path}`));
+        }
+
+        callback(undefined, manifest.mounts[path]);
+    };
+
+    manifestHandler.getArchiveForPath = function (path, callback) {
+        for (let mountingPoint in manifest.mounts) {
+            if (mountingPoint === path) {
+                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive});
+                });
+            }
+
+            if (pskPath.isSubpath(path, mountingPoint)) {
+                return getArchive(manifest.mounts[mountingPoint], true,(err, archive) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    let remaining = path.substring(mountingPoint.length);
+                    remaining = pskPath.ensureIsAbsolute(remaining);
+                    return archive.getArchiveForPath(remaining, function (err, result) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        result.prefixPath = pskPath.join(mountingPoint, result.prefixPath);
+                        callback(undefined, result);
+                    });
+                });
+            }
+        }
+
+        callback(undefined, {prefixPath: "/", relativePath: path, archive: archive});
+    };
+
+    manifestHandler.getMountedDossiers = function (path, callback) {
+        const mountedDossiers = [];
+        for (let mountPoint in manifest.mounts) {
+            if (pskPath.isSubpath(mountPoint, path)) {
+                let mountPath = mountPoint.substring(path.length);
+                if (mountPath[0] === "/") {
+                    mountPath = mountPath.substring(1);
+                }
+                mountedDossiers.push({
+                    path: mountPath.split("/").shift(),
+                    identifier: manifest.mounts[mountPoint]
+                });
+            }
+        }
+
+        callback(undefined, mountedDossiers);
+    };
+
+function getArchive(seed, asDossier, callback) {
+    if (typeof asDossier === "function") {
+        callback = asDossier;
+        asDossier = false;
+    }
+    let edfsModuleName = "edfs";
+    let EDFS = require(edfsModuleName);
+    EDFS.attachWithSeed(seed, function (err, edfs) {
+        if (err) {
+            return callback(err);
+        }
+
+        if (asDossier) {
+            return callback(undefined, edfs.loadRawDossier(seed));
+        }
+
+        callback(undefined, edfs.loadBar(seed));
+    });
+}
+
+    function persist(callback) {
+        archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
+    }
+
+    function init(callback) {
+        archive.readFile(MANIFEST_PATH, (err, manifestContent) => {
+            if (err) {
+                manifest = {mounts: {}};
+            } else {
+                try {
+                    manifest = JSON.parse(manifestContent.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+            }
+
+            callback(undefined, manifestHandler);
+        });
+    }
+
+    init(callback);
+}
+
+module.exports.getManifest = function getManifest(archive, callback) {
+    Manifest(archive, callback);
+};
+
+
+},{"swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
 function RawDossier(endpoint, seed, cache) {
     const barModule = require("bar");
-    const constants = require("../moduleConstants").CSB;
-    const swarmutils = require("swarmutils");
-    const TaskCounter = swarmutils.TaskCounter;
+    const Manifest = require("./Manifest");
+    const pskPath = require("swarmutils").path;
+    let manifestHandler;
     const bar = createBar(seed);
-
     this.getSeed = () => {
         return bar.getSeed();
     };
@@ -7596,6 +7695,21 @@ function RawDossier(endpoint, seed, cache) {
     this.start = (callback) => {
         createBlockchain(bar).start(callback);
     };
+
+    function getManifest(callback) {
+        if (typeof manifestHandler === "undefined") {
+            Manifest.getManifest(bar, (err, handler) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                manifestHandler = handler;
+                return callback(undefined, manifestHandler);
+            });
+        } else {
+            return callback(undefined, manifestHandler);
+        }
+    }
 
     this.addFolder = (fsFolderPath, barPath, options, callback) => {
         const defaultOpts = {encrypt: true, ignoreMounts: true};
@@ -7610,15 +7724,12 @@ function RawDossier(endpoint, seed, cache) {
         if (options.ignoreMounts === true) {
             bar.addFolder(fsFolderPath, barPath, options, callback);
         } else {
-            const splitPath = barPath.split("/");
-            const folderName = splitPath.pop();
-            barPath = splitPath.join("/");
-            loadBarForPath(barPath, (err, dossierContext) => {
+            this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
 
-                dossierContext.archive.addFolder(fsFolderPath, dossierContext.relativePath + "/" + folderName, options, callback);
+                result.archive.addFolder(fsFolderPath, result.relativePath, options, callback);
             });
         }
     };
@@ -7636,56 +7747,53 @@ function RawDossier(endpoint, seed, cache) {
         if (options.ignoreMounts === true) {
             bar.addFile(fsFilePath, barPath, options, (err, barMapDigest) => callback(err, barMapDigest));
         } else {
-            const splitPath = barPath.split("/");
-            const fileName = splitPath.pop();
-            barPath = splitPath.join("/");
-            loadBarForPath(barPath, (err, dossierContext) => {
+            this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
 
-                dossierContext.archive.addFile(fsFilePath, dossierContext.relativePath + "/" + fileName, options, callback);
+                result.archive.addFile(fsFilePath, result.relativePath, options, callback);
             });
         }
     };
 
     this.readFile = (fileBarPath, callback) => {
-        loadBarForPath(fileBarPath, (err, dossierContext) => {
+        this.getArchiveForPath(fileBarPath, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.readFile(dossierContext.relativePath, callback);
+            result.archive.readFile(result.relativePath, callback);
         });
     };
 
     this.createReadStream = (fileBarPath, callback) => {
-        loadBarForPath(fileBarPath, (err, dossierContext) => {
+        this.getArchiveForPath(fileBarPath, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.createReadStream(dossierContext.relativePath, callback);
+            result.archive.createReadStream(result.relativePath, callback);
         });
     };
 
     this.extractFolder = (fsFolderPath, barPath, callback) => {
-        loadBarForPath(barPath, (err, dossierContext) => {
+        this.getArchiveForPath(barPath, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.extractFolder(fsFolderPath, dossierContext.relativePath, callback);
+            result.archive.extractFolder(fsFolderPath, result.relativePath, callback);
         });
     };
 
     this.extractFile = (fsFilePath, barPath, callback) => {
-        loadBarForPath(barPath, (err, dossierContext) => {
+        this.getArchiveForPath(barPath, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.extractFile(fsFilePath, dossierContext.relativePath, callback);
+            result.archive.extractFile(fsFilePath, result.relativePath, callback);
         });
     };
 
@@ -7698,16 +7806,16 @@ function RawDossier(endpoint, seed, cache) {
 
         Object.assign(defaultOpts, options);
         options = defaultOpts;
-        if (path.split("/").includes(constants.MANIFEST_FILE)) {
-            return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
-        }
+
+        // if (path.split("/").includes(constants.MANIFEST_FILE)) {
+        //     return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
+        // }
+
+
         if (options.ignoreMounts === true) {
             bar.writeFile(path, data, options, callback);
         } else {
-            const splitPath = path.split("/");
-            const fileName = splitPath.pop();
-            path = splitPath.join("/");
-            loadBarForPath(path, (err, dossierContext) => {
+            this.getArchiveForPath(path, (err, dossierContext) => {
                 if (err) {
                     return callback(err);
                 }
@@ -7715,7 +7823,7 @@ function RawDossier(endpoint, seed, cache) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
                 }
 
-                dossierContext.archive.writeFile(dossierContext.relativePath + "/" + fileName, data, options, callback);
+                dossierContext.archive.writeFile(dossierContext.relativePath, data, options, callback);
             });
         }
     };
@@ -7724,25 +7832,19 @@ function RawDossier(endpoint, seed, cache) {
         bar.delete(barPath, callback);
     };
 
-    this.listFiles = (path, callback) => {
-        loadBarForPath(path, (err, dossierContext) => {
+    this.listFiles = (path, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = {recursive: true};
+        }
+        this.getArchiveForPath(path, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.listFiles(dossierContext.relativePath, (err, files) => {
+            result.archive.listFiles(result.relativePath, options, (err, files) => {
                 if (err) {
                     return callback(err);
-                }
-
-                if (path !== "/" && path !== "" && typeof path !== "function") {
-                    files = files.map(file => {
-                        if (file[0] === "/") {
-                            file = file.slice(1);
-                        }
-
-                        return file;
-                    })
                 }
 
                 callback(undefined, files);
@@ -7751,12 +7853,12 @@ function RawDossier(endpoint, seed, cache) {
     };
 
     this.listFolders = (path, callback) => {
-        loadBarForPath(path, (err, dossierContext) => {
+        this.getArchiveForPath(path, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            dossierContext.archive.listFolders(dossierContext.relativePath, (err, folders) => {
+            result.archive.listFolders(result.relativePath, (err, folders) => {
                 if (err) {
                     return callback(err);
                 }
@@ -7773,180 +7875,120 @@ function RawDossier(endpoint, seed, cache) {
                 withFileTypes: false
             };
         }
-        loadBarForPath(folderPath, (err, dossierContext) => {
+
+        const entries = {};
+        this.getArchiveForPath(folderPath, (err, result) => {
             if (err) {
                 return callback(err);
             }
 
-            const taskCounter = new TaskCounter((errors, results) => {
-                let entries;
-                if (options.withFileTypes === true) {
-                    entries = {};
-                    results.forEach(res=> {
-                        let entryType = Object.keys(res)[0];
-                        entries[entryType] = res[entryType];
-                    })
-                }else{
-                    entries = [];
-                    results.forEach(res => {
-                        entries = entries.concat(Object.values(res)[0])
-                    });
-                }
-
-
-                callback(undefined, entries);
-            });
-
-            taskCounter.increment(3);
-            dossierContext.archive.listFolders(dossierContext.relativePath, false, (err, folders) => {
+            result.archive.listFiles(result.relativePath, {recursive: false}, (err, files) => {
                 if (err) {
-                    taskCounter.decrement(undefined, {folders:[]});
-                    return;
+                    return callback(err);
                 }
 
-                folders = folders.map(folder => {
-                    if (folder[0] === "/") {
-                        return folder.slice(1);
+                entries.files = files;
+
+                result.archive.listFolders(result.relativePath, {recursive: false}, (err, folders) => {
+                    if (err) {
+                        return callback(err);
                     }
 
-                    return folder;
-                });
-                taskCounter.decrement(undefined, {folders: folders});
-            });
-
-            dossierContext.archive.listFiles(dossierContext.relativePath, false, (err, files) => {
-                if (err) {
-                    taskCounter.decrement(undefined, {files: []});
-                    return;
-                }
-
-                files = files.map(file => {
-                    if (file[0] === "/") {
-                        return file.slice(1);
+                    if (options.withFileTypes) {
+                        entries.folders = folders;
+                    } else {
+                        entries.files = [...entries.files, ...folders];
+                    }
+                    if (result.archive === bar) {
+                        getManifest(listMounts);
+                    } else {
+                        Manifest.getManifest(result.archive, listMounts);
                     }
 
-                    return file;
-                });
-                taskCounter.decrement(undefined, {files: files});
-            });
+                    function listMounts(err, handler) {
+                        if (err) {
+                            return callback(err);
+                        }
 
-            this.listMountedDossiers("/", (err, mountedDossiers) => {
-                if (err) {
-                    taskCounter.decrement(undefined, {mounts: []});
-                    return;
-                }
-
-                const mountPaths = mountedDossiers.map(dossier => {
-                    const pathSegments = dossier.path.split("/");
-                    if (pathSegments[0] === "") {
-                        pathSegments.shift();
-                    }
-                    if (pathSegments.length > 0) {
-                        return pathSegments[0];
+                        handler.getMountedDossiers(result.relativePath, (err, mounts) => {
+                            if (err) {
+                                return callback(err);
+                            }
+                            if (options.withFileTypes) {
+                                entries.mounts = mounts.map(mount => mount.path);
+                                entries.mounts = entries.mounts.filter(mount => entries.folders.indexOf(mount) === -1);
+                                return callback(undefined, entries);
+                            }
+                            entries.files = [...entries.files, ...mounts];
+                            return callback(undefined, entries.files);
+                        });
                     }
                 });
-
-                taskCounter.decrement(undefined, {mounts: mountPaths});
             });
         });
     };
 
-    this.mount = (path, name, archiveIdentifier, readonly, callback) => {
-        if (typeof readonly === "function") {
-            callback = readonly;
-            readonly = false;
-        }
-        if (/\W-_/.test(name) === true) {
-            return callback(Error("Invalid mount name"));
+
+    this.mount = (path, archiveIdentifier, options, callback) => {
+        if (typeof options === "function") {
+            callback = options;
+            options = undefined;
         }
 
         bar.listFiles(path, (err, files) => {
             if (!err && files.length > 0) {
                 return callback(Error("Tried to mount in a non-empty folder"));
             }
-
-            bar.readFile(constants.MANIFEST_FILE, (err, data) => {
-                let manifest;
-                if (err) {
-                    manifest = {};
-                    manifest.mounts = [];
-                }
-
-                if (data) {
-                    manifest = JSON.parse(data.toString());
-                    const existingMount = manifest.mounts.find(el => el.localPath === path && el.mountName === name);
-                    if (existingMount) {
-                        return callback(Error(`A mount point at path ${path} with the name ${name} already exists.`));
-                    }
-                }
-
-                const mount = {};
-                mount.localPath = path;
-                mount.mountName = name;
-                mount.archiveIdentifier = archiveIdentifier;
-                mount.readonly = readonly;
-                manifest.mounts.push(mount);
-
-                bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), {encrypt: true}, callback);
-            });
-        });
-    };
-
-    this.unmount = (path, name, callback) => {
-        bar.readFile(constants.MANIFEST_FILE, (err, data) => {
-            if (err) {
-                return callback(err);
-            }
-
-            if (data.length === 0) {
-                return callback(Error("Nothing to unmount"));
-            }
-
-            const manifest = JSON.parse(data.toString());
-            const index = manifest.mounts.findIndex(el => el.localPath === path);
-            if (index >= 0) {
-                manifest.mounts.splice(index, 1);
-            } else {
-                return callback(Error(`No mount point exists at path ${path}`));
-            }
-
-            bar.writeFile(constants.MANIFEST_FILE, JSON.stringify(manifest), callback);
-        });
-    };
-
-    this.listMountedDossiers = (path, callback) => {
-        loadBarForPath(path, (err, dossierContext) => {
-            if (err) {
-                return callback(err);
-            }
-
-            dossierContext.archive.readFile(constants.MANIFEST_FILE, (err, manifestContent) => {
+            getManifest((err, manifestHandler) => {
                 if (err) {
                     return callback(err);
                 }
 
-                let manifest;
-                try {
-                    manifest = JSON.parse(manifestContent.toString());
-                } catch (e) {
-                    return callback(e);
+                manifestHandler.mount(path, archiveIdentifier, options, callback);
+            });
+        });
+    };
+
+    this.unmount = (path, callback) => {
+        getManifest((err, manifestHandler) => {
+            if (err) {
+                return callback(err);
+            }
+
+            manifestHandler.unmount(path, callback);
+        });
+    };
+
+    this.listMountedDossiers = (path, callback) => {
+        this.getArchiveForPath(path, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (result.archive === bar) {
+                getManifest(listMounts);
+            } else {
+                Manifest.getManifest(result.archive, listMounts);
+            }
+
+            function listMounts(err, handler) {
+                if (err) {
+                    return callback(err);
                 }
 
-                const matchingMounts = [];
-                manifest.mounts.forEach(mount => {
-                    let sep = mount.localPath === "/" ? "" : "/";
-                    let pth = mount.localPath + sep + mount.mountName;
+                handler.getMountedDossiers(result.relativePath, callback);
+            }
+        });
+    };
 
-                    if (pth.startsWith(dossierContext.relativePath)) {
-                        if (path !== "/" && path !== "" && typeof path !== "function" && pth[0] === "/") {
-                            pth = pth.slice(1);
-                        }
 
-                        matchingMounts.push({path: pth, dossierReference: mount.archiveIdentifier});
-                    }
-                });
-                callback(undefined, matchingMounts);
-            });
+    this.getArchiveForPath = function (path, callback) {
+        getManifest((err, handler) => {
+            if (err) {
+                return callback(err);
+            }
+
+            handler.getArchiveForPath(path, callback);
         });
     };
 
@@ -7958,7 +8000,7 @@ function RawDossier(endpoint, seed, cache) {
      */
     this.setValidator = (validator) => {
         bar.setValidator(validator);
-    }
+    };
 
     //------------------------------------------------- internal functions ---------------------------------------------
     function createBlockchain(bar) {
@@ -7993,106 +8035,11 @@ function RawDossier(endpoint, seed, cache) {
 
         return barModule.createArchive(archiveConfigurator);
     }
-
-    function loadBarForPath(path, callback) {
-        if (typeof path === "function") {
-            callback = path;
-            path = "/";
-        }
-
-        __loadBarForPathRecursively(bar, "", path, false, callback);
-
-        function __loadBarForPathRecursively(archive, prefixPath, relativePath, readonly, callback) {
-            if (relativePath === "" || relativePath === "/") {
-                return callback(undefined, {archive, prefixPath, readonly, relativePath});
-            }
-
-            archive.listFiles((err, files) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                if (files.length === 0) {
-                    __searchInManifest();
-                } else {
-                    let barPath = files.find(file => {
-                        return file.includes(relativePath) || relativePath.includes(file);
-                    });
-
-                    if (barPath) {
-                        return callback(undefined, {archive, prefixPath, readonly, relativePath});
-                    } else {
-                        __searchInManifest();
-                    }
-
-                }
-
-                function __searchInManifest() {
-                    let pathRest = [];
-                    let splitPath = relativePath.split("/");
-                    if (splitPath[0] === "") {
-                        splitPath[0] = "/";
-                    }
-
-                    archive.readFile("/" + constants.MANIFEST_FILE, (err, manifestContent) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        const manifest = JSON.parse(manifestContent.toString());
-                        pathRest.unshift(splitPath.pop());
-                        if (splitPath.length === 0) {
-                            return callback(undefined, {archive, prefixPath, readonly, relativePath});
-                        }
-
-                        while (splitPath.length > 0) {
-                            let localPath;
-                            if (splitPath[0] === "/") {
-                                while (splitPath[0] === "/") {
-                                    splitPath.shift();
-                                }
-                                localPath = "/" + splitPath.join("/");
-                                splitPath.unshift("/");
-                            } else {
-                                localPath = splitPath.join("/");
-                            }
-
-                            for (let mount of manifest.mounts) {
-                                const name = pathRest[0];
-                                if (mount.localPath === localPath && mount.mountName === name) {
-                                    pathRest.shift();
-
-                                    let newPath;
-                                    if (prefixPath.endsWith("/") || prefixPath === "") {
-                                        newPath = prefixPath + localPath + "/" + name;
-                                    } else {
-                                        newPath = prefixPath + "/" + localPath + "/" + name;
-                                    }
-                                    const internalArchive = createBar(mount.archiveIdentifier);
-                                    let remainingPath = pathRest.join("/");
-                                    if (remainingPath[0] !== "/") {
-                                        //when navigate into an archive we need to ensure that the remainingPath starts with /
-                                        remainingPath = "/" + remainingPath;
-                                    }
-                                    return __loadBarForPathRecursively(internalArchive, newPath, remainingPath, mount.readonly, callback);
-                                }
-                            }
-
-                            pathRest.unshift(splitPath.pop());
-                            if (splitPath.length === 0) {
-                                return callback(Error(`Path ${path} could not be found.`));
-                            }
-                        }
-                    });
-                }
-            });
-        }
-    }
 }
 
 module.exports = RawDossier;
 
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 
@@ -11553,10 +11500,9 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 		const listFiles = promisify(this.rawDossier.listFiles);
 		const readFile = promisify(this.rawDossier.readFile);
 
-		let fileList = await listFiles(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
-
-		fileList = bundles.filter(bundle => fileList.includes(bundle))
-			.map(bundle => pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
+		let fileList = await listFiles(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
+		fileList = bundles.filter(bundle => fileList.includes(bundle) || fileList.includes(`/${bundle}`))
+			.map(bundle => pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
 
 		if (fileList.length !== bundles.length) {
 			const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
@@ -13218,8 +13164,13 @@ function normalize(pth) {
 function join(...args) {
     let pth = "";
     for (let i = 0; i < args.length; i++) {
-        pth += "/" + args[i];
+        if (i !== 0 && args[i - 1] !== "") {
+            pth += "/";
+        }
+
+        pth += args[i];
     }
+
     return normalize(pth);
 }
 
@@ -13244,11 +13195,75 @@ function ensureIsAbsolute(pth) {
     return __ensureIsAbsolute(pth);
 }
 
+function isSubpath(path, subPath) {
+    path = normalize(path);
+    subPath = normalize(subPath);
+    let result = false;
+    if (path.indexOf(subPath) === 0) {
+        let char = path[subPath.length];
+        if (char === "" || char === "/" || subPath === "/") {
+            result = true;
+        }
+    }
+
+    return result;
+}
+
+function dirname(path) {
+    if (path === "/") {
+        return path;
+    }
+    const pathSegments = path.split("/");
+    pathSegments.pop();
+    return ensureIsAbsolute(pathSegments.join("/"));
+}
+
+function basename(path) {
+    if (path === "/") {
+        return path;
+    }
+    return path.split("/").pop;
+}
+
+function relative(from, to) {
+    from = normalize(from);
+    to = normalize(to);
+
+    const fromSegments = from.split("/");
+    const toSegments = to.split("/");
+    let splitIndex;
+    for (let i = 0; i < fromSegments.length; i++) {
+        if (fromSegments[i] !== toSegments[i]) {
+            break;
+        }
+        splitIndex = i;
+    }
+
+    if (typeof splitIndex === "undefined") {
+        throw Error(`The paths <${from}> and <${to}> have nothing in common`);
+    }
+
+    splitIndex++;
+    let relativePath = [];
+    for (let i = splitIndex; i < fromSegments.length; i++) {
+        relativePath.push("..");
+    }
+    for (let i = splitIndex; i < toSegments.length; i++) {
+        relativePath.push(toSegments[i]);
+    }
+
+    return relativePath.join("/");
+}
+
 module.exports = {
     normalize,
     join,
     isAbsolute,
-    ensureIsAbsolute
+    ensureIsAbsolute,
+    isSubpath,
+    dirname,
+    basename,
+    relative
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
