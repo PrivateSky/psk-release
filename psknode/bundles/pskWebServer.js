@@ -1457,7 +1457,7 @@ function DossierWizardMiddleware(server) {
     server.post(`${URL_PREFIX}/mount/:transactionId`, (req, res) => {
         const transactionId = req.params.transactionId;
         const mountPoint = {
-            mountPath: req.headers['x-mount-path'],
+            path: req.headers['x-mount-path'],
             seed: req.headers['x-mounted-dossier-seed']
         };
 
@@ -1592,8 +1592,8 @@ function addFile(workingDir, dossierPath, archive, callback) {
     archive.addFile(path.join(workingDir, path.basename(dossierPath)), dossierPath, callback);
 }
 
-function mount(workingDir, mountPath, mountName, seed, archive, callback) {
-    archive.mount(mountPath, mountName, seed, false, callback);
+function mount(workingDir, path, seed, archive, callback) {
+    archive.mount(path, seed, false, callback);
 }
 
 module.exports = {
@@ -1656,7 +1656,7 @@ function judge(command, archive, workingDir, callback) {
             break;
 
         case 'mount':
-            dossierOperations.mount(workingDir, command.params.mountPath, command.params.mountName, command.params.seed, archive, callback);
+            dossierOperations.mount(workingDir, command.params.path, command.params.seed, archive, callback);
             break;
 
         default:
@@ -1726,8 +1726,7 @@ function mount(workingDir, mountPoint, callback) {
     const cmd = {
         name: 'mount',
         params: {
-            mountPath: path.dirname(mountPoint.mountPath),
-            mountName: path.basename(mountPoint.mountPath),
+            path: path.dirname(mountPoint.path),
             seed: mountPoint.seed
         }
     };
@@ -5190,7 +5189,7 @@ function ServerConfig(conf) {
         storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
-        "endpoints":["virtualMQ", "staticServer", "edfs", "filesManager", "dossierWizard"],
+        "endpoints":["virtualMQ", "edfs", "filesManager", "dossierWizard"],
         "endpointsConfig": {
             "virtualMQ": {
                 "channelsFolderName": "channels",
