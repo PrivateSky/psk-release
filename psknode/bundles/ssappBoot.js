@@ -57287,6 +57287,7 @@ function fn5 (a, b, c, d, e, m, k, s) {
 module.exports = RIPEMD160
 
 },{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","hash-base":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer

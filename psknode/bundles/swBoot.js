@@ -12158,7 +12158,11 @@ const extensionsMimeTypes = {
     }, "mpeg": {
         name: "video/mpeg",
         binary: true
-    }, "mpkg": {
+    },
+	"mp4": {
+		name: "video/mp4",
+		binary: true
+	},"mpkg": {
         name: "application/vnd.apple.installer+xm",
         binary: true
     }, "odp": {
@@ -12326,6 +12330,7 @@ module.exports.getMimeTypeFromExtension = function (extension) {
     }
     return defaultMimeType;
 };
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
 const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
@@ -52870,6 +52875,7 @@ function fn5 (a, b, c, d, e, m, k, s) {
 module.exports = RIPEMD160
 
 },{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","hash-base":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -58642,6 +58648,7 @@ module.exports.isStream = require("./lib/utils/isStream");
 (function (Buffer,global){
 const SWBootScript = require("./SWBootScript");
 const server = require("ssapp-middleware").getMiddleware();
+const MimeType = require("../util/MimeType");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
 const RawDossierHelper = require("./RawDossierHelper");
@@ -58943,7 +58950,9 @@ function downloadHandler(req, res) {
         const filename = path.split('/').pop();
         const readableStream = convertToNativeReadableStream(stream);
 
+		let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
         res.status(200);
+        res.set("Content-Type",MimeType.getMimeTypeFromExtension(fileExt).name);
         res.set("Content-Disposition", `attachment; filename="${filename}"`);
         res.send(readableStream);
     });
@@ -58990,4 +58999,4 @@ function configureUploader(config) {
 
 }).call(this,{"isBuffer":require("../../../../../node_modules/is-buffer/index.js")},typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","../../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","./RawDossierHelper":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","./Uploader":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/Uploader.js","edfs":"edfs","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js"])
+},{"../../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","../../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","../util/MimeType":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","./RawDossierHelper":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","./Uploader":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/Uploader.js","edfs":"edfs","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js"])
