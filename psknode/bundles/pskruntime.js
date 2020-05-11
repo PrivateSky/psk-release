@@ -3716,24 +3716,29 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
 	this.boot = function (callback) {
 		const __boot = async () => {
-			const seed = await getSeed();
-			edfs = await getEDFS();
-			this.rawDossier = edfs.loadRawDossier(seed);
-			try{
-                await evalBundles(runtimeBundles);
-            }catch(err)
-            {
+            const seed = await getSeed();
+            edfs = await getEDFS();
+
+            const loadRawDossier = promisify(edfs.loadRawDossier);
+            try {
+                this.rawDossier = await loadRawDossier(seed);
+            } catch (err) {
                 console.log(err);
             }
-			await initializeSwarmEngine();
-			if (typeof constitutionBundles !== "undefined") {
-				try{
-					await evalBundles(constitutionBundles, true);
-				}catch(err)
-				{
-					console.log(err);
-				}
-			}
+
+            try {
+                await evalBundles(runtimeBundles);
+            } catch(err) {
+                console.log(err);
+            }
+            await initializeSwarmEngine();
+            if (typeof constitutionBundles !== "undefined") {
+                try {
+                    await evalBundles(constitutionBundles, true);
+                } catch(err) {
+                    console.log(err);
+                }
+            }
 		};
 
 		__boot()
@@ -3993,19 +3998,24 @@ function getEDFS(callback) {
 
 function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
-    const bar = self.edfs.loadBar(self.seed);
-    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+    self.edfs.loadBar(self.seed, (err, bar) => {
         if (err) {
             return callback(err);
         }
-        self.domainName = content.toString();
-        $$.log(`Domain ${self.domainName} is booting...`);
 
-        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-        const se = require("swarm-engine");
-        se.initialise(self.domainName);
+        bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+            if (err) {
+                return callback(err);
+            }
+            self.domainName = content.toString();
+            $$.log(`Domain ${self.domainName} is booting...`);
 
-        callback();
+            $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+            const se = require("swarm-engine");
+            se.initialise(self.domainName);
+
+            callback();
+        });
     });
 }
 
@@ -4047,19 +4057,24 @@ function plugPowerCords() {
 
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
-                const rawDossier = self.edfs.loadRawDossier(self.seed);
-                rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                self.edfs.loadRawDossier(self.seed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
-                    agents.forEach(agent => {
-                        const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
-                        $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
-                    });
+                    rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    $$.event('status.domains.boot', {name: self.domainConf.alias});
-                    console.log("Domain boot successfully");
+                        agents.forEach(agent => {
+                            const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                            $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+                        });
+
+                        $$.event('status.domains.boot', {name: self.domainConf.alias});
+                        console.log("Domain boot successfully");
+                    });
                 });
             });
         })
@@ -4067,6 +4082,7 @@ function plugPowerCords() {
 }
 
 boot();
+
 },{"./BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","dossier":false,"edfs":false,"path":"path","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js":[function(require,module,exports){
 module.exports = {
     getIsolatesBootScript: function() {

@@ -125,13 +125,18 @@ function listFiles(alseed, folderPath) {
                     throw err;
                 }
 
-                const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.listFiles(folderPath, (err, fileList) => {
+                edfs.loadRawDossier(alseed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
+                    rawDossier.listFiles(folderPath, (err, fileList) => {
+                        if (err) {
+                            throw err;
+                        }
+
                     console.log("Files:", fileList);
+                });
                 });
             });
         }
@@ -163,13 +168,18 @@ function getApp(alseed, barPath, fsFolderPath) {
                 throw err;
             }
 
-            const rawDossier = edfs.loadRawDossier(alseed);
-            rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
+            edfs.loadRawDossier(alseed, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
 
-                console.log("Extracted folder.");
+                rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Extracted folder.");
+                });
             });
         });
     }
@@ -200,13 +210,18 @@ function extractFile(alseed, barPath, fsFilePath) {
                 throw err;
             }
 
-            const rawDossier = edfs.loadRawDossier(alseed);
-            rawDossier.extractFile(fsFilePath, barPath, (err) => {
+            edfs.loadRawDossier(alseed, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
 
-                console.log("Extracted file.");
+                rawDossier.extractFile(fsFilePath, barPath, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log("Extracted file.");
+                });
             });
         });
     }
@@ -228,19 +243,25 @@ function createDossier(domainName, constitutionPath, noSave) {
     if (noSave === "nosave") {
         const edfs = utils.getInitializedEDFS();
         const archive = edfs.createBar();
-        archive.addFolder(path.resolve(constitutionPath), "/", (err) => {
+        archive.load((err) => {
             if (err) {
                 throw err;
             }
 
-            archive.writeFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, domainName, () => {
+            archive.addFolder(path.resolve(constitutionPath), "/", (err) => {
                 if (err) {
                     throw err;
                 }
-                console.log("The dossier was created. Its SEED is the following.");
-                console.log("SEED", archive.getSeed());
+
+                archive.writeFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, domainName, () => {
+                    if (err) {
+                        throw err;
+                    }
+                    console.log("The dossier was created. Its SEED is the following.");
+                    console.log("SEED", archive.getSeed());
+                });
             });
-        });
+        })
     } else {
         getPassword((err, password) => {
             if (err) {
@@ -275,23 +296,29 @@ function createDossier(domainName, constitutionPath, noSave) {
                                 process.exit(1);
                             }
                             const archive = edfs.createBar();
-                            archive.addFolder(path.resolve(constitutionPath), "/", (err, mapDigest) => {
+                            archive.load((err) => {
                                 if (err) {
                                     throw err;
                                 }
 
-                                csb.startTransaction("StandardCSBTransactions", "addFileAnchor", domainName, "csb", archive.getSeed()).onReturn((err, res) => {
+                                archive.addFolder(path.resolve(constitutionPath), "/", (err, mapDigest) => {
                                     if (err) {
-                                        console.error(err);
-                                        process.exit(1);
+                                        throw err;
                                     }
 
-                                    console.log("The CSB was created and a reference to it has been added to the wallet.");
-                                    console.log("Its SEED is:", archive.getSeed());
-                                    process.exit(0);
-                                });
+                                    csb.startTransaction("StandardCSBTransactions", "addFileAnchor", domainName, "csb", archive.getSeed()).onReturn((err, res) => {
+                                        if (err) {
+                                            console.error(err);
+                                            process.exit(1);
+                                        }
 
-                            });
+                                        console.log("The CSB was created and a reference to it has been added to the wallet.");
+                                        console.log("Its SEED is:", archive.getSeed());
+                                        process.exit(0);
+                                    });
+
+                                });
+                            })
                         });
                     });
                 });
@@ -330,14 +357,19 @@ function setApp(alseed, appPath) {
                 throw err;
             }
 
-            const bar = edfs.loadBar(alseed);
-            bar.addFolder(appPath, EDFS.constants.CSB.APP_FOLDER, (err) => {
+            edfs.loadBar(alseed, (err, bar) => {
                 if (err) {
                     throw err;
                 }
 
-                console.log('All done');
-            })
+                bar.addFolder(appPath, EDFS.constants.CSB.APP_FOLDER, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    console.log('All done');
+                })
+            });
         });
     }
 }
@@ -385,13 +417,14 @@ function mount(alseed, path, archiveIdentifier) {
                     throw err;
                 }
 
-                const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.mount(path, archiveIdentifier, (err) => {
-                    if (err) {
-                        throw err;
-                    }
+                edfs.loadRawDossier(alseed, (err, rawDossier) => {
+                    rawDossier.mount(path, archiveIdentifier, (err) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    console.log("Successfully mounted.");
+                        console.log("Successfully mounted.");
+                    });
                 });
             });
         }
@@ -440,13 +473,17 @@ function unmount(alseed, path) {
                     throw err;
                 }
 
-                const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.unmount(path, (err) => {
+                edfs.loadRawDossier(alseed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
+                    rawDossier.unmount(path, (err) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    console.log("Successfully unmounted.");
+                        console.log("Successfully unmounted.");
+                    });
                 });
             });
         }
@@ -495,13 +532,18 @@ function listMounts(alseed, path) {
                     throw err;
                 }
 
-                const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.listMountedDossiers(path, (err, mounts) => {
+                edfs.loadRawDossier(alseed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
-                    console.log(mounts);
+                    rawDossier.listMountedDossiers(path, (err, mounts) => {
+                        if (err) {
+                            throw err;
+                        }
+
+                        console.log(mounts);
+                    });
                 });
             });
         }
@@ -513,6 +555,7 @@ addCommand("set", "app", setApp, " <seed>/<alias> <folderPath> \t\t\t\t\t |add a
 addCommand("mount", null, mount, "<seed>/<alias> <path> <archiveIdentifier> <> \t\t\t\t |Mounts the dossier having the seed <seed> at <path>");
 addCommand("unmount", null, unmount, "<seed>/<alias> <path> \t\t\t\t |Unmounts the dossier mounted at <path>");
 addCommand("list", "mounts", listMounts, "<seed>/<alias> <path>\t\t\t\t |Lists the seeds of all dossiers mounted at <path>");
+
 },{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
 require("./wallet");
 require("./bar");
@@ -912,7 +955,12 @@ function loadArchiveWithAlias(alias, callback) {
                         return callback(err);
                     }
 
-                    callback(undefined, edfs.loadRawDossier(seed));
+                    edfs.loadRawDossier(seed, (err, rawDossier) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(undefined, rawDossier);
+                    })
                 });
             });
         });
@@ -963,6 +1011,7 @@ module.exports = {
     getOwnIdentity,
     loadArchiveWithAlias,
 };
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","bar":false,"dossier":false,"edfs":false}],"buffer-crc32":[function(require,module,exports){

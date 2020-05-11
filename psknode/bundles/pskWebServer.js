@@ -1618,13 +1618,19 @@ function executioner(workingDir, callback) {
             return callback(e);
         }
 
-        executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+        archive.load((err) => {
             if (err) {
                 return callback(err);
             }
 
-            callback(undefined, archive.getSeed());
-        });
+            executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, archive.getSeed());
+            });
+        })
     });
 }
 
@@ -2220,21 +2226,45 @@ function EDFS(endpoint, options) {
 
     this.bootRawDossier = (seed, callback) => {
         const rawDossier = new RawDossier(endpoint, seed, cache);
-        rawDossier.start(err => callback(err, rawDossier));
+        rawDossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            rawDossier.start(err => callback(err, rawDossier));
+        })
     };
 
-    this.loadRawDossier = (seed) => {
-        return new RawDossier(endpoint, seed, cache);
+    this.loadRawDossier = (seed, callback) => {
+        const dossier = new RawDossier(endpoint, seed, cache);
+        dossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, dossier);
+        });
     };
 
-    this.loadBar = (seed) => {
-        return barModule.createArchive(createArchiveConfig(seed));
+    this.loadBar = (seed, callback) => {
+        const bar = barModule.createArchive(createArchiveConfig(seed));
+        bar.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, bar);
+        });
     };
 
     this.clone = (seed, callback) => {
         const edfsBrickStorage = require("edfs-brick-storage").create(endpoint);
-        const bar = this.loadBar(seed);
-        bar.clone(edfsBrickStorage, true, callback);
+        this.loadBar(seed, (err, bar) => {
+            if (err) {
+                return callback(err);
+            }
+            bar.clone(edfsBrickStorage, true, callback);
+        })
     };
 
     this.createWallet = (templateSeed, password, overwrite, callback) => {
@@ -2243,23 +2273,29 @@ function EDFS(endpoint, options) {
             overwrite = false;
         }
         const wallet = this.createRawDossier();
-        wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+        wallet.load((err) => {
             if (err) {
                 return callback(err);
             }
 
-            const seed = wallet.getSeed();
-            if (typeof password !== "undefined") {
-                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
+            wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const seed = wallet.getSeed();
+                if (typeof password !== "undefined") {
+                    require("../seedCage").putSeed(seed, password, overwrite, (err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(undefined, seed.toString());
+                    });
+                } else {
                     callback(undefined, seed.toString());
-                });
-            } else {
-                callback(undefined, seed.toString());
-            }
-        }));
+                }
+            }));
+        })
     };
 
     this.loadWallet = function (walletSeed, password, overwrite, callback) {
@@ -2274,34 +2310,32 @@ function EDFS(endpoint, options) {
                 if (err) {
                     return callback(err);
                 }
-                let rawDossier = this.loadRawDossier(seed);
-
-                if (!rawDossier) {
-                    return callback(new Error("RawDossier is not available"));
-                }
-                return callback(undefined, rawDossier);
-
+                this.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    return callback(undefined, dossier);
+                });
             });
-        } else {
+            return;
+        }
 
-            let rawDossier = this.loadRawDossier(walletSeed);
-
-            if (!rawDossier) {
-                return callback(new Error("RawDossier is not available"));
+        this.loadRawDossier(walletSeed, (err, dossier) => {
+            if (err) {
+                return callback(err);
             }
-
 
             if (typeof password !== "undefined" && password !== null) {
                 require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
-                    callback(undefined, rawDossier);
+                    callback(undefined, dossier);
                 });
             } else {
-                return callback(undefined, rawDossier);
+                return callback(undefined, dossier);
             }
-        }
+        });
     };
 
 //------------------------------------------------ internal methods -------------------------------------------------
@@ -2441,25 +2475,36 @@ function Manifest(archive, callback) {
         callback(undefined, mountedDossiers);
     };
 
-function getArchive(seed, asDossier, callback) {
-    if (typeof asDossier === "function") {
-        callback = asDossier;
-        asDossier = false;
+    function getArchive(seed, asDossier, callback) {
+        if (typeof asDossier === "function") {
+            callback = asDossier;
+            asDossier = false;
+        }
+        let edfsModuleName = "edfs";
+        let EDFS = require(edfsModuleName);
+        EDFS.attachWithSeed(seed, function (err, edfs) {
+            if (err) {
+                return callback(err);
+            }
+
+            if (asDossier) {
+                return edfs.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, dossier);
+                })
+            }
+
+            edfs.loadBar(seed, (err, bar) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, bar);
+            })
+        });
     }
-    let edfsModuleName = "edfs";
-    let EDFS = require(edfsModuleName);
-    EDFS.attachWithSeed(seed, function (err, edfs) {
-        if (err) {
-            return callback(err);
-        }
-
-        if (asDossier) {
-            return callback(undefined, edfs.loadRawDossier(seed));
-        }
-
-        callback(undefined, edfs.loadBar(seed));
-    });
-}
 
     function persist(callback) {
         archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
@@ -2496,12 +2541,17 @@ function RawDossier(endpoint, seed, cache) {
     const pskPath = require("swarmutils").path;
     let manifestHandler;
     const bar = createBar(seed);
+
     this.getSeed = () => {
         return bar.getSeed();
     };
 
     this.start = (callback) => {
         createBlockchain(bar).start(callback);
+    };
+
+    this.load = (callback) => {
+        bar.load(callback);
     };
 
     function getManifest(callback) {

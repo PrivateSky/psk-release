@@ -421,7 +421,7 @@ module.exports.createArchiveConfigurator = () => {
 };
 
 module.exports.createBarMap = (header) => {
-    const BarMap = require("./lib/FolderBarMap");
+    const BarMap = require("./lib/BarMap");
     return new BarMap(header);
 };
 
@@ -429,7 +429,7 @@ module.exports.Seed = require('./lib/Seed');
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js","./lib/Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/BarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BarMap.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js","./lib/Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require('./Brick');
 const pathModule = "path";
@@ -441,18 +441,102 @@ const TaskCounter = swarmutils.TaskCounter;
 const pskPth = swarmutils.path;
 const crypto = require('pskcrypto');
 const adler32 = require('adler32');
+const BrickStorageService = require('./BrickStorageService').Service;
 
+/**
+ * @param {ArchiveConfigurator} archiveConfigurator
+ */
 function Archive(archiveConfigurator) {
-
-    const archiveFsAdapter = archiveConfigurator.getFsAdapter();
-    const storageProvider = archiveConfigurator.getStorageProvider();
-    const cache = archiveConfigurator.getCache();
-
     let cachedSEED;
     let barMap;
     let cachedMapDigest;
     let validator;
 
+    const brickStorageService = buildBrickStorageServiceInstance();
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * Create and configura the BrickStorageService
+     *
+     * @return {BrickStorageService}
+     */
+    function buildBrickStorageServiceInstance() {
+        const instance = new BrickStorageService({
+            cache: archiveConfigurator.getCache(),
+            bufferSize: archiveConfigurator.getBufferSize(),
+            storageProvider: archiveConfigurator.getStorageProvider(),
+
+            brickFactoryCallback: () => {
+                return new Brick(archiveConfigurator);
+            },
+
+            barMapConfiguratorCallback: (barMap) => {
+                if (archiveConfigurator.getMapEncryptionKey()) {
+                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
+                }
+
+                if (!barMap.getConfig()) {
+                    barMap.setConfig(archiveConfigurator);
+                }
+
+                barMap.load();
+                return barMap;
+            },
+
+            brickDataExtractorCallback: (brickMeta, brick) => {
+                brick.setConfig(archiveConfigurator);
+                const transformParameters = barMap.getTransformParameters(brickMeta);
+                brick.setTransformParameters(transformParameters);
+
+                return brick.getRawData();
+            },
+
+            fsAdapter: archiveConfigurator.getFsAdapter()
+        });
+
+        return instance;
+    }
+
+    /**
+     * @param {string} fileBarPath
+     * @return {string}
+     */
+    function computeFileHash(fileBarPath) {
+        const hashList = barMap.getBricksMeta(fileBarPath).map(brickMeta => brickMeta.hash);
+        const PskHash = crypto.PskHash;
+        const pskHash = new PskHash();
+        hashList.forEach(hash => {
+            pskHash.update(hash);
+        });
+
+        return pskHash.digest();
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {callback} callback
+     */
+    this.load = (callback) => {
+        const barMapHash = archiveConfigurator.getMapDigest();
+        brickStorageService.getBarMap(barMapHash, (err, map) => {
+            if (err) {
+                return callback(err);
+            }
+
+            barMap = map;
+            callback();
+        })
+    };
+
+    /**
+     * @return {string}
+     */
     this.getMapDigest = () => {
         if (cachedMapDigest) {
             return cachedMapDigest;
@@ -462,11 +546,17 @@ function Archive(archiveConfigurator) {
         return cachedMapDigest;
     };
 
+    /**
+     * @param {string} seed
+     */
     this.setSeed = (seed) => {
         cachedSEED = seed;
         archiveConfigurator.setSeed(Buffer.from(seed));
     };
 
+    /**
+     * @return {string}
+     */
     this.getSeed = () => {
         if (cachedSEED) {
             return cachedSEED;
@@ -476,31 +566,49 @@ function Archive(archiveConfigurator) {
         return cachedSEED;
     };
 
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     * @return {string}
+     */
     this.getFileHash = (barPath, callback) => {
         barPath = pskPth.normalize(barPath);
-        loadBarMapThenExecute(() => {
-            callback(undefined, __computeFileHash(barPath).toString("hex"));
-        }, callback)
+        const hash = computeFileHash(barPath).toString("hex");
+        callback(undefined, hash);
+        return hash;
     };
 
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     * @return {string}
+     */
     this.getFolderHash = (barPath, callback) => {
         barPath = pskPth.normalize(barPath);
-        loadBarMapThenExecute(() => {
-            const fileList = barMap.getFileList(barPath);
-            if (fileList.length === 1) {
-                return callback(undefined, __computeFileHash(pskPth.join(barPath, fileList[0]).toString("hex")));
-            }
-            fileList.sort();
+        const fileList = barMap.getFileList(barPath);
+        if (fileList.length === 1) {
+            const hash = computeFileHash(pskPth.join(barPath, fileList[0]).toString("hex"));
+            callback(undefined, hash);
+            return hash;
+        }
+        fileList.sort();
 
-            let xor = __computeFileHash(pskPth.join(barPath, fileList[0]));
-            for (let i = 0; i < fileList.length - 1; i++) {
-                xor = crypto.xorBuffers(xor, __computeFileHash(pskPth.join(barPath, fileList[i + 1])));
-            }
+        let xor = computeFileHash(pskPth.join(barPath, fileList[0]));
+        for (let i = 0; i < fileList.length - 1; i++) {
+            xor = crypto.xorBuffers(xor, computeFileHash(pskPth.join(barPath, fileList[i + 1])));
+        }
 
-            callback(undefined, crypto.pskHash(xor, "hex"));
-        }, callback);
+        const hash = crypto.pskHash(xor, "hex");
+        callback(undefined, hash);
+        return hash;
     };
 
+    /**
+     * @param {string} barPath
+     * @param {string|Buffer|stream.ReadableStream} data
+     * @param {object} options
+     * @param {callback} callback
+     */
     this.writeFile = (barPath, data, options, callback) => {
         if (typeof options === "function") {
             callback = options;
@@ -509,120 +617,71 @@ function Archive(archiveConfigurator) {
         }
         barPath = pskPth.normalize(barPath);
 
-        loadBarMapThenExecute(__addData, callback);
+        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        function __addData() {
-            archiveConfigurator.setIsEncrypted(options.encrypt);
-            const bufferSize = archiveConfigurator.getBufferSize();
-
-            if (typeof data === "string") {
-                data = Buffer.from(data);
+        brickStorageService.ingestData(data, (err, result) => {
+            if (err) {
+                return callback(err);
             }
 
-
-            if (Buffer.isBuffer(data)) {
-                let bricks;
-                try {
-                    bricks = createBricksFromBuffer(data, bufferSize);
-                } catch (e) {
-                    return callback(e);
-                }
-                return updateBar(barPath, bricks, callback);
-            }
-
-            if (isStream.isReadable(data)) {
-                return createBricksFromStream(data, bufferSize, (err, bricks) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    updateBar(barPath, bricks, callback);
-                });
-            }
-
-            return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
-        }
+            barMap.addFileEntry(barPath, result);
+            this.saveBarMap(callback);
+        });
     };
 
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     */
     this.readFile = (barPath, callback) => {
         barPath = pskPth.normalize(barPath);
-        loadBarMapThenExecute(__readFile, callback);
 
-        function __readFile() {
-            let fileData = Buffer.alloc(0);
-            let bricksMeta;
-            try {
-                bricksMeta = barMap.getBricksMeta(barPath);
-            } catch (err) {
+        let bricksMeta;
+
+        try {
+            bricksMeta = barMap.getBricksMeta(barPath);
+        } catch (err) {
+            return callback(err);
+        }
+
+        brickStorageService.createBufferFromBricks(bricksMeta, (err, buffer) => {
+            if (err) {
                 return callback(err);
             }
 
-            getFileRecursively(0, callback);
-
-            function getFileRecursively(brickIndex, callback) {
-                const brickMeta = bricksMeta[brickIndex];
-                getBrickData(brickMeta, (err, data) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    fileData = Buffer.concat([fileData, data]);
-                    ++brickIndex;
-
-                    if (brickIndex < bricksMeta.length) {
-                        getFileRecursively(brickIndex, callback);
-                    } else {
-                        callback(undefined, fileData);
-                    }
-
-                });
-            }
-        }
+            callback(undefined, buffer);
+        });
     };
 
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     */
     this.createReadStream = (barPath, callback) => {
         barPath = pskPth.normalize(barPath);
-        loadBarMapThenExecute(__prepareStream, callback);
 
-        function __prepareStream() {
-            let brickIndex = 0;
-            let bricksMeta;
+        let bricksMeta;
+        try {
+            bricksMeta = barMap.getBricksMeta(barPath);
+        } catch (err) {
+            return callback(err);
+        }
 
-            try {
-                bricksMeta = barMap.getBricksMeta(barPath);
-            } catch (err) {
+        brickStorageService.createStreamFromBricks(bricksMeta, (err, stream) => {
+            if (err) {
                 return callback(err);
             }
 
-            const readableStream = new stream.Readable({
-                read(size) {
-                    if (brickIndex < bricksMeta.length) {
-                        this.readBrickData(brickIndex++);
-                    }
-                }
-            });
-
-            // Get a brick and push it into the stream
-            readableStream.readBrickData = function (brickIndex) {
-                const brickMeta = bricksMeta[brickIndex];
-                getBrickData(brickMeta, (err, data) => {
-                    if (err) {
-                        this.destroy(err);
-                        return;
-                    }
-
-                    this.push(data);
-
-                    if (brickIndex >= (bricksMeta.length - 1)) {
-                        this.push(null);
-                    }
-                });
-            };
-
-            callback(null, readableStream);
-        }
+            callback(undefined, stream);
+        });
     };
 
+    /**
+     * @param {string} fsFilePath
+     * @param {string} barPath
+     * @param {object} options
+     * @param {callback} callback
+     */
     this.addFile = (fsFilePath, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
@@ -631,26 +690,25 @@ function Archive(archiveConfigurator) {
         }
 
         barPath = pskPth.normalize(barPath);
+        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        loadBarMapThenExecute(__addFile, callback);
+        brickStorageService.ingestFile(fsFilePath, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
 
-        function __addFile() {
-            createBricks(fsFilePath, barPath, archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                barMap.setConfig(archiveConfigurator);
-                if (archiveConfigurator.getMapEncryptionKey()) {
-                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                }
-
-                storageProvider.putBarMap(barMap, callback);
-            });
-        }
+            barMap.addFileEntry(barPath, result);
+            this.saveBarMap(callback);
+        })
     };
 
-    this.addFiles = (arrWithFilePaths, barPath, options, callback) => {
+    /**
+     * @param {string} files
+     * @param {string} barPath
+     * @param {object} options
+     * @param {callback} callback
+     */
+    this.addFiles = (files, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
             options = {};
@@ -658,148 +716,71 @@ function Archive(archiveConfigurator) {
         }
 
         barPath = pskPth.normalize(barPath);
+        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        let arr = arrWithFilePaths.slice();
+        const filesArray = files.slice();
 
-        loadBarMapThenExecute(() => {
-            recAdd()
-        }, callback);
-
-        function recAdd() {
-            if (arr.length > 0) {
-                let filePath = arr.pop();
-                let fileName = path.basename(filePath);
-
-                createBricks(filePath, pskPth.join(barPath, fileName), archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    recAdd();
-                });
-            } else {
-                barMap.setConfig(archiveConfigurator);
-                if (archiveConfigurator.getMapEncryptionKey()) {
-                    barMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                }
-                storageProvider.putBarMap(barMap, callback);
+        brickStorageService.ingestFiles(filesArray, (err, result) => {
+            if (err) {
+                return callback(err);
             }
-        }
+
+            for (const filePath in result) {
+                const bricks = result[filePath];
+                barMap.addFileEntry(pskPth.join(barPath, filePath), bricks);
+            }
+
+            this.saveBarMap(callback);
+        });
     };
 
+    /**
+     * @param {string} fsFilePath
+     * @param {string} barPath
+     * @param {callback} callback
+     */
     this.extractFile = (fsFilePath, barPath, callback) => {
         if (typeof barPath === "function") {
             callback = barPath;
             barPath = pskPth.normalize(fsFilePath);
         }
 
+        let bricksMeta;
 
-        loadBarMapThenExecute(__extractFile, callback);
-
-        function __extractFile() {
-            const bricksMeta = barMap.getBricksMeta(barPath);
-            getFileRecursively(0, callback);
-
-            function getFileRecursively(brickIndex, callback) {
-                const brickMeta = bricksMeta[brickIndex];
-                getBrickData(brickMeta, (err, data) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    archiveFsAdapter.appendBlockToFile(fsFilePath, data, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        ++brickIndex;
-                        if (brickIndex < bricksMeta.length) {
-                            getFileRecursively(brickIndex, callback);
-                        } else {
-                            callback();
-                        }
-                    });
-                })
-            }
+        try {
+            bricksMeta = barMap.getBricksMeta(barPath);
+        } catch (err) {
+            return callback(err);
         }
+
+
+        brickStorageService.createFileFromBricks(fsFilePath, bricksMeta, callback);
     };
 
-    this.appendToFile = (filePath, data, callback) => {
+    /**
+     * @param {string} barPath
+     * @param {string|Buffer|stream.ReadableStream} data
+     * @param {callback} callback
+     */
+    this.appendToFile = (barPath, data, callback) => {
+        barPath = pskPth.normalize(barPath);
 
-        loadBarMapThenExecute(__appendToFile, callback);
-
-        function __appendToFile() {
-            filePath = path.normalize(filePath);
-
-            if (typeof data === "string") {
-                data = Buffer.from(data);
-            }
-            if (Buffer.isBuffer(data)) {
-                const dataBrick = new Brick(data);
-                storageProvider.putBrick(dataBrick, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    barMap.add(filePath, dataBrick);
-                    putBarMap(callback);
-                });
-                return;
+        brickStorageService.ingestData(data, (err, result) => {
+            if (err) {
+                return callback(err);
             }
 
-            if (isStream.isReadable(data)) {
-                data.on('error', (err) => {
-                    return callback(err);
-                }).on('data', (chunk) => {
-                    const dataBrick = new Brick(chunk);
-                    barMap.add(filePath, dataBrick);
-                    storageProvider.putBrick(dataBrick, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                    });
-                }).on("end", () => {
-                    putBarMap(callback);
-                });
-                return;
-            }
-            callback(new Error("Invalid type of parameter data"));
-        }
+            barMap.appendBricksToEntry(barPath, result);
+            this.saveBarMap(callback);
+        })
     };
 
-
-    this.replaceFile = (fileName, stream, callback) => {
-        if (typeof stream !== 'object') {
-            return callback(new Error('Wrong stream!'));
-        }
-
-        loadBarMapThenExecute(__replaceFile, callback);
-
-        function __replaceFile() {
-            fileName = path.normalize(fileName);
-            stream.on('error', () => {
-                return callback(new Error("File does not exist!"));
-            }).on('open', () => {
-                storageProvider.deleteFile(fileName, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    barMap.emptyList(fileName);
-                });
-            }).on('data', (chunk) => {
-                let tempBrick = new Brick(chunk);
-                barMap.add(fileName, tempBrick);
-                storageProvider.putBrick(tempBrick, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    putBarMap(callback);
-                });
-            });
-        }
-    };
-
+    /**
+     * @param {string} fsFolderPath
+     * @param {string} barPath
+     * @param {object} options
+     * @param {callback} callback
+     */
     this.addFolder = (fsFolderPath, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
@@ -807,88 +788,83 @@ function Archive(archiveConfigurator) {
             options.encrypt = true;
         }
         barPath = pskPth.normalize(barPath);
-        const filesIterator = archiveFsAdapter.getFilesIterator(fsFolderPath);
+        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        loadBarMapThenExecute(__addFolder, callback);
-
-        function __addFolder() {
-
-            filesIterator.next(readFileCb);
-
-            function readFileCb(err, file, rootFsPath) {
-                if (err) {
-                    return callback(err);
-                }
-
-                if (typeof file !== "undefined") {
-                    createBricks(path.join(rootFsPath, file), pskPth.join(barPath, file), archiveConfigurator.getBufferSize(), options.encrypt, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        filesIterator.next(readFileCb);
-                    });
-                } else {
-                    storageProvider.putBarMap(barMap, (err, mapDigest) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        archiveConfigurator.setMapDigest(mapDigest);
-                        callback(undefined, mapDigest);
-                    });
-                }
+        brickStorageService.ingestFolder(fsFolderPath, (err, result) => {
+            if (err) {
+                return callback(err);
             }
-        }
+
+
+            for (const filePath in result) {
+                const bricks = result[filePath];
+                barMap.addFileEntry(pskPth.join(barPath, filePath), bricks);
+            }
+
+            this.saveBarMap(callback);
+        });
     };
 
-
+    /**
+     * @param {string} fsFolderPath
+     * @param {string} barPath
+     * @param {callback} callback
+     */
     this.extractFolder = (fsFolderPath, barPath, callback) => {
         if (typeof barPath === "function") {
             callback = barPath;
             barPath = pskPth.normalize(fsFolderPath);
         }
 
-        loadBarMapThenExecute(() => {
-            const filePaths = barMap.getFileList(barPath);
-            const taskCounter = new TaskCounter(() => {
-                callback();
-            });
-            taskCounter.increment(filePaths.length);
-            filePaths.forEach(filePath => {
-                let actualPath;
-                if (fsFolderPath) {
-                    if (fsFolderPath.includes(filePath)) {
-                        actualPath = fsFolderPath;
-                    } else {
-                        actualPath = path.join(fsFolderPath, filePath);
-                    }
+        const filePaths = barMap.getFileList(barPath);
+        const taskCounter = new TaskCounter(() => {
+            callback();
+        });
+        taskCounter.increment(filePaths.length);
+        filePaths.forEach(filePath => {
+            let actualPath;
+            if (fsFolderPath) {
+                if (fsFolderPath.includes(filePath)) {
+                    actualPath = fsFolderPath;
                 } else {
-                    actualPath = filePath;
+                    actualPath = path.join(fsFolderPath, filePath);
+                }
+            } else {
+                actualPath = filePath;
+            }
+
+            this.extractFile(actualPath, filePath, (err) => {
+                if (err) {
+                    return callback(err);
                 }
 
-                this.extractFile(actualPath, filePath, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    taskCounter.decrement();
-                });
+                taskCounter.decrement();
             });
-        }, callback);
+        });
     };
 
-    this.store = (callback) => {
-        storageProvider.putBarMap(barMap, callback);
+    /**
+     * @param {callback} callback
+     */
+    this.saveBarMap = (callback) => {
+        brickStorageService.putBarMap(barMap, callback);
     };
 
+
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     */
     this.delete = (barPath, callback) => {
-        loadBarMapThenExecute(() => {
-            barMap.delete(barPath);
-            callback();
-        }, callback);
+        barMap.delete(barPath);
+        callback();
     };
 
+    /**
+     * @param {string} folderBarPath
+     * @param {object} options
+     * @param {callback} callback
+     */
     this.listFiles = (folderBarPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
@@ -899,107 +875,80 @@ function Archive(archiveConfigurator) {
             folderBarPath = "/";
         }
 
+        let fileList;
+        try {
+            fileList = barMap.getFileList(folderBarPath, options.recursive);
+        } catch (e) {
+            return callback(e);
+        }
 
-        loadBarMapThenExecute(() => {
-            let fileList;
-            try {
-                fileList = barMap.getFileList(folderBarPath, options.recursive);
-            } catch (e) {
-                return callback(e);
-            }
-
-            callback(undefined, fileList);
-        }, callback);
+        callback(undefined, fileList);
     };
 
+    /**
+     * @param {string} folderBarPath
+     * @param {boolean} recursive
+     * @param {callback} callback
+     */
     this.listFolders = (folderBarPath, recursive, callback) => {
         if (typeof recursive === "function") {
             callback = recursive;
             recursive = true;
         }
 
-        loadBarMapThenExecute(() => {
-            callback(undefined, barMap.getFolderList(folderBarPath, recursive));
-        }, callback);
+        callback(undefined, barMap.getFolderList(folderBarPath, recursive));
     };
 
+    /**
+     * @param {EDFSBrickStorage} targetStorage
+     * @param {boolean} preserveKeys
+     * @param {callback} callback
+     */
     this.clone = (targetStorage, preserveKeys = true, callback) => {
         targetStorage.getBarMap((err, targetBarMap) => {
             if (err) {
                 return callback(err);
             }
 
-            loadBarMapThenExecute(__cloneBricks, callback);
 
-            function __cloneBricks() {
-                const fileList = barMap.getFileList("/");
-
-                __getFilesRecursively(fileList, 0, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    cachedSEED = archiveConfigurator.getSeed();
-                    archiveConfigurator.generateSeed();
-                    targetBarMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                    targetBarMap.setConfig(archiveConfigurator);
-                    targetStorage.putBarMap(targetBarMap, err => callback(err, archiveConfigurator.getSeed()));
-                });
+            const fileList = barMap.getFileList("/");
+            const bricksList = {};
+            for (const filepath of fileList) {
+                bricksList[filepath] = barMap.getBricksMeta(filepath);
             }
 
-            function __getFilesRecursively(fileList, fileIndex, callback) {
-                const filePath = fileList[fileIndex];
-                let bricksMeta;
-                try {
-                    bricksMeta = bricksMeta.getBricksMeta(filePath);
-                } catch (e){
-                    return callback(e);
-                }
-
-                __getBricksRecursively(filePath, bricksMeta, 0, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    ++fileIndex;
-                    if (fileIndex === fileList.length) {
-                        return callback();
+            brickStorageService.copyBricks(bricksList, {
+                dstStorage: targetStorage,
+                beforeCopyCallback: (brickId, brick) => {
+                    const transformParameters = barMap.getTransformParameters(brickId);
+                    if (transformParameters) {
+                        brick.setTransformParameters(transformParameters);
                     }
 
-                    __getFilesRecursively(fileList, fileIndex, callback);
-                });
-            }
-
-            function __getBricksRecursively(filePath, bricksMeta, brickIndex, callback) {
-                storageProvider.getBrick(bricksMeta[brickIndex].hash, (err, brick) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    brick.setTransformParameters(barMap.getTransformParameters(bricksMeta[brickIndex]));
-                    __addBrickToTarget(brick, callback);
-                });
-
-                function __addBrickToTarget(brick, callback) {
                     brick.setConfig(archiveConfigurator);
                     if (!preserveKeys) {
                         brick.createNewTransform();
                     }
 
-                    ++brickIndex;
-                    targetBarMap.add(filePath, brick);
-                    targetStorage.putBrick(brick, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        if (brickIndex === bricksMeta.length) {
-                            return callback();
-                        }
-
-                        __getBricksRecursively(filePath, bricksMeta, brickIndex, callback);
-                    });
+                    return brick;
                 }
-            }
+            }, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                for (const filepath in result) {
+                    const bricks = result[filepath];
+                    targetBarMap.addFileEntry(filepath, bricks);
+                }
+
+                cachedSEED = archiveConfigurator.getSeed();
+                archiveConfigurator.generateSeed();
+                targetBarMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
+                targetBarMap.setConfig(archiveConfigurator);
+
+                targetStorage.putBarMap(targetBarMap, err => callback(err, archiveConfigurator.getSeed()));
+            });
         });
     };
 
@@ -1011,271 +960,13 @@ function Archive(archiveConfigurator) {
     this.setValidator = (_validator) => {
         validator = _validator;
     };
-
-    //------------------------------------------- internal methods -----------------------------------------------------
-
-    function __computeFileHash(fileBarPath) {
-        const hashList = barMap.getBricksMeta(fileBarPath).map(brickMeta => brickMeta.hash);
-        const PskHash = crypto.PskHash;
-        const pskHash = new PskHash();
-        hashList.forEach(hash => {
-            pskHash.update(hash);
-        });
-
-        return pskHash.digest();
-    }
-
-    function putBarMap(callback) {
-        if (typeof archiveConfigurator.getMapDigest() !== "undefined") {
-            storageProvider.deleteFile(archiveConfigurator.getMapDigest(), (err) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                __putBarMap(callback);
-            });
-            return;
-        }
-        __putBarMap(callback);
-    }
-
-    function __putBarMap(callback) {
-        storageProvider.putBarMap(barMap, (err, newMapDigest) => {
-            if (err) {
-                return callback(err);
-            }
-
-            archiveConfigurator.setMapDigest(newMapDigest);
-            callback(undefined, archiveConfigurator.getMapDigest());
-        });
-    }
-
-    function createBricks(fsFilePath, barPath, blockSize, areEncrypted, callback) {
-        if (typeof areEncrypted === "function") {
-            callback = areEncrypted;
-            areEncrypted = true;
-        }
-        archiveFsAdapter.getFileSize(fsFilePath, (err, fileSize) => {
-            if (err) {
-                return callback(err);
-            }
-
-            let noBlocks = Math.floor(fileSize / blockSize);
-            if (fileSize % blockSize > 0) {
-                ++noBlocks;
-            }
-
-            if (!barMap.isEmpty(barPath)) {
-                barMap.emptyList(barPath);
-            }
-            __createBricksRecursively(0, callback);
-
-            function __createBricksRecursively(blockIndex, callback) {
-                archiveFsAdapter.readBlockFromFile(fsFilePath, blockIndex * blockSize, (blockIndex + 1) * blockSize - 1, (err, blockData) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    archiveConfigurator.setIsEncrypted(areEncrypted);
-                    const brick = new Brick(archiveConfigurator);
-                    brick.setRawData(blockData);
-                    barMap.add(barPath, brick);
-                    storageProvider.putBrick(brick, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        ++blockIndex;
-                        if (blockIndex < noBlocks) {
-                            __createBricksRecursively(blockIndex, callback);
-                        } else {
-                            callback();
-                        }
-                    });
-                });
-            }
-        });
-    }
-
-    /**
-     * Create bricks from a Buffer
-     * @param {Buffer} buffer
-     * @param {number} blockSize
-     * @return {Array<Brick>}
-     */
-    function createBricksFromBuffer(buffer, blockSize) {
-        let noBlocks = Math.floor(buffer.length / blockSize);
-        if ((buffer.length % blockSize) > 0) {
-            ++noBlocks;
-        }
-
-        const bricks = [];
-        for (let blockIndex = 0; blockIndex < noBlocks; blockIndex++) {
-            const blockData = buffer.slice(blockIndex * blockSize, (blockIndex + 1) * blockSize);
-
-            const brick = new Brick(archiveConfigurator);
-            brick.setRawData(blockData);
-            bricks.push(brick);
-        }
-
-        return bricks;
-    }
-
-    /**
-     * Create bricks from a Stream
-     * @param {stream.Readable} stream
-     * @param {number} blockSize
-     * @param {callback|undefined} callback
-     */
-    function createBricksFromStream(stream, blockSize, callback) {
-        let bricks = [];
-        stream.on('data', (chunk) => {
-            if (typeof chunk === 'string') {
-                chunk = Buffer.from(chunk);
-            }
-
-            let chunkBricks = createBricksFromBuffer(chunk, chunk.length);
-            bricks = bricks.concat(chunkBricks);
-        });
-        stream.on('error', (err) => {
-            callback(err);
-        });
-        stream.on('end', () => {
-            callback(undefined, bricks);
-        });
-    }
-
-    /**
-     * @param {string} barPath
-     * @param {Array<Brick} bricks
-     * @param {callback} callback
-     */
-    function updateBar(barPath, bricks, callback) {
-        if (!barMap.isEmpty(barPath)) {
-            barMap.emptyList(barPath);
-        }
-
-        for (let brick of bricks) {
-            barMap.add(barPath, brick);
-        }
-
-        function __saveBricks(bricks, callback) {
-            const brick = bricks.shift();
-
-            if (!brick) {
-                return storageProvider.putBarMap(barMap, callback);
-            }
-
-            storageProvider.putBrick(brick, (err) => {
-                if (err) {
-                    return callback(err);
-                };
-
-                __saveBricks(bricks, callback);
-            })
-        }
-
-        if (!validator || typeof validator.writeRule !== 'function') {
-            return __saveBricks(bricks, callback);
-        }
-
-        validator.writeRule.call(this, barMap, barPath, bricks, (err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            __saveBricks(bricks, callback);
-        });
-    }
-
-    /**
-     * @param {*} key
-     * @return {Boolean}
-     */
-    function hasInCache(key) {
-        if (!cache) {
-            return false;
-        }
-
-        return cache.has(key);
-    }
-
-    /**
-     * @param {*} key
-     * @param {*} value
-     */
-    function storeInCache(key, value) {
-        if (!cache) {
-            return;
-        }
-
-        cache.set(key, value);
-    }
-
-    /**
-     * Try and get brick data from cache
-     * Fallback to storage provide if not found in cache
-     *
-     * @param {string} brickMeta
-     * @param {callback} callback
-     */
-    function getBrickData(brickMeta, callback) {
-        if (!hasInCache(brickMeta.hash)) {
-            return storageProvider.getBrick(brickMeta.hash, (err, brick) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                brick.setConfig(archiveConfigurator);
-                brick.setTransformParameters(barMap.getTransformParameters(brickMeta));
-                const data = brick.getRawData();
-                storeInCache(brickMeta.hash, data);
-                callback(undefined, data);
-            });
-        }
-
-        const data = cache.get(brickMeta.hash);
-        callback(undefined, data);
-    }
-
-    function loadBarMapThenExecute(functionToBeExecuted, callback) {
-        const digest = archiveConfigurator.getMapDigest();
-        if (!digest || !hasInCache(digest)) {
-            return storageProvider.getBarMap(digest, (err, map) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                if (archiveConfigurator.getMapEncryptionKey()) {
-                    map.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                }
-
-                if (!map.getConfig()) {
-                    map.setConfig(archiveConfigurator);
-                }
-
-                map.load();
-                barMap = map;
-                if (digest) {
-                    storeInCache(digest, barMap);
-                }
-                storageProvider.setBarMap(barMap);
-                functionToBeExecuted();
-            });
-        }
-
-        const map = cache.get(digest);
-        barMap = map;
-        storageProvider.setBarMap(barMap);
-        functionToBeExecuted();
-    }
 }
 
 module.exports = Archive;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","pskcrypto":"pskcrypto","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","pskcrypto":"pskcrypto","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 const Seed = require("./Seed");
@@ -1491,511 +1182,7 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 
 module.exports = ArchiveConfigurator;
 
-},{"./Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
-const crypto = require('pskcrypto');
-const BrickTransformFactory = require("./transforms/BrickTransformFactory");
-const transformFactory = new BrickTransformFactory();
-const adler32 = require('adler32');
-
-function Brick(config) {
-    let rawData;
-    let transformedData;
-    let hash;
-    let transformParameters;
-    let transform = transformFactory.createBrickTransform(config);
-
-    this.setConfig = (newConfig) => {
-        config = newConfig;
-        if (transform) {
-            transform.setConfig(newConfig);
-        } else {
-            transform = transformFactory.createBrickTransform(config);
-        }
-    };
-
-    this.createNewTransform = () => {
-        transform = transformFactory.createBrickTransform(config);
-        transformParameters = undefined;
-        transformData();
-    };
-
-    this.getHash = () => {
-        if (!hash) {
-            hash = crypto.pskHash(this.getTransformedData()).toString("hex");
-        }
-
-        return hash;
-    };
-
-    this.getKey = () => {
-        const seedId = config.getSeedKey();
-        if (seedId) {
-            return seedId;
-        }
-        return config.getMapDigest();
-    };
-
-    this.setKey = (key) => {
-        config.setSeedKey(key);
-    };
-
-    this.getSeed = () => {
-        return config.getSeed().toString();
-    };
-    this.getAdler32 = () => {
-        return adler32.sum(this.getTransformedData());
-    };
-
-    this.setRawData = function (data) {
-        rawData = data;
-        if (!transform) {
-            transformedData = rawData;
-        }
-    };
-
-    this.getRawData = () => {
-        if (rawData) {
-            return rawData;
-        }
-
-        if (transformedData) {
-            if (!transform) {
-                return transformedData;
-            }
-
-            rawData = transform.applyInverseTransform(transformedData, transformParameters);
-            if (rawData) {
-                return rawData;
-            }
-
-            return transformedData;
-        }
-
-        throw new Error("The brick does not contain any data.");
-    };
-
-    this.setTransformedData = (data) => {
-        transformedData = data;
-    };
-
-    this.getTransformedData = () => {
-        if (!transformedData) {
-            transformData();
-        }
-
-        if (transformedData) {
-            return transformedData;
-        }
-
-        if (rawData) {
-            return rawData;
-        }
-
-        throw new Error("The brick does not contain any data.");
-    };
-
-    this.getTransformParameters = () => {
-        if (!transformedData) {
-            transformData();
-        }
-        return transformParameters;
-    };
-
-    this.setTransformParameters = (newTransformParams) => {
-        if (!newTransformParams) {
-            return;
-        }
-
-        if (!transformParameters) {
-            transformParameters = newTransformParams;
-            return;
-        }
-
-        Object.keys(newTransformParams).forEach(key => {
-            transformParameters[key] = newTransformParams[key];
-        });
-    };
-
-    this.getRawSize = () => {
-        return rawData.length;
-    };
-
-    this.getTransformedSize = () => {
-        if (!transformedData) {
-            return rawData.length;
-        }
-
-        return transformedData.length;
-    };
-
-//----------------------------------------------- internal methods -----------------------------------------------------
-    function transformData() {
-        if (!transform) {
-            throw new Error("transform undefined");
-        }
-
-        if (rawData) {
-            transformedData = transform.applyDirectTransform(rawData, transformParameters);
-            if (!transformedData) {
-                transformedData = rawData;
-            }
-        }
-
-        transformParameters = transform.getTransformParameters();
-    }
-
-}
-
-module.exports = Brick;
-
-},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBarMap.js":[function(require,module,exports){
-(function (Buffer){
-const Brick = require("./Brick");
-const util = require("../utils/utilities");
-const pathModule = "path";
-const path = require(pathModule);
-
-function FileBarMap(header) {
-    header = header || {};
-
-    let brickOffset = util.getBarMapOffsetSize();
-    let archiveConfig;
-    let encryptionKey;
-
-    this.add = (filePath, brick) => {
-        filePath = filePath.split(path.sep).join(path.posix.sep);
-        this.load();
-        if (typeof header[filePath] === "undefined") {
-            header[filePath] = [];
-        }
-
-        const brickObj = {
-            checkSum: brick.getAdler32(),
-            offset: brickOffset,
-            hash: brick.getHash()
-        };
-
-        const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
-        if (encKey) {
-            brickObj.key = encKey;
-        }
-
-        header[filePath].push(brickObj);
-        brickOffset += brick.getTransformedSize();
-    };
-
-    this.getHashList = (filePath) => {
-        this.load();
-        return header[filePath].map(brickObj => brickObj.offset);
-    };
-
-    this.getFileList = (folderBarPath) => {
-        this.load();
-        if (!folderBarPath) {
-            return Object.keys(header);
-        }
-        return Object.keys(header).filter(fileName => fileName.includes(folderBarPath));
-    };
-
-    this.getDictionaryObject = () => {
-        let objectDict = {};
-        Object.keys(header).forEach((fileName) => {
-            let brickObjects = header[fileName];
-            for (let j = 0; j < brickObjects.length; j++) {
-                if (typeof objectDict[brickObjects[j]['checkSum']] === 'undefined') {
-                    objectDict[brickObjects[j]['checkSum']] = [];
-                }
-                objectDict[brickObjects[j]['checkSum']].push(brickObjects[j]['hash']);
-            }
-        });
-        return objectDict;
-    };
-
-    this.getTransformParameters = (brickId) => {
-        if (!brickId) {
-            return encryptionKey ? {key: encryptionKey} : {};
-        }
-
-        this.load();
-        let bricks = [];
-        const files = this.getFileList();
-
-        files.forEach(filePath => {
-            bricks = bricks.concat(header[filePath]);
-        });
-
-        const brickObj = bricks.find(brick => {
-            return brick.offset === brickId;
-        });
-
-        const addTransformData = {};
-        if (brickObj.key) {
-            addTransformData.key = Buffer.from(brickObj.key);
-        }
-
-        return addTransformData;
-    };
-
-    this.toBrick = () => {
-        this.load();
-        const brick = new Brick(archiveConfig);
-        brick.setTransformParameters({key: encryptionKey});
-        brick.setRawData(Buffer.from(JSON.stringify(header)));
-        return brick;
-    };
-
-    this.load = () => {
-        if (header instanceof Brick) {
-            header.setConfig(archiveConfig);
-            if (encryptionKey) {
-                header.setTransformParameters({key: encryptionKey});
-            }
-            header = JSON.parse(header.getRawData().toString());
-        }
-    };
-
-    this.setConfig = (config) => {
-        archiveConfig = config;
-    };
-
-    this.getConfig = () => {
-        return archiveConfig;
-    };
-
-    this.setEncryptionKey = (encKey) => {
-        encryptionKey = encKey;
-    };
-
-    this.removeFile = (filePath) => {
-        this.load();
-        delete header[filePath];
-    };
-}
-
-module.exports = FileBarMap;
-}).call(this,require("buffer").Buffer)
-
-},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
-(function (Buffer){
-const BarMap = require("./FileBarMap");
-const util = require("../utils/utilities");
-const fs = require("fs");
-const Brick = require("./Brick");
-const AsyncDispatcher = require("../utils/AsyncDispatcher");
-
-function FileBrickStorage(filePath) {
-
-    let isFirstBrick = true;
-    let map;
-    let mapOffset;
-
-    this.setBarMap = (barMap) => {
-        map = barMap;
-    };
-
-    this.putBrick = (brick, callback) => {
-        if (isFirstBrick) {
-            isFirstBrick = false;
-            const writeStream = fs.createWriteStream(filePath, {start: util.getBarMapOffsetSize()});
-            writeStream.on("error", (err) => {
-                return callback(err);
-            });
-
-            writeStream.write(brick.getTransformedData(), callback);
-        } else {
-            fs.appendFile(filePath, brick.getTransformedData(), callback);
-        }
-    };
-
-    this.getBrick = (brickId, callback) => {
-        this.getBarMap((err, barMap) => {
-            if (err) {
-                return callback(err);
-            }
-            let brickOffsets = [];
-            const fileList = barMap.getFileList();
-            fileList.forEach(file => {
-                brickOffsets = brickOffsets.concat(barMap.getHashList(file));
-            });
-
-            const brickIndex = brickOffsets.findIndex(el => {
-                return el === brickId;
-            });
-
-            let nextBrickId = brickOffsets[brickIndex + 1];
-            if (!nextBrickId) {
-                nextBrickId = Number(mapOffset);
-            }
-
-            readBrick(brickId, nextBrickId, callback);
-        });
-
-    };
-
-    this.deleteFile = (fileName, callback) => {
-        this.getBarMap((err, barMap) => {
-            if (err) {
-                return callback(err);
-            }
-
-            barMap.removeFile(fileName);
-            this.putBarMap(barMap, callback);
-        });
-    };
-
-
-    this.putBarMap = (barMap, callback) => {
-        map = barMap;
-        readBarMapOffset((err, offset) => {
-            if(offset) {
-                offset = Number(offset);
-                fs.truncate(filePath, offset, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    __writeBarMap(offset);
-                });
-            }else{
-                fs.stat(filePath, (err, stats) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    const barMapOffset = stats.size;
-
-                    const bufferBarMapOffset = Buffer.alloc(util.getBarMapOffsetSize());
-                    bufferBarMapOffset.writeBigUInt64LE(BigInt(barMapOffset));
-                    mapOffset = barMapOffset;
-                    const offsetWriteStream = fs.createWriteStream(filePath, {flags: "r+", start: 0});
-
-                    offsetWriteStream.on("error", (err) => {
-                        return callback(err);
-                    });
-
-                    offsetWriteStream.write(bufferBarMapOffset, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        __writeBarMap(barMapOffset);
-                    });
-                });
-            }
-        });
-
-        function __writeBarMap(offset) {
-            const mapWriteStream = fs.createWriteStream(filePath, {flags: "r+", start: offset});
-            mapWriteStream.on("error", (err) => {
-                return callback(err);
-            });
-
-            const mapBrick = barMap.toBrick();
-            mapBrick.setTransformParameters(barMap.getTransformParameters());
-            mapWriteStream.write(mapBrick.getTransformedData(), callback);
-        }
-
-    };
-
-    this.getBarMap = (mapDigest, callback) => {
-        if (typeof mapDigest === "function") {
-            callback = mapDigest;
-        }
-
-        if (map) {
-            return callback(undefined, map);
-        }
-
-        readBarMap((err, barMap) => {
-            if (err) {
-                return callback(err);
-            }
-
-            map = barMap;
-            callback(undefined, barMap);
-        });
-    };
-
-    //------------------------------------------ Internal functions ---------------------------------------------------
-
-    function readBarMapOffset(callback) {
-        const readStream = fs.createReadStream(filePath, {start: 0, end: util.getBarMapOffsetSize() - 1});
-
-        const buffer = Buffer.alloc(util.getBarMapOffsetSize());
-        let offsetBuffer = 0;
-
-        readStream.on("data", (chunk) => {
-            chunk.copy(buffer, offsetBuffer);
-            offsetBuffer += chunk.length;
-        });
-
-        readStream.on("end", () => {
-            callback(undefined, buffer.readBigUInt64LE());
-        });
-
-        readStream.on("error", (err) => {
-            return callback(err);
-        });
-    }
-
-    function readBarMap(callback) {
-        readBarMapOffset((err, barMapOffset) => {
-            if (err) {
-                if (err.code === "ENOENT") {
-                    return callback(undefined, new BarMap());
-                }
-
-                return callback(err)
-            }
-
-            mapOffset = barMapOffset;
-            const readStream = fs.createReadStream(filePath, {start: Number(barMapOffset)});
-            let barMapData = Buffer.alloc(0);
-
-            readStream.on("data", (chunk) => {
-                barMapData = Buffer.concat([barMapData, chunk]);
-            });
-
-            readStream.on("error", (err) => {
-                return callback(err);
-            });
-
-            readStream.on("end", () => {
-                const mapBrick = new Brick();
-                mapBrick.setTransformedData(barMapData);
-                callback(undefined, new BarMap(mapBrick));
-            });
-        });
-    }
-
-    function readBrick(brickOffsetStart, brickOffsetEnd, callback) {
-        const readStream = fs.createReadStream(filePath, {start: brickOffsetStart, end: brickOffsetEnd - 1});
-        let brickData = Buffer.alloc(0);
-
-        readStream.on("data", (chunk) => {
-            brickData = Buffer.concat([brickData, chunk]);
-        });
-
-        readStream.on("error", (err) => {
-            return callback(err);
-        });
-
-        readStream.on("end", () => {
-            const brick = new Brick();
-            brick.setTransformedData(brickData);
-            callback(undefined, brick);
-        });
-    }
-}
-
-module.exports = {
-    createFileBrickStorage(filePath) {
-        return new FileBrickStorage(filePath);
-    }
-};
-}).call(this,require("buffer").Buffer)
-
-},{"../utils/AsyncDispatcher":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js","../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./FileBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBarMap.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js":[function(require,module,exports){
+},{"./Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BarMap.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require("./Brick");
 const pathModule = "path";
@@ -2009,11 +1196,25 @@ try {
     }
 }
 
-function FolderBarMap(header) {
+function BarMap(header) {
     header = header || {};
     const pskPath = require("swarmutils").path;
     let archiveConfig;
     let encryptionKey;
+
+    this.addFileEntry = (path, bricks) => {
+        if (!this.isEmpty(path)) {
+            this.emptyList(path);
+        }
+
+        this.appendBricksToEntry(path, bricks);
+    };
+
+    this.appendBricksToEntry = (path, bricks) => {
+        for (const data of bricks) {
+            this.add(path, data);
+        }
+    }
 
     this.add = (filePath, brick) => {
         filePath = pskPath.normalize(filePath);
@@ -2029,22 +1230,35 @@ function FolderBarMap(header) {
             if (fileName === "") {
                 fileName = splitPath.shift();
             }
-            if (splitPath.length === 0) {
-                const brickObj = {
-                    checkSum: brick.getAdler32(),
-                    hash: brick.getHash()
-                };
 
-                const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
-                if (encKey) {
-                    brickObj.key = encKey;
+            if (!splitPath.length) {
+                let checkSum;
+                let hash;
+                let key;
+
+                if (brick instanceof Brick) {
+                    checkSum = brick.getAdler32();
+                    hash = brick.getHash();
+                    key = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
+                } else {
+                    checkSum = brick.checkSum;
+                    hash = brick.hash;
+                    key = brick.encryptionKey;
                 }
 
+
+                const brickObj = {
+                    checkSum,
+                    hash,
+                };
+
+                if (key) {
+                    brickObj.key = key;
+                }
 
                 if (!barMapObj[fileName]) {
                     barMapObj[fileName] = [];
                 }
-
 
                 barMapObj[fileName].push(brickObj);
             } else {
@@ -2327,14 +1541,1082 @@ function FolderBarMap(header) {
     };
 }
 
-module.exports = FolderBarMap;
+module.exports = BarMap;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
+},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+const crypto = require('pskcrypto');
+const BrickTransformFactory = require("./transforms/BrickTransformFactory");
+const transformFactory = new BrickTransformFactory();
+const adler32 = require('adler32');
+
+function Brick(config) {
+    let rawData;
+    let transformedData;
+    let hash;
+    let transformParameters;
+    let transform = transformFactory.createBrickTransform(config);
+
+    this.setConfig = (newConfig) => {
+        config = newConfig;
+        if (transform) {
+            transform.setConfig(newConfig);
+        } else {
+            transform = transformFactory.createBrickTransform(config);
+        }
+    };
+
+    this.createNewTransform = () => {
+        transform = transformFactory.createBrickTransform(config);
+        transformParameters = undefined;
+        transformData();
+    };
+
+    this.getHash = () => {
+        if (!hash) {
+            hash = crypto.pskHash(this.getTransformedData()).toString("hex");
+        }
+
+        return hash;
+    };
+
+    this.getKey = () => {
+        const seedId = config.getSeedKey();
+        if (seedId) {
+            return seedId;
+        }
+        return config.getMapDigest();
+    };
+
+    this.setKey = (key) => {
+        config.setSeedKey(key);
+    };
+
+    this.getSeed = () => {
+        return config.getSeed().toString();
+    };
+    this.getAdler32 = () => {
+        return adler32.sum(this.getTransformedData());
+    };
+
+    this.setRawData = function (data) {
+        rawData = data;
+        if (!transform) {
+            transformedData = rawData;
+        }
+    };
+
+    this.getRawData = () => {
+        if (rawData) {
+            return rawData;
+        }
+
+        if (transformedData) {
+            if (!transform) {
+                return transformedData;
+            }
+
+            rawData = transform.applyInverseTransform(transformedData, transformParameters);
+            if (rawData) {
+                return rawData;
+            }
+
+            return transformedData;
+        }
+
+        throw new Error("The brick does not contain any data.");
+    };
+
+    this.setTransformedData = (data) => {
+        transformedData = data;
+    };
+
+    this.getTransformedData = () => {
+        if (!transformedData) {
+            transformData();
+        }
+
+        if (transformedData) {
+            return transformedData;
+        }
+
+        if (rawData) {
+            return rawData;
+        }
+
+        throw new Error("The brick does not contain any data.");
+    };
+
+    this.getTransformParameters = () => {
+        if (!transformedData) {
+            transformData();
+        }
+        return transformParameters;
+    };
+
+    this.setTransformParameters = (newTransformParams) => {
+        if (!newTransformParams) {
+            return;
+        }
+
+        if (!transformParameters) {
+            transformParameters = newTransformParams;
+            return;
+        }
+
+        Object.keys(newTransformParams).forEach(key => {
+            transformParameters[key] = newTransformParams[key];
+        });
+    };
+
+    this.getRawSize = () => {
+        return rawData.length;
+    };
+
+    this.getTransformedSize = () => {
+        if (!transformedData) {
+            return rawData.length;
+        }
+
+        return transformedData.length;
+    };
+
+    this.getSummary = () => {
+        let encryptionKey;
+        const transformParameters = this.getTransformParameters();
+
+        if (transformParameters) {
+            encryptionKey = transformParameters.key;
+        }
+
+        return {
+            hash: this.getHash(),
+            checkSum: this.getAdler32(),
+            encryptionKey
+        };
+    }
+
+//----------------------------------------------- internal methods -----------------------------------------------------
+    function transformData() {
+        if (!transform) {
+            throw new Error("transform undefined");
+        }
+
+        if (rawData) {
+            transformedData = transform.applyDirectTransform(rawData, transformParameters);
+            if (!transformedData) {
+                transformedData = rawData;
+            }
+        }
+
+        transformParameters = transform.getTransformParameters();
+    }
+
+}
+
+module.exports = Brick;
+
+},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
+(function (Buffer){
+'use strict'
+
+const pathModule = "path";
+const path = require(pathModule);
+
+const isStream = require("../../utils/isStream");
+const stream = require('stream');
+
+/**
+ * Brick storage layer
+ * Wrapper over EDFSBrickStorage
+ *
+ * @param {object} options
+ * @param {Cache} options.cache
+ * @param {number} options.bufferSize
+ * @param {EDFSBrickStorage} options.storageProvider
+ * @param {callback} options.brickFactoryCallback
+ * @param {FSAdapter} options.fsAdapter
+ * @param {callback} options.brickDataExtractorCallback
+ * @param {callback} options.barMapConfiguratorCallback
+ */
+function Service(options) {
+    options = options || {};
+
+    this.cache = options.cache;
+    this.bufferSize = parseInt(options.bufferSize, 10);
+    this.storageProvider = options.storageProvider;
+    this.brickFactoryCallback = options.brickFactoryCallback;
+    this.fsAdapter = options.fsAdapter;
+    this.brickDataExtractorCallback = options.brickDataExtractorCallback;
+    this.barMapConfiguratorCallback = options.barMapConfiguratorCallback;
+
+    if (isNaN(this.bufferSize) || this.bufferSize < 1) {
+        throw new Error('Buffer size is required');
+    }
+
+    if (!this.storageProvider) {
+        throw new Error('Storage provider is required');
+    }
+
+    if (typeof this.brickFactoryCallback !== 'function') {
+        throw new Error('A brick factory callback is required');
+    }
+
+    if (!this.fsAdapter) {
+        throw new Error('A file system adapter is required');
+    }
+
+    if (typeof this.brickDataExtractorCallback !== 'function') {
+        throw new Error('A Brick data extractor callback is required');
+    }
+
+    if (typeof this.barMapConfiguratorCallback !== 'function') {
+        throw new Error('A BarMap configurator callback is required');
+    }
+
+    /**
+     * @param {*} key
+     * @return {Boolean}
+     */
+    const hasInCache = (key) => {
+        if (!this.cache) {
+            return false;
+        }
+
+        return this.cache.has(key);
+    }
+
+    /**
+     * @param {*} key
+     * @param {*} value
+     */
+    const storeInCache = (key, value) => {
+        if (!this.cache) {
+            return;
+        }
+
+        this.cache.set(key, value);
+    }
+
+    /**
+     * Creates writable stream to a EDFSBrickStorage instance
+     *
+     * @param {EDFSBrickStorage} storageProvider
+     * @param {callback} beforeCopyCallback
+     * @return {stream.Writable}
+     */
+    const createBricksWritableStream = (storageProvider, beforeCopyCallback) => {
+        return ((storageProvider, beforeCopyCallback) => {
+
+            const writableStream = new stream.Writable({
+                write(brickContainer, encoding, callback) {
+                    let { brick, brickMeta } = brickContainer;
+                    if (typeof beforeCopyCallback === 'function') {
+                        brick = beforeCopyCallback(brickMeta, brick);
+                    }
+
+                    storageProvider.putBrick(brick, (err, digest) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        const brickSummary = brick.getSummary();
+                        brickSummary.digest = digest;
+                        this.bricksSummary.push(brickSummary);
+
+                        callback();
+                    })
+                },
+                objectMode: true
+            });
+
+            writableStream.bricksSummary = [];
+            return writableStream;
+
+        })(storageProvider, beforeCopyCallback);
+    }
+
+    /**
+     * Create a readable stream of Brick objects
+     * retrieved from EDFSBrickStorage
+     *
+     * @param {Array<object>} bricksMeta
+     * @return {stream.Readable}
+     */
+    const createBricksReadableStream = (bricksMeta) => {
+        return ((bricksMeta) => {
+
+            let brickIndex = 0;
+
+            const readableStream = new stream.Readable({
+                read(size) {
+                    if (brickIndex < bricksMeta.length) {
+                        this.getBrick(brickIndex++);
+                    }
+                },
+                objectMode: true
+            });
+
+            // Get a brick and push it into the stream
+            const self = this;
+            readableStream.getBrick = function (brickIndex) {
+                const brickMeta = bricksMeta[brickIndex];
+                self.storageProvider.getBrick(brickMeta.hash, (err, brick) => {
+                    if (err) {
+                        this.destroy(err);
+                        return;
+                    }
+
+                    this.push({
+                        brickMeta,
+                        brick
+                    });
+
+                    if (brickIndex >= (bricksMeta.length - 1)) {
+                        this.push(null);
+                    }
+                });
+            };
+
+            return readableStream;
+
+        })(bricksMeta);
+    }
+
+    /**
+     * Retrieves a Brick from storage and converts
+     * it into a Buffer
+     *
+     * @param {object} brickMeta
+     * @param {callback} callback
+     */
+    const getBrickAsBuffer = (brickMeta, callback) => {
+        if (hasInCache(brickMeta.hash)) {
+            const data = this.cache.get(brickMeta.hash);
+            return callback(undefined, data);
+        }
+
+        this.storageProvider.getBrick(brickMeta.hash, (err, brick) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const data = this.brickDataExtractorCallback(brickMeta, brick);
+            storeInCache(brickMeta.hash, data);
+            callback(undefined, data);
+        });
+    };
+
+    /**
+     * Counts the number of blocks in a file
+     *
+     * @param {string} filePath
+     * @param {callback} callback
+     */
+    const getFileBlocksCount = (filePath, callback) => {
+        this.fsAdapter.getFileSize(filePath, (err, size) => {
+            if (err) {
+                return callback(err);
+            }
+
+            let blocksCount = Math.floor(size / this.bufferSize);
+            if (size % this.bufferSize > 0) {
+                ++blocksCount;
+            }
+
+            callback(undefined, blocksCount);
+        })
+    };
+
+    /**
+     * Creates a Brick from a Buffer
+     * and saves it into brick storage
+     *
+     * @param {Buffer} data
+     * @param {callback} callback
+     */
+    const convertDataBlockToBrick = (data, callback) => {
+        const brick = this.brickFactoryCallback();
+        brick.setRawData(data);
+
+        this.storageProvider.putBrick(brick, (err, digest) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const brickSummary = brick.getSummary();
+            brickSummary.digest = digest;
+
+            return callback(undefined, brickSummary);
+        });
+
+    };
+
+    /**
+     * Recursively breaks a buffer into Brick objects and
+     * stores them into storage
+     *
+     * @param {Array<object>} resultContainer
+     * @param {Buffer} buffer
+     * @param {number} blockIndex
+     * @param {number} blockSize
+     * @param {callback} callback
+     */
+    const convertBufferToBricks = (resultContainer, buffer, blockIndex, blockSize, callback) => {
+        let blocksCount = Math.floor(buffer.length / blockSize);
+        if ((buffer.length % blockSize) > 0) {
+            ++blocksCount;
+        }
+
+        const blockData = buffer.slice(blockIndex * blockSize, (blockIndex + 1) * blockSize);
+
+        convertDataBlockToBrick(blockData, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            resultContainer.push(result);
+            ++blockIndex;
+
+            if (blockIndex < blocksCount) {
+                return convertBufferToBricks(resultContainer, buffer, blockIndex, blockSize, callback);
+            }
+
+            return callback();
+        });
+    };
+
+    /**
+     * Copy the contents of a file into brick storage
+     *
+     * @param {Array<object>} resultContainer
+     * @param {string} filePath
+     * @param {number} blockIndex
+     * @param {number} blocksCount
+     * @param {callback} callback
+     */
+    const convertFileToBricks = (resultContainer, filePath, blockIndex, blocksCount, callback) => {
+        if (typeof blocksCount === 'function') {
+            callback = blocksCount;
+            blocksCount = blockIndex;
+            blockIndex = 0;
+        }
+
+        const blockOffset = blockIndex * this.bufferSize;
+        const blockEndOffset = (blockIndex + 1) * this.bufferSize - 1;
+        this.fsAdapter.readBlockFromFile(filePath, blockOffset, blockEndOffset, (err, data) => {
+            if (err) {
+                return callback(err);
+            }
+
+            convertDataBlockToBrick(data, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                resultContainer.push(result);
+                ++blockIndex;
+
+                if (blockIndex < blocksCount) {
+                    return convertFileToBricks(resultContainer, filePath, blockIndex, blocksCount, callback);
+                }
+
+                return callback();
+            })
+        })
+    };
+
+    /**
+     * Stores a Buffer as Bricks into brick storage
+     *
+     * @param {Buffer} buffer
+     * @param {number|callback} bufferSize
+     * @param {callback|undefined} callback
+     */
+    this.ingestBuffer = (buffer, bufferSize, callback) => {
+        if (typeof bufferSize === 'function') {
+            callback = bufferSize;
+            bufferSize = this.bufferSize;
+        }
+        const bricksSummary = [];
+
+        convertBufferToBricks(bricksSummary, buffer, 0, bufferSize, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, bricksSummary);
+        });
+    };
+
+    /**
+     * Reads a stream of data into multiple Brick objects
+     * stored in brick storage
+     *
+     * @param {stream.Readable} stream
+     * @param {callback}
+     */
+    this.ingestStream = (stream, callback) => {
+        let bricksSummary = [];
+        stream.on('data', (chunk) => {
+            if (typeof chunk === 'string') {
+                chunk = Buffer.from(chunk);
+            }
+
+            stream.pause();
+            this.ingestBuffer(chunk, chunk.length, (err, summary) => {
+                if (err) {
+                    stream.destroy(err);
+                    return;
+                }
+                bricksSummary = bricksSummary.concat(summary);
+                stream.resume();
+            });
+        });
+        stream.on('error', (err) => {
+            callback(err);
+        });
+        stream.on('end', () => {
+            callback(undefined, bricksSummary);
+        })
+    };
+
+    /**
+     * @param {string|Buffer|stream.Readable} data
+     * @param {callback} callback
+     */
+    this.ingestData = (data, callback) => {
+        if (typeof data === 'string') {
+            data = Buffer.from(data);
+        }
+
+        if (!Buffer.isBuffer(data) && !isStream.isReadable(data)) {
+            return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
+        }
+
+        if (Buffer.isBuffer(data)) {
+            return this.ingestBuffer(data, callback);
+        }
+
+        return this.ingestStream(data, callback);
+    };
+
+    /**
+     * Copy the contents of a file into brick storage
+     *
+     * @param {string} filePath
+     * @param {callback} callback
+     */
+    this.ingestFile = (filePath, callback) => {
+        const bricksSummary = [];
+
+        getFileBlocksCount(filePath, (err, blocksCount) => {
+            if (err) {
+                return callback(err);
+            }
+
+            convertFileToBricks(bricksSummary, filePath, blocksCount, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, bricksSummary);
+            });
+        });
+    };
+
+    /**
+     * Copy the contents of multiple files into brick storage
+     *
+     * @param {Array<string>} filePath
+     * @param {callback} callback
+     */
+    this.ingestFiles = (files, callback) => {
+        const bricksSummary = {};
+
+        const ingestFilesRecursive = (files, callback) => {
+            if (!files.length) {
+                return callback(undefined, bricksSummary);
+            }
+
+            const filePath = files.pop();
+            const filename = path.basename(filePath);
+
+            this.ingestFile(filePath, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                bricksSummary[filename] = result;
+
+                ingestFilesRecursive(files, callback);
+            });
+        };
+
+        ingestFilesRecursive(files, callback);
+    };
+
+    /**
+     * Copy the contents of folder into brick storage
+     *
+     * @param {string} folderPath
+     * @param {callback} callback
+     */
+    this.ingestFolder = (folderPath, callback) => {
+        const bricksSummary = {};
+        const filesIterator = this.fsAdapter.getFilesIterator(folderPath);
+
+        const iteratorHandler = (err, filename, dirname) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof filename === 'undefined') {
+                return callback(undefined, bricksSummary);
+            }
+
+            const filePath = path.join(dirname, filename);
+            this.ingestFile(filePath, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                bricksSummary[filename] = result;
+                filesIterator.next(iteratorHandler);
+            });
+        };
+
+        filesIterator.next(iteratorHandler);
+    };
+
+    /**
+     * Retrieve all the Bricks identified by `bricksMeta`
+     * from storage and create a Buffer using their data
+     *
+     * @param {Array<object>} bricksMeta
+     * @param {callback} callback
+     */
+    this.createBufferFromBricks = (bricksMeta, callback) => {
+        let buffer = Buffer.alloc(0);
+
+        const getBricksAsBufferRecursive = (index, callback) => {
+            const brickMeta = bricksMeta[index];
+
+            getBrickAsBuffer(brickMeta, (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                buffer = Buffer.concat([buffer, data]);
+                ++index;
+
+                if (index < bricksMeta.length) {
+                    return getBricksAsBufferRecursive(index, callback);
+                }
+
+                callback(undefined, buffer);
+            });
+        };
+
+        getBricksAsBufferRecursive(0, callback);
+    }
+
+    /**
+     * Retrieve all the Bricks identified by `bricksMeta`
+     * from storage and create a readable stream
+     * from their data
+     *
+     * @param {Array<object>} bricksMeta
+     * @param {callback} callback
+     */
+    this.createStreamFromBricks = (bricksMeta, callback) => {
+        let brickIndex = 0;
+
+        const readableStream = new stream.Readable({
+            read(size) {
+                if (brickIndex < bricksMeta.length) {
+                    this.readBrickData(brickIndex++);
+                }
+            }
+        });
+
+        // Get a brick and push it into the stream
+        readableStream.readBrickData = function (brickIndex) {
+            const brickMeta = bricksMeta[brickIndex];
+            getBrickAsBuffer(brickMeta, (err, data) => {
+                if (err) {
+                    this.destroy(err);
+                    return;
+                }
+
+                this.push(data);
+
+                if (brickIndex >= (bricksMeta.length - 1)) {
+                    this.push(null);
+                }
+            });
+        };
+
+        callback(undefined, readableStream);
+    }
+
+    /**
+     * Retrieve all the Bricks identified by `bricksMeta`
+     * and store their data into a file
+     *
+     * @param {string} filePath
+     * @param {Array<object>} bricksMeta
+     * @param {callback} callback
+     */
+    this.createFileFromBricks = (filePath, bricksMeta, callback) => {
+        const getBricksAsBufferRecursive = (index, callback) => {
+            const brickMeta = bricksMeta[index];
+
+            getBrickAsBuffer(brickMeta, (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                this.fsAdapter.appendBlockToFile(filePath, data, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    ++index;
+
+                    if (index < bricksMeta.length) {
+                        return getBricksAsBufferRecursive(index, callback);
+                    }
+
+                    callback();
+                });
+            });
+        };
+
+        getBricksAsBufferRecursive(0, callback);
+    }
+
+    /**
+     * Copy all the Bricks identified by `bricksList`
+     * into another storage provider
+     *
+     * @param {object} bricksList
+     * @param {object} options
+     * @param {FSAdapter} options.dstStorage
+     * @param {callback} options.beforeCopyCallback
+     * @param {callback} callback
+     */
+    this.copyBricks = (bricksList, options, callback) => {
+        const bricksSetKeys = Object.keys(bricksList);
+        const newBricksSetKeys = {};
+
+        const copyBricksRecursive = (callback) => {
+            if (!bricksSetKeys.length) {
+                return callback();
+            }
+
+            const setKey = bricksSetKeys.shift();
+            const bricksMeta = bricksList[setKey];
+
+            const srcStream = createBricksReadableStream(bricksMeta);
+            const dstStream = createBricksWritableStream(options.dstStorage, options.beforeCopyCallback);
+
+            srcStream.on('error', (err) => {
+                callback(err);
+                dstStream.destroy(err);
+            });
+
+            dstStream.on('finish', () => {
+                newBricksSetKeys[setKey] = dstStream.bricksSummary;
+                dstStream.destroy();
+                copyBricksRecursive(callback);
+            });
+
+            srcStream.pipe(dstStream);
+        };
+
+        copyBricksRecursive((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, newBricksSetKeys);
+        });
+    };
+
+    /**
+     * @param {string} hash
+     * @param {callback} callback
+     */
+    this.getBarMap = (hash, callback) => {
+        if (hash && hasInCache(hash)) {
+            const map = this.cache.get(hash);
+            this.storageProvider.setBarMap(map);
+            return callback(undefined, map);
+        }
+
+        this.storageProvider.getBarMap(hash, (err, map) => {
+            if (err) {
+                return callback(err);
+            }
+
+            map = this.barMapConfiguratorCallback(map);
+
+            if (hash) {
+                storeInCache(hash, map);
+            }
+
+            this.storageProvider.setBarMap(map);
+            callback(undefined, map);
+        })
+    }
+
+    /**
+     * @param {BarMap} barMap
+     * @param {callback} callback
+     */
+    this.putBarMap = (barMap, callback) => {
+        this.storageProvider.putBarMap(barMap, callback);
+    }
+}
+
+module.exports = Service;
+
+}).call(this,require("buffer").Buffer)
+
+},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+'use strict'
+
+module.exports = {
+    Service: require('./Service')
+};
+
+},{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
+(function (Buffer){
+const BarMap = require("./obsolete/FileBarMap");
+const util = require("../utils/utilities");
+const fs = require("fs");
+const Brick = require("./Brick");
+const AsyncDispatcher = require("../utils/AsyncDispatcher");
+
+function FileBrickStorage(filePath) {
+
+    let isFirstBrick = true;
+    let map;
+    let mapOffset;
+
+    this.setBarMap = (barMap) => {
+        map = barMap;
+    };
+
+    this.putBrick = (brick, callback) => {
+        if (isFirstBrick) {
+            isFirstBrick = false;
+            const writeStream = fs.createWriteStream(filePath, {start: util.getBarMapOffsetSize()});
+            writeStream.on("error", (err) => {
+                return callback(err);
+            });
+
+            writeStream.write(brick.getTransformedData(), callback);
+        } else {
+            fs.appendFile(filePath, brick.getTransformedData(), callback);
+        }
+    };
+
+    this.getBrick = (brickId, callback) => {
+        this.getBarMap((err, barMap) => {
+            if (err) {
+                return callback(err);
+            }
+            let brickOffsets = [];
+            const fileList = barMap.getFileList();
+            fileList.forEach(file => {
+                brickOffsets = brickOffsets.concat(barMap.getHashList(file));
+            });
+
+            const brickIndex = brickOffsets.findIndex(el => {
+                return el === brickId;
+            });
+
+            let nextBrickId = brickOffsets[brickIndex + 1];
+            if (!nextBrickId) {
+                nextBrickId = Number(mapOffset);
+            }
+
+            readBrick(brickId, nextBrickId, callback);
+        });
+
+    };
+
+    this.deleteFile = (fileName, callback) => {
+        this.getBarMap((err, barMap) => {
+            if (err) {
+                return callback(err);
+            }
+
+            barMap.removeFile(fileName);
+            this.putBarMap(barMap, callback);
+        });
+    };
+
+
+    this.putBarMap = (barMap, callback) => {
+        map = barMap;
+        readBarMapOffset((err, offset) => {
+            if(offset) {
+                offset = Number(offset);
+                fs.truncate(filePath, offset, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    __writeBarMap(offset);
+                });
+            }else{
+                fs.stat(filePath, (err, stats) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    const barMapOffset = stats.size;
+
+                    const bufferBarMapOffset = Buffer.alloc(util.getBarMapOffsetSize());
+                    bufferBarMapOffset.writeBigUInt64LE(BigInt(barMapOffset));
+                    mapOffset = barMapOffset;
+                    const offsetWriteStream = fs.createWriteStream(filePath, {flags: "r+", start: 0});
+
+                    offsetWriteStream.on("error", (err) => {
+                        return callback(err);
+                    });
+
+                    offsetWriteStream.write(bufferBarMapOffset, (err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        __writeBarMap(barMapOffset);
+                    });
+                });
+            }
+        });
+
+        function __writeBarMap(offset) {
+            const mapWriteStream = fs.createWriteStream(filePath, {flags: "r+", start: offset});
+            mapWriteStream.on("error", (err) => {
+                return callback(err);
+            });
+
+            const mapBrick = barMap.toBrick();
+            mapBrick.setTransformParameters(barMap.getTransformParameters());
+            mapWriteStream.write(mapBrick.getTransformedData(), callback);
+        }
+
+    };
+
+    this.getBarMap = (mapDigest, callback) => {
+        if (typeof mapDigest === "function") {
+            callback = mapDigest;
+        }
+
+        if (map) {
+            return callback(undefined, map);
+        }
+
+        readBarMap((err, barMap) => {
+            if (err) {
+                return callback(err);
+            }
+
+            map = barMap;
+            callback(undefined, barMap);
+        });
+    };
+
+    //------------------------------------------ Internal functions ---------------------------------------------------
+
+    function readBarMapOffset(callback) {
+        const readStream = fs.createReadStream(filePath, {start: 0, end: util.getBarMapOffsetSize() - 1});
+
+        const buffer = Buffer.alloc(util.getBarMapOffsetSize());
+        let offsetBuffer = 0;
+
+        readStream.on("data", (chunk) => {
+            chunk.copy(buffer, offsetBuffer);
+            offsetBuffer += chunk.length;
+        });
+
+        readStream.on("end", () => {
+            callback(undefined, buffer.readBigUInt64LE());
+        });
+
+        readStream.on("error", (err) => {
+            return callback(err);
+        });
+    }
+
+    function readBarMap(callback) {
+        readBarMapOffset((err, barMapOffset) => {
+            if (err) {
+                if (err.code === "ENOENT") {
+                    return callback(undefined, new BarMap());
+                }
+
+                return callback(err)
+            }
+
+            mapOffset = barMapOffset;
+            const readStream = fs.createReadStream(filePath, {start: Number(barMapOffset)});
+            let barMapData = Buffer.alloc(0);
+
+            readStream.on("data", (chunk) => {
+                barMapData = Buffer.concat([barMapData, chunk]);
+            });
+
+            readStream.on("error", (err) => {
+                return callback(err);
+            });
+
+            readStream.on("end", () => {
+                const mapBrick = new Brick();
+                mapBrick.setTransformedData(barMapData);
+                callback(undefined, new BarMap(mapBrick));
+            });
+        });
+    }
+
+    function readBrick(brickOffsetStart, brickOffsetEnd, callback) {
+        const readStream = fs.createReadStream(filePath, {start: brickOffsetStart, end: brickOffsetEnd - 1});
+        let brickData = Buffer.alloc(0);
+
+        readStream.on("data", (chunk) => {
+            brickData = Buffer.concat([brickData, chunk]);
+        });
+
+        readStream.on("error", (err) => {
+            return callback(err);
+        });
+
+        readStream.on("end", () => {
+            const brick = new Brick();
+            brick.setTransformedData(brickData);
+            callback(undefined, brick);
+        });
+    }
+}
+
+module.exports = {
+    createFileBrickStorage(filePath) {
+        return new FileBrickStorage(filePath);
+    }
+};
+
+}).call(this,require("buffer").Buffer)
+
+},{"../utils/AsyncDispatcher":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js","../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBarMap.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
 const fs = require("fs");
 const path = require("path");
-const BarMap = require("./FolderBarMap");
+const BarMap = require("./BarMap");
 const Brick = require("./Brick");
 
 function FolderBrickStorage(location) {
@@ -2430,7 +2712,8 @@ module.exports = {
         return new FolderBrickStorage(location);
     }
 };
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./FolderBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBarMap.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js":[function(require,module,exports){
+
+},{"./BarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BarMap.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js":[function(require,module,exports){
 (function (Buffer){
 const crypto = require("pskcrypto");
 const base58 = require("./base58");
@@ -2688,7 +2971,145 @@ module.exports = {
 };
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
+},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBarMap.js":[function(require,module,exports){
+(function (Buffer){
+const Brick = require("../Brick");
+const util = require("../../utils/utilities");
+const pathModule = "path";
+const path = require(pathModule);
+
+function FileBarMap(header) {
+    header = header || {};
+
+    let brickOffset = util.getBarMapOffsetSize();
+    let archiveConfig;
+    let encryptionKey;
+
+    this.addFileEntry = (path, bricks) => {
+        this.appendBricksToEntry(path, bricks);
+    };
+
+    this.appendBricksToEntry = (path, bricks) => {
+        for (const data of bricks) {
+            this.add(path, data);
+        }
+    }
+
+    this.add = (filePath, brick) => {
+        filePath = filePath.split(path.sep).join(path.posix.sep);
+        this.load();
+        if (typeof header[filePath] === "undefined") {
+            header[filePath] = [];
+        }
+
+        const brickObj = {
+            checkSum: brick.getAdler32(),
+            offset: brickOffset,
+            hash: brick.getHash()
+        };
+
+        const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
+        if (encKey) {
+            brickObj.key = encKey;
+        }
+
+        header[filePath].push(brickObj);
+        brickOffset += brick.getTransformedSize();
+    };
+
+    this.getHashList = (filePath) => {
+        this.load();
+        return header[filePath].map(brickObj => brickObj.offset);
+    };
+
+    this.getFileList = (folderBarPath) => {
+        this.load();
+        if (!folderBarPath) {
+            return Object.keys(header);
+        }
+        return Object.keys(header).filter(fileName => fileName.includes(folderBarPath));
+    };
+
+    this.getDictionaryObject = () => {
+        let objectDict = {};
+        Object.keys(header).forEach((fileName) => {
+            let brickObjects = header[fileName];
+            for (let j = 0; j < brickObjects.length; j++) {
+                if (typeof objectDict[brickObjects[j]['checkSum']] === 'undefined') {
+                    objectDict[brickObjects[j]['checkSum']] = [];
+                }
+                objectDict[brickObjects[j]['checkSum']].push(brickObjects[j]['hash']);
+            }
+        });
+        return objectDict;
+    };
+
+    this.getTransformParameters = (brickId) => {
+        if (!brickId) {
+            return encryptionKey ? {key: encryptionKey} : {};
+        }
+
+        this.load();
+        let bricks = [];
+        const files = this.getFileList();
+
+        files.forEach(filePath => {
+            bricks = bricks.concat(header[filePath]);
+        });
+
+        const brickObj = bricks.find(brick => {
+            return brick.offset === brickId;
+        });
+
+        const addTransformData = {};
+        if (brickObj.key) {
+            addTransformData.key = Buffer.from(brickObj.key);
+        }
+
+        return addTransformData;
+    };
+
+    this.toBrick = () => {
+        this.load();
+        const brick = new Brick(archiveConfig);
+        brick.setTransformParameters({key: encryptionKey});
+        brick.setRawData(Buffer.from(JSON.stringify(header)));
+        return brick;
+    };
+
+    this.load = () => {
+        if (header instanceof Brick) {
+            header.setConfig(archiveConfig);
+            if (encryptionKey) {
+                header.setTransformParameters({key: encryptionKey});
+            }
+            header = JSON.parse(header.getRawData().toString());
+        }
+    };
+
+    this.setConfig = (config) => {
+        archiveConfig = config;
+    };
+
+    this.getConfig = () => {
+        return archiveConfig;
+    };
+
+    this.setEncryptionKey = (encKey) => {
+        encryptionKey = encKey;
+    };
+
+    this.removeFile = (filePath) => {
+        this.load();
+        delete header[filePath];
+    };
+}
+
+module.exports = FileBarMap;
+
+}).call(this,require("buffer").Buffer)
+
+},{"../../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
 (function (Buffer){
 function BrickTransform(transformGenerator) {
     let directTransform;
@@ -7314,13 +7735,19 @@ function executioner(workingDir, callback) {
             return callback(e);
         }
 
-        executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+        archive.load((err) => {
             if (err) {
                 return callback(err);
             }
 
-            callback(undefined, archive.getSeed());
-        });
+            executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, archive.getSeed());
+            });
+        })
     });
 }
 
@@ -8140,21 +8567,45 @@ function EDFS(endpoint, options) {
 
     this.bootRawDossier = (seed, callback) => {
         const rawDossier = new RawDossier(endpoint, seed, cache);
-        rawDossier.start(err => callback(err, rawDossier));
+        rawDossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            rawDossier.start(err => callback(err, rawDossier));
+        })
     };
 
-    this.loadRawDossier = (seed) => {
-        return new RawDossier(endpoint, seed, cache);
+    this.loadRawDossier = (seed, callback) => {
+        const dossier = new RawDossier(endpoint, seed, cache);
+        dossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, dossier);
+        });
     };
 
-    this.loadBar = (seed) => {
-        return barModule.createArchive(createArchiveConfig(seed));
+    this.loadBar = (seed, callback) => {
+        const bar = barModule.createArchive(createArchiveConfig(seed));
+        bar.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, bar);
+        });
     };
 
     this.clone = (seed, callback) => {
         const edfsBrickStorage = require("edfs-brick-storage").create(endpoint);
-        const bar = this.loadBar(seed);
-        bar.clone(edfsBrickStorage, true, callback);
+        this.loadBar(seed, (err, bar) => {
+            if (err) {
+                return callback(err);
+            }
+            bar.clone(edfsBrickStorage, true, callback);
+        })
     };
 
     this.createWallet = (templateSeed, password, overwrite, callback) => {
@@ -8163,23 +8614,29 @@ function EDFS(endpoint, options) {
             overwrite = false;
         }
         const wallet = this.createRawDossier();
-        wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+        wallet.load((err) => {
             if (err) {
                 return callback(err);
             }
 
-            const seed = wallet.getSeed();
-            if (typeof password !== "undefined") {
-                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
+            wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const seed = wallet.getSeed();
+                if (typeof password !== "undefined") {
+                    require("../seedCage").putSeed(seed, password, overwrite, (err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(undefined, seed.toString());
+                    });
+                } else {
                     callback(undefined, seed.toString());
-                });
-            } else {
-                callback(undefined, seed.toString());
-            }
-        }));
+                }
+            }));
+        })
     };
 
     this.loadWallet = function (walletSeed, password, overwrite, callback) {
@@ -8194,34 +8651,32 @@ function EDFS(endpoint, options) {
                 if (err) {
                     return callback(err);
                 }
-                let rawDossier = this.loadRawDossier(seed);
-
-                if (!rawDossier) {
-                    return callback(new Error("RawDossier is not available"));
-                }
-                return callback(undefined, rawDossier);
-
+                this.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    return callback(undefined, dossier);
+                });
             });
-        } else {
+            return;
+        }
 
-            let rawDossier = this.loadRawDossier(walletSeed);
-
-            if (!rawDossier) {
-                return callback(new Error("RawDossier is not available"));
+        this.loadRawDossier(walletSeed, (err, dossier) => {
+            if (err) {
+                return callback(err);
             }
-
 
             if (typeof password !== "undefined" && password !== null) {
                 require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
-                    callback(undefined, rawDossier);
+                    callback(undefined, dossier);
                 });
             } else {
-                return callback(undefined, rawDossier);
+                return callback(undefined, dossier);
             }
-        }
+        });
     };
 
 //------------------------------------------------ internal methods -------------------------------------------------
@@ -8361,25 +8816,36 @@ function Manifest(archive, callback) {
         callback(undefined, mountedDossiers);
     };
 
-function getArchive(seed, asDossier, callback) {
-    if (typeof asDossier === "function") {
-        callback = asDossier;
-        asDossier = false;
+    function getArchive(seed, asDossier, callback) {
+        if (typeof asDossier === "function") {
+            callback = asDossier;
+            asDossier = false;
+        }
+        let edfsModuleName = "edfs";
+        let EDFS = require(edfsModuleName);
+        EDFS.attachWithSeed(seed, function (err, edfs) {
+            if (err) {
+                return callback(err);
+            }
+
+            if (asDossier) {
+                return edfs.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, dossier);
+                })
+            }
+
+            edfs.loadBar(seed, (err, bar) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, bar);
+            })
+        });
     }
-    let edfsModuleName = "edfs";
-    let EDFS = require(edfsModuleName);
-    EDFS.attachWithSeed(seed, function (err, edfs) {
-        if (err) {
-            return callback(err);
-        }
-
-        if (asDossier) {
-            return callback(undefined, edfs.loadRawDossier(seed));
-        }
-
-        callback(undefined, edfs.loadBar(seed));
-    });
-}
 
     function persist(callback) {
         archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
@@ -8416,12 +8882,17 @@ function RawDossier(endpoint, seed, cache) {
     const pskPath = require("swarmutils").path;
     let manifestHandler;
     const bar = createBar(seed);
+
     this.getSeed = () => {
         return bar.getSeed();
     };
 
     this.start = (callback) => {
         createBlockchain(bar).start(callback);
+    };
+
+    this.load = (callback) => {
+        bar.load(callback);
     };
 
     function getManifest(callback) {
@@ -14564,24 +15035,29 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
 	this.boot = function (callback) {
 		const __boot = async () => {
-			const seed = await getSeed();
-			edfs = await getEDFS();
-			this.rawDossier = edfs.loadRawDossier(seed);
-			try{
-                await evalBundles(runtimeBundles);
-            }catch(err)
-            {
+            const seed = await getSeed();
+            edfs = await getEDFS();
+
+            const loadRawDossier = promisify(edfs.loadRawDossier);
+            try {
+                this.rawDossier = await loadRawDossier(seed);
+            } catch (err) {
                 console.log(err);
             }
-			await initializeSwarmEngine();
-			if (typeof constitutionBundles !== "undefined") {
-				try{
-					await evalBundles(constitutionBundles, true);
-				}catch(err)
-				{
-					console.log(err);
-				}
-			}
+
+            try {
+                await evalBundles(runtimeBundles);
+            } catch(err) {
+                console.log(err);
+            }
+            await initializeSwarmEngine();
+            if (typeof constitutionBundles !== "undefined") {
+                try {
+                    await evalBundles(constitutionBundles, true);
+                } catch(err) {
+                    console.log(err);
+                }
+            }
 		};
 
 		__boot()
@@ -14860,19 +15336,24 @@ function getEDFS(callback) {
 
 function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
-    const bar = self.edfs.loadBar(self.seed);
-    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+    self.edfs.loadBar(self.seed, (err, bar) => {
         if (err) {
             return callback(err);
         }
-        self.domainName = content.toString();
-        $$.log(`Domain ${self.domainName} is booting...`);
 
-        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-        const se = require("swarm-engine");
-        se.initialise(self.domainName);
+        bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+            if (err) {
+                return callback(err);
+            }
+            self.domainName = content.toString();
+            $$.log(`Domain ${self.domainName} is booting...`);
 
-        callback();
+            $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+            const se = require("swarm-engine");
+            se.initialise(self.domainName);
+
+            callback();
+        });
     });
 }
 
@@ -14914,19 +15395,24 @@ function plugPowerCords() {
 
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
-                const rawDossier = self.edfs.loadRawDossier(self.seed);
-                rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                self.edfs.loadRawDossier(self.seed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
-                    agents.forEach(agent => {
-                        const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
-                        $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
-                    });
+                    rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    $$.event('status.domains.boot', {name: self.domainConf.alias});
-                    console.log("Domain boot successfully");
+                        agents.forEach(agent => {
+                            const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                            $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+                        });
+
+                        $$.event('status.domains.boot', {name: self.domainConf.alias});
+                        console.log("Domain boot successfully");
+                    });
                 });
             });
         })
@@ -14934,6 +15420,7 @@ function plugPowerCords() {
 }
 
 boot();
+
 }).call(this,require('_process'))
 
 },{"./BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","dossier":"/home/travis/build/PrivateSky/privatesky/modules/dossier/index.js","edfs":"/home/travis/build/PrivateSky/privatesky/modules/edfs/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js","swarm-engine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js":[function(require,module,exports){

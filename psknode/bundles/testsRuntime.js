@@ -4482,21 +4482,45 @@ function EDFS(endpoint, options) {
 
     this.bootRawDossier = (seed, callback) => {
         const rawDossier = new RawDossier(endpoint, seed, cache);
-        rawDossier.start(err => callback(err, rawDossier));
+        rawDossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            rawDossier.start(err => callback(err, rawDossier));
+        })
     };
 
-    this.loadRawDossier = (seed) => {
-        return new RawDossier(endpoint, seed, cache);
+    this.loadRawDossier = (seed, callback) => {
+        const dossier = new RawDossier(endpoint, seed, cache);
+        dossier.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, dossier);
+        });
     };
 
-    this.loadBar = (seed) => {
-        return barModule.createArchive(createArchiveConfig(seed));
+    this.loadBar = (seed, callback) => {
+        const bar = barModule.createArchive(createArchiveConfig(seed));
+        bar.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, bar);
+        });
     };
 
     this.clone = (seed, callback) => {
         const edfsBrickStorage = require("edfs-brick-storage").create(endpoint);
-        const bar = this.loadBar(seed);
-        bar.clone(edfsBrickStorage, true, callback);
+        this.loadBar(seed, (err, bar) => {
+            if (err) {
+                return callback(err);
+            }
+            bar.clone(edfsBrickStorage, true, callback);
+        })
     };
 
     this.createWallet = (templateSeed, password, overwrite, callback) => {
@@ -4505,23 +4529,29 @@ function EDFS(endpoint, options) {
             overwrite = false;
         }
         const wallet = this.createRawDossier();
-        wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+        wallet.load((err) => {
             if (err) {
                 return callback(err);
             }
 
-            const seed = wallet.getSeed();
-            if (typeof password !== "undefined") {
-                require("../seedCage").putSeed(seed, password, overwrite, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
+            wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const seed = wallet.getSeed();
+                if (typeof password !== "undefined") {
+                    require("../seedCage").putSeed(seed, password, overwrite, (err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(undefined, seed.toString());
+                    });
+                } else {
                     callback(undefined, seed.toString());
-                });
-            } else {
-                callback(undefined, seed.toString());
-            }
-        }));
+                }
+            }));
+        })
     };
 
     this.loadWallet = function (walletSeed, password, overwrite, callback) {
@@ -4536,34 +4566,32 @@ function EDFS(endpoint, options) {
                 if (err) {
                     return callback(err);
                 }
-                let rawDossier = this.loadRawDossier(seed);
-
-                if (!rawDossier) {
-                    return callback(new Error("RawDossier is not available"));
-                }
-                return callback(undefined, rawDossier);
-
+                this.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    return callback(undefined, dossier);
+                });
             });
-        } else {
+            return;
+        }
 
-            let rawDossier = this.loadRawDossier(walletSeed);
-
-            if (!rawDossier) {
-                return callback(new Error("RawDossier is not available"));
+        this.loadRawDossier(walletSeed, (err, dossier) => {
+            if (err) {
+                return callback(err);
             }
-
 
             if (typeof password !== "undefined" && password !== null) {
                 require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
                     if (err) {
                         return callback(err);
                     }
-                    callback(undefined, rawDossier);
+                    callback(undefined, dossier);
                 });
             } else {
-                return callback(undefined, rawDossier);
+                return callback(undefined, dossier);
             }
-        }
+        });
     };
 
 //------------------------------------------------ internal methods -------------------------------------------------
@@ -4703,25 +4731,36 @@ function Manifest(archive, callback) {
         callback(undefined, mountedDossiers);
     };
 
-function getArchive(seed, asDossier, callback) {
-    if (typeof asDossier === "function") {
-        callback = asDossier;
-        asDossier = false;
+    function getArchive(seed, asDossier, callback) {
+        if (typeof asDossier === "function") {
+            callback = asDossier;
+            asDossier = false;
+        }
+        let edfsModuleName = "edfs";
+        let EDFS = require(edfsModuleName);
+        EDFS.attachWithSeed(seed, function (err, edfs) {
+            if (err) {
+                return callback(err);
+            }
+
+            if (asDossier) {
+                return edfs.loadRawDossier(seed, (err, dossier) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(undefined, dossier);
+                })
+            }
+
+            edfs.loadBar(seed, (err, bar) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, bar);
+            })
+        });
     }
-    let edfsModuleName = "edfs";
-    let EDFS = require(edfsModuleName);
-    EDFS.attachWithSeed(seed, function (err, edfs) {
-        if (err) {
-            return callback(err);
-        }
-
-        if (asDossier) {
-            return callback(undefined, edfs.loadRawDossier(seed));
-        }
-
-        callback(undefined, edfs.loadBar(seed));
-    });
-}
 
     function persist(callback) {
         archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
@@ -4758,12 +4797,17 @@ function RawDossier(endpoint, seed, cache) {
     const pskPath = require("swarmutils").path;
     let manifestHandler;
     const bar = createBar(seed);
+
     this.getSeed = () => {
         return bar.getSeed();
     };
 
     this.start = (callback) => {
         createBlockchain(bar).start(callback);
+    };
+
+    this.load = (callback) => {
+        bar.load(callback);
     };
 
     function getManifest(callback) {
@@ -7817,24 +7861,29 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
 	this.boot = function (callback) {
 		const __boot = async () => {
-			const seed = await getSeed();
-			edfs = await getEDFS();
-			this.rawDossier = edfs.loadRawDossier(seed);
-			try{
-                await evalBundles(runtimeBundles);
-            }catch(err)
-            {
+            const seed = await getSeed();
+            edfs = await getEDFS();
+
+            const loadRawDossier = promisify(edfs.loadRawDossier);
+            try {
+                this.rawDossier = await loadRawDossier(seed);
+            } catch (err) {
                 console.log(err);
             }
-			await initializeSwarmEngine();
-			if (typeof constitutionBundles !== "undefined") {
-				try{
-					await evalBundles(constitutionBundles, true);
-				}catch(err)
-				{
-					console.log(err);
-				}
-			}
+
+            try {
+                await evalBundles(runtimeBundles);
+            } catch(err) {
+                console.log(err);
+            }
+            await initializeSwarmEngine();
+            if (typeof constitutionBundles !== "undefined") {
+                try {
+                    await evalBundles(constitutionBundles, true);
+                } catch(err) {
+                    console.log(err);
+                }
+            }
 		};
 
 		__boot()
@@ -8094,19 +8143,24 @@ function getEDFS(callback) {
 
 function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
-    const bar = self.edfs.loadBar(self.seed);
-    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+    self.edfs.loadBar(self.seed, (err, bar) => {
         if (err) {
             return callback(err);
         }
-        self.domainName = content.toString();
-        $$.log(`Domain ${self.domainName} is booting...`);
 
-        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-        const se = require("swarm-engine");
-        se.initialise(self.domainName);
+        bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+            if (err) {
+                return callback(err);
+            }
+            self.domainName = content.toString();
+            $$.log(`Domain ${self.domainName} is booting...`);
 
-        callback();
+            $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+            const se = require("swarm-engine");
+            se.initialise(self.domainName);
+
+            callback();
+        });
     });
 }
 
@@ -8148,19 +8202,24 @@ function plugPowerCords() {
 
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
-                const rawDossier = self.edfs.loadRawDossier(self.seed);
-                rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                self.edfs.loadRawDossier(self.seed, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
-                    agents.forEach(agent => {
-                        const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
-                        $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
-                    });
+                    rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    $$.event('status.domains.boot', {name: self.domainConf.alias});
-                    console.log("Domain boot successfully");
+                        agents.forEach(agent => {
+                            const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                            $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+                        });
+
+                        $$.event('status.domains.boot', {name: self.domainConf.alias});
+                        console.log("Domain boot successfully");
+                    });
                 });
             });
         })
@@ -8168,6 +8227,7 @@ function plugPowerCords() {
 }
 
 boot();
+
 },{"./BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","dossier":"dossier","edfs":"edfs","path":false,"soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js":[function(require,module,exports){
 module.exports = {
     getIsolatesBootScript: function() {
