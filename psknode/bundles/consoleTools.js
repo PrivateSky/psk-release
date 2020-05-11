@@ -342,13 +342,12 @@ function setApp(alseed, appPath) {
     }
 }
 
-function mount(alseed, path, name, archiveIdentifier) {
-    if (arguments.length < 3) {
+function mount(alseed, path, archiveIdentifier) {
+    if (arguments.length < 2) {
         throw Error(`Insufficient arguments. Expected at least 3. Received ${arguments.length}`);
     }
-    if (arguments.length === 3) {
-        archiveIdentifier = name;
-        name = path;
+    if (arguments.length === 2) {
+        archiveIdentifier = path;
         path = alseed;
         alseed = undefined;
         utils.loadWallet((err, wallet) => {
@@ -356,7 +355,7 @@ function mount(alseed, path, name, archiveIdentifier) {
                 throw err;
             }
 
-            wallet.mount(path, name, archiveIdentifier, (err) => {
+            wallet.mount(path, archiveIdentifier, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -371,7 +370,7 @@ function mount(alseed, path, name, archiveIdentifier) {
                     throw err;
                 }
 
-                rawDossier.mount(path, name, archiveIdentifier, (err) => {
+                rawDossier.mount(path, archiveIdentifier, (err) => {
                     if (err) {
                         throw err;
                     }
@@ -387,7 +386,7 @@ function mount(alseed, path, name, archiveIdentifier) {
                 }
 
                 const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.mount(path, name, archiveIdentifier, (err) => {
+                rawDossier.mount(path, archiveIdentifier, (err) => {
                     if (err) {
                         throw err;
                     }
@@ -399,12 +398,11 @@ function mount(alseed, path, name, archiveIdentifier) {
     }
 }
 
-function unmount(alseed, path, name) {
-    if (arguments.length < 2) {
+function unmount(alseed, path) {
+    if (arguments.length < 1) {
         throw Error(`Insufficient arguments. Expected at least 2. Received ${arguments.length}`);
     }
     if (arguments.length === 2) {
-        name = path;
         path = alseed;
         alseed = undefined;
         utils.loadWallet((err, wallet) => {
@@ -412,7 +410,7 @@ function unmount(alseed, path, name) {
                 throw err;
             }
 
-            wallet.unmount(path, name, (err) => {
+            wallet.unmount(path, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -427,7 +425,7 @@ function unmount(alseed, path, name) {
                     throw err;
                 }
 
-                rawDossier.unmount(path, name, (err) => {
+                rawDossier.unmount(path, (err) => {
                     if (err) {
                         throw err;
                     }
@@ -443,7 +441,7 @@ function unmount(alseed, path, name) {
                 }
 
                 const rawDossier = edfs.loadRawDossier(alseed);
-                rawDossier.unmount(path, name, (err) => {
+                rawDossier.unmount(path, (err) => {
                     if (err) {
                         throw err;
                     }
@@ -512,8 +510,8 @@ function listMounts(alseed, path) {
 
 addCommand("create", "dossier", createDossier, "<domainName> <constitutionPath> <nosave>\t\t\t\t |creates an archive containing constitutions folder <constitutionPath> for Domain <domainName>");
 addCommand("set", "app", setApp, " <seed>/<alias> <folderPath> \t\t\t\t\t |add an app to an existing archive");
-addCommand("mount", null, mount, "<seed>/<alias> <path> <name> <archiveIdentifier> <> \t\t\t\t |Mounts the dossier having the seed <seed> at <path>/<name>");
-addCommand("unmount", null, unmount, "<seed>/<alias> <path> <name>\t\t\t\t |Unmounts the dossier mounted at <path>/<name>");
+addCommand("mount", null, mount, "<seed>/<alias> <path> <archiveIdentifier> <> \t\t\t\t |Mounts the dossier having the seed <seed> at <path>");
+addCommand("unmount", null, unmount, "<seed>/<alias> <path> \t\t\t\t |Unmounts the dossier mounted at <path>");
 addCommand("list", "mounts", listMounts, "<seed>/<alias> <path>\t\t\t\t |Lists the seeds of all dossiers mounted at <path>");
 },{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
 require("./wallet");
@@ -593,45 +591,43 @@ function restore(seed) {
     }
     const EDFS = require("edfs");
     let edfs;
-    try {
-        edfs = EDFS.attachWithSeed(seed);
-    } catch (e) {
-        throw Error("The provided seed is invalid.");
-    }
+    EDFS.attachWithSeed(seed, (err, edfs) => {
+        if (err) {
+            throw err;
+        }__saveSeed();
 
-    __saveSeed();
-
-    function __saveSeed() {
-        consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
-            if (err) {
-                console.log(`Caught error: ${err.message}`);
-                process.exit(1);
-            }
-
-            consoleUtils.insertPassword({
-                prompt: "Confirm password:",
-                validationFunction: utils.validatePassword
-            }, (err, newPassword) => {
+        function __saveSeed() {
+            consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
                 if (err) {
                     console.log(`Caught error: ${err.message}`);
                     process.exit(1);
                 }
 
-                if (password !== newPassword) {
-                    console.log("The passwords do not coincide. Try again.");
-                    __saveSeed();
-                } else {
-                    edfs.loadWallet(seed, password, true, (err, wallet) => {
-                        if (err) {
-                            throw err;
-                        }
+                consoleUtils.insertPassword({
+                    prompt: "Confirm password:",
+                    validationFunction: utils.validatePassword
+                }, (err, newPassword) => {
+                    if (err) {
+                        console.log(`Caught error: ${err.message}`);
+                        process.exit(1);
+                    }
 
-                        console.log("Wallet was restored");
-                    });
-                }
+                    if (password !== newPassword) {
+                        console.log("The passwords do not coincide. Try again.");
+                        __saveSeed();
+                    } else {
+                        edfs.loadWallet(seed, password, true, (err, wallet) => {
+                            if (err) {
+                                throw err;
+                            }
+
+                            console.log("Wallet was restored");
+                        });
+                    }
+                });
             });
-        });
-    }
+        }
+    });
 }
 
 function changePassword() {
