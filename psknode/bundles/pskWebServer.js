@@ -4524,714 +4524,7 @@ function SecurityContext() {
 
 module.exports = SecurityContext;
 
-},{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js":[function(require,module,exports){
-(function (Buffer,__dirname){
-const path = require("path");
-const fs = require("fs");
-const crypto = require('crypto');
-const integration = require("zmq_adapter");
-
-const Queue = require("swarmutils").Queue;
-const SwarmPacker = require("swarmutils").SwarmPacker;
-
-function ChannelsManager(server){
-    const utils = require("./utils");
-    const config = utils.getServerConfig();
-    const channelKeyFileName = "channel_key";
-
-    const rootFolder = path.join(config.storage, config.endpointsConfig.virtualMQ.channelsFolderName);
-    fs.mkdirSync(rootFolder, {recursive: true});
-
-    const channelKeys = {};
-    const queues = {};
-    const subscribers = {};
-
-    let baseDir = __dirname;
-
-    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
-    //TODO: check for better implementation
-    if(process.cwd().indexOf(__dirname) ===-1){
-        baseDir = path.join(process.cwd(), __dirname);
-    }
-
-
-    let forwarder;
-    if(integration.testIfAvailable()){
-        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
-    }
-
-    function generateToken(){
-        let buffer = crypto.randomBytes(config.endpointsConfig.virtualMQ.tokenSize);
-        return buffer.toString('hex');
-    }
-
-    function createChannel(name, publicKey, callback){
-        let channelFolder = path.join(rootFolder, name);
-        let keyFile = path.join(channelFolder, channelKeyFileName);
-        let token = generateToken();
-
-        if(typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)){
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        fs.mkdirSync(channelFolder);
-
-        if(fs.existsSync(keyFile)){
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        const config = JSON.stringify({publicKey, token});
-        fs.writeFile(keyFile, config, (err, res)=>{
-            if(!err){
-                channelKeys[name] = config;
-            }
-            return callback(err, !err ? token : undefined);
-        });
-    }
-
-    function retrieveChannelDetails(channelName, callback){
-        if(typeof channelKeys[channelName] !== "undefined"){
-            return callback(null, channelKeys[channelName]);
-        }else{
-            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
-                if(res){
-                    try{
-                        channelKeys[channelName] = JSON.parse(res);
-                    }catch(e){
-                        console.log(e);
-                        return callback(e);
-                    }
-                }
-                callback(err, channelKeys[channelName]);
-            });
-        }
-    }
-
-    function forwardChannel(channelName, forward, callback){
-        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
-        fs.readFile(channelKeyFile, (err, content)=>{
-            let config;
-            try{
-                config = JSON.parse(content);
-            }catch(e){
-                return callback(e);
-            }
-
-            if(typeof config !== "undefined"){
-                config.forward = forward;
-                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args)=>{
-                    if(!err){
-                        channelKeys[channelName] = config;
-                    }
-                    callback(err, ...args);
-                });
-            }
-        });
-    }
-
-    function readBody(req, callback){
-        let data = "";
-        req.on("data", (messagePart)=>{
-            data += messagePart;
-        });
-
-        req.on("end", ()=>{
-            callback(null, data);
-        });
-
-        req.on("error", (err)=>{
-            callback(err);
-        });
-    }
-
-    function createChannelHandler(req, res){
-        const channelName = req.params.channelName;
-
-        readBody(req, (err, message)=>{
-            if(err){
-                return sendStatus(res, 400);
-            }
-
-            const publicKey = message;
-            if (typeof channelName !== "string" || channelName.length === 0 ||
-                typeof publicKey !== "string" || publicKey.length === 0) {
-                return sendStatus(res, 400);
-            }
-
-            let handler = getBasicReturnHandler(res);
-
-            createChannel(channelName, publicKey, (err, token)=>{
-                if(!err){
-                    res.setHeader('Cookie', [`${config.endpointsConfig.virtualMQ.tokenSize}=${token}`]);
-                }
-                handler(err, res);
-            });
-        });
-    }
-
-    function sendStatus(res, reasonCode){
-        res.statusCode = reasonCode;
-        res.end();
-    }
-
-    function getBasicReturnHandler(res){
-        return function(err, result){
-            if(err){
-                return sendStatus(res, err.code || 500);
-            }
-
-            return sendStatus(res, 200);
-        }
-    }
-
-    function enableForwarderHandler(req, res){
-        if(integration.testIfAvailable() === false){
-            return sendStatus(res, 417);
-        }
-        readBody(req, (err, message)=>{
-            const {enable} = message;
-            const channelName = req.params.channelName;
-            const signature = req.headers[config.endpointsConfig.virtualMQ.signatureHeaderName];
-
-            if(typeof channelName !== "string" || typeof signature !== "string"){
-                return sendStatus(res, 400);
-            }
-
-            retrieveChannelDetails(channelName, (err, details)=>{
-                if(err){
-                    return sendStatus(res, 500);
-                }else{
-                    //todo: check signature against key [details.publickey]
-
-                    if(typeof enable === "undefined" || enable){
-                        forwardChannel(channelName, true, getBasicReturnHandler(res));
-                    }else{
-                        forwardChannel(channelName, null, getBasicReturnHandler(res));
-                    }
-                }
-            });
-        });
-    }
-
-    function getQueue(name){
-        if(typeof queues[name] === "undefined"){
-            queues[name] = new Queue();
-        }
-
-        return queues[name];
-    }
-
-    function checkIfChannelExist(channelName, callback){
-        retrieveChannelDetails(channelName, (err, details)=>{
-            callback(null, err ? false : true);
-        });
-    }
-
-    function writeMessage(subscribers, message){
-        let dispatched = false;
-        try {
-            while(subscribers.length>0){
-                let subscriber = subscribers.pop();
-                if(!dispatched){
-                    deliverMessage(subscriber, message);
-                    dispatched = true;
-                }else{
-                    sendStatus(subscriber, 403);
-                }
-            }
-        }catch(err) {
-            //... some subscribers could have a timeout connection
-            if(subscribers.length>0){
-                deliverMessage(subscribers, message);
-            }
-        }
-
-        return dispatched;
-    }
-
-    function readSendMessageBody(req, callback){
-        const contentType = req.headers['content-type'];
-
-        if (contentType === 'application/octet-stream') {
-            const contentLength = Number.parseInt(req.headers['content-length'], 10);
-
-            if(Number.isNaN(contentLength)){
-                let error = new Error("Wrong content length header received!");
-                error.code = 411;
-                return callback(error);
-            }
-
-            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
-                if(err) {
-                    return callback(err);
-                }
-                callback(undefined, bodyAsBuffer);
-            });
-        } else {
-            callback(new Error("Wrong message format received!"));
-        }
-
-        function streamToBuffer(stream, bufferSize, callback) {
-            const buffer = Buffer.alloc(bufferSize);
-            let currentOffset = 0;
-
-            stream.on('data', function(chunk){
-                const chunkSize = chunk.length;
-                const nextOffset = chunkSize + currentOffset;
-
-                if (currentOffset > bufferSize - 1) {
-                    stream.close();
-                    return callback(new Error('Stream is bigger than reported size'));
-                }
-
-                write2Buffer(buffer, chunk, currentOffset);
-                currentOffset = nextOffset;
-
-            });
-            stream.on('end', function(){
-                callback(undefined, buffer);
-            });
-            stream.on('error', callback);
-        }
-
-        function write2Buffer(buffer, dataToAppend, offset) {
-            const dataSize = dataToAppend.length;
-
-            for (let i = 0; i < dataSize; i++) {
-                buffer[offset++] = dataToAppend[i];
-            }
-        }
-    }
-
-    function sendMessageHandler(req, res){
-        let channelName = req.params.channelName;
-
-        checkIfChannelExist(channelName, (err, exists)=>{
-            if(!exists){
-                return sendStatus(res, 403);
-            }else{
-                retrieveChannelDetails(channelName, (err, details)=>{
-                    //we choose to read the body of request only after we know that we recognize the destination channel
-                    readSendMessageBody(req, (err, message)=>{
-                        if(err){
-                            //console.log(err);
-                            return sendStatus(res, 403);
-                        }
-
-                        let header;
-                        try{
-                            header = SwarmPacker.unpack(message.buffer);
-                        }catch(error){
-                            //console.log(error);
-                            return sendStatus(res, 400);
-                        }
-
-                        //TODO: to all checks based on message header
-
-                        if(integration.testIfAvailable() && details.forward){
-                            //console.log("Forwarding message <", message, "> on channel", channelName);
-                            forwarder.send(channelName, message);
-                        }else{
-                            let queue = getQueue(channelName);
-                            let subscribers = getSubscribersList(channelName);
-                            let dispatched = false;
-                            if(queue.isEmpty()){
-                                dispatched = writeMessage(subscribers, message);
-                            }
-                            if(!dispatched) {
-                                if(queue.length < config.endpointsConfig.virtualMQ.maxSize){
-                                    queue.push(message);
-                                }else{
-                                    //queue is full
-                                    return sendStatus(res, 429);
-                                }
-
-                                /*
-                                if(subscribers.length>0){
-                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
-                                    //happened and maybe we should try to dispatch first message from queue
-                                }
-                                */
-
-                            }
-                        }
-                        return sendStatus(res, 200);
-                    });
-                })
-            }
-        });
-    }
-
-    function getSubscribersList(channelName){
-        if(typeof subscribers[channelName] === "undefined"){
-            subscribers[channelName] = [];
-        }
-
-        return subscribers[channelName];
-    }
-
-    function deliverMessage(res, message){
-        if(Buffer.isBuffer(message)) {
-            res.setHeader('content-type', 'application/octet-stream');
-        }
-
-        if(typeof message.length !== "undefined"){
-            res.setHeader('content-length', message.length);
-        }
-
-        res.write(message);
-        sendStatus(res, 200);
-    }
-
-    function getCookie(res, cookieName){
-        let cookies = res.headers['cookie'];
-        if(typeof cookies === "undefined"){
-            return undefined;
-        }
-        if(Array.isArray(cookies)){
-            for(let i=0; i<cookies.length; i++){
-                let cookie = cookies[i];
-                if(cookie.indexOf(cookieName) !== -1){
-                    return cookie.substr(cookieName.length+1);
-                }
-            }
-        }else{
-            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
-
-            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)','i');
-            let match = cookies.match(regex);
-
-            return match && unescape(match[1]);
-        }
-    }
-
-    function receiveMessageHandler(req, res){
-        let channelName = req.params.channelName;
-        checkIfChannelExist(channelName, (err, exists)=>{
-            if(!exists){
-                return sendStatus(res, 403);
-            }else{
-                retrieveChannelDetails(channelName, (err, details)=>{
-                    if(err){
-                        return sendStatus(res, 500);
-                    }
-                    //TODO: check signature agains details.publickey
-
-
-                    if(details.forward){
-                        //if channel is forward it does not make sense
-                        return sendStatus(res, 409);
-                    }
-
-                    /*let signature = req.headers["signature"];
-                    if(typeof signature === "undefined"){
-                        return sendStatus(res, 403);
-                    }*/
-
-                    // let cookie = getCookie(req, tokenHeaderName);
-
-                    // if(typeof cookie === "undefined" || cookie === null){
-                    //     return sendStatus(res, 412);
-                    // }
-
-                    let queue = getQueue(channelName);
-                    let message = queue.pop();
-
-                    if(!message){
-                        getSubscribersList(channelName).push(res);
-                    }else{
-                        deliverMessage(res, message);
-                    }
-                });
-            }
-        });
-    }
-
-    server.put("/create-channel/:channelName", createChannelHandler);
-    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
-    server.post("/send-message/:channelName", sendMessageHandler);
-    server.get("/receive-message/:channelName", receiveMessageHandler);
-}
-
-module.exports = ChannelsManager;
-}).call(this,require("buffer").Buffer,"/modules/psk-webserver")
-
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","buffer":false,"crypto":false,"fs":false,"path":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js":[function(require,module,exports){
-const extensionsMimeTypes = {
-    "aac": {
-        name: "audio/aac",
-        binary: true
-    },
-    "abw": {
-        name: "application/x-abiword",
-        binary: true
-    },
-    "arc": {
-        name: "application/x-freearc",
-        binary: true
-    },
-    "avi": {
-        name: "video/x-msvideo",
-        binary: true
-    },
-    "azw": {
-        name: "application/vnd.amazon.ebook",
-        binary: true
-    },
-    "bin": {
-        name: "application/octet-stream",
-        binary: true
-    }, "bmp": {
-        name: "image/bmp",
-        binary: true
-    }, "bz": {
-        name: "application/x-bzip",
-        binary: true
-    }, "bz2": {
-        name: "application/x-bzip2",
-        binary: true
-    }, "csh": {
-        name: "application/x-csh",
-        binary: false
-    }, "css": {
-        name: "text/css",
-        binary: false
-    }, "csv": {
-        name: "text/csv",
-        binary: false
-    }, "doc": {
-        name: "application/msword",
-        binary: true
-    }, "docx": {
-        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        binary: true
-    }, "eot": {
-        name: "application/vnd.ms-fontobject",
-        binary: true
-    }, "epub": {
-        name: "application/epub+zip",
-        binary: true
-    }, "gz": {
-        name: "application/gzip",
-        binary: true
-    }, "gif": {
-        name: "image/gif",
-        binary: true
-    }, "htm": {
-        name: "text/html",
-        binary: false
-    }, "html": {
-        name: "text/html",
-        binary: false
-    }, "ico": {
-        name: "image/vnd.microsoft.icon",
-        binary: true
-    }, "ics": {
-        name: "text/calendar",
-        binary: false
-    }, "jpeg": {
-        name: "image/jpeg",
-        binary: true
-    }, "jpg": {
-        name: "image/jpeg",
-        binary: true
-    }, "js": {
-        name: "text/javascript",
-        binary: false
-    }, "json": {
-        name: "application/json",
-        binary: false
-    }, "jsonld": {
-        name: "application/ld+json",
-        binary: false
-    }, "mid": {
-        name: "audio/midi",
-        binary: true
-    }, "midi": {
-        name: "audio/midi",
-        binary: true
-    }, "mjs": {
-        name: "text/javascript",
-        binary: false
-    }, "mp3": {
-        name: "audio/mpeg",
-        binary: true
-    }, "mpeg": {
-        name: "video/mpeg",
-        binary: true
-    }, "mpkg": {
-        name: "application/vnd.apple.installer+xm",
-        binary: true
-    }, "odp": {
-        name: "application/vnd.oasis.opendocument.presentation",
-        binary: true
-    }, "ods": {
-        name: "application/vnd.oasis.opendocument.spreadsheet",
-        binary: true
-    }, "odt": {
-        name: "application/vnd.oasis.opendocument.text",
-        binary: true
-    }, "oga": {
-        name: "audio/ogg",
-        binary: true
-    },
-    "ogv": {
-        name: "video/ogg",
-        binary: true
-    },
-    "ogx": {
-        name: "application/ogg",
-        binary: true
-    },
-    "opus": {
-        name: "audio/opus",
-        binary: true
-    },
-    "otf": {
-        name: "font/otf",
-        binary: true
-    },
-    "png": {
-        name: "image/png",
-        binary: true
-    },
-    "pdf": {
-        name: "application/pdf",
-        binary: true
-    },
-    "php": {
-        name: "application/php",
-        binary: false
-    },
-    "ppt": {
-        name: "application/vnd.ms-powerpoint",
-        binary: true
-    },
-    "pptx": {
-        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        binary: true
-    },
-    "rtf": {
-        name: "application/rtf",
-        binary: true
-    },
-    "sh": {
-        name: "application/x-sh",
-        binary: false
-    },
-    "svg": {
-        name: "image/svg+xml",
-        binary: false
-    },
-    "swf": {
-        name: "application/x-shockwave-flash",
-        binary: true
-    },
-    "tar": {
-        name: "application/x-tar",
-        binary: true
-    },
-    "tif": {
-        name: "image/tiff",
-        binary: true
-    },
-    "tiff": {
-        name: "image/tiff",
-        binary: true
-    },
-    "ts": {
-        name: "video/mp2t",
-        binary: true
-    },
-    "ttf": {
-        name: "font/ttf",
-        binary: true
-    },
-    "txt": {
-        name: "text/plain",
-        binary: false
-    },
-    "vsd": {
-        name: "application/vnd.visio",
-        binary: true
-    },
-    "wav": {
-        name: "audio/wav",
-        binary: true
-    },
-    "weba": {
-        name: "audio/webm",
-        binary: true
-    },
-    "webm": {
-        name: "video/webm",
-        binary: true
-    },
-    "webp": {
-        name: "image/webp",
-        binary: true
-    },
-    "woff": {
-        name: "font/woff",
-        binary: true
-    },
-    "woff2": {
-        name: "font/woff2",
-        binary: true
-    },
-    "xhtml": {
-        name: "application/xhtml+xml",
-        binary: false
-    },
-    "xls": {
-        name: "application/vnd.ms-excel",
-        binary: true
-    },
-    "xlsx": {
-        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        binary: true
-    },
-    "xml": {
-        name: "text/xml",
-        binary: false
-    },
-    "xul": {
-        name: "application/vnd.mozilla.xul+xml",
-        binary: true
-    },
-    "zip": {
-        name: "application/zip",
-        binary: true
-    },
-    "3gp": {
-        name: "video/3gpp",
-        binary: true
-    },
-    "3g2": {
-        name: "video/3gpp2",
-        binary: true
-    },
-    "7z": {
-        name: "application/x-7z-compressed",
-        binary: true
-    }
-};
-
-const defaultMimeType = {
-    name: "text/plain",
-    binary: false
-};
-module.exports.getMimeTypeFromExtension = function (extension) {
-    if (typeof extensionsMimeTypes[extension] !== "undefined") {
-        return extensionsMimeTypes[extension];
-    }
-    return defaultMimeType;
-};
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
+},{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
 (function (__dirname){
 function ServerConfig(conf) {
     const path = require("path");
@@ -5240,15 +4533,25 @@ function ServerConfig(conf) {
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "endpoints":["virtualMQ", "edfs", "filesManager", "dossierWizard"],
+        "endpoints":["virtualMQ", "filesManager", "edfs", "dossier-wizard"],
         "endpointsConfig": {
             "virtualMQ": {
+                "path":"./ChannelsManager.js",
                 "channelsFolderName": "channels",
                 "maxSize": 100,
                 "tokenSize": 48,
                 "tokenHeaderName": "x-tokenHeader",
                 "signatureHeaderName": "x-signature",
                 "enableSignatureCheck": true
+            },
+            "dossier-wizard": {
+                "path":"dossier-wizard"
+            },
+            "edfs": {
+                "path":"edfs-middleware"
+            },
+            "filesManager": {
+                "path":"./FilesManager.js"
             }
         }
     };
@@ -5260,201 +4563,7 @@ function ServerConfig(conf) {
 module.exports = ServerConfig;
 }).call(this,"/modules/psk-webserver")
 
-},{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js":[function(require,module,exports){
-function StaticServer(server) {
-    const lockedPathsPrefixes = ["/EDFS", "/receive-message"];
-    const fs = require("fs");
-    const path = require("path");
-    server.use("*", function (req, res, next) {
-        const prefix = "/directory-summary/";
-        requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
-            if (notOurResponsibility) {
-                return next();
-            }
-            targetPath = targetPath.replace(prefix, "");
-            serverTarget(targetPath);
-        });
-
-        function serverTarget(targetPath) {
-            console.log("Serving summary for dir:", targetPath);
-            fs.stat(targetPath, function (err, stats) {
-                if (err) {
-                    res.statusCode = 404;
-                    res.end();
-                    return;
-                }
-                if (!stats.isDirectory()) {
-                    res.statusCode = 403;
-                    res.end();
-                    return;
-                }
-
-                function send() {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', "application/json");
-                    //let's clean some empty objects
-                    for (let prop in summary) {
-                        if (Object.keys(summary[prop]).length === 0) {
-                            delete summary[prop];
-                        }
-                    }
-
-                    res.write(JSON.stringify(summary));
-                    res.end();
-                }
-
-                let summary = {};
-                let directories = {};
-
-                function extractContent(currentPath) {
-                    directories[currentPath] = -1;
-                    let summaryId = currentPath.replace(targetPath, "");
-                    summaryId = summaryId.split(path.sep).join("/");
-                    if (summaryId === "") {
-                        summaryId = "/";
-                    }
-                    //summaryId = path.basename(summaryId);
-                    summary[summaryId] = {};
-
-                    fs.readdir(currentPath, function (err, files) {
-                        if (err) {
-                            return markAsFinish(currentPath);
-                        }
-                        directories[currentPath] = files.length;
-                        //directory empty test
-                        if (files.length === 0) {
-                            return markAsFinish(currentPath);
-                        } else {
-                            for (let i = 0; i < files.length; i++) {
-                                let file = files[i];
-                                const fileName = path.join(currentPath, file);
-                                if (fs.statSync(fileName).isDirectory()) {
-                                    extractContent(fileName);
-                                } else {
-                                    let fileContent = fs.readFileSync(fileName);
-                                    summary[summaryId][file] = fileContent.toString();
-                                }
-                                directories[currentPath]--;
-                            }
-                            return markAsFinish(currentPath);
-                        }
-                    });
-                }
-
-                function markAsFinish(targetPath) {
-                    if (directories [targetPath] > 0) {
-                        return;
-                    }
-                    delete directories [targetPath];
-                    const dirsLeftToProcess = Object.keys(directories);
-                    //if there are no other directories left to process
-                    if (dirsLeftToProcess.length === 0) {
-                        send();
-                    }
-                }
-
-                extractContent(targetPath);
-            })
-        }
-
-    });
-
-    server.use("*", function (req, res, next) {
-        requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
-            if (notOurResponsibility) {
-                return next();
-            }
-            //from now on we mean to resolve the url
-            fs.stat(targetPath, function (err, stats) {
-                if (err) {
-                    res.statusCode = 404;
-                    res.end();
-                    return;
-                }
-                if (stats.isDirectory()) {
-                    let url = req.url;
-                    if (url[url.length - 1] !== "/") {
-                        res.writeHead(302, {
-                            'Location': url + "/"
-                        });
-                        res.end();
-                        return;
-                    }
-                    const defaultFileName = "index.html";
-                    const defaultPath = path.join(targetPath, defaultFileName);
-                    fs.stat(defaultPath, function (err) {
-                        if (err) {
-                            res.statusCode = 403;
-                            res.end();
-                            return;
-                        }
-                        return sendFile(res, defaultPath);
-                    });
-                } else {
-                    return sendFile(res, targetPath);
-                }
-            });
-        });
-    });
-
-    function sendFile(res, file) {
-        let stream = fs.createReadStream(file);
-        const mimes = require("./MimeType");
-        let ext = path.extname(file);
-        if (ext !== "") {
-            ext = ext.replace(".", "");
-            res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
-        } else {
-            res.setHeader('Content-Type', "application/octet-stream");
-        }
-        res.statusCode = 200;
-        stream.pipe(res);
-        stream.on('finish', () => {
-            res.end();
-        });
-    }
-
-    function requestValidation(req, method, urlPrefix, callback) {
-        if (typeof urlPrefix === "function") {
-            callback = urlPrefix;
-            urlPrefix = undefined;
-        }
-        if (req.method !== method) {
-            //we resolve only GET requests
-            return callback(true);
-        }
-
-        if (typeof urlPrefix === "undefined") {
-            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
-                let reservedPath = lockedPathsPrefixes[i];
-                //if we find a url that starts with a reserved prefix is not our duty ro resolve
-                if (req.url.indexOf(reservedPath) === 0) {
-                    return callback(true);
-                }
-            }
-        } else {
-            if (req.url.indexOf(urlPrefix) !== 0) {
-                return callback(true);
-            }
-        }
-
-        const rootFolder = server.rootFolder;
-        const path = require("path");
-        let requestedUrl = req.url;
-        if (urlPrefix) {
-            requestedUrl = requestedUrl.replace(urlPrefix, "");
-        }
-        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
-        //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
-        if (targetPath.indexOf(rootFolder) !== 0) {
-            return callback(true);
-        }
-        callback(false, targetPath);
-    }
-}
-
-module.exports = StaticServer;
-},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js","fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
+},{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
 (function (Buffer){
 const http = require('http');
 const {URL} = require('url');
@@ -6297,19 +5406,19 @@ module.exports = {Server, Client, httpUtils, Router};
 
 
 },{"./classes/Client":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Client.js","./classes/Router":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Router.js","./classes/Server":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Server.js","./httpUtils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/httpUtils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js":[function(require,module,exports){
-(function (Buffer,__dirname){
-function readMessageBufferFromHTTPStream(reqORres, callback){
+(function (Buffer){
+function readMessageBufferFromHTTPStream(reqORres, callback) {
     const contentType = reqORres.headers['content-type'];
 
     if (contentType === 'application/octet-stream') {
         const contentLength = Number.parseInt(reqORres.headers['content-length'], 10);
 
-        if(Number.isNaN(contentLength)){
+        if (Number.isNaN(contentLength)) {
             return callback(new Error("Wrong content length header received!"));
         }
 
         streamToBuffer(reqORres, contentLength, (err, bodyAsBuffer) => {
-            if(err) {
+            if (err) {
                 return callback(err);
             }
             callback(undefined, bodyAsBuffer);
@@ -6322,7 +5431,7 @@ function readMessageBufferFromHTTPStream(reqORres, callback){
         const buffer = Buffer.alloc(bufferSize);
         let currentOffset = 0;
 
-        stream.on('data', function(chunk){
+        stream.on('data', function (chunk) {
             const chunkSize = chunk.length;
             const nextOffset = chunkSize + currentOffset;
 
@@ -6335,7 +5444,7 @@ function readMessageBufferFromHTTPStream(reqORres, callback){
             currentOffset = nextOffset;
 
         });
-        stream.on('end', function(){
+        stream.on('end', function () {
             callback(undefined, buffer);
         });
         stream.on('error', callback);
@@ -6352,13 +5461,13 @@ function readMessageBufferFromHTTPStream(reqORres, callback){
 
 let serverConf;
 const ServerConfig = require("./ServerConfig");
+
 function getServerConfig() {
     if (typeof serverConf === "undefined") {
         const fs = require("fs");
         const path = require("path");
-        const pskRootInstallFolder = path.resolve("." + __dirname + "/../..");
         try {
-            serverConf = fs.readFileSync(path.join(pskRootInstallFolder, "conf", "server.json"));
+            serverConf = fs.readFileSync(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "conf", "server.json"));
             serverConf = JSON.parse(serverConf.toString());
         } catch (e) {
             serverConf = undefined;
@@ -6372,7 +5481,7 @@ module.exports = {
     readMessageBufferFromHTTPStream,
     getServerConfig
 };
-}).call(this,require("buffer").Buffer,"/modules/psk-webserver")
+}).call(this,require("buffer").Buffer)
 
 },{"./ServerConfig":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js","buffer":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 (function (Buffer){
@@ -9359,29 +8468,23 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 			res.end();
 		});
 
-		const middlewareList = conf.endpoints;
-		middlewareList.forEach(middleware => {
-			switch(middleware){
-				case "virtualMQ":
-					require("./ChannelsManager.js")(server);
-					break;
+		function addMiddlewares(){
+			const middlewareList = conf.endpoints;
+			const path = require("path");
+			middlewareList.forEach(middleware => {
+				const middlewareConfig = Object.keys(conf.endpointsConfig).find(endpointName => endpointName === middleware);
+				if (middlewareConfig) {
+					let middlewarePath = conf.endpointsConfig[middlewareConfig].path;
+					if (middlewarePath.startsWith(".")) {
+						middlewarePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, middlewarePath);
+					}
+					require(middlewarePath)(server);
+				}
+			})
 
-				case "staticServer":
-					require("./StaticServer")(server);
-					break;
+		}
 
-				case "edfs":
-					require("edfs-middleware")(server);
-					break;
-
-				case "dossierWizard":
-					require("dossier-wizard")(server);
-					break;
-
-				default:
-			}
-		});
-
+		addMiddlewares();
 		setTimeout(function(){
 			//allow other endpoints registration before registering fallback handler
 			server.use(function (req, res) {
@@ -9420,7 +8523,7 @@ module.exports.getServerConfig = function () {
 	return utils.getServerConfig();
 };
 
-},{"./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./StaticServer":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","dossier-wizard":"dossier-wizard","edfs-middleware":"edfs-middleware"}],"pskcrypto":[function(require,module,exports){
+},{"./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","path":false}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
