@@ -34,109 +34,109 @@ if (typeof $$ !== "undefined") {
 
 },{"edfs":"edfs","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarm-engine/bootScripts/IsolateBootScript":"swarm-engine/bootScripts/IsolateBootScript"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
-
 function FetchBrickTransportStrategy(initialConfig) {
-    const url = initialConfig;
-    this.send = (name, data, callback) => {
+	const url = initialConfig;
+	this.send = (name, data, callback) => {
 
-        fetch(url + "/EDFS/"+name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: data
-        }).then(function(response) {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(function(data) {
-            callback(null, data)
-        }).catch(error=>{
-            callback(error);
-        });
+		fetch(url + "/EDFS/" + name, {
+			method: 'POST',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+			body: data
+		}).then(function (response) {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().catch((err) => {
+				// This happens when the response is empty
+				return {};
+			});
+		}).then(function (data) {
+			callback(null, data)
+		}).catch(error => {
+			callback(error);
+		});
 
-    };
+	};
 
-    this.get = (name, callback) => {
-        fetch(url + "/EDFS/"+name,{
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response=>{
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.arrayBuffer();
-        }).then(arrayBuffer=>{
-                let buffer = new Buffer(arrayBuffer.byteLength);
-                let view = new Uint8Array(arrayBuffer);
-                for (let i = 0; i < buffer.length; ++i) {
-                    buffer[i] = view[i];
-                }
+	this.get = (name, callback) => {
+		fetch(url + "/EDFS/" + name, {
+			method: 'GET',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.arrayBuffer();
+		}).then(arrayBuffer => {
+			let buffer = new Buffer(arrayBuffer.byteLength);
+			let view = new Uint8Array(arrayBuffer);
+			for (let i = 0; i < buffer.length; ++i) {
+				buffer[i] = view[i];
+			}
 
-            callback(null, buffer);
-        }).catch(error=>{
-            callback(error);
-        });
-    };
+			callback(null, buffer);
+		}).catch(error => {
+			callback(error);
+		});
+	};
 
-    this.getHashForAlias = (alias, callback) => {
-        fetch(url + "/EDFS/getVersions/" + alias, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response => {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().then(data => {
-                callback(null, data);
-            }).catch(error => {
-                callback(error);
-            })
-        });
-    };
+	this.getHashForAlias = (alias, callback) => {
+		fetch(url + "/EDFS/getVersions/" + alias, {
+			method: 'GET',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().then(data => {
+				callback(null, data);
+			}).catch(error => {
+				callback(error);
+			})
+		});
+	};
 
-    this.attachHashToAlias = (alias, name, callback) => {
-        fetch(url + '/EDFS/attachHashToAlias/' + name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: alias
-        }).then(response => {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(data => {
-            callback(null, data);
-        }).catch(error => {
-            callback(error);
-        })
-    }
+	this.attachHashToAlias = (alias, name, callback) => {
+		fetch(url + '/EDFS/attachHashToAlias/' + name, {
+			method: 'POST',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+			body: alias
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().catch((err) => {
+				// This happens when the response is empty
+				return {};
+			});
+		}).then(data => {
+			callback(null, data);
+		}).catch(error => {
+			callback(error);
+		})
+	}
 
-    this.getLocator = () => {
-        return url;
-    };
+	this.getLocator = () => {
+		return url;
+	};
 }
+
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
 FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
-    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+	return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
 };
 
 
@@ -250,12 +250,14 @@ function EDFS(endpoint, options) {
     const pskPath = require("swarmutils").path;
     const cache = options.cache;
 
-    this.createRawDossier = () => {
-        return new RawDossier(endpoint, undefined, cache);
+    this.createRawDossier = (callback) => {
+        const dossier = new RawDossier(endpoint, undefined, cache);
+        dossier.load(err => callback(err, dossier));
     };
 
-    this.createBar = () => {
-        return barModule.createArchive(createArchiveConfig());
+    this.createBar = (callback) => {
+        const bar = barModule.createArchive(createArchiveConfig());
+        bar.load(err => callback(err, bar));
     };
 
     this.bootRawDossier = (seed, callback) => {
@@ -306,8 +308,7 @@ function EDFS(endpoint, options) {
             callback = overwrite;
             overwrite = false;
         }
-        const wallet = this.createRawDossier();
-        wallet.load((err) => {
+        this.createRawDossier((err, wallet) => {
             if (err) {
                 return callback(err);
             }

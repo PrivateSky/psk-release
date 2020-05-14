@@ -1382,7 +1382,8 @@ function DossierWizardMiddleware(server) {
     const executioner = require('./utils/executioner');
 
     const randSize = 32;
-    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
+
+    function setHeaders(req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         // Request methods you wish to allow
@@ -1391,9 +1392,9 @@ function DossierWizardMiddleware(server) {
         // Request headers you wish to allow
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
         next();
-    });
+    }
 
-    server.post(`${URL_PREFIX}/begin`, (req, res) => {
+    function beginSession(req, res) {
         const transactionId = crypto.randomBytes(randSize).toString('hex');
         fs.mkdir(path.join(server.rootFolder, transactionId), {recursive: true}, (err) => {
             if (err) {
@@ -1404,14 +1405,14 @@ function DossierWizardMiddleware(server) {
 
             res.end(transactionId);
         });
-    });
+    }
 
-    server.post(`${URL_PREFIX}/addFile`, (req, res) => {
+    function sendError(req, res) {
         res.statusCode = 400;
         res.end('Illegal url, missing transaction id');
-    });
+    }
 
-    server.post(`${URL_PREFIX}/addFile/:transactionId`, (req, res) => {
+    function addFileToDossier(req, res) {
         const transactionId = req.params.transactionId;
         const fileObj = {
             dossierPath: req.headers["x-dossier-path"],
@@ -1429,16 +1430,9 @@ function DossierWizardMiddleware(server) {
 
             res.end();
         });
-    });
+    }
 
-    server.post(`${URL_PREFIX}/setEndpoint`, (req, res) => {
-        res.statusCode = 400;
-        res.end('Illegal url, missing transaction id');
-    });
-
-    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, httpUtils.bodyParser);
-
-    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, (req, res) => {
+    function setDossierEndpoint(req, res) {
         const transactionId = req.params.transactionId;
         serverCommands.setEndpoint(path.join(server.rootFolder, transactionId), req.body, (err) => {
             if (err) {
@@ -1447,14 +1441,9 @@ function DossierWizardMiddleware(server) {
 
             res.end();
         });
-    });
+    }
 
-    server.post(`${URL_PREFIX}/mount`, (req, res) => {
-        res.statusCode = 400;
-        res.end('Illegal url, missing transaction id');
-    });
-
-    server.post(`${URL_PREFIX}/mount/:transactionId`, (req, res) => {
+    function mount(req, res) {
         const transactionId = req.params.transactionId;
         const mountPoint = {
             path: req.headers['x-mount-path'],
@@ -1470,14 +1459,9 @@ function DossierWizardMiddleware(server) {
             }
             res.end();
         });
-    });
+    }
 
-    server.post(`${URL_PREFIX}/build`, (req, res) => {
-        res.statusCode = 400;
-        res.end('Illegal url, missing transaction id');
-    });
-    server.post(`${URL_PREFIX}/build/:transactionId`, httpUtils.bodyParser);
-    server.post(`${URL_PREFIX}/build/:transactionId`, (req, res) => {
+    function buildDossier(req, res) {
         const transactionId = req.params.transactionId;
         executioner.executioner(path.join(server.rootFolder, transactionId), (err, seed) => {
             if (err) {
@@ -1489,9 +1473,10 @@ function DossierWizardMiddleware(server) {
             res.end(seed.toString());
 
         });
-    });
+    }
 
-    server.use(`${URL_PREFIX}`, (req, res) => {
+    function redirect(req, res) {
+        console.log("Redirect called");
         res.statusCode = 303;
         let redirectLocation = 'index.html';
 
@@ -1501,14 +1486,31 @@ function DossierWizardMiddleware(server) {
 
         res.setHeader("Location", redirectLocation);
         res.end();
-    });
+    }
+
+    server.use(`${URL_PREFIX}/*`, setHeaders);
+
+    server.post(`${URL_PREFIX}/begin`, beginSession);
+
+    server.post(`${URL_PREFIX}/addFile`, sendError);
+    server.post(`${URL_PREFIX}/addFile/:transactionId`, addFileToDossier);
+
+    server.post(`${URL_PREFIX}/setEndpoint`, sendError);
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, httpUtils.bodyParser);
+    server.post(`${URL_PREFIX}/setEndpoint/:transactionId`, setDossierEndpoint);
+
+    server.post(`${URL_PREFIX}/mount`, sendError);
+    server.post(`${URL_PREFIX}/mount/:transactionId`, mount);
+
+    server.post(`${URL_PREFIX}/build`, sendError);
+    server.post(`${URL_PREFIX}/build/:transactionId`, httpUtils.bodyParser);
+    server.post(`${URL_PREFIX}/build/:transactionId`, buildDossier);
+
+    server.use(`${URL_PREFIX}`, redirect);
 
     server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dossier-wizard/web'), `${URL_PREFIX}/`));
 
-    server.use((req, res) => {
-        res.statusCode = 404;
-        res.end();
-    });
+    server.use(sendError);
 }
 
 module.exports = DossierWizardMiddleware;
@@ -1582,9 +1584,9 @@ module.exports = TransactionManager;
 },{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js":[function(require,module,exports){
 const EDFS = require("edfs");
 
-function createArchive(endpoint) {
+function createArchive(endpoint, callback) {
     const edfs = EDFS.attachToEndpoint(endpoint);
-    return edfs.createRawDossier();
+    edfs.createRawDossier(callback);
 }
 
 function addFile(workingDir, dossierPath, archive, callback) {
@@ -1611,14 +1613,7 @@ function executioner(workingDir, callback) {
         if (err) {
             return callback(err);
         }
-        let archive;
-        try {
-            archive = dossierOperations.createArchive(transaction.endpoint);
-        } catch (e) {
-            return callback(e);
-        }
-
-        archive.load((err) => {
+        dossierOperations.createArchive(transaction.endpoint, (err, archive) => {
             if (err) {
                 return callback(err);
             }
@@ -1924,14 +1919,14 @@ function EDFSMiddleware(server) {
     require("../flows/BricksManager");
 
     let storageFolder = path.join(server.rootFolder, bricks_storage_folder);
-    if(typeof process.env.EDFS_BRICK_STORAGE_FOLDER !== "undefined"){
+    if (typeof process.env.EDFS_BRICK_STORAGE_FOLDER !== "undefined") {
         storageFolder = process.env.EDFS_BRICK_STORAGE_FOLDER;
     }
 
     $$.flow.start("BricksManager").init(storageFolder);
     console.log("Bricks Storage location", storageFolder);
 
-    server.use(`${URL_PREFIX}/*`, function (req, res, next) {
+    function setHeaders(req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         // Request methods you wish to allow
@@ -1940,9 +1935,9 @@ function EDFSMiddleware(server) {
         // Request headers you wish to allow
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
         next();
-    });
+    }
 
-    server.post(`${URL_PREFIX}/:fileId`, (req, res) => {
+    function uploadBrick(req, res) {
         $$.flow.start("BricksManager").write(req.params.fileId, req, (err, result) => {
             res.statusCode = 201;
             if (err) {
@@ -1954,9 +1949,9 @@ function EDFSMiddleware(server) {
             }
             res.end(JSON.stringify(result));
         });
-    });
+    }
 
-    server.get(`${URL_PREFIX}/:fileId`, (req, res) => {
+    function downloadBrick(req, res) {
         res.setHeader("content-type", "application/octet-stream");
         res.setHeader('Cache-control', 'max-age=31536000'); // set brick cache expiry to 1 year
         $$.flow.start("BricksManager").read(req.params.fileId, res, (err, result) => {
@@ -1967,9 +1962,9 @@ function EDFSMiddleware(server) {
             }
             res.end();
         });
-    });
+    }
 
-    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, (req, res) => {
+    function attachHashToAlias(req, res) {
         $$.flow.start("BricksManager").addAlias(req.params.fileId, req, (err, result) => {
             res.statusCode = 201;
             if (err) {
@@ -1981,9 +1976,9 @@ function EDFSMiddleware(server) {
             }
             res.end();
         });
-    });
+    }
 
-    server.get(`${URL_PREFIX}/getVersions/:alias`, (req, res) => {
+    function getVersions(req, res) {
         $$.flow.start("BricksManager").readVersions(req.params.alias, (err, fileHashes) => {
             res.statusCode = 200;
             if (err) {
@@ -1993,116 +1988,122 @@ function EDFSMiddleware(server) {
             res.setHeader("content-type", "application/json");
             res.end(JSON.stringify(fileHashes));
         });
-    });
+    }
+
+    server.use(`${URL_PREFIX}/*`, setHeaders);
+    server.post(`${URL_PREFIX}/:fileId`, uploadBrick);
+    server.get(`${URL_PREFIX}/:fileId`, downloadBrick);
+    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, attachHashToAlias);
+    server.get(`${URL_PREFIX}/getVersions/:alias`, getVersions);
 }
 
 module.exports = EDFSMiddleware;
 
 },{"../flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
-
 function FetchBrickTransportStrategy(initialConfig) {
-    const url = initialConfig;
-    this.send = (name, data, callback) => {
+	const url = initialConfig;
+	this.send = (name, data, callback) => {
 
-        fetch(url + "/EDFS/"+name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: data
-        }).then(function(response) {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(function(data) {
-            callback(null, data)
-        }).catch(error=>{
-            callback(error);
-        });
+		fetch(url + "/EDFS/" + name, {
+			method: 'POST',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+			body: data
+		}).then(function (response) {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().catch((err) => {
+				// This happens when the response is empty
+				return {};
+			});
+		}).then(function (data) {
+			callback(null, data)
+		}).catch(error => {
+			callback(error);
+		});
 
-    };
+	};
 
-    this.get = (name, callback) => {
-        fetch(url + "/EDFS/"+name,{
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response=>{
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.arrayBuffer();
-        }).then(arrayBuffer=>{
-                let buffer = new Buffer(arrayBuffer.byteLength);
-                let view = new Uint8Array(arrayBuffer);
-                for (let i = 0; i < buffer.length; ++i) {
-                    buffer[i] = view[i];
-                }
+	this.get = (name, callback) => {
+		fetch(url + "/EDFS/" + name, {
+			method: 'GET',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.arrayBuffer();
+		}).then(arrayBuffer => {
+			let buffer = new Buffer(arrayBuffer.byteLength);
+			let view = new Uint8Array(arrayBuffer);
+			for (let i = 0; i < buffer.length; ++i) {
+				buffer[i] = view[i];
+			}
 
-            callback(null, buffer);
-        }).catch(error=>{
-            callback(error);
-        });
-    };
+			callback(null, buffer);
+		}).catch(error => {
+			callback(error);
+		});
+	};
 
-    this.getHashForAlias = (alias, callback) => {
-        fetch(url + "/EDFS/getVersions/" + alias, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response => {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().then(data => {
-                callback(null, data);
-            }).catch(error => {
-                callback(error);
-            })
-        });
-    };
+	this.getHashForAlias = (alias, callback) => {
+		fetch(url + "/EDFS/getVersions/" + alias, {
+			method: 'GET',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().then(data => {
+				callback(null, data);
+			}).catch(error => {
+				callback(error);
+			})
+		});
+	};
 
-    this.attachHashToAlias = (alias, name, callback) => {
-        fetch(url + '/EDFS/attachHashToAlias/' + name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: alias
-        }).then(response => {
-            if(response.status>=400){
-                return callback(new Error(`An error occurred ${response.statusText}`))
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(data => {
-            callback(null, data);
-        }).catch(error => {
-            callback(error);
-        })
-    }
+	this.attachHashToAlias = (alias, name, callback) => {
+		fetch(url + '/EDFS/attachHashToAlias/' + name, {
+			method: 'POST',
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/octet-stream'
+			},
+			body: alias
+		}).then(response => {
+			if (response.status >= 400) {
+				throw new Error(`An error occurred ${response.statusText}`);
+			}
+			return response.json().catch((err) => {
+				// This happens when the response is empty
+				return {};
+			});
+		}).then(data => {
+			callback(null, data);
+		}).catch(error => {
+			callback(error);
+		})
+	}
 
-    this.getLocator = () => {
-        return url;
-    };
+	this.getLocator = () => {
+		return url;
+	};
 }
+
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
 FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
-    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+	return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
 };
 
 
@@ -2216,12 +2217,14 @@ function EDFS(endpoint, options) {
     const pskPath = require("swarmutils").path;
     const cache = options.cache;
 
-    this.createRawDossier = () => {
-        return new RawDossier(endpoint, undefined, cache);
+    this.createRawDossier = (callback) => {
+        const dossier = new RawDossier(endpoint, undefined, cache);
+        dossier.load(err => callback(err, dossier));
     };
 
-    this.createBar = () => {
-        return barModule.createArchive(createArchiveConfig());
+    this.createBar = (callback) => {
+        const bar = barModule.createArchive(createArchiveConfig());
+        bar.load(err => callback(err, bar));
     };
 
     this.bootRawDossier = (seed, callback) => {
@@ -2272,8 +2275,7 @@ function EDFS(endpoint, options) {
             callback = overwrite;
             overwrite = false;
         }
-        const wallet = this.createRawDossier();
-        wallet.load((err) => {
+        this.createRawDossier((err, wallet) => {
             if (err) {
                 return callback(err);
             }
