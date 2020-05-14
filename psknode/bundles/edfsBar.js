@@ -507,7 +507,7 @@ function Archive(archiveConfigurator) {
      * @param {callback} callback
      */
     this.load = (callback) => {
-        const barMapHash = archiveConfigurator.getMapDigest();
+        const barMapHash = archiveConfigurator.getBarMapId();
         brickStorageService.getBarMap(barMapHash, (err, map) => {
             if (err) {
                 return callback(err);
@@ -526,7 +526,7 @@ function Archive(archiveConfigurator) {
             return cachedMapDigest;
         }
 
-        cachedMapDigest = archiveConfigurator.getMapDigest();
+        cachedMapDigest = archiveConfigurator.getBarMapId();
         return cachedMapDigest;
     };
 
@@ -998,18 +998,10 @@ function ArchiveConfigurator() {
         return config.fsAdapter;
     };
 
-    this.setMapDigest = (mapDigest) => {
-        config.mapDigest = mapDigest;
-    };
-
-    let barMapNotCreated = true;
-    this.getMapDigest = () => {
-        if(barMapNotCreated) {
-            barMapNotCreated = false;
-            return config.mapDigest;
+    this.getBarMapId = () => {
+        if (config.seed) {
+            return config.seed.getKey();
         }
-
-        return this.getSeedKey();
     };
 
     this.setEncryptionAlgorithm = (algorithm) => {
@@ -1097,11 +1089,9 @@ function ArchiveConfigurator() {
 
     this.setSeedKey = (key) => {
         config.seed.setKey(key);
-        this.setMapDigest(key);
     };
 
     this.getSeedKey = () => {
-        loadSeed();
         if (config.seed) {
             return config.seed.getKey();
         }
@@ -1113,7 +1103,6 @@ function ArchiveConfigurator() {
         if (endpoint) {
             this.setStorageProvider("EDFSBrickStorage", endpoint);
         }
-        this.setMapDigest(config.seed.getKey());
     };
 
     this.getSeed = () => {
@@ -1141,9 +1130,6 @@ function ArchiveConfigurator() {
             config.seedEndpoint = config.seed.getEndpoint();
         }
         config.seed = new Seed(undefined, config.seedEndpoint);
-        if (config.seed.getKey()) {
-            self.setMapDigest(config.seed.getKey());
-        }
     };
 
     this.setCache = (cacheInstance) => {
@@ -1572,11 +1558,7 @@ function Brick(config) {
     };
 
     this.getKey = () => {
-        const seedId = config.getSeedKey();
-        if (seedId) {
-            return seedId;
-        }
-        return config.getMapDigest();
+        return config.getSeedKey();
     };
 
     this.setKey = (key) => {
