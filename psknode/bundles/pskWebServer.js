@@ -1746,11 +1746,8 @@ const pathModule = "path";
 const path = require(pathModule);
 const fsModule = "fs";
 const fs = require(fsModule);
-const osModule = "os";
-const endOfLine = require(osModule).EOL;
 const crypto = require("pskcrypto");
 const folderNameSize = process.env.FOLDER_NAME_SIZE || 5;
-const FILE_SEPARATOR = '-';
 let brickStorageFolder;
 
 $$.flow.describe("BricksManager", {
@@ -1794,42 +1791,6 @@ $$.flow.describe("BricksManager", {
             } else {
                 callback(new Error(`File ${filePath} was not found.`));
             }
-        });
-    },
-    addAlias: function (fileHash, readStream, callback) {
-        if (!this.__verifyFileName(fileHash, callback)) {
-            return;
-        }
-
-        this.__streamToString(readStream, (err, alias) => {
-            if (err) {
-                return callback(err);
-            }
-            if (!alias) {
-                return callback(new Error("No alias was provided"));
-            }
-
-            const filePath = path.join(brickStorageFolder, alias);
-            this.__verifyFileExistence(filePath, (err) => {
-                if (err) {
-                    fs.writeFile(filePath, fileHash + endOfLine, callback);
-                } else {
-                    fs.appendFile(filePath, fileHash + endOfLine, callback);
-                }
-            });
-
-        });
-    },
-    readVersions: function (alias, callback) {
-        const filePath = path.join(brickStorageFolder, alias);
-        fs.readFile(filePath, (err, fileHashes) => {
-            if (err) {
-                if (err.code === "ENOENT") {
-                    return callback(undefined, []);
-                }
-                return callback(err);
-            }
-            callback(undefined, fileHashes.toString().trimEnd().split(endOfLine));
         });
     },
     __verifyFileName: function (fileName, callback) {
@@ -1895,18 +1856,6 @@ $$.flow.describe("BricksManager", {
     },
     __verifyFileExistence: function (filePath, callback) {
         fs.access(filePath, callback);
-    },
-    __streamToString: function (readStream, callback) {
-        let str = '';
-        readStream.on("data", (chunk) => {
-            str += chunk;
-        });
-
-        readStream.on("end", () => {
-            callback(undefined, str);
-        });
-
-        readStream.on("error", callback);
     }
 });
 
@@ -1964,37 +1913,9 @@ function EDFSMiddleware(server) {
         });
     }
 
-    function attachHashToAlias(req, res) {
-        $$.flow.start("BricksManager").addAlias(req.params.fileId, req, (err, result) => {
-            res.statusCode = 201;
-            if (err) {
-                res.statusCode = 500;
-
-                if (err.code === 'EACCES') {
-                    res.statusCode = 409;
-                }
-            }
-            res.end();
-        });
-    }
-
-    function getVersions(req, res) {
-        $$.flow.start("BricksManager").readVersions(req.params.alias, (err, fileHashes) => {
-            res.statusCode = 200;
-            if (err) {
-                console.error(err);
-                res.statusCode = 404;
-            }
-            res.setHeader("content-type", "application/json");
-            res.end(JSON.stringify(fileHashes));
-        });
-    }
-
     server.use(`${URL_PREFIX}/*`, setHeaders);
     server.post(`${URL_PREFIX}/:fileId`, uploadBrick);
     server.get(`${URL_PREFIX}/:fileId`, downloadBrick);
-    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, attachHashToAlias);
-    server.get(`${URL_PREFIX}/getVersions/:alias`, getVersions);
 }
 
 module.exports = EDFSMiddleware;
@@ -2002,108 +1923,108 @@ module.exports = EDFSMiddleware;
 },{"../flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
 (function (Buffer){
 function FetchBrickTransportStrategy(initialConfig) {
-	const url = initialConfig;
-	this.send = (name, data, callback) => {
+    const url = initialConfig;
+    this.send = (name, data, callback) => {
 
-		fetch(url + "/EDFS/" + name, {
-			method: 'POST',
-			mode: 'cors',
-			headers: {
-				'Content-Type': 'application/octet-stream'
-			},
-			body: data
-		}).then(function (response) {
-			if (response.status >= 400) {
-				throw new Error(`An error occurred ${response.statusText}`);
-			}
-			return response.json().catch((err) => {
-				// This happens when the response is empty
-				return {};
-			});
-		}).then(function (data) {
-			callback(null, data)
-		}).catch(error => {
-			callback(error);
-		});
+        fetch(url + "/EDFS/" + name, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            body: data
+        }).then(function (response) {
+            if (response.status >= 400) {
+                throw new Error(`An error occurred ${response.statusText}`);
+            }
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
+        }).then(function (data) {
+            callback(null, data)
+        }).catch(error => {
+            callback(error);
+        });
 
-	};
+    };
 
-	this.get = (name, callback) => {
-		fetch(url + "/EDFS/" + name, {
-			method: 'GET',
-			mode: 'cors',
-			headers: {
-				'Content-Type': 'application/octet-stream'
-			},
-		}).then(response => {
-			if (response.status >= 400) {
-				throw new Error(`An error occurred ${response.statusText}`);
-			}
-			return response.arrayBuffer();
-		}).then(arrayBuffer => {
-			let buffer = new Buffer(arrayBuffer.byteLength);
-			let view = new Uint8Array(arrayBuffer);
-			for (let i = 0; i < buffer.length; ++i) {
-				buffer[i] = view[i];
-			}
+    this.get = (name, callback) => {
+        fetch(url + "/EDFS/" + name, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+        }).then(response => {
+            if (response.status >= 400) {
+                throw new Error(`An error occurred ${response.statusText}`);
+            }
+            return response.arrayBuffer();
+        }).then(arrayBuffer => {
+            let buffer = new Buffer(arrayBuffer.byteLength);
+            let view = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < buffer.length; ++i) {
+                buffer[i] = view[i];
+            }
 
-			callback(null, buffer);
-		}).catch(error => {
-			callback(error);
-		});
-	};
+            callback(null, buffer);
+        }).catch(error => {
+            callback(error);
+        });
+    };
 
-	this.getHashForAlias = (alias, callback) => {
-		fetch(url + "/EDFS/getVersions/" + alias, {
-			method: 'GET',
-			mode: 'cors',
-			headers: {
-				'Content-Type': 'application/octet-stream'
-			},
-		}).then(response => {
-			if (response.status >= 400) {
-				throw new Error(`An error occurred ${response.statusText}`);
-			}
-			return response.json().then(data => {
-				callback(null, data);
-			}).catch(error => {
-				callback(error);
-			})
-		});
-	};
+    this.getHashForAlias = (alias, callback) => {
+        fetch(url + "/anchoring/getVersions/" + alias, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+        }).then(response => {
+            if (response.status >= 400) {
+                throw new Error(`An error occurred ${response.statusText}`);
+            }
+            return response.json().then(data => {
+                callback(null, data);
+            }).catch(error => {
+                callback(error);
+            })
+        });
+    };
 
-	this.attachHashToAlias = (alias, name, callback) => {
-		fetch(url + '/EDFS/attachHashToAlias/' + name, {
-			method: 'POST',
-			mode: 'cors',
-			headers: {
-				'Content-Type': 'application/octet-stream'
-			},
-			body: alias
-		}).then(response => {
-			if (response.status >= 400) {
-				throw new Error(`An error occurred ${response.statusText}`);
-			}
-			return response.json().catch((err) => {
-				// This happens when the response is empty
-				return {};
-			});
-		}).then(data => {
-			callback(null, data);
-		}).catch(error => {
-			callback(error);
-		})
-	}
+    this.attachHashToAlias = (alias, name, callback) => {
+        fetch(url + '/anchoring/attachHashToAlias/' + name, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            body: alias
+        }).then(response => {
+            if (response.status >= 400) {
+                throw new Error(`An error occurred ${response.statusText}`);
+            }
+            return response.json().catch((err) => {
+                // This happens when the response is empty
+                return {};
+            });
+        }).then(data => {
+            callback(null, data);
+        }).catch(error => {
+            callback(error);
+        })
+    };
 
-	this.getLocator = () => {
-		return url;
-	};
+    this.getLocator = () => {
+        return url;
+    };
 }
 
 //TODO:why we use this?
 FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
 FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
-	return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
+    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
 };
 
 
@@ -2112,7 +2033,6 @@ module.exports = FetchBrickTransportStrategy;
 }).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
-
 function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
 
@@ -2124,7 +2044,8 @@ function HTTPBrickTransportStrategy(endpoint) {
 
             try {
                 brickDigest = JSON.parse(brickDigest);
-            } catch (e) {}
+            } catch (e) {
+            }
             callback(undefined, brickDigest);
         });
     };
@@ -2134,8 +2055,8 @@ function HTTPBrickTransportStrategy(endpoint) {
     };
 
     this.getHashForAlias = (alias, callback) => {
-        $$.remote.doHttpGet(endpoint + "/EDFS/getVersions/" + alias, (err, hashesList) => {
-            if(err) {
+        $$.remote.doHttpGet(endpoint + "/anchoring/getVersions/" + alias, (err, hashesList) => {
+            if (err) {
                 return callback(err)
             }
 
@@ -2144,7 +2065,7 @@ function HTTPBrickTransportStrategy(endpoint) {
     };
 
     this.attachHashToAlias = (alias, name, callback) => {
-        $$.remote.doHttpPost(endpoint + "/EDFS/attachHashToAlias/" + name, alias, callback);
+        $$.remote.doHttpPost(endpoint + "/anchoring/attachHashToAlias/" + name, alias, callback);
     };
 
     this.getLocator = () => {
@@ -4527,15 +4448,15 @@ function SecurityContext() {
 module.exports = SecurityContext;
 
 },{"./Agent":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
-(function (__dirname){
 function ServerConfig(conf) {
     const path = require("path");
     const defaultConf = {
-        storage: path.join(path.resolve("." + __dirname + "/../.."), "tmp"),
+        "storage": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "tmp"),
+        "sslFolder": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "conf", "ssl"),
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "endpoints": ["virtualMQ", "filesManager", "edfs", "dossier-wizard"],
+        "endpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard"],
         "endpointsConfig": {
             "virtualMQ": {
                 "path": "./modules/psk-webserver/ChannelsManager.js",
@@ -4554,6 +4475,9 @@ function ServerConfig(conf) {
             },
             "filesManager": {
                 "path": "./modules/psk-webserver/FilesManager.js"
+            },
+            "anchoring": {
+                "path": "./modules/psk-webserver/AnchoringService.js"
             }
         }
     };
@@ -4589,12 +4513,11 @@ function ServerConfig(conf) {
     }
 
     conf = createConfig(conf, defaultConf);
+    console.log("Config", conf);
     return conf;
 }
 
 module.exports = ServerConfig;
-}).call(this,"/modules/psk-webserver")
-
 },{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
 (function (Buffer){
 const http = require('http');
