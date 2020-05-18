@@ -10381,7 +10381,7 @@ function ServerConfig(conf) {
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "endpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard"],
+        "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard"],
         "endpointsConfig": {
             "virtualMQ": {
                 "path": "./modules/psk-webserver/ChannelsManager.js",
@@ -10438,7 +10438,6 @@ function ServerConfig(conf) {
     }
 
     conf = createConfig(conf, defaultConf);
-    console.log("Config", conf);
     return conf;
 }
 
@@ -10678,7 +10677,7 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 		});
 
 		function addMiddlewares(){
-			const middlewareList = conf.endpoints;
+			const middlewareList = conf.activeEndpoints;
 			const path = require("path");
 			middlewareList.forEach(middleware => {
 				const middlewareConfig = Object.keys(conf.endpointsConfig).find(endpointName => endpointName === middleware);
