@@ -4456,7 +4456,7 @@ function ServerConfig(conf) {
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard"],
+        "activeEndpoints": ["virtualMQ", "filesManager", "staticServer", "anchoring", "edfs", "dossier-wizard"],
         "endpointsConfig": {
             "virtualMQ": {
                 "path": "./modules/psk-webserver/ChannelsManager.js",
@@ -4478,6 +4478,9 @@ function ServerConfig(conf) {
             },
             "anchoring": {
                 "path": "./modules/psk-webserver/AnchoringService.js"
+            },
+            "staticServer": {
+                "path": "./modules/psk-webserver/StaticServer.js"
             }
         }
     };

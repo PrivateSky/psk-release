@@ -10381,7 +10381,7 @@ function ServerConfig(conf) {
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard"],
+        "activeEndpoints": ["virtualMQ", "filesManager", "staticServer", "anchoring", "edfs", "dossier-wizard"],
         "endpointsConfig": {
             "virtualMQ": {
                 "path": "./modules/psk-webserver/ChannelsManager.js",
@@ -10403,6 +10403,9 @@ function ServerConfig(conf) {
             },
             "anchoring": {
                 "path": "./modules/psk-webserver/AnchoringService.js"
+            },
+            "staticServer": {
+                "path": "./modules/psk-webserver/StaticServer.js"
             }
         }
     };
@@ -28445,7 +28448,7 @@ module.exports={
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/index.js":[function(require,module,exports){
-var Buffer = require('buffer').Buffer
+var Buffer = require('safe-buffer').Buffer
 var createHash = require('create-hash')
 var stream = require('readable-stream')
 var inherits = require('inherits')
@@ -28538,9 +28541,9 @@ module.exports = {
   createVerify: createVerify
 }
 
-},{"./algorithms.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
+},{"./algorithms.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
-var Buffer = require('buffer').Buffer
+var Buffer = require('safe-buffer').Buffer
 var createHmac = require('create-hmac')
 var crt = require('browserify-rsa')
 var EC = require('elliptic').ec
@@ -28683,9 +28686,9 @@ module.exports = sign
 module.exports.getKey = getKey
 module.exports.makeKey = makeKey
 
-},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","create-hmac":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/browser.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
+},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js","create-hmac":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/browser.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
-var Buffer = require('buffer').Buffer
+var Buffer = require('safe-buffer').Buffer
 var BN = require('bn.js')
 var EC = require('elliptic').ec
 var parseKeys = require('parse-asn1')
@@ -28769,7 +28772,7 @@ function checkValue (b, q) {
 
 module.exports = verify
 
-},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
 'use strict';
 
 function _inheritsLoose(subClass, superClass) { subClass.prototype = Object.create(superClass.prototype); subClass.prototype.constructor = subClass; subClass.__proto__ = superClass; }
