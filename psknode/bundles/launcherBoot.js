@@ -8057,7 +8057,63 @@ util.inherits(PoolThreads, AbstractPool);
 
 module.exports = PoolThreads;
 
-},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
+const AbstractPool = require('./AbstractPool');
+const util = require('util');
+
+/**
+ * @param {PoolConfig&PoolConfigStorage} options
+ * @param {function} workerCreateHelper
+ * @mixes AbstractPool
+ */
+function PoolWebWorkers(options, workerCreateHelper) {
+    AbstractPool.call(this, options);
+
+    this.createNewWorker = function (callback) {
+
+        const envTypes = require("overwrite-require").constants;
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE){
+            return callback(new Error(`Web Worker is not available into current environment type <${$$.environmentType}>`));
+        }
+
+        const newWorker = new Worker(options.bootScript, options.workerOptions);
+
+        if (typeof workerCreateHelper === "function") {
+            workerCreateHelper(newWorker);
+        }
+
+        const callbackWrapper = (...args) => {
+            removeListeners();
+            callback(...args);
+        };
+
+        function onMessage(msg) {
+            if(msg !== 'ready') {
+                callbackWrapper(new Error('Build script did not respond accordingly, it might be incompatible with current version'));
+                return;
+            }
+
+            callbackWrapper(undefined, newWorker);
+        }
+
+        function removeListeners() {
+            newWorker.removeListener('message', onMessage);
+            newWorker.removeListener('error', callbackWrapper);
+            newWorker.removeListener('exit', callbackWrapper);
+        }
+
+        newWorker.on('message', onMessage);
+        newWorker.on('error', callbackWrapper);
+        newWorker.on('exit', callbackWrapper);
+    };
+
+}
+
+util.inherits(PoolWebWorkers, AbstractPool);
+
+module.exports = PoolWebWorkers;
+
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"overwrite-require","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
 const os = require('os');
 const util = require('util');
 const WorkerStrategies = require('./WorkerStrategies');
@@ -8341,7 +8397,8 @@ module.exports = WorkerPool;
 },{"./QueueShim.js":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
 const WorkerStrategies = {
     THREADS: 'threads',
-    ISOLATES: 'isolates'
+    ISOLATES: 'isolates',
+    WEB_WORKERS: 'web-workers'
 };
 
 module.exports = Object.freeze(WorkerStrategies);
@@ -9083,11 +9140,18 @@ if(typeof global.$$.uidGenerator == "undefined"){
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
-const fs = require('fs');
-const path = require('path');
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
+
+let registry = {};
+function registerWorkerStrategy(strategyName, constructor){
+    registry[strategyName] = constructor;
+}
+
+function getWorkerStrategy(strategyName){
+    return registry[strategyName];
+}
 
 /**
  * @throws if config is invalid, if config tries to set properties to undefined or add new properties (check PoolConfig to see solutions)
@@ -9096,36 +9160,42 @@ const WorkerStrategies = require('./lib/WorkerStrategies');
  */
 function createWorkerPool(poolConfig, workerCreateHelper) {
     const newPoolConfig = PoolConfig.createByOverwritingDefaults(poolConfig);
+    /*
+    TODO: why do we need to check this here? :-??
 
+    const fs = require('fs');
+    const path = require('path');
     if (newPoolConfig.workerOptions && newPoolConfig.workerOptions.cwd && !fs.existsSync(newPoolConfig.workerOptions.cwd)) {
         throw new Error(`The provided working directory does not exists ${config.workingDir}`);
-    }
+    }*/
 
-    let concretePool = null;
-
-    if (newPoolConfig.workerStrategy === WorkerStrategies.THREADS) {
-        const PoolThreads = require('./lib/Pool-Threads');
-
-        concretePool = new PoolThreads(newPoolConfig, workerCreateHelper);
-    } else if (newPoolConfig.workerStrategy === WorkerStrategies.ISOLATES) {
-        const PoolIsolates = require('./lib/Pool-Isolates');
-
-        concretePool = new PoolIsolates(newPoolConfig, workerCreateHelper)
-    } else {
+    let workerStrategy = getWorkerStrategy(newPoolConfig.workerStrategy);
+    if(typeof workerStrategy === "undefined"){
         throw new TypeError(`Could not find a implementation for worker strategy "${newPoolConfig.workerStrategy}"`);
     }
+
+    let concretePool = new workerStrategy(newPoolConfig, workerCreateHelper);
 
     return new WorkerPool(concretePool);
 }
 
+const PoolIsolates = require('./lib/Pool-Isolates');
+registerWorkerStrategy(WorkerStrategies.ISOLATES, PoolIsolates);
+
+const PoolThreads = require('./lib/Pool-Threads');
+registerWorkerStrategy(WorkerStrategies.THREADS, PoolThreads);
+
+const PoolWebWorkers = require('./lib/Pool-Web-Workers');
+registerWorkerStrategy(WorkerStrategies.WEB_WORKERS, PoolWebWorkers);
 
 module.exports = {
     createWorkerPool,
     PoolConfig,
-    WorkerStrategies
+    WorkerStrategies,
+    registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/PoolConfig":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js","fs":false,"path":false}],"zmq_adapter":[function(require,module,exports){
+},{"./lib/Pool-Isolates":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"zmq_adapter":[function(require,module,exports){
 (function (Buffer){
 const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
 const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";

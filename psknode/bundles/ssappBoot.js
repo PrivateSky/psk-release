@@ -10371,7 +10371,889 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require('_process'),require("buffer").Buffer)
 
-},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
+},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js":[function(require,module,exports){
+const URL_PREFIX = "/anchoring";
+const anchorsStorage = "anchors";
+function AnchoringService(server) {
+    const path = require("path");
+    require("./libs/flows/AnchorsManager");
+
+    let storageFolder = path.join(server.rootFolder, anchorsStorage);
+    $$.flow.start("AnchorsManager").init(storageFolder);
+
+    function setHeaders(req, res, next) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Request methods you wish to allow
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+        // Request headers you wish to allow
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
+        next();
+    }
+
+    function attachHashToAlias(req, res) {
+        $$.flow.start("AnchorsManager").addAlias(req.params.fileId, req, (err, result) => {
+            res.statusCode = 201;
+            if (err) {
+                res.statusCode = 500;
+
+                if (err.code === 'EACCES') {
+                    res.statusCode = 409;
+                }
+            }
+            res.end();
+        });
+    }
+
+    function getVersions(req, res) {
+        $$.flow.start("AnchorsManager").readVersions(req.params.alias, (err, fileHashes) => {
+            res.statusCode = 200;
+            if (err) {
+                console.error(err);
+                res.statusCode = 404;
+            }
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify(fileHashes));
+        });
+    }
+
+    server.use(`${URL_PREFIX}/*`, setHeaders);
+    server.post(`${URL_PREFIX}/attachHashToAlias/:fileId`, attachHashToAlias);
+    server.get(`${URL_PREFIX}/getVersions/:alias`, getVersions);
+}
+
+module.exports = AnchoringService;
+},{"./libs/flows/AnchorsManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/flows/AnchorsManager.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js":[function(require,module,exports){
+(function (process,Buffer,__dirname){
+const path = require("path");
+const fs = require("fs");
+const crypto = require('crypto');
+const integration = require("zmq_adapter");
+
+const Queue = require("swarmutils").Queue;
+const SwarmPacker = require("swarmutils").SwarmPacker;
+
+function ChannelsManager(server){
+    const utils = require("./utils");
+    const config = utils.getServerConfig();
+    const channelKeyFileName = "channel_key";
+
+    const rootFolder = path.join(config.storage, config.endpointsConfig.virtualMQ.channelsFolderName);
+    fs.mkdirSync(rootFolder, {recursive: true});
+
+    const channelKeys = {};
+    const queues = {};
+    const subscribers = {};
+
+    let baseDir = __dirname;
+
+    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
+    //TODO: check for better implementation
+    if(process.cwd().indexOf(__dirname) ===-1){
+        baseDir = path.join(process.cwd(), __dirname);
+    }
+
+
+    let forwarder;
+    if(integration.testIfAvailable()){
+        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
+    }
+
+    function generateToken(){
+        let buffer = crypto.randomBytes(config.endpointsConfig.virtualMQ.tokenSize);
+        return buffer.toString('hex');
+    }
+
+    function createChannel(name, publicKey, callback){
+        let channelFolder = path.join(rootFolder, name);
+        let keyFile = path.join(channelFolder, channelKeyFileName);
+        let token = generateToken();
+
+        if(typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        fs.mkdirSync(channelFolder);
+
+        if(fs.existsSync(keyFile)){
+            let e = new Error("channel exists!");
+            e.code = 409;
+            return callback(e);
+        }
+
+        const config = JSON.stringify({publicKey, token});
+        fs.writeFile(keyFile, config, (err, res)=>{
+            if(!err){
+                channelKeys[name] = config;
+            }
+            return callback(err, !err ? token : undefined);
+        });
+    }
+
+    function retrieveChannelDetails(channelName, callback){
+        if(typeof channelKeys[channelName] !== "undefined"){
+            return callback(null, channelKeys[channelName]);
+        }else{
+            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res)=>{
+                if(res){
+                    try{
+                        channelKeys[channelName] = JSON.parse(res);
+                    }catch(e){
+                        console.log(e);
+                        return callback(e);
+                    }
+                }
+                callback(err, channelKeys[channelName]);
+            });
+        }
+    }
+
+    function forwardChannel(channelName, forward, callback){
+        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
+        fs.readFile(channelKeyFile, (err, content)=>{
+            let config;
+            try{
+                config = JSON.parse(content);
+            }catch(e){
+                return callback(e);
+            }
+
+            if(typeof config !== "undefined"){
+                config.forward = forward;
+                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args)=>{
+                    if(!err){
+                        channelKeys[channelName] = config;
+                    }
+                    callback(err, ...args);
+                });
+            }
+        });
+    }
+
+    function readBody(req, callback){
+        let data = "";
+        req.on("data", (messagePart)=>{
+            data += messagePart;
+        });
+
+        req.on("end", ()=>{
+            callback(null, data);
+        });
+
+        req.on("error", (err)=>{
+            callback(err);
+        });
+    }
+
+    function createChannelHandler(req, res){
+        const channelName = req.params.channelName;
+
+        readBody(req, (err, message)=>{
+            if(err){
+                return sendStatus(res, 400);
+            }
+
+            const publicKey = message;
+            if (typeof channelName !== "string" || channelName.length === 0 ||
+                typeof publicKey !== "string" || publicKey.length === 0) {
+                return sendStatus(res, 400);
+            }
+
+            let handler = getBasicReturnHandler(res);
+
+            createChannel(channelName, publicKey, (err, token)=>{
+                if(!err){
+                    res.setHeader('Cookie', [`${config.endpointsConfig.virtualMQ.tokenSize}=${token}`]);
+                }
+                handler(err, res);
+            });
+        });
+    }
+
+    function sendStatus(res, reasonCode){
+        res.statusCode = reasonCode;
+        res.end();
+    }
+
+    function getBasicReturnHandler(res){
+        return function(err, result){
+            if(err){
+                return sendStatus(res, err.code || 500);
+            }
+
+            return sendStatus(res, 200);
+        }
+    }
+
+    function enableForwarderHandler(req, res){
+        if(integration.testIfAvailable() === false){
+            return sendStatus(res, 417);
+        }
+        readBody(req, (err, message)=>{
+            const {enable} = message;
+            const channelName = req.params.channelName;
+            const signature = req.headers[config.endpointsConfig.virtualMQ.signatureHeaderName];
+
+            if(typeof channelName !== "string" || typeof signature !== "string"){
+                return sendStatus(res, 400);
+            }
+
+            retrieveChannelDetails(channelName, (err, details)=>{
+                if(err){
+                    return sendStatus(res, 500);
+                }else{
+                    //todo: check signature against key [details.publickey]
+
+                    if(typeof enable === "undefined" || enable){
+                        forwardChannel(channelName, true, getBasicReturnHandler(res));
+                    }else{
+                        forwardChannel(channelName, null, getBasicReturnHandler(res));
+                    }
+                }
+            });
+        });
+    }
+
+    function getQueue(name){
+        if(typeof queues[name] === "undefined"){
+            queues[name] = new Queue();
+        }
+
+        return queues[name];
+    }
+
+    function checkIfChannelExist(channelName, callback){
+        retrieveChannelDetails(channelName, (err, details)=>{
+            callback(null, err ? false : true);
+        });
+    }
+
+    function writeMessage(subscribers, message){
+        let dispatched = false;
+        try {
+            while(subscribers.length>0){
+                let subscriber = subscribers.pop();
+                if(!dispatched){
+                    deliverMessage(subscriber, message);
+                    dispatched = true;
+                }else{
+                    sendStatus(subscriber, 403);
+                }
+            }
+        }catch(err) {
+            //... some subscribers could have a timeout connection
+            if(subscribers.length>0){
+                deliverMessage(subscribers, message);
+            }
+        }
+
+        return dispatched;
+    }
+
+    function readSendMessageBody(req, callback){
+        const contentType = req.headers['content-type'];
+
+        if (contentType === 'application/octet-stream') {
+            const contentLength = Number.parseInt(req.headers['content-length'], 10);
+
+            if(Number.isNaN(contentLength)){
+                let error = new Error("Wrong content length header received!");
+                error.code = 411;
+                return callback(error);
+            }
+
+            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
+                if(err) {
+                    return callback(err);
+                }
+                callback(undefined, bodyAsBuffer);
+            });
+        } else {
+            callback(new Error("Wrong message format received!"));
+        }
+
+        function streamToBuffer(stream, bufferSize, callback) {
+            const buffer = Buffer.alloc(bufferSize);
+            let currentOffset = 0;
+
+            stream.on('data', function(chunk){
+                const chunkSize = chunk.length;
+                const nextOffset = chunkSize + currentOffset;
+
+                if (currentOffset > bufferSize - 1) {
+                    stream.close();
+                    return callback(new Error('Stream is bigger than reported size'));
+                }
+
+                write2Buffer(buffer, chunk, currentOffset);
+                currentOffset = nextOffset;
+
+            });
+            stream.on('end', function(){
+                callback(undefined, buffer);
+            });
+            stream.on('error', callback);
+        }
+
+        function write2Buffer(buffer, dataToAppend, offset) {
+            const dataSize = dataToAppend.length;
+
+            for (let i = 0; i < dataSize; i++) {
+                buffer[offset++] = dataToAppend[i];
+            }
+        }
+    }
+
+    function sendMessageHandler(req, res){
+        let channelName = req.params.channelName;
+
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retrieveChannelDetails(channelName, (err, details)=>{
+                    //we choose to read the body of request only after we know that we recognize the destination channel
+                    readSendMessageBody(req, (err, message)=>{
+                        if(err){
+                            //console.log(err);
+                            return sendStatus(res, 403);
+                        }
+
+                        let header;
+                        try{
+                            header = SwarmPacker.unpack(message.buffer);
+                        }catch(error){
+                            //console.log(error);
+                            return sendStatus(res, 400);
+                        }
+
+                        //TODO: to all checks based on message header
+
+                        if(integration.testIfAvailable() && details.forward){
+                            //console.log("Forwarding message <", message, "> on channel", channelName);
+                            forwarder.send(channelName, message);
+                        }else{
+                            let queue = getQueue(channelName);
+                            let subscribers = getSubscribersList(channelName);
+                            let dispatched = false;
+                            if(queue.isEmpty()){
+                                dispatched = writeMessage(subscribers, message);
+                            }
+                            if(!dispatched) {
+                                if(queue.length < config.endpointsConfig.virtualMQ.maxSize){
+                                    queue.push(message);
+                                }else{
+                                    //queue is full
+                                    return sendStatus(res, 429);
+                                }
+
+                                /*
+                                if(subscribers.length>0){
+                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
+                                    //happened and maybe we should try to dispatch first message from queue
+                                }
+                                */
+
+                            }
+                        }
+                        return sendStatus(res, 200);
+                    });
+                })
+            }
+        });
+    }
+
+    function getSubscribersList(channelName){
+        if(typeof subscribers[channelName] === "undefined"){
+            subscribers[channelName] = [];
+        }
+
+        return subscribers[channelName];
+    }
+
+    function deliverMessage(res, message){
+        if(Buffer.isBuffer(message)) {
+            res.setHeader('content-type', 'application/octet-stream');
+        }
+
+        if(typeof message.length !== "undefined"){
+            res.setHeader('content-length', message.length);
+        }
+
+        res.write(message);
+        sendStatus(res, 200);
+    }
+
+    function getCookie(res, cookieName){
+        let cookies = res.headers['cookie'];
+        if(typeof cookies === "undefined"){
+            return undefined;
+        }
+        if(Array.isArray(cookies)){
+            for(let i=0; i<cookies.length; i++){
+                let cookie = cookies[i];
+                if(cookie.indexOf(cookieName) !== -1){
+                    return cookie.substr(cookieName.length+1);
+                }
+            }
+        }else{
+            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
+
+            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)','i');
+            let match = cookies.match(regex);
+
+            return match && unescape(match[1]);
+        }
+    }
+
+    function receiveMessageHandler(req, res){
+        let channelName = req.params.channelName;
+        checkIfChannelExist(channelName, (err, exists)=>{
+            if(!exists){
+                return sendStatus(res, 403);
+            }else{
+                retrieveChannelDetails(channelName, (err, details)=>{
+                    if(err){
+                        return sendStatus(res, 500);
+                    }
+                    //TODO: check signature agains details.publickey
+
+
+                    if(details.forward){
+                        //if channel is forward it does not make sense
+                        return sendStatus(res, 409);
+                    }
+
+                    /*let signature = req.headers["signature"];
+                    if(typeof signature === "undefined"){
+                        return sendStatus(res, 403);
+                    }*/
+
+                    // let cookie = getCookie(req, tokenHeaderName);
+
+                    // if(typeof cookie === "undefined" || cookie === null){
+                    //     return sendStatus(res, 412);
+                    // }
+
+                    let queue = getQueue(channelName);
+                    let message = queue.pop();
+
+                    if(!message){
+                        getSubscribersList(channelName).push(res);
+                    }else{
+                        deliverMessage(res, message);
+                    }
+                });
+            }
+        });
+    }
+
+    server.put("/create-channel/:channelName", createChannelHandler);
+    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
+    server.post("/send-message/:channelName", sendMessageHandler);
+    server.get("/receive-message/:channelName", receiveMessageHandler);
+}
+
+module.exports = ChannelsManager;
+}).call(this,require('_process'),require("buffer").Buffer,"/modules/psk-webserver")
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js":[function(require,module,exports){
+(function (Buffer){
+function FilesManager(server) {
+	const fs = require('fs');
+	const path = require('path');
+	const utils = require("./utils");
+	const serverConf = utils.getServerConfig();
+	//folder can be userId/tripId/...
+
+	function uploadFile(req, res) {
+		upload(req, (err, result) => {
+			if (err) {
+				res.statusCode = 500;
+				res.end();
+			} else {
+				res.statusCode = 200;
+				res.end(JSON.stringify(result));
+			}
+		})
+	}
+
+	function downloadFile(req, res) {
+		download(req, res, (err, result) => {
+			if (err) {
+				res.statusCode = 404;
+				res.end();
+			} else {
+				sendResult(res, result);
+			}
+		});
+	}
+
+	guid = function () {
+		function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+				.toString(16)
+				.substring(1);
+		}
+
+		return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+	};
+
+	function upload(req, callback) {
+		const readFileStream = req;
+		if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+			callback(new Error("Something wrong happened"));
+			return;
+		}
+
+		const folder = Buffer.from(req.params.folder, 'base64').toString().replace('\n', '');
+		if (folder.includes('..')) {
+			return callback('err');
+		}
+		let filename = guid();
+		if (filename.split('.').length > 1) {
+			return callback('err');
+		}
+		const completeFolderPath = path.join(serverConf.storage, folder);
+
+		const contentType = req.headers['content-type'].split('/');
+
+		if (contentType[0] === 'image' || (contentType[0] === 'application' && contentType[1] === 'pdf')) {
+			filename += '.' + contentType[1];
+		} else {
+			return callback('err');
+		}
+		try {
+			fs.mkdirSync(completeFolderPath, {recursive: true});
+		} catch (e) {
+			return callback(e);
+		}
+		const writeStream = fs.createWriteStream(path.join(completeFolderPath, filename));
+
+		writeStream.on('finish', () => {
+			writeStream.close();
+			return callback(null, {'path': path.posix.join(folder, filename)});
+		});
+
+		writeStream.on('error', (err) => {
+			writeStream.close();
+			return callback(err);
+		});
+		req.pipe(writeStream);
+	}
+
+	function download(req, res, callback) {
+		const readFileStream = req;
+		if (!readFileStream || !readFileStream.pipe || typeof readFileStream.pipe !== "function") {
+			callback(new Error("Something wrong happened"));
+			return;
+		}
+		const folder = Buffer.from(req.params.filepath, 'base64').toString().replace('\n', '');
+
+		const completeFolderPath = path.join(serverConf.storage, folder);
+		if (folder.includes('..')) {
+			return callback(new Error("invalidPath"));
+		}
+		if (fs.existsSync(completeFolderPath)) {
+			const fileToSend = fs.createReadStream(completeFolderPath);
+			res.setHeader('Content-Type', `image/${folder.split('.')[1]}`);
+			return callback(null, fileToSend);
+		} else {
+			return callback(new Error("PathNotFound"));
+		}
+	}
+
+	function sendResult(resHandler, resultStream) {
+		resHandler.statusCode = 200;
+		resultStream.pipe(resHandler);
+		resultStream.on('finish', () => {
+			resHandler.end();
+		});
+	}
+
+
+	server.post('/files/upload/:folder', uploadFile);
+	server.get('/files/download/:filepath', downloadFile);
+}
+
+module.exports = FilesManager;
+}).call(this,require("buffer").Buffer)
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js":[function(require,module,exports){
+const extensionsMimeTypes = {
+    "aac": {
+        name: "audio/aac",
+        binary: true
+    },
+    "abw": {
+        name: "application/x-abiword",
+        binary: true
+    },
+    "arc": {
+        name: "application/x-freearc",
+        binary: true
+    },
+    "avi": {
+        name: "video/x-msvideo",
+        binary: true
+    },
+    "azw": {
+        name: "application/vnd.amazon.ebook",
+        binary: true
+    },
+    "bin": {
+        name: "application/octet-stream",
+        binary: true
+    }, "bmp": {
+        name: "image/bmp",
+        binary: true
+    }, "bz": {
+        name: "application/x-bzip",
+        binary: true
+    }, "bz2": {
+        name: "application/x-bzip2",
+        binary: true
+    }, "csh": {
+        name: "application/x-csh",
+        binary: false
+    }, "css": {
+        name: "text/css",
+        binary: false
+    }, "csv": {
+        name: "text/csv",
+        binary: false
+    }, "doc": {
+        name: "application/msword",
+        binary: true
+    }, "docx": {
+        name: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        binary: true
+    }, "eot": {
+        name: "application/vnd.ms-fontobject",
+        binary: true
+    }, "epub": {
+        name: "application/epub+zip",
+        binary: true
+    }, "gz": {
+        name: "application/gzip",
+        binary: true
+    }, "gif": {
+        name: "image/gif",
+        binary: true
+    }, "htm": {
+        name: "text/html",
+        binary: false
+    }, "html": {
+        name: "text/html",
+        binary: false
+    }, "ico": {
+        name: "image/vnd.microsoft.icon",
+        binary: true
+    }, "ics": {
+        name: "text/calendar",
+        binary: false
+    }, "jpeg": {
+        name: "image/jpeg",
+        binary: true
+    }, "jpg": {
+        name: "image/jpeg",
+        binary: true
+    }, "js": {
+        name: "text/javascript",
+        binary: false
+    }, "json": {
+        name: "application/json",
+        binary: false
+    }, "jsonld": {
+        name: "application/ld+json",
+        binary: false
+    }, "mid": {
+        name: "audio/midi",
+        binary: true
+    }, "midi": {
+        name: "audio/midi",
+        binary: true
+    }, "mjs": {
+        name: "text/javascript",
+        binary: false
+    }, "mp3": {
+        name: "audio/mpeg",
+        binary: true
+    }, "mpeg": {
+        name: "video/mpeg",
+        binary: true
+    }, "mpkg": {
+        name: "application/vnd.apple.installer+xm",
+        binary: true
+    }, "odp": {
+        name: "application/vnd.oasis.opendocument.presentation",
+        binary: true
+    }, "ods": {
+        name: "application/vnd.oasis.opendocument.spreadsheet",
+        binary: true
+    }, "odt": {
+        name: "application/vnd.oasis.opendocument.text",
+        binary: true
+    }, "oga": {
+        name: "audio/ogg",
+        binary: true
+    },
+    "ogv": {
+        name: "video/ogg",
+        binary: true
+    },
+    "ogx": {
+        name: "application/ogg",
+        binary: true
+    },
+    "opus": {
+        name: "audio/opus",
+        binary: true
+    },
+    "otf": {
+        name: "font/otf",
+        binary: true
+    },
+    "png": {
+        name: "image/png",
+        binary: true
+    },
+    "pdf": {
+        name: "application/pdf",
+        binary: true
+    },
+    "php": {
+        name: "application/php",
+        binary: false
+    },
+    "ppt": {
+        name: "application/vnd.ms-powerpoint",
+        binary: true
+    },
+    "pptx": {
+        name: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        binary: true
+    },
+    "rtf": {
+        name: "application/rtf",
+        binary: true
+    },
+    "sh": {
+        name: "application/x-sh",
+        binary: false
+    },
+    "svg": {
+        name: "image/svg+xml",
+        binary: false
+    },
+    "swf": {
+        name: "application/x-shockwave-flash",
+        binary: true
+    },
+    "tar": {
+        name: "application/x-tar",
+        binary: true
+    },
+    "tif": {
+        name: "image/tiff",
+        binary: true
+    },
+    "tiff": {
+        name: "image/tiff",
+        binary: true
+    },
+    "ts": {
+        name: "video/mp2t",
+        binary: true
+    },
+    "ttf": {
+        name: "font/ttf",
+        binary: true
+    },
+    "txt": {
+        name: "text/plain",
+        binary: false
+    },
+    "vsd": {
+        name: "application/vnd.visio",
+        binary: true
+    },
+    "wav": {
+        name: "audio/wav",
+        binary: true
+    },
+    "weba": {
+        name: "audio/webm",
+        binary: true
+    },
+    "webm": {
+        name: "video/webm",
+        binary: true
+    },
+    "webp": {
+        name: "image/webp",
+        binary: true
+    },
+    "woff": {
+        name: "font/woff",
+        binary: true
+    },
+    "woff2": {
+        name: "font/woff2",
+        binary: true
+    },
+    "xhtml": {
+        name: "application/xhtml+xml",
+        binary: false
+    },
+    "xls": {
+        name: "application/vnd.ms-excel",
+        binary: true
+    },
+    "xlsx": {
+        name: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        binary: true
+    },
+    "xml": {
+        name: "text/xml",
+        binary: false
+    },
+    "xul": {
+        name: "application/vnd.mozilla.xul+xml",
+        binary: true
+    },
+    "zip": {
+        name: "application/zip",
+        binary: true
+    },
+    "3gp": {
+        name: "video/3gpp",
+        binary: true
+    },
+    "3g2": {
+        name: "video/3gpp2",
+        binary: true
+    },
+    "7z": {
+        name: "application/x-7z-compressed",
+        binary: true
+    }
+};
+
+const defaultMimeType = {
+    name: "text/plain",
+    binary: false
+};
+module.exports.getMimeTypeFromExtension = function (extension) {
+    if (typeof extensionsMimeTypes[extension] !== "undefined") {
+        return extensionsMimeTypes[extension];
+    }
+    return defaultMimeType;
+};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ServerConfig.js":[function(require,module,exports){
 (function (process){
 function ServerConfig(conf) {
     const path = require("path");
@@ -10381,10 +11263,10 @@ function ServerConfig(conf) {
         "port": 8080,
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
-        "activeEndpoints": ["virtualMQ", "filesManager", "staticServer", "anchoring", "edfs", "dossier-wizard"],
+        "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard", "staticServer"],
         "endpointsConfig": {
             "virtualMQ": {
-                "path": "./modules/psk-webserver/ChannelsManager.js",
+                "path": "./ChannelsManager.js",
                 "channelsFolderName": "channels",
                 "maxSize": 100,
                 "tokenSize": 48,
@@ -10399,13 +11281,13 @@ function ServerConfig(conf) {
                 "path": "edfs-middleware"
             },
             "filesManager": {
-                "path": "./modules/psk-webserver/FilesManager.js"
+                "path": "./FilesManager.js"
             },
             "anchoring": {
-                "path": "./modules/psk-webserver/AnchoringService.js"
+                "path": "./AnchoringService.js"
             },
             "staticServer": {
-                "path": "./modules/psk-webserver/StaticServer.js"
+                "path": "./StaticServer.js"
             }
         }
     };
@@ -10447,7 +11329,213 @@ function ServerConfig(conf) {
 module.exports = ServerConfig;
 }).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
+},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js":[function(require,module,exports){
+function StaticServer(server) {
+    const lockedPathsPrefixes = ["/anchoring", "/EDFS", "/receive-message"];
+    const fs = require("fs");
+    const path = require("path");
+    const MimeType = require("./MimeType");
+    function sendFiles(req, res, next) {
+        const prefix = "/directory-summary/";
+        requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            targetPath = targetPath.replace(prefix, "");
+            serverTarget(targetPath);
+        });
+
+        function serverTarget(targetPath) {
+            console.log("Serving summary for dir:", targetPath);
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (!stats.isDirectory()) {
+                    res.statusCode = 403;
+                    res.end();
+                    return;
+                }
+
+                function send() {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', "application/json");
+                    //let's clean some empty objects
+                    for (let prop in summary) {
+                        if (Object.keys(summary[prop]).length === 0) {
+                            delete summary[prop];
+                        }
+                    }
+
+                    res.write(JSON.stringify(summary));
+                    res.end();
+                }
+
+                let summary = {};
+                let directories = {};
+
+                function extractContent(currentPath) {
+                    directories[currentPath] = -1;
+                    let summaryId = currentPath.replace(targetPath, "");
+                    summaryId = summaryId.split(path.sep).join("/");
+                    if (summaryId === "") {
+                        summaryId = "/";
+                    }
+                    //summaryId = path.basename(summaryId);
+                    summary[summaryId] = {};
+
+                    fs.readdir(currentPath, function (err, files) {
+                        if (err) {
+                            return markAsFinish(currentPath);
+                        }
+                        directories[currentPath] = files.length;
+                        //directory empty test
+                        if (files.length === 0) {
+                            return markAsFinish(currentPath);
+                        } else {
+                            for (let i = 0; i < files.length; i++) {
+                                let file = files[i];
+                                const fileName = path.join(currentPath, file);
+                                if (fs.statSync(fileName).isDirectory()) {
+                                    extractContent(fileName);
+                                } else {
+                                    let fileContent = fs.readFileSync(fileName);
+                                    let fileExtension = fileName.substring(fileName.lastIndexOf(".")+1);
+                                    let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
+                                    if(mimeType.binary){
+										summary[summaryId][file] = Array.from(fileContent);
+                                    }
+                                    else{
+										summary[summaryId][file] = fileContent.toString();
+                                    }
+
+                                }
+                                directories[currentPath]--;
+                            }
+                            return markAsFinish(currentPath);
+                        }
+                    });
+                }
+
+                function markAsFinish(targetPath) {
+                    if (directories [targetPath] > 0) {
+                        return;
+                    }
+                    delete directories [targetPath];
+                    const dirsLeftToProcess = Object.keys(directories);
+                    //if there are no other directories left to process
+                    if (dirsLeftToProcess.length === 0) {
+                        send();
+                    }
+                }
+
+                extractContent(targetPath);
+            })
+        }
+
+    }
+    function sendFile(res, file) {
+        let stream = fs.createReadStream(file);
+        const mimes = require("./MimeType");
+        let ext = path.extname(file);
+        if (ext !== "") {
+            ext = ext.replace(".", "");
+            res.setHeader('Content-Type', mimes.getMimeTypeFromExtension(ext).name);
+        } else {
+            res.setHeader('Content-Type', "application/octet-stream");
+        }
+        res.statusCode = 200;
+        stream.pipe(res);
+        stream.on('finish', () => {
+            res.end();
+        });
+    }
+
+    function requestValidation(req, method, urlPrefix, callback) {
+        if (typeof urlPrefix === "function") {
+            callback = urlPrefix;
+            urlPrefix = undefined;
+        }
+        if (req.method !== method) {
+            //we resolve only GET requests
+            return callback(true);
+        }
+
+        if (typeof urlPrefix === "undefined") {
+            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
+                let reservedPath = lockedPathsPrefixes[i];
+                //if we find a url that starts with a reserved prefix is not our duty ro resolve
+                if (req.url.indexOf(reservedPath) === 0) {
+                    return callback(true);
+                }
+            }
+        } else {
+            if (req.url.indexOf(urlPrefix) !== 0) {
+                return callback(true);
+            }
+        }
+
+        const rootFolder = server.rootFolder;
+        const path = require("path");
+        let requestedUrl = req.url;
+        if (urlPrefix) {
+            requestedUrl = requestedUrl.replace(urlPrefix, "");
+        }
+        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+        //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
+        if (targetPath.indexOf(rootFolder) !== 0) {
+            return callback(true);
+        }
+        callback(false, targetPath);
+    }
+
+    function redirect(req, res, next) {
+        requestValidation(req, "GET", function (notOurResponsibility, targetPath) {
+            if (notOurResponsibility) {
+                return next();
+            }
+            //from now on we mean to resolve the url
+            fs.stat(targetPath, function (err, stats) {
+                if (err) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
+                if (stats.isDirectory()) {
+                    let url = req.url;
+                    if (url[url.length - 1] !== "/") {
+                        res.writeHead(302, {
+                            'Location': url + "/"
+                        });
+                        res.end();
+                        return;
+                    }
+                    const defaultFileName = "index.html";
+                    const defaultPath = path.join(targetPath, defaultFileName);
+                    fs.stat(defaultPath, function (err) {
+                        if (err) {
+                            res.statusCode = 403;
+                            res.end();
+                            return;
+                        }
+                        return sendFile(res, defaultPath);
+                    });
+                } else {
+                    return sendFile(res, targetPath);
+                }
+            });
+        });
+    }
+
+    server.use("*", sendFiles);
+    server.use("*", redirect);
+}
+
+module.exports = StaticServer;
+
+},{"./MimeType":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/MimeType.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js":[function(require,module,exports){
 (function (process,Buffer){
 const http = require('http');
 const {URL} = require('url');
@@ -10584,11 +11672,16 @@ module.exports = RequestFactory;
 }).call(this,require('_process'),require("buffer").Buffer)
 
 },{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/index.js":[function(require,module,exports){
-(function (process){
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
 const TokenBucket = require('./libs/TokenBucket');
 const START_TOKENS = 6000000;
+//next require lines are only for browserify build purpose
+require("./ChannelsManager.js");
+require("./FilesManager.js");
+require("./AnchoringService.js");
+require("./StaticServer.js");
+//end
 
 function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const port = listeningPort || 8080;
@@ -10686,9 +11779,7 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 				const middlewareConfig = Object.keys(conf.endpointsConfig).find(endpointName => endpointName === middleware);
 				if (middlewareConfig) {
 					let middlewarePath = conf.endpointsConfig[middlewareConfig].path;
-					if (middlewarePath.startsWith(".")) {
-						middlewarePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, middlewarePath);
-					}
+					console.log(`Preparing to register middleware from path ${middlewarePath}`);
 					require(middlewarePath)(server);
 				}
 			})
@@ -10734,9 +11825,7 @@ module.exports.getServerConfig = function () {
 	return utils.getServerConfig();
 };
 
-}).call(this,require('_process'))
-
-},{"./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js":[function(require,module,exports){
+},{"./AnchoringService.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js","./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js","./StaticServer.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js":[function(require,module,exports){
 /**
  * An implementation of the Token bucket algorithm
  * @param startTokens - maximum number of tokens possible to obtain and the default starting value
@@ -10857,6 +11946,75 @@ function TokenBucket(startTokens = 6000, tokenValuePerTime = 10, unitOfTime = 10
 
 module.exports = TokenBucket;
 
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/flows/AnchorsManager.js":[function(require,module,exports){
+const pathModule = "path";
+const path = require(pathModule);
+const fsModule = "fs";
+const fs = require(fsModule);
+const osModule = "os";
+const endOfLine = require(osModule).EOL;
+let anchorsFolders;
+$$.flow.describe("AnchorsManager", {
+    init: function (rootFolder) {
+        rootFolder = path.resolve(rootFolder);
+        anchorsFolders = rootFolder;
+        try{
+            fs.mkdirSync(anchorsFolders, {recursive: true});
+        }catch (e) {
+            throw e;
+        }
+    },
+
+    addAlias: function (fileHash, readStream, callback) {
+        if (!fileHash || typeof fileHash !== "string") {
+            return callback(new Error("No fileId specified."));
+        }
+
+        this.__streamToString(readStream, (err, alias) => {
+            if (err) {
+                return callback(err);
+            }
+            if (!alias) {
+                return callback(new Error("No alias was provided"));
+            }
+
+            const filePath = path.join(anchorsFolders, alias);
+            fs.access(filePath, (err) => {
+                if (err) {
+                    fs.writeFile(filePath, fileHash + endOfLine, callback);
+                } else {
+                    fs.appendFile(filePath, fileHash + endOfLine, callback);
+                }
+            });
+
+        });
+    },
+
+    readVersions: function (alias, callback) {
+        const filePath = path.join(anchorsFolders, alias);
+        fs.readFile(filePath, (err, fileHashes) => {
+            if (err) {
+                if (err.code === "ENOENT") {
+                    return callback(undefined, []);
+                }
+                return callback(err);
+            }
+            callback(undefined, fileHashes.toString().trimEnd().split(endOfLine));
+        });
+    },
+    __streamToString: function (readStream, callback) {
+        let str = '';
+        readStream.on("data", (chunk) => {
+            str += chunk;
+        });
+
+        readStream.on("end", () => {
+            callback(undefined, str);
+        });
+
+        readStream.on("error", callback);
+    }
+});
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/classes/Client.js":[function(require,module,exports){
 (function (Buffer){
 const http = require('http');
@@ -16160,11 +17318,18 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
 }).call(this,require("buffer").Buffer)
 
 },{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/index.js":[function(require,module,exports){
-const fs = require('fs');
-const path = require('path');
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
+
+let registry = {};
+function registerWorkerStrategy(strategyName, constructor){
+    registry[strategyName] = constructor;
+}
+
+function getWorkerStrategy(strategyName){
+    return registry[strategyName];
+}
 
 /**
  * @throws if config is invalid, if config tries to set properties to undefined or add new properties (check PoolConfig to see solutions)
@@ -16173,36 +17338,42 @@ const WorkerStrategies = require('./lib/WorkerStrategies');
  */
 function createWorkerPool(poolConfig, workerCreateHelper) {
     const newPoolConfig = PoolConfig.createByOverwritingDefaults(poolConfig);
+    /*
+    TODO: why do we need to check this here? :-??
 
+    const fs = require('fs');
+    const path = require('path');
     if (newPoolConfig.workerOptions && newPoolConfig.workerOptions.cwd && !fs.existsSync(newPoolConfig.workerOptions.cwd)) {
         throw new Error(`The provided working directory does not exists ${config.workingDir}`);
-    }
+    }*/
 
-    let concretePool = null;
-
-    if (newPoolConfig.workerStrategy === WorkerStrategies.THREADS) {
-        const PoolThreads = require('./lib/Pool-Threads');
-
-        concretePool = new PoolThreads(newPoolConfig, workerCreateHelper);
-    } else if (newPoolConfig.workerStrategy === WorkerStrategies.ISOLATES) {
-        const PoolIsolates = require('./lib/Pool-Isolates');
-
-        concretePool = new PoolIsolates(newPoolConfig, workerCreateHelper)
-    } else {
+    let workerStrategy = getWorkerStrategy(newPoolConfig.workerStrategy);
+    if(typeof workerStrategy === "undefined"){
         throw new TypeError(`Could not find a implementation for worker strategy "${newPoolConfig.workerStrategy}"`);
     }
+
+    let concretePool = new workerStrategy(newPoolConfig, workerCreateHelper);
 
     return new WorkerPool(concretePool);
 }
 
+const PoolIsolates = require('./lib/Pool-Isolates');
+registerWorkerStrategy(WorkerStrategies.ISOLATES, PoolIsolates);
+
+const PoolThreads = require('./lib/Pool-Threads');
+registerWorkerStrategy(WorkerStrategies.THREADS, PoolThreads);
+
+const PoolWebWorkers = require('./lib/Pool-Web-Workers');
+registerWorkerStrategy(WorkerStrategies.WEB_WORKERS, PoolWebWorkers);
 
 module.exports = {
     createWorkerPool,
     PoolConfig,
-    WorkerStrategies
+    WorkerStrategies,
+    registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/PoolConfig":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
+},{"./lib/Pool-Isolates":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
 (function (setImmediate){
 const {assert} = require('./utils');
 const util = require('util');
@@ -16403,7 +17574,63 @@ util.inherits(PoolThreads, AbstractPool);
 
 module.exports = PoolThreads;
 
-},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
+const AbstractPool = require('./AbstractPool');
+const util = require('util');
+
+/**
+ * @param {PoolConfig&PoolConfigStorage} options
+ * @param {function} workerCreateHelper
+ * @mixes AbstractPool
+ */
+function PoolWebWorkers(options, workerCreateHelper) {
+    AbstractPool.call(this, options);
+
+    this.createNewWorker = function (callback) {
+
+        const envTypes = require("overwrite-require").constants;
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE){
+            return callback(new Error(`Web Worker is not available into current environment type <${$$.environmentType}>`));
+        }
+
+        const newWorker = new Worker(options.bootScript, options.workerOptions);
+
+        if (typeof workerCreateHelper === "function") {
+            workerCreateHelper(newWorker);
+        }
+
+        const callbackWrapper = (...args) => {
+            removeListeners();
+            callback(...args);
+        };
+
+        function onMessage(msg) {
+            if(msg !== 'ready') {
+                callbackWrapper(new Error('Build script did not respond accordingly, it might be incompatible with current version'));
+                return;
+            }
+
+            callbackWrapper(undefined, newWorker);
+        }
+
+        function removeListeners() {
+            newWorker.removeListener('message', onMessage);
+            newWorker.removeListener('error', callbackWrapper);
+            newWorker.removeListener('exit', callbackWrapper);
+        }
+
+        newWorker.on('message', onMessage);
+        newWorker.on('error', callbackWrapper);
+        newWorker.on('exit', callbackWrapper);
+    };
+
+}
+
+util.inherits(PoolWebWorkers, AbstractPool);
+
+module.exports = PoolWebWorkers;
+
+},{"./AbstractPool":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
 const os = require('os');
 const util = require('util');
 const WorkerStrategies = require('./WorkerStrategies');
@@ -16687,7 +17914,8 @@ module.exports = WorkerPool;
 },{"./QueueShim.js":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
 const WorkerStrategies = {
     THREADS: 'threads',
-    ISOLATES: 'isolates'
+    ISOLATES: 'isolates',
+    WEB_WORKERS: 'web-workers'
 };
 
 module.exports = Object.freeze(WorkerStrategies);
