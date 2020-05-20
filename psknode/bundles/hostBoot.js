@@ -11323,6 +11323,7 @@ function ServerConfig(conf) {
     }
 
     conf = createConfig(conf, defaultConf);
+    conf.defaultEndpoints = defaultConf.activeEndpoints;
     return conf;
 }
 
@@ -11331,10 +11332,10 @@ module.exports = ServerConfig;
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js":[function(require,module,exports){
 function StaticServer(server) {
-    const lockedPathsPrefixes = ["/anchoring", "/EDFS", "/receive-message"];
     const fs = require("fs");
     const path = require("path");
     const MimeType = require("./MimeType");
+
     function sendFiles(req, res, next) {
         const prefix = "/directory-summary/";
         requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
@@ -11402,13 +11403,12 @@ function StaticServer(server) {
                                     extractContent(fileName);
                                 } else {
                                     let fileContent = fs.readFileSync(fileName);
-                                    let fileExtension = fileName.substring(fileName.lastIndexOf(".")+1);
+                                    let fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1);
                                     let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
-                                    if(mimeType.binary){
-										summary[summaryId][file] = Array.from(fileContent);
-                                    }
-                                    else{
-										summary[summaryId][file] = fileContent.toString();
+                                    if (mimeType.binary) {
+                                        summary[summaryId][file] = Array.from(fileContent);
+                                    } else {
+                                        summary[summaryId][file] = fileContent.toString();
                                     }
 
                                 }
@@ -11436,6 +11436,7 @@ function StaticServer(server) {
         }
 
     }
+
     function sendFile(res, file) {
         let stream = fs.createReadStream(file);
         const mimes = require("./MimeType");
@@ -11463,15 +11464,7 @@ function StaticServer(server) {
             return callback(true);
         }
 
-        if (typeof urlPrefix === "undefined") {
-            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
-                let reservedPath = lockedPathsPrefixes[i];
-                //if we find a url that starts with a reserved prefix is not our duty ro resolve
-                if (req.url.indexOf(reservedPath) === 0) {
-                    return callback(true);
-                }
-            }
-        } else {
+        if (typeof urlPrefix !== "undefined") {
             if (req.url.indexOf(urlPrefix) !== 0) {
                 return callback(true);
             }
@@ -11672,6 +11665,7 @@ module.exports = RequestFactory;
 }).call(this,require('_process'),require("buffer").Buffer)
 
 },{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js","zmq_adapter":"/home/travis/build/PrivateSky/privatesky/modules/zmq_adapter/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/index.js":[function(require,module,exports){
+(function (process){
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
 const TokenBucket = require('./libs/TokenBucket');
@@ -11777,8 +11771,12 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 			const path = require("path");
 			middlewareList.forEach(middleware => {
 				const middlewareConfig = Object.keys(conf.endpointsConfig).find(endpointName => endpointName === middleware);
+				let middlewarePath;
 				if (middlewareConfig) {
-					let middlewarePath = conf.endpointsConfig[middlewareConfig].path;
+					middlewarePath = conf.endpointsConfig[middlewareConfig].path;
+					if (middlewarePath.startsWith(".") && conf.defaultEndpoints.indexOf(middleware) === -1) {
+						middlewarePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, middlewarePath);
+					}
 					console.log(`Preparing to register middleware from path ${middlewarePath}`);
 					require(middlewarePath)(server);
 				}
@@ -11825,7 +11823,9 @@ module.exports.getServerConfig = function () {
 	return utils.getServerConfig();
 };
 
-},{"./AnchoringService.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js","./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js","./StaticServer.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js":[function(require,module,exports){
+}).call(this,require('_process'))
+
+},{"./AnchoringService.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js","./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js","./StaticServer.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js":[function(require,module,exports){
 /**
  * An implementation of the Token bucket algorithm
  * @param startTokens - maximum number of tokens possible to obtain and the default starting value

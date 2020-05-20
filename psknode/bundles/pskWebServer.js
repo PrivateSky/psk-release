@@ -5396,16 +5396,17 @@ function ServerConfig(conf) {
     }
 
     conf = createConfig(conf, defaultConf);
+    conf.defaultEndpoints = defaultConf.activeEndpoints;
     return conf;
 }
 
 module.exports = ServerConfig;
 },{"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js":[function(require,module,exports){
 function StaticServer(server) {
-    const lockedPathsPrefixes = ["/anchoring", "/EDFS", "/receive-message"];
     const fs = require("fs");
     const path = require("path");
     const MimeType = require("./MimeType");
+
     function sendFiles(req, res, next) {
         const prefix = "/directory-summary/";
         requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
@@ -5473,13 +5474,12 @@ function StaticServer(server) {
                                     extractContent(fileName);
                                 } else {
                                     let fileContent = fs.readFileSync(fileName);
-                                    let fileExtension = fileName.substring(fileName.lastIndexOf(".")+1);
+                                    let fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1);
                                     let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
-                                    if(mimeType.binary){
-										summary[summaryId][file] = Array.from(fileContent);
-                                    }
-                                    else{
-										summary[summaryId][file] = fileContent.toString();
+                                    if (mimeType.binary) {
+                                        summary[summaryId][file] = Array.from(fileContent);
+                                    } else {
+                                        summary[summaryId][file] = fileContent.toString();
                                     }
 
                                 }
@@ -5507,6 +5507,7 @@ function StaticServer(server) {
         }
 
     }
+
     function sendFile(res, file) {
         let stream = fs.createReadStream(file);
         const mimes = require("./MimeType");
@@ -5534,15 +5535,7 @@ function StaticServer(server) {
             return callback(true);
         }
 
-        if (typeof urlPrefix === "undefined") {
-            for (let i = 0; i < lockedPathsPrefixes.length; i++) {
-                let reservedPath = lockedPathsPrefixes[i];
-                //if we find a url that starts with a reserved prefix is not our duty ro resolve
-                if (req.url.indexOf(reservedPath) === 0) {
-                    return callback(true);
-                }
-            }
-        } else {
+        if (typeof urlPrefix !== "undefined") {
             if (req.url.indexOf(urlPrefix) !== 0) {
                 return callback(true);
             }
@@ -9591,8 +9584,12 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 			const path = require("path");
 			middlewareList.forEach(middleware => {
 				const middlewareConfig = Object.keys(conf.endpointsConfig).find(endpointName => endpointName === middleware);
+				let middlewarePath;
 				if (middlewareConfig) {
-					let middlewarePath = conf.endpointsConfig[middlewareConfig].path;
+					middlewarePath = conf.endpointsConfig[middlewareConfig].path;
+					if (middlewarePath.startsWith(".") && conf.defaultEndpoints.indexOf(middleware) === -1) {
+						middlewarePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, middlewarePath);
+					}
 					console.log(`Preparing to register middleware from path ${middlewarePath}`);
 					require(middlewarePath)(server);
 				}
