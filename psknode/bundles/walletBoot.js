@@ -4795,6 +4795,34 @@ function EDFSBrickStorage(endpoint) {
         });
     };
 
+    const BRICK_MAX_SIZE_IN_BYTES = 4;
+    this.getMultipleBricks = function (brickHashes, callback) {
+        brickTransportStrategy.getMultipleBricks(brickHashes, (err, bricksData) => {
+            if (err) {
+                return callback(err);
+            }
+            let bricks = [];
+
+            function parseResponse(response) {
+                if (response.length > 0) {
+                    let brickSizeBuffer = response.slice(0, BRICK_MAX_SIZE_IN_BYTES);
+                    let brickSize = brickSizeBuffer.readUInt32BE();
+                    let brickData = response.slice(BRICK_MAX_SIZE_IN_BYTES, brickSize + BRICK_MAX_SIZE_IN_BYTES);
+                    const brick = bar.createBrick();
+                    brick.setTransformedData(brickData);
+                    bricks.push(brick);
+                    response = response.slice(brickSize + BRICK_MAX_SIZE_IN_BYTES);
+                    return parseResponse(response);
+                }
+            }
+
+            parseResponse(bricksData);
+            callback(undefined, bricks);
+        });
+
+
+    };
+
     this.deleteBrick = function (brickHash, callback) {
         throw new Error("Not implemented");
     };
@@ -5015,6 +5043,14 @@ function HTTPBrickTransportStrategy(endpoint) {
 
     this.get = (name, callback) => {
         $$.remote.doHttpGet(endpoint + "/EDFS/" + name, callback);
+    };
+
+    this.getMultipleBricks = (brickHashes, callback) => {
+        let query = "?";
+        brickHashes.forEach(brickHash => {
+            query += "hashes=" + brickHash + "&";
+        });
+        $$.remote.doHttpGet(endpoint + "/EDFS/downloadMultipleBricks" + query, callback);
     };
 
     this.getHashForAlias = (alias, callback) => {
@@ -10203,7 +10239,63 @@ function IframePowerCord(iframe){
 }
 
 module.exports = IframePowerCord;
-},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/InnerWebWorkerPowerCord.js":[function(require,module,exports){
+function InnerWebWorkerPowerCord() {
+    this.sendSwarm = function (swarmSerialization) {
+        postMessage(swarmSerialization);
+    };
+
+}
+
+module.exports = InnerWebWorkerPowerCord;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/OuterWebWorkerPowerCord.js":[function(require,module,exports){
+function OuterWebWorkerPowerCord(bootScript, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
+    const syndicate = require('syndicate');
+    let pool = null;
+    let self = this;
+
+    function connectToEnergy() {
+        const config = {
+            maximumNumberOfWorkers: numberOfWires,
+            workerStrategy: syndicate.WorkerStrategies.WEB_WORKERS,
+            bootScript: bootScript,
+            workerOptions: {
+                type: "classic",
+                name: self.identity,
+                workerData: {
+                    constitutionSeed: energySourceSeed
+                }
+            }
+        };
+
+        pool = syndicate.createWorkerPool(config);
+
+    }
+
+    this.sendSwarm = function (swarmSerialization) {
+        pool.addTask(swarmSerialization, (err, msg) => {
+            if (err instanceof Error) {
+                throw err;
+            }
+
+            this.transfer(msg.buffer || msg);
+        });
+    };
+
+    return new Proxy(this, {
+        set(target, p, value, receiver) {
+            target[p] = value;
+            if(p === 'identity') {
+                connectToEnergy();
+            }
+        }
+    })
+}
+
+module.exports = OuterWebWorkerPowerCord;
+
+},{"syndicate":"syndicate"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
 const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
     const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
@@ -12269,11 +12361,7 @@ if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
     se.initialise();
 }
 
-module.exports.load = function(seed, identity, callback){
-    const pathName = "path";
-    const path = require(pathName);
-    const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
-
+function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{
         const crypto = require("pskcrypto");
@@ -12294,13 +12382,34 @@ module.exports.load = function(seed, identity, callback){
                 return $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, transactionTypeName, methodName, ...args);
             }
         };
-        //todo implement a way to know when thread is ready
+        //todo implement a way to know when thread/worker/isolate is ready
         setTimeout(()=>{
             callback(undefined, handler);
         }, 100);
     });
-};
-},{"pskcrypto":"pskcrypto","swarm-engine":"swarm-engine"}],"edfs-brick-storage":[function(require,module,exports){
+}
+
+module.exports.load = function(seed, identity, callback){
+    const envTypes = require("overwrite-require").constants;
+    switch($$.environmentType){
+        case envTypes.BROWSER_ENVIRONMENT_TYPE:
+            const pc = new se.OuterWebWorkerPowerCord("path_to_boot_script", seed);
+            return envSetup(pc, seed, identity, callback);
+            break;
+        case envTypes.NODEJS_ENVIRONMENT_TYPE:
+            const pathName = "path";
+            const path = require(pathName);
+            const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
+            return envSetup(powerCord, seed, identity, callback);
+            break;
+        case envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        case envTypes.ISOLATE_ENVIRONMENT_TYPE:
+        case envTypes.THREAD_ENVIRONMENT_TYPE:
+        default:
+            return callback(new Error(`Dossier can not be loaded in <${$$.environmentType}> environment type for now!`));
+    }
+}
+},{"overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine":"swarm-engine"}],"edfs-brick-storage":[function(require,module,exports){
 module.exports.create = (endpoint) => {
     const EDFSBrickStorage = require("./EDFSBrickStorage");
     return new EDFSBrickStorage(endpoint)
@@ -12789,9 +12898,12 @@ if (browserContexts.indexOf($$.environmentType) !== -1) {
     module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
     module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
+
+    module.exports.OuterWebWorkerPowerCord = require("./powerCords/browser/OuterWebWorkerPowerCord");
+    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");
 }
 
-},{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/HostPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js","./powerCords/browser/IframePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js","./powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
+},{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/HostPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js","./powerCords/browser/IframePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js","./powerCords/browser/InnerWebWorkerPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/InnerWebWorkerPowerCord.js","./powerCords/browser/OuterWebWorkerPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/OuterWebWorkerPowerCord.js","./powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
 (function (global){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");

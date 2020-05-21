@@ -1740,6 +1740,7 @@ module.exports = {
 };
 
 },{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/TransactionManager.js","fs":false,"path":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/BricksManager.js":[function(require,module,exports){
+(function (Buffer){
 const pathModule = "path";
 const path = require(pathModule);
 const fsModule = "fs";
@@ -1791,6 +1792,49 @@ $$.flow.describe("BricksManager", {
             }
         });
     },
+
+    readMultipleBricks: function (brickHashes, writeStream, callback) {
+        this.__writeMultipleBricksToStream(brickHashes, 0, writeStream, callback);
+    },
+
+    __writeBrickDataToStream: function (brickData, writeStream, callback) {
+        const brickSize = Buffer.alloc(4);
+        brickSize.writeUInt32BE(brickData.length);
+        writeStream.write(brickSize, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            writeStream.write(brickData, callback);
+        });
+    },
+    __writeMultipleBricksToStream: function (brickHashes, brickIndex, writeStream, callback) {
+        const brickHash = brickHashes[brickIndex];
+        this.__readBrick(brickHash, (err, brickData) => {
+            this.__writeBrickDataToStream(brickData, writeStream, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                brickIndex++;
+                if (brickIndex === brickHashes.length) {
+                    callback();
+                } else {
+                    this.__writeMultipleBricksToStream(brickHashes, brickIndex, writeStream, callback);
+                }
+            });
+        });
+    },
+    __readBrick: function (brickHash, callback) {
+        const folderPath = path.join(brickStorageFolder, brickHash.substr(0, folderNameSize));
+        const filePath = path.join(folderPath, brickHash);
+        this.__verifyFileExistence(filePath, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            fs.readFile(filePath, callback);
+        });
+    },
     __verifyFileName: function (fileName, callback) {
         if (!fileName || typeof fileName !== "string") {
             return callback(new Error("No fileId specified."));
@@ -1803,16 +1847,16 @@ $$.flow.describe("BricksManager", {
         return true;
     },
     __ensureFolderStructure: function (folder, callback) {
-        try{
+        try {
             fs.mkdirSync(folder, {recursive: true});
-        }catch(err){
-            if(callback){
+        } catch (err) {
+            if (callback) {
                 callback(err);
-            }else{
+            } else {
                 throw err;
             }
         }
-        if(callback){
+        if (callback) {
             callback();
         }
     },
@@ -1826,7 +1870,7 @@ $$.flow.describe("BricksManager", {
                     hash.update(data);
                 });
 
-                const writeStream = fs.createWriteStream(filePath, {mode: 0o444});
+                const writeStream = fs.createWriteStream(filePath, {mode: 0o777});
 
                 writeStream.on("finish", () => {
                     callback(undefined, hash.digest("hex"));
@@ -1857,7 +1901,9 @@ $$.flow.describe("BricksManager", {
     }
 });
 
-},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/EDFSMiddleware.js":[function(require,module,exports){
 const bricks_storage_folder = "brick-storage";
 const URL_PREFIX = "/EDFS";
 
@@ -1911,9 +1957,25 @@ function EDFSMiddleware(server) {
         });
     }
 
+    function downloadMultipleBricks(req, res) {
+        res.setHeader("content-type", "application/octet-stream");
+        res.setHeader('Cache-control', 'max-age=31536000'); // set brick cache expiry to 1 year
+        $$.flow.start("BricksManager").readMultipleBricks(req.query.hashes, res, (err, result) => {
+            res.statusCode = 200;
+            if (err) {
+                console.log(err);
+                res.statusCode = 404;
+            }
+            res.end();
+        });
+    }
+
     server.use(`${URL_PREFIX}/*`, setHeaders);
+    server.use(`${URL_PREFIX}/downloadMultipleBricks`, downloadMultipleBricks);
     server.post(`${URL_PREFIX}/:fileId`, uploadBrick);
     server.get(`${URL_PREFIX}/:fileId`, downloadBrick);
+    server.post(`${URL_PREFIX}/:fileId/:dldomain`, uploadBrick);
+    server.get(`${URL_PREFIX}/:fileId/:dldomain`, downloadBrick);
 }
 
 module.exports = EDFSMiddleware;
@@ -2050,6 +2112,14 @@ function HTTPBrickTransportStrategy(endpoint) {
 
     this.get = (name, callback) => {
         $$.remote.doHttpGet(endpoint + "/EDFS/" + name, callback);
+    };
+
+    this.getMultipleBricks = (brickHashes, callback) => {
+        let query = "?";
+        brickHashes.forEach(brickHash => {
+            query += "hashes=" + brickHash + "&";
+        });
+        $$.remote.doHttpGet(endpoint + "/EDFS/downloadMultipleBricks" + query, callback);
     };
 
     this.getHashForAlias = (alias, callback) => {

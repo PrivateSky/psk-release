@@ -7499,6 +7499,34 @@ function EDFSBrickStorage(endpoint) {
         });
     };
 
+    const BRICK_MAX_SIZE_IN_BYTES = 4;
+    this.getMultipleBricks = function (brickHashes, callback) {
+        brickTransportStrategy.getMultipleBricks(brickHashes, (err, bricksData) => {
+            if (err) {
+                return callback(err);
+            }
+            let bricks = [];
+
+            function parseResponse(response) {
+                if (response.length > 0) {
+                    let brickSizeBuffer = response.slice(0, BRICK_MAX_SIZE_IN_BYTES);
+                    let brickSize = brickSizeBuffer.readUInt32BE();
+                    let brickData = response.slice(BRICK_MAX_SIZE_IN_BYTES, brickSize + BRICK_MAX_SIZE_IN_BYTES);
+                    const brick = bar.createBrick();
+                    brick.setTransformedData(brickData);
+                    bricks.push(brick);
+                    response = response.slice(brickSize + BRICK_MAX_SIZE_IN_BYTES);
+                    return parseResponse(response);
+                }
+            }
+
+            parseResponse(bricksData);
+            callback(undefined, bricks);
+        });
+
+
+    };
+
     this.deleteBrick = function (brickHash, callback) {
         throw new Error("Not implemented");
     };
@@ -7725,6 +7753,14 @@ function HTTPBrickTransportStrategy(endpoint) {
 
     this.get = (name, callback) => {
         $$.remote.doHttpGet(endpoint + "/EDFS/" + name, callback);
+    };
+
+    this.getMultipleBricks = (brickHashes, callback) => {
+        let query = "?";
+        brickHashes.forEach(brickHash => {
+            query += "hashes=" + brickHash + "&";
+        });
+        $$.remote.doHttpGet(endpoint + "/EDFS/downloadMultipleBricks" + query, callback);
     };
 
     this.getHashForAlias = (alias, callback) => {
@@ -18781,7 +18817,13 @@ PEMEncoder.prototype.encode = function encode(data, options) {
     } else if (cmp > 0) {
       r.isub(this.p);
     } else {
-      r.strip();
+      if (r.strip !== undefined) {
+        // r is BN v4 instance
+        r.strip();
+      } else {
+        // r is BN v5 instance
+        r._strip();
+      }
     }
 
     return r;
@@ -23599,7 +23641,13 @@ function fromByteArray (uint8) {
     } else if (cmp > 0) {
       r.isub(this.p);
     } else {
-      r._strip();
+      if (r.strip !== undefined) {
+        // r is a BN v4 instance
+        r.strip();
+      } else {
+        // r is a BN v5 instance
+        r._strip();
+      }
     }
 
     return r;
