@@ -158,6 +158,7 @@ function HTTPBrickTransportStrategy(endpoint) {
             try {
                 brickDigest = JSON.parse(brickDigest);
             } catch (e) {
+                return callback(e);
             }
             callback(undefined, brickDigest);
         });

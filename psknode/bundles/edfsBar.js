@@ -3752,8 +3752,7 @@ $$.flow.describe("BricksManager", {
 
                 readStream.pipe(writeStream);
             } else {
-                callback();
-
+                callback(undefined, fileName);
             }
         });
     },
@@ -3974,6 +3973,7 @@ function HTTPBrickTransportStrategy(endpoint) {
             try {
                 brickDigest = JSON.parse(brickDigest);
             } catch (e) {
+                return callback(e);
             }
             callback(undefined, brickDigest);
         });
