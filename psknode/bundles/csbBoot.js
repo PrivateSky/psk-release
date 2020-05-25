@@ -503,7 +503,7 @@ function Manifest(archive, callback) {
     };
 
     manifestHandler.getMountedDossiers = function (path, callback) {
-        const mountedDossiers = [];
+        let mountedDossiers = [];
         for (let mountPoint in manifest.mounts) {
             if (pskPath.isSubpath(mountPoint, path)) {
                 let mountPath = mountPoint.substring(path.length);
@@ -516,6 +516,11 @@ function Manifest(archive, callback) {
                 });
             }
         }
+
+        const mountPaths = mountedDossiers.map(mountedDossier => mountedDossier.path);
+        mountedDossiers = mountedDossiers.filter((mountedDossier, index) => {
+            return mountPaths.indexOf(mountedDossier.path) === index;
+        });
 
         callback(undefined, mountedDossiers);
     };

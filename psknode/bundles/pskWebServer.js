@@ -2449,7 +2449,7 @@ function Manifest(archive, callback) {
     };
 
     manifestHandler.getMountedDossiers = function (path, callback) {
-        const mountedDossiers = [];
+        let mountedDossiers = [];
         for (let mountPoint in manifest.mounts) {
             if (pskPath.isSubpath(mountPoint, path)) {
                 let mountPath = mountPoint.substring(path.length);
@@ -2462,6 +2462,11 @@ function Manifest(archive, callback) {
                 });
             }
         }
+
+        const mountPaths = mountedDossiers.map(mountedDossier => mountedDossier.path);
+        mountedDossiers = mountedDossiers.filter((mountedDossier, index) => {
+            return mountPaths.indexOf(mountedDossier.path) === index;
+        });
 
         callback(undefined, mountedDossiers);
     };
@@ -6642,7 +6647,7 @@ function getServerConfig() {
         const fs = require("fs");
         const path = require("path");
         try {
-            serverConf = fs.readFileSync(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "conf", "server.json"));
+            serverConf = fs.readFileSync(path.join(process.env.PSK_CONFIG_LOCATION, "server.json"));
             serverConf = JSON.parse(serverConf.toString());
         } catch (e) {
             serverConf = undefined;
