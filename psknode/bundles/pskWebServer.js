@@ -1794,6 +1794,9 @@ $$.flow.describe("BricksManager", {
     },
 
     readMultipleBricks: function (brickHashes, writeStream, callback) {
+        if (!Array.isArray(brickHashes)) {
+            brickHashes = [brickHashes];
+        }
         this.__writeMultipleBricksToStream(brickHashes, 0, writeStream, callback);
     },
 
