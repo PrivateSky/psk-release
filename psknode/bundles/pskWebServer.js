@@ -1370,6 +1370,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 };
 },{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/DossierWizardMiddleware.js":[function(require,module,exports){
 const URL_PREFIX = "/dossierWizard";
+const dossierWizardStorage = "dossier-wizard-storage";
 
 function DossierWizardMiddleware(server) {
     const path = require('path');
@@ -1380,7 +1381,6 @@ function DossierWizardMiddleware(server) {
     const crypto = require('pskcrypto');
     const serverCommands = require('./utils/serverCommands');
     const executioner = require('./utils/executioner');
-
     const randSize = 32;
 
     function setHeaders(req, res, next) {
@@ -1396,7 +1396,7 @@ function DossierWizardMiddleware(server) {
 
     function beginSession(req, res) {
         const transactionId = crypto.randomBytes(randSize).toString('hex');
-        fs.mkdir(path.join(server.rootFolder, transactionId), {recursive: true}, (err) => {
+        fs.mkdir(path.join(server.rootFolder, dossierWizardStorage, transactionId), {recursive: true}, (err) => {
             if (err) {
                 res.statusCode = 500;
                 res.end();
@@ -1404,6 +1404,17 @@ function DossierWizardMiddleware(server) {
             }
 
             res.end(transactionId);
+        });
+    }
+
+    function setSeedKey(req, res) {
+        const transactionId = req.params.transactionId;
+        serverCommands.setSeedKey(path.join(server.rootFolder, dossierWizardStorage, transactionId), req.body, (err) => {
+            if (err) {
+                res.statusCode = 500;
+            }
+
+            res.end();
         });
     }
 
@@ -1419,7 +1430,7 @@ function DossierWizardMiddleware(server) {
             stream: req
         };
 
-        serverCommands.addFile(path.join(server.rootFolder, transactionId), fileObj, (err) => {
+        serverCommands.addFile(path.join(server.rootFolder, dossierWizardStorage, transactionId), fileObj, (err) => {
             if (err) {
                 if (err.code === 'EEXIST') {
                     res.statusCode = 409;
@@ -1434,7 +1445,7 @@ function DossierWizardMiddleware(server) {
 
     function setDossierEndpoint(req, res) {
         const transactionId = req.params.transactionId;
-        serverCommands.setEndpoint(path.join(server.rootFolder, transactionId), req.body, (err) => {
+        serverCommands.setEndpoint(path.join(server.rootFolder, dossierWizardStorage, transactionId), req.body, (err) => {
             if (err) {
                 res.statusCode = 500;
             }
@@ -1450,7 +1461,7 @@ function DossierWizardMiddleware(server) {
             seed: req.headers['x-mounted-dossier-seed']
         };
 
-        serverCommands.mount(path.join(server.rootFolder, transactionId), mountPoint, (err) => {
+        serverCommands.mount(path.join(server.rootFolder, dossierWizardStorage, transactionId), mountPoint, (err) => {
             if (err) {
                 res.statusCode = 500;
                 console.log("Error", err);
@@ -1463,7 +1474,7 @@ function DossierWizardMiddleware(server) {
 
     function buildDossier(req, res) {
         const transactionId = req.params.transactionId;
-        executioner.executioner(path.join(server.rootFolder, transactionId), (err, seed) => {
+        executioner.executioner(path.join(server.rootFolder, dossierWizardStorage, transactionId), (err, seed) => {
             if (err) {
                 res.statusCode = 500;
                 console.log("Error", err);
@@ -1476,7 +1487,6 @@ function DossierWizardMiddleware(server) {
     }
 
     function redirect(req, res) {
-        console.log("Redirect called");
         res.statusCode = 303;
         let redirectLocation = 'index.html';
 
@@ -1491,6 +1501,9 @@ function DossierWizardMiddleware(server) {
     server.use(`${URL_PREFIX}/*`, setHeaders);
 
     server.post(`${URL_PREFIX}/begin`, beginSession);
+
+    server.post(`${URL_PREFIX}/setSeedKey/:transactionId`, httpUtils.bodyParser);
+    server.post(`${URL_PREFIX}/setSeedKey/:transactionId`, setSeedKey);
 
     server.post(`${URL_PREFIX}/addFile`, sendError);
     server.post(`${URL_PREFIX}/addFile/:transactionId`, addFileToDossier);
@@ -1582,9 +1595,20 @@ module.exports = TransactionManager;
 },{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/dossierOperations.js":[function(require,module,exports){
 const EDFS = require("edfs");
 
-function createArchive(endpoint, callback) {
+function createArchive(endpoint, seedKey, callback) {
+    if (typeof seedKey === "function") {
+        callback = seedKey;
+        seedKey = undefined;
+    }
     const edfs = EDFS.attachToEndpoint(endpoint);
-    edfs.createRawDossier(callback);
+    if (typeof seedKey !== "undefined") {
+        const barModule = require("bar");
+        const Seed = barModule.Seed;
+        const seed = new Seed(undefined, endpoint, seedKey);
+        edfs.loadRawDossier(seed.getCompactForm(), callback)
+    } else {
+        edfs.createRawDossier(callback);
+    }
 }
 
 function addFile(workingDir, dossierPath, archive, callback) {
@@ -1601,7 +1625,7 @@ module.exports = {
     createArchive,
     mount
 };
-},{"edfs":"edfs","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js":[function(require,module,exports){
+},{"bar":false,"edfs":"edfs","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dossier-wizard/utils/executioner.js":[function(require,module,exports){
 const dossierOperations = require('./dossierOperations');
 const TransactionManager = require('./TransactionManager');
 
@@ -1611,7 +1635,7 @@ function executioner(workingDir, callback) {
         if (err) {
             return callback(err);
         }
-        dossierOperations.createArchive(transaction.endpoint, (err, archive) => {
+        dossierOperations.createArchive(transaction.endpoint, transaction.seedKey, (err, archive) => {
             if (err) {
                 return callback(err);
             }
@@ -1676,6 +1700,17 @@ const url = require('url');
 
 const TransactionManager = require("./TransactionManager");
 
+function setSeedKey(workingDir, seedKey, callback) {
+    const manager = new TransactionManager(workingDir);
+    manager.loadTransaction((err, transaction) => {
+        if (err) {
+            return callback(err);
+        }
+        transaction.seedKey = seedKey;
+        manager.saveTransaction(transaction, callback);
+    });
+}
+
 function addFile(workingDir, FileObj, callback) {
     const cmd = {
         name: 'addFile',
@@ -1734,6 +1769,7 @@ function mount(workingDir, mountPoint, callback) {
     manager.addCommand(cmd, callback);
 }
 module.exports = {
+    setSeedKey,
     addFile,
     setEndpoint,
     mount
@@ -5412,6 +5448,7 @@ function ServerConfig(conf) {
         "storage": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "tmp"),
         "sslFolder": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "conf", "ssl"),
         "port": 8080,
+        "host": "0.0.0.0",
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
         "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard", "staticServer"],
@@ -9576,7 +9613,7 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const conf = utils.getServerConfig();
 	const server = new Server(sslConfig);
 	server.rootFolder = rootFolder;
-	server.listen(port, (err) => {
+	server.listen(port, conf.host, (err) => {
 		if(err){
 			console.log(err);
 			if(callback){

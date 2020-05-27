@@ -7647,7 +7647,7 @@ function EDFSBrickStorage(endpoint) {
             }
             brickTransportStrategy.get(barMapId, (err, barMapData) => {
                 if (err) {
-                    return callback(err);
+                    return callback(undefined, bar.createBarMap());
                 }
 
                 const mapBrick = bar.createBrick();
@@ -11320,6 +11320,7 @@ function ServerConfig(conf) {
         "storage": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "tmp"),
         "sslFolder": path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "conf", "ssl"),
         "port": 8080,
+        "host": "0.0.0.0",
         "zeromqForwardAddress": "tcp://127.0.0.1:5001",
         "preventRateLimit": false,
         "activeEndpoints": ["virtualMQ", "filesManager", "anchoring", "edfs", "dossier-wizard", "staticServer"],
@@ -11744,7 +11745,7 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	const conf = utils.getServerConfig();
 	const server = new Server(sslConfig);
 	server.rootFolder = rootFolder;
-	server.listen(port, (err) => {
+	server.listen(port, conf.host, (err) => {
 		if(err){
 			console.log(err);
 			if(callback){
