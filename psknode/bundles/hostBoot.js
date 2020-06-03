@@ -8076,7 +8076,7 @@ function EDFS(endpoint, options) {
         const archiveConfigurator = new ArchiveConfigurator();
         archiveConfigurator.setFsAdapter("FsAdapter");
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
-        archiveConfigurator.setBufferSize(65535);
+        archiveConfigurator.setBufferSize(1000000);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
         archiveConfigurator.setCache(cache);
 
@@ -8617,7 +8617,7 @@ function RawDossier(endpoint, seed, cache) {
         archiveConfigurator.setFsAdapter("FsAdapter");
 
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
-        archiveConfigurator.setBufferSize(65535);
+        archiveConfigurator.setBufferSize(1000000);
         if (!localSeed) {
             archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
             archiveConfigurator.setSeedEndpoint(endpoint);
@@ -11532,11 +11532,12 @@ function StaticServer(server) {
 
         const rootFolder = server.rootFolder;
         const path = require("path");
-        let requestedUrl = req.url;
+        let requestedUrl = new URL(req.url, `http://${req.headers.host}`);
+		let requestedUrlPathname = requestedUrl.pathname;
         if (urlPrefix) {
-            requestedUrl = requestedUrl.replace(urlPrefix, "");
+            requestedUrlPathname = requestedUrlPathname.replace(urlPrefix, "");
         }
-        let targetPath = path.resolve(path.join(rootFolder, requestedUrl));
+        let targetPath = path.resolve(path.join(rootFolder, requestedUrlPathname));
         //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
         if (targetPath.indexOf(rootFolder) !== 0) {
             return callback(true);
@@ -11551,7 +11552,6 @@ function StaticServer(server) {
             }
             //from now on we mean to resolve the url
             //remove existing query params
-            targetPath = targetPath.split("?")[0];
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
                     res.statusCode = 404;
@@ -11559,11 +11559,13 @@ function StaticServer(server) {
                     return;
                 }
                 if (stats.isDirectory()) {
-                    let url = req.url;
-                    url = url.split("?")[0];
-                    if (url[url.length - 1] !== "/") {
+
+					let protocol = req.socket.encrypted ? "https" : "http";
+					let url = new URL(req.url, `${protocol}://${req.headers.host}`);
+
+                    if (url.pathname[url.pathname.length - 1] !== "/") {
                         res.writeHead(302, {
-                            'Location': url + "/"
+                            'Location': url.pathname + "/" +url.search
                         });
                         res.end();
                         return;

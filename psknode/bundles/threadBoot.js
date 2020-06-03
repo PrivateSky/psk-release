@@ -3968,7 +3968,7 @@ function EDFS(endpoint, options) {
         const archiveConfigurator = new ArchiveConfigurator();
         archiveConfigurator.setFsAdapter("FsAdapter");
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
-        archiveConfigurator.setBufferSize(65535);
+        archiveConfigurator.setBufferSize(1000000);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
         archiveConfigurator.setCache(cache);
 
@@ -4509,7 +4509,7 @@ function RawDossier(endpoint, seed, cache) {
         archiveConfigurator.setFsAdapter("FsAdapter");
 
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
-        archiveConfigurator.setBufferSize(65535);
+        archiveConfigurator.setBufferSize(1000000);
         if (!localSeed) {
             archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
             archiveConfigurator.setSeedEndpoint(endpoint);
