@@ -31890,23 +31890,25 @@ exports.pbkdf2Sync = require('./lib/sync')
 
 },{"./lib/async":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
 (function (process,global){
+var Buffer = require('safe-buffer').Buffer
+
 var checkParameters = require('./precondition')
 var defaultEncoding = require('./default-encoding')
 var sync = require('./sync')
-var Buffer = require('safe-buffer').Buffer
+var toBuffer = require('./to-buffer')
 
 var ZERO_BUF
 var subtle = global.crypto && global.crypto.subtle
 var toBrowser = {
-  'sha': 'SHA-1',
+  sha: 'SHA-1',
   'sha-1': 'SHA-1',
-  'sha1': 'SHA-1',
-  'sha256': 'SHA-256',
+  sha1: 'SHA-1',
+  sha256: 'SHA-256',
   'sha-256': 'SHA-256',
-  'sha384': 'SHA-384',
+  sha384: 'SHA-384',
   'sha-384': 'SHA-384',
   'sha-512': 'SHA-512',
-  'sha512': 'SHA-512'
+  sha512: 'SHA-512'
 }
 var checks = []
 function checkNative (algo) {
@@ -31932,7 +31934,7 @@ function checkNative (algo) {
 
 function browserPbkdf2 (password, salt, iterations, length, algo) {
   return subtle.importKey(
-    'raw', password, {name: 'PBKDF2'}, false, ['deriveBits']
+    'raw', password, { name: 'PBKDF2' }, false, ['deriveBits']
   ).then(function (key) {
     return subtle.deriveBits({
       name: 'PBKDF2',
@@ -31979,10 +31981,10 @@ module.exports = function (password, salt, iterations, keylen, digest, callback)
     })
   }
 
-  checkParameters(password, salt, iterations, keylen)
+  checkParameters(iterations, keylen)
+  password = toBuffer(password, defaultEncoding, 'Password')
+  salt = toBuffer(salt, defaultEncoding, 'Salt')
   if (typeof callback !== 'function') throw new Error('No callback provided to pbkdf2')
-  if (!Buffer.isBuffer(password)) password = Buffer.from(password, defaultEncoding)
-  if (!Buffer.isBuffer(salt)) salt = Buffer.from(salt, defaultEncoding)
 
   resolvePromise(checkNative(algo).then(function (resp) {
     if (resp) return browserPbkdf2(password, salt, iterations, keylen, algo)
@@ -31993,35 +31995,27 @@ module.exports = function (password, salt, iterations, keylen, digest, callback)
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
+},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
 (function (process){
 var defaultEncoding
 /* istanbul ignore next */
 if (process.browser) {
   defaultEncoding = 'utf-8'
-} else {
+} else if (process.version) {
   var pVersionMajor = parseInt(process.version.split('.')[0].slice(1), 10)
 
   defaultEncoding = pVersionMajor >= 6 ? 'utf-8' : 'binary'
+} else {
+  defaultEncoding = 'utf-8'
 }
 module.exports = defaultEncoding
 
 }).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
-(function (Buffer){
 var MAX_ALLOC = Math.pow(2, 30) - 1 // default in iojs
 
-function checkBuffer (buf, name) {
-  if (typeof buf !== 'string' && !Buffer.isBuffer(buf)) {
-    throw new TypeError(name + ' must be a buffer or string')
-  }
-}
-
-module.exports = function (password, salt, iterations, keylen) {
-  checkBuffer(password, 'Password')
-  checkBuffer(salt, 'Salt')
-
+module.exports = function (iterations, keylen) {
   if (typeof iterations !== 'number') {
     throw new TypeError('Iterations not a number')
   }
@@ -32039,16 +32033,16 @@ module.exports = function (password, salt, iterations, keylen) {
   }
 }
 
-}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-
-},{"../../is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
 var md5 = require('create-hash/md5')
 var RIPEMD160 = require('ripemd160')
 var sha = require('sha.js')
+var Buffer = require('safe-buffer').Buffer
 
 var checkParameters = require('./precondition')
 var defaultEncoding = require('./default-encoding')
-var Buffer = require('safe-buffer').Buffer
+var toBuffer = require('./to-buffer')
+
 var ZEROS = Buffer.alloc(128)
 var sizes = {
   md5: 16,
@@ -32110,10 +32104,9 @@ function getDigest (alg) {
 }
 
 function pbkdf2 (password, salt, iterations, keylen, digest) {
-  checkParameters(password, salt, iterations, keylen)
-
-  if (!Buffer.isBuffer(password)) password = Buffer.from(password, defaultEncoding)
-  if (!Buffer.isBuffer(salt)) salt = Buffer.from(salt, defaultEncoding)
+  checkParameters(iterations, keylen)
+  password = toBuffer(password, defaultEncoding, 'Password')
+  salt = toBuffer(salt, defaultEncoding, 'Salt')
 
   digest = digest || 'sha1'
 
@@ -32147,7 +32140,22 @@ function pbkdf2 (password, salt, iterations, keylen, digest) {
 
 module.exports = pbkdf2
 
-},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","create-hash/md5":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
+},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
+var Buffer = require('safe-buffer').Buffer
+
+module.exports = (thing, encoding, name) => {
+  if (Buffer.isBuffer(thing)) {
+    return thing
+  } else if (typeof thing === 'string') {
+    return Buffer.from(thing, encoding)
+  } else if (ArrayBuffer.isView(thing)) {
+    return Buffer.from(thing.buffer)
+  } else {
+    throw new TypeError(name + ' must be a string, a Buffer, a typed array or a DataView')
+  }
+}
+
+},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
 (function (process){
 'use strict';
 

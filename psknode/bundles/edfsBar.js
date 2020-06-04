@@ -1823,6 +1823,9 @@ function Service(options) {
 
             const readableStream = new stream.Readable({
                 read(size) {
+                    if (!bricksMeta.length) {
+                        return this.push(null);
+                    }
                     if (brickIndex < bricksMeta.length) {
                         this.getBrick(brickIndex++);
                     }
@@ -2207,6 +2210,10 @@ function Service(options) {
 
         const readableStream = new stream.Readable({
             read(size) {
+                if (!bricksMeta.length) {
+                    return this.push(null);
+                }
+
                 if (brickIndex < bricksMeta.length) {
                     this.readBrickData(brickIndex++);
                 }
