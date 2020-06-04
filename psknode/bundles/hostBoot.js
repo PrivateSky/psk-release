@@ -8203,7 +8203,7 @@ function Manifest(archive, callback) {
                     mountPath = mountPath.substring(1);
                 }
                 mountedDossiers.push({
-                    path: mountPath.split("/").shift(),
+                    path: mountPath,
                     identifier: manifest.mounts[mountPoint]
                 });
             }
@@ -8514,12 +8514,18 @@ function RawDossier(endpoint, seed, cache) {
                             if (err) {
                                 return callback(err);
                             }
+                            let mountPaths = mounts.map(mount => mount.path);
+                            let folders = mountPaths.filter(mountPath =>  mountPath.split('/').length >= 2);
+                            folders = folders.map(mountPath => mountPath.split('/').shift());
+                            let mountedDossiers = mountPaths.filter(mountPath => mountPath.split('/').length === 1);
+                            mountedDossiers = mountedDossiers.map(mountPath => mountPath.split('/').shift());
                             if (options.withFileTypes) {
-                                entries.mounts = mounts.map(mount => mount.path);
+                                entries.mounts = mountedDossiers;
+                                entries.folders = Array.from(new Set([...entries.folders, ...folders]));
                                 entries.mounts = entries.mounts.filter(mount => entries.folders.indexOf(mount) === -1);
                                 return callback(undefined, entries);
                             }
-                            entries.files = [...entries.files, ...mounts];
+                            entries.files = Array.from(new Set([...entries.files, ...mounts, ...folders]));
                             return callback(undefined, entries.files);
                         });
                     }
@@ -53380,7 +53386,7 @@ module.exports = pbkdf2
 },{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
-module.exports = (thing, encoding, name) => {
+module.exports = function (thing, encoding, name) {
   if (Buffer.isBuffer(thing)) {
     return thing
   } else if (typeof thing === 'string') {
