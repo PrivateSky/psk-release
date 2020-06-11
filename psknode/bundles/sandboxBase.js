@@ -5123,273 +5123,47 @@ module.exports = SmartRemoteChannelPowerCord;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","/modules/swarm-engine/powerCords")
 
-},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"buffer","psk-webserver":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js":[function(require,module,exports){
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"buffer","psk-webserver":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js":[function(require,module,exports){
 (function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-function HostPowerCord(parent){
+/*
+	This type of PowerCord can be used from outer and inner SSApp in order to facilitate the SWARM communication
+	@param reference can be the parent (SSApp or wallet environment) or the iframe in which the SSApp gets loaded
+*/
+function SSAppPowerCord(reference){
 
-    this.sendSwarm = function (swarmSerialization){
-        parent.postMessage(swarmSerialization, "*");
-    };
+	this.sendSwarm = function (swarmSerialization){
+		reference.postMessage(swarmSerialization, "*");
+	};
 
-    let receivedMessageHandler  = (event)=>{
-        console.log("Message received in iframe",event);
-        let swarmSerialization = event.data;
-        this.transfer(swarmSerialization);
-    };
+	let receivedMessageHandler  = (event)=>{
+		console.log("SSAppPowerCord caught event", event);
+		if(event.source !== reference){
+			console.log("Not my message to handle");
+			return;
+		}
+		console.log("Message received from ssapp", event.source);
+		let swarmSerialization = event.data;
+		this.transfer(swarmSerialization);
+	};
 
-    let subscribe = () => {
-        if(!window.iframePCMessageHandler){
-            window.iframePCMessageHandler = receivedMessageHandler;
-            window.addEventListener("message",receivedMessageHandler)
-        }
-    };
+	let setupConnection = () => {
+		window.addEventListener("message", receivedMessageHandler);
+	};
 
-
-    return new Proxy(this, {
-        set(target, p, value, receiver) {
-            target[p] = value;
-            if(p === 'identity') {
-                subscribe.call(target);
-            }
-        }
-    });
+	return new Proxy(this, {
+		set(target, p, value, receiver) {
+			target[p] = value;
+			if(p === 'identity') {
+				setupConnection();
+			}
+		}
+	});
 }
 
+module.exports = SSAppPowerCord;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","/modules/swarm-engine/powerCords/browser")
 
-module.exports = HostPowerCord;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/HostPowerCord.js","/modules/swarm-engine/powerCords/browser")
-
-},{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-function IframePowerCord(iframe){
-
-    let iframeSrc = iframe.src;
-
-    this.sendSwarm = function (swarmSerialization){
-        const SwarmPacker = require("swarmutils").SwarmPacker;
-
-        try {
-           SwarmPacker.getHeader(swarmSerialization);
-        }
-        catch (e) {
-            console.error("Could not deserialize swarm");
-        }
-
-        if(iframe && iframe.contentWindow){
-            iframe.contentWindow.postMessage(swarmSerialization, iframe.src);
-        }
-        else{
-            //TODO: check if the iframe/psk-app should be loaded again
-            console.error(`Iframe is no longer available. ${iframeSrc}`);
-        }
-
-    };
-
-    let receivedMessageHandler  = (event)=>{
-
-        if (event.source !== window) {
-            console.log("Message received in parent", event);
-            this.transfer(event.data);
-        }
-
-    };
-
-    let subscribe = () => {
-
-        // if(this.identity && this.identity!=="*"){
-        // }
-        // else{
-        //     //TODO: you should use a power cord capable of handling * identities.
-        //     console.error("Cannot handle identity '*'. You should use a power cord capable of handling '*' identities.")
-        // }
-
-        if(!window.iframePCMessageHandler){
-            window.iframePCMessageHandler = receivedMessageHandler;
-            window.addEventListener("message",receivedMessageHandler)
-        }
-    };
-
-    return new Proxy(this, {
-        set(target, p, value, receiver) {
-            target[p] = value;
-            if(p === 'identity') {
-                subscribe.call(target);
-            }
-        }
-    });
-}
-
-module.exports = IframePowerCord;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/IframePowerCord.js","/modules/swarm-engine/powerCords/browser")
-
-},{"buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/InnerWebWorkerPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-function InnerWebWorkerPowerCord() {
-    this.sendSwarm = function (swarmSerialization) {
-        postMessage(swarmSerialization);
-    };
-
-}
-
-module.exports = InnerWebWorkerPowerCord;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/InnerWebWorkerPowerCord.js","/modules/swarm-engine/powerCords/browser")
-
-},{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/OuterWebWorkerPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-function OuterWebWorkerPowerCord(bootScript, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
-    const syndicate = require('syndicate');
-    let pool = null;
-    let self = this;
-
-    function connectToEnergy() {
-        const config = {
-            maximumNumberOfWorkers: numberOfWires,
-            workerStrategy: syndicate.WorkerStrategies.WEB_WORKERS,
-            bootScript: bootScript,
-            workerOptions: {
-                type: "classic",
-                name: self.identity,
-                workerData: {
-                    constitutionSeed: energySourceSeed
-                }
-            }
-        };
-
-        pool = syndicate.createWorkerPool(config);
-
-    }
-
-    this.sendSwarm = function (swarmSerialization) {
-        pool.addTask(swarmSerialization, (err, msg) => {
-            if (err instanceof Error) {
-                throw err;
-            }
-
-            this.transfer(msg.buffer || msg);
-        });
-    };
-
-    return new Proxy(this, {
-        set(target, p, value, receiver) {
-            target[p] = value;
-            if(p === 'identity') {
-                connectToEnergy();
-            }
-        }
-    })
-}
-
-module.exports = OuterWebWorkerPowerCord;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/OuterWebWorkerPowerCord.js","/modules/swarm-engine/powerCords/browser")
-
-},{"buffer":"buffer","syndicate":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-const UtilFunctions = require("../../utils/utilFunctions");
-function ServiceWorkerPC() {
-    const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
-    const SwarmPacker = require("swarmutils").SwarmPacker;
-    const server = require("ssapp-middleware").getMiddleware();
-
-    this.sendSwarm = function (swarmSerialization) {
-        let header;
-
-        try {
-            header = SwarmPacker.getHeader(swarmSerialization);
-        } catch (e) {
-            console.error("Could not deserialize swarm");
-        }
-
-        //TODO
-        //verifica header.target pt urmatoarele cazuri:
-        // -- daca targetul este un regex de forma domain/agent/agentName atunci trebuie trimis mesajul cu ajutorul lui channelsManager pe canalul Base64(numeDomeniu)
-        // -- daca targetul este un regex de forma http/https atunci trebuie verificat daca domeniul fake-uit de service worker coincide cu domeniul din url.
-        //          Daca coincid atunci se trimite folosind channelsManagerul local daca nu coincide atunci se face un request http(s) (fetch)
-        // -- default ???? - posibil sa fie nevoie sa intoarcem tot in swarm engine... NU SUNT SIGUR!!!
-
-        if(UtilFunctions.isUrl(header.swarmTarget)){
-            if (!UtilFunctions.isInMyHosts(header.swarmTarget, server.requestedHosts)) {
-                fetch(header.swarmTarget,
-                    {
-                        method: 'POST',
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        headers: {
-                            'Content-Type': 'application/octet-stream'
-                        },
-                        redirect: 'follow', // manual, *follow, error
-                        referrerPolicy: 'no-referrer', // no-referrer, *client
-                        body: swarmSerialization
-                    }).then(response => {
-
-                    //TODO
-                    //check status codes
-                    if (!response.ok) {
-                        console.error(`An error occurred:  ${response.status} - ${response.statusText}`);
-                    }
-
-                }).catch((err)=>{
-                    //TODO
-                    //handle error
-                    console.log(err);
-                });
-                return;
-            }
-        }
-
-        let channelName = UtilFunctions.getChannelName(header.swarmTarget);
-        channelsManager.sendMessage(channelName, swarmSerialization, function () {
-            //TODO
-            //what now?
-            console.log("done");
-        });
-    };
-
-    let receiveSwarmSerialization = (err, message) => {
-        if (err) {
-            console.log(err);
-            if (err.code >= 400 && err.code < 500) {
-                return;
-            }
-        } else {
-            //we facilitate the transfer of swarmSerialization to $$.swarmEngine
-            this.transfer(message);
-        }
-        //we need tp subscribe again in order to be called when a new message arrive
-        //because no matter why error or message channelManager will remove as from the subs list
-        setTimeout(subscribe, 0);
-    };
-
-    let subscribe = () => {
-        //TODO
-        //verifica this.identity pt urmatoarele cazuri:
-        // -- daca targetul este un regex de forma domain/agent/agentName atunci trebuie trimis mesajul cu ajutorul lui channelsManager pe canalul Base64(numeDomeniu)
-        // -- default ???? - posibil sa fie nevoie sa intoarcem tot in swarm engine... NU SUNT SIGUR!!!
-
-
-        //let channelName = ""; //based on this.identity when need to extract the domainName from regex domainName/agent/agentname
-        let channelName = this.identity.split("/")[0];//temporary test
-        channelsManager.receiveMessage(btoa(channelName), receiveSwarmSerialization);
-    }
-
-    return new Proxy(this, {
-        set(target, p, value, receiver) {
-            target[p] = value;
-            if (p === 'identity') {
-                //when we get our identity
-                //setup means first call of subscribe
-                subscribe.call(target);
-            }
-        }
-    });
-}
-
-module.exports = ServiceWorkerPC;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","/modules/swarm-engine/powerCords/browser")
-
-},{"../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","buffer":"buffer","ssapp-middleware":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
+},{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
 (function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
 module.exports = function(swarmEngineApi){
     const cm = require("callflow");
@@ -5493,234 +5267,7 @@ exports.getTemplateHandler = function (swarmEngine) {
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/swarms/swarm_template-se.js","/modules/swarm-engine/swarms")
 
-},{"buffer":"buffer","callflow":"callflow","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-let Queue = require("swarmutils").Queue;
-const maxQueueSize = 100;
-const TOKEN_PLACEHOLDER = "WEB_TOKEN_PLACEHOLDER";
-const queues = {};
-const subscribers = {};
-
-
-function _getSubscribersList(channelName) {
-    if (typeof subscribers[channelName] === "undefined") {
-        subscribers[channelName] = [];
-    }
-
-    return subscribers[channelName];
-}
-
-function _getQueue(name) {
-    if (typeof queues[name] === "undefined") {
-        queues[name] = new Queue();
-    }
-
-    return queues[name];
-}
-
-function _deliverMessage(subscribers, message) {
-    let dispatched = false;
-    try {
-        while (subscribers.length > 0) {
-            let subscriberCallback = subscribers.pop();
-            if (!dispatched) {
-                subscriberCallback(undefined, message);
-                dispatched = true;
-            } else {
-                let e = new Error("Already dispatched");
-                e.code = 403;
-                subscriberCallback(e);
-            }
-        }
-    } catch (err) {
-        //... some subscribers could have a timeout connection
-        if (subscribers.length > 0) {
-            _deliverMessage(subscribers, message);
-        }
-    }
-
-    return dispatched;
-}
-
-function createChannel(channelName, callback) {
-    if (typeof queues[channelName] !== "undefined") {
-        let e = new Error("Channel exists!");
-        e.code = 409;
-        return callback(e);
-    }
-
-    queues[channelName] = new Queue();
-    callback(undefined, TOKEN_PLACEHOLDER);
-}
-
-const plugs = {};
-function sendMessage(channelName, message, callback) {
-
-    let header;
-    try{
-        const SwarmPacker = require("swarmutils").SwarmPacker;
-        header = SwarmPacker.getHeader(message);
-    }catch(error){
-        let e = new Error("SwarmPacker could not deserialize message");
-        e.code = 400;
-        callback(e);
-    }
-
-    if(typeof plugs[header.swarmTarget] === "undefined"){
-        //we need to do this in order to ensure that we have a handler for every fake/real channel that we create
-        let PC = require("../powerCords/browser/ServiceWorkerPC");
-        plugs[header.swarmTarget] =  new PC();
-        $$.swarmEngine.plug(header.swarmTarget, plugs[header.swarmTarget]);
-    }
-
-    let queue = _getQueue(channelName);
-    let subscribers = _getSubscribersList(channelName);
-    let dispatched = false;
-    if (queue.isEmpty()) {
-        dispatched = _deliverMessage(subscribers, message);
-    }
-
-    if (!dispatched) {
-        if (queue.length < maxQueueSize) {
-            queue.push(message);
-            return callback(undefined);
-
-        } else {
-            //queue is full
-            let e = new Error("Queue is full");
-            e.code = 429;
-            return callback(e);
-        }
-
-    }
-    callback(undefined);
-
-}
-
-function receiveMessage(channelName, callback) {
-    console.log(`Trying to receive message from channel "${channelName}"`);
-    let queue = _getQueue(channelName);
-    let message = queue.pop();
-
-    if (!message) {
-        _getSubscribersList(channelName).push(callback);
-    } else {
-        callback(undefined, message);
-    }
-
-}
-
-function SWChannelsManager() {
-
-        this.createChannel = createChannel;
-        this.sendMessage = sendMessage;
-        this.receiveMessage = receiveMessage;
-        this.forwardMessage = function (channel, enable, callback) {
-            let e = new Error("Unsupported feature");
-            e.code = 403;
-            callback(e);
-        };
-        console.log("ChannelsManager initialised!");
-}
-
-let channelManagerInstance = new SWChannelsManager();
-
-module.exports.getChannelsManager = function(){
-    return channelManagerInstance;
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/utils/SWChannelsManager.js","/modules/swarm-engine/utils")
-
-},{"../powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
-const urlReg = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?([a-z0-9]+([\-.]{1}[a-z0-9]+)*\.[a-z]{2,5}|localhost)(:[0-9]{1,5})?(\/.*)?$/gi;
-const domainReg = /^([0-9a-zA-Z]*)\/agent\/([0-9a-zA-Z]*)$/gi;
-const httpUrlRegex = new RegExp(urlReg);
-const domainRegex =  new RegExp(domainReg);
-
-
-function prepareMessage(req, callback){
-    const contentType = req.headers['content-type'];
-    if (contentType === 'application/octet-stream') {
-        const contentLength = Number.parseInt(req.headers['Content-Length'], 10);
-
-        if(Number.isNaN(contentLength)){
-            let e = new Error("Length Required");
-            e.code = 411;
-            return callback(e);
-        }
-        else{
-            callback(undefined,req.body);
-        }
-
-    } else {
-        let e = new Error("Wrong message format received!");
-        e.code = 500;
-        callback(e);
-    }
-}
-
-function isUrl(url){
-    return url.match(httpUrlRegex);
-}
-
-function isInMyHosts(swarmTarget, hosts) {
-    let url = new URL(swarmTarget);
-    let arrayHosts = Array.from(hosts);
-    for(let i = 0; i<arrayHosts.length; i++){
-        if (url.host === arrayHosts[i]) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-function getChannelName(swarmTarget){
-
-    let channelName;
-    //check against domain/agent/agentName;
-
-    if(swarmTarget.match(domainRegex)){
-        let regGroups = domainRegex.exec(swarmTarget);
-        channelName = btoa(regGroups[2]);
-        return channelName;
-    }
-
-    //check against urls;
-    if (swarmTarget.match(httpUrlRegex)) {
-
-        if (swarmTarget[swarmTarget.length - 1] === "/") {
-            swarmTarget = swarmTarget.slice(0, -1);
-        }
-
-        let urlFragments = swarmTarget.split("/");
-        channelName = urlFragments[urlFragments.length - 1];
-    }
-
-    return channelName;
-}
-
-function handleOptionsRequest(req,res, next){
-
-    const headers = {};
-    // IE8 does not allow domains to be specified, just the *
-    headers["Access-Control-Allow-Origin"] = req.headers.origin;
-    // headers["Access-Control-Allow-Origin"] = "*";
-    headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
-    headers["Access-Control-Allow-Credentials"] = true;
-    headers["Access-Control-Max-Age"] = '3600'; //one hour
-    headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}`;
-    res.set(headers);
-    res.status(200);
-    res.end();
-}
-
-module.exports = {prepareMessage, getChannelName, isUrl, isInMyHosts, handleOptionsRequest};
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/utils/utilFunctions.js","/modules/swarm-engine/utils")
-
-},{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"buffer":"buffer","callflow":"callflow","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 (function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
 function product(args) {
     if(!args.length){
@@ -11835,17 +11382,18 @@ module.exports = {
 const or = require("overwrite-require");
 const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
 if (browserContexts.indexOf($$.environmentType) !== -1) {
-    module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
+    module.exports.SSAppPowerCord = require("./powerCords/browser/SSAppPowerCord");
+    /*module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
     module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
 
     module.exports.OuterWebWorkerPowerCord = require("./powerCords/browser/OuterWebWorkerPowerCord");
-    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");
+    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");*/
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/index.js","/modules/swarm-engine")
 
-},{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/HostPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/HostPowerCord.js","./powerCords/browser/IframePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/IframePowerCord.js","./powerCords/browser/InnerWebWorkerPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/InnerWebWorkerPowerCord.js","./powerCords/browser/OuterWebWorkerPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/OuterWebWorkerPowerCord.js","./powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"swarmutils":[function(require,module,exports){
+},{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"swarmutils":[function(require,module,exports){
 (function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
