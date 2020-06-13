@@ -28,6 +28,10 @@ global.pskWebServerLoadModules = function(){
 		$$.__runtimeModules["edfs"] = require("edfs");
 	}
 
+	if(typeof $$.__runtimeModules["psk-key-did-resolver"] === "undefined"){
+		$$.__runtimeModules["psk-key-did-resolver"] = require("psk-key-did-resolver");
+	}
+
 	if(typeof $$.__runtimeModules["psk-webserver"] === "undefined"){
 		$$.__runtimeModules["psk-webserver"] = require("psk-webserver");
 	}
@@ -82,7 +86,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer-crc32":"buffer-crc32","callflow":"callflow","dossier-wizard":"dossier-wizard","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","psk-webserver":"psk-webserver","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"buffer-crc32":"buffer-crc32","callflow":"callflow","dossier-wizard":"dossier-wizard","edfs":"edfs","edfs-middleware":"edfs-middleware","node-fd-slicer":"node-fd-slicer","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-key-did-resolver":"psk-key-did-resolver","psk-security-context":"psk-security-context","psk-webserver":"psk-webserver","pskcrypto":"pskcrypto","soundpubsub":"soundpubsub","swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -4405,7 +4409,2192 @@ $$.remote.base64Decode = function base64Decode(encodedString){
 
 }).call(this,require("buffer").Buffer)
 
-},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
+},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/BarMapStrategyMixin.js":[function(require,module,exports){
+'use strict';
+
+const BarMapStrategyMixin = {
+    barMapController: null,
+    anchoringEventListener: null,
+    conflictResolutionFunction: null,
+    decisionFunction: null,
+    signingFunction: null,
+    cache: null,
+    lastHash: null,
+    validator: null,
+
+    initialize: function (options) {
+        if (typeof options.anchoringEventListener === 'function') {
+            this.setAnchoringEventListener(options.anchoringEventListener);
+        }
+
+        if (typeof options.decisionFn === 'function') {
+            this.setDecisionFunction(options.decisionFn);
+        }
+
+        if (typeof options.conflictResolutionFn === 'function') {
+            this.setConflictResolutionFunction(options.conflictResolutionFn);
+        }
+
+        if (typeof options.signingFn === 'function') {
+            this.setSigningFunction(options.signingFn);
+        }
+    },
+
+    /**
+     * @param {BarMapController} controller
+     */
+    setBarMapController: function (controller) {
+        this.barMapController = controller;
+    },
+
+    /**
+     * @param {callback} callback
+     */
+    setConflictResolutionFunction: function (fn) {
+        this.conflictResolutionFunction = fn;
+    },
+
+    /**
+     * 
+     * @param {callback} listener 
+     */
+    setAnchoringEventListener: function (listener) {
+        this.anchoringEventListener = listener;
+    },
+
+    /**
+     * @param {callback} fn 
+     */
+    setSigningFunction: function (fn) {
+        this.signingFunction = fn;
+    },
+
+    /**
+     * @param {callback} fn 
+     */
+    setDecisionFunction: function (fn) {
+        this.decisionFunction = fn;
+    },
+
+    /**
+     * @param {object} validator 
+     */
+    setValidator: function (validator) {
+        this.validator = validator;
+    },
+
+    /**
+     * @param {psk-cache.Cache} cache 
+     */
+    setCache: function (cache) {
+        this.cache = cache;
+    },
+
+    /**
+     * @param {string} key 
+     * @return {boolean}
+     */
+    hasInCache: function (key) {
+        if (!this.cache) {
+            return false;
+        }
+
+        return this.cache.has(key);
+    },
+
+    /**
+     * @param {string} key 
+     * @return {*}
+     */
+    getFromCache: function (key) {
+        if (!this.cache) {
+            return;
+        }
+
+        return this.cache.get(key);
+    },
+
+    /**
+     * @param {string} key 
+     * @param {*} value 
+     */
+    storeInCache: function (key, value) {
+        if (!this.cache) {
+            return;
+        }
+
+        this.cache.set(key, value)
+    },
+
+    /**
+     * 
+     * @param {BarMap} barMap 
+     * @param {callback} callback 
+     */
+    ifChangesShouldBeAnchored: function (barMap, callback) {
+        if (typeof this.decisionFunction !== 'function') {
+            return callback(undefined, true);
+        }
+
+        this.decisionFunction(barMap, callback);
+    },
+
+    /**
+     * @return {string|null}
+     */
+    getLastHash: function () {
+        return this.lastHash;
+    },
+
+    afterBarMapAnchoring: function (diff, diffHash, callback) {
+        throw new Error('Unimplemented');
+    },
+
+    load: function (alias, callback) {
+        throw new Error('Unimplemented');
+    },
+
+    /**
+     * @param {callback} defaultListener
+     * @return {callback}
+     */
+    getAnchoringEventListener: function (defaultListener) {
+        let anchoringEventListener = this.anchoringEventListener;
+        if (typeof anchoringEventListener !== 'function') {
+            anchoringEventListener = defaultListener;
+        }
+
+        return anchoringEventListener;
+    }
+}
+
+module.exports = BarMapStrategyMixin;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/DiffStrategy.js":[function(require,module,exports){
+'use strict';
+
+const BarMapDiff = require('bar').BarMapDiff;
+const BarMapStrategyMixin = require('./BarMapStrategyMixin');
+
+/**
+ * @param {object} options
+ * @param {callback} options.decisionFn Callback which will decide when to effectively anchor changes
+ *                                                              If empty, the changes will be anchored after each operation
+ * @param {callback} options.conflictResolutionFn Callback which will handle anchoring conflicts
+ *                                                              The default strategy is to reload the BarMap and then apply the new changes
+ * @param {callback} options.anchoringCb A callback which is called when the strategy anchors the changes
+ * @param {callback} options.signingFn  A function which will sign the new alias
+ * @param {callback} callback
+ */
+function DiffStrategy(options) {
+    options = options || {};
+    Object.assign(this, BarMapStrategyMixin);
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * 
+     * @param {Array<BarMapDiff} barMapDiffs 
+     * @param {callback} callback 
+     */
+    const createBarMapFromDiffs = (barMapDiffs, callback) => {
+        const barMap = this.barMapController.createNewBarMap();
+        try {
+            for (const barMapDiff of barMapDiffs) {
+                barMap.applyDiff(barMapDiff);
+            }
+        } catch (e) {
+            return callback(e);
+        }
+
+        callback(undefined, barMap);
+    }
+
+    /**
+     * @param {Array<string>} hashes 
+     * @return {string}
+     */
+    const createBricksCacheKey = (hashes) => {
+        return hashes.join(':');
+    };
+
+    /**
+     * @param {Array<Brick>} bricks
+     * @return {Array<BarMapDiff}
+     */
+    const createDiffsFromBricks = (bricks) => {
+        const diffs = [];
+        for (const brick of bricks) {
+            const barMap = this.barMapController.createNewBarMap(brick);
+            diffs.push(barMap);
+        }
+
+        return diffs;
+    }
+
+    /**
+     * Get the list of BarMapDiffs either from cache
+     * or from Brick storage
+     * 
+     * @param {Array<string>} hashes 
+     * @param {callback} callback 
+     */
+    const getBarMapDiffs = (hashes, callback) => {
+        const cacheKey = createBricksCacheKey(hashes);
+        if (this.hasInCache(cacheKey)) {
+            const barMapDiffs = this.getFromCache(cacheKey);
+            return callback(undefined, barMapDiffs);
+        }
+
+        this.barMapController.getMultipleBricks(hashes, (err, bricks) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (hashes.length !== bricks.length) {
+                return callback(new Error('Invalid data received'));
+            }
+
+            const barMapDiffs = createDiffsFromBricks(bricks);
+            this.storeInCache(cacheKey, barMapDiffs);
+            callback(undefined, barMapDiffs);
+        });
+    }
+
+    /**
+     * Assemble a final BarMap from several BarMapDiffs
+     * after validating the history
+     *
+     * @param {Array<string>} hashes
+     * @param {callback} callback
+     */
+    const assembleBarMap = (hashes, callback) => {
+        this.lastHash = hashes[hashes.length - 1];
+        getBarMapDiffs(hashes, (err, barMapDiffs) => {
+            if (err) {
+                return callback(err);
+            }
+
+            this.validator.validate('barMapHistory', barMapDiffs, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                createBarMapFromDiffs(barMapDiffs, callback);
+            });
+        })
+    }
+
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    this.load = (alias, callback) => {
+        this.barMapController.getAliasVersions(alias, (err, versionHashes) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (!versionHashes.length) {
+                return callback(new Error(`No data found for alias <${alias}>`));
+            }
+
+            assembleBarMap(versionHashes, callback);
+        })
+    }
+
+
+    /**
+     * Compact a list of BarMapDiff objects
+     * into a single BarMapDiff object
+     * 
+     * @param {Array<BarMapDiff} diffsList
+     * @return {BarMapDiff}
+     */
+    this.compactDiffs = (diffsList) => {
+        const barMap = diffsList.shift();
+
+        while (diffsList.length) {
+            const barMapDiff = diffsList.shift();
+
+            barMap.applyDiff(barMapDiff);
+        }
+
+        return barMap;
+    }
+
+    /**
+     * Merge the `diff` object into the current valid
+     * BarMap object
+     * 
+     * @param {BarMapDiff} diff
+     * @param {string} diffHash
+     * @param {callback} callback
+     */
+    this.afterBarMapAnchoring = (diff, diffHash, callback) => {
+        const validBarMap = this.barMapController.getValidBarMap();
+        try {
+            validBarMap.applyDiff(diff);
+        } catch (e) {
+            return callback(e);
+        }
+        this.lastHash = diffHash;
+        callback(undefined, diffHash);
+    }
+
+    /**
+     * Call the `conflictResolutionFn` if it exists
+     * @param {object} conflictInfo
+     * @param {BarMap} conflictInfo.barMap The up to date valid BarMap
+     * @param {Array<BarMapDiff} conflictInfo.pendingAnchoringDiffs A list of BarMapDiff that were requested for anchoring or failed to anchor
+     * @param {Array<BarMapDiff} conflictInfo.newDiffs A list of BarMapDiff objects that haven't been scheduled for anchoring
+     * @param {callback} callback
+     */
+    this.handleConflict = (conflictInfo, callback) => {
+        if (typeof this.conflictResolutionFn !== 'function') {
+            return callback(conflictInfo.error);
+        }
+
+        this.conflictResolutionFn(this.barMapController, {
+            validBarMap: conflictInfo.barMap,
+            pendingAnchoringDiffs: conflictInfo.pendingAnchoringDiffs,
+            newDiffs: conflictInfo.newDiffs,
+            error: conflictInfo.error
+        }, callback);
+    }
+
+    /**
+     * Try and fix an anchoring conflict
+     * 
+     * Merge any "pending anchoring" BarMapDiff objects in a clone
+     * of the valid barMap. If merging fails, call the 'conflictResolutionFn'
+     * in order to fix the conflict. If merging succeeds, update the "dirtyBarMap"
+     * 
+     * @param {BarMap} barMap The up to date valid BarMap
+     * @param {Array<BarMapDiff} pendingAnchoringDiffs A list of BarMapDiff that were requested for anchoring or failed to anchor
+     * @param {Array<BarMapDiff} newDiffs A list of BarMapDiff objects that haven't been scheduled for anchoring
+     * @param {callback} callback
+     */
+    this.reconcile = (barMap, pendingAnchoringDiffs, newDiffs, callback) => {
+        // Try and apply the changes on a barMap copy
+        const barMapCopy = barMap.clone();
+
+        try {
+            for (let i = 0; i < pendingAnchoringDiffs; i++) {
+                barMapCopy.applyDiff(pendingAnchoringDiffs[i]);
+            }
+        } catch (e) {
+            return this.handleConflict({
+                barMap,
+                pendingAnchoringDiffs,
+                newDiffs,
+                error: e
+            }, callback);
+        }
+
+        this.barMapController.setDirtyBarMap(barMapCopy);
+        callback();
+    }
+
+    this.initialize(options);
+}
+
+module.exports = DiffStrategy;
+},{"./BarMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/BarMapStrategyMixin.js","bar":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/Factory.js":[function(require,module,exports){
+'use strict';
+
+const constants = require('../constants');
+const DiffStrategy = require('./DiffStrategy');
+
+/**
+ * @param {object} options
+ */
+function Factory(options) {
+    options = options || {};
+
+    const factories = {};
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    const initialize = () => {
+        const builtinStrategies = constants.builtinBarMapStrategies;
+        this.registerStrategy(builtinStrategies.DIFF, this.createDiffStrategy);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} strategyName
+     * @param {object} factory
+     */
+    this.registerStrategy = (strategyName, factory) => {
+        factories[strategyName] = factory;
+    }
+
+    /**
+     * @param {string} strategyName
+     * @param {object} options
+     * @return {BarMapStrategyMixin}
+     */
+    this.create = (strategyName, options) => {
+        const factory = factories[strategyName];
+        options = options || {};
+        return factory(options);
+    }
+
+    /**
+     * @param {object} options
+     * @return {DiffStrategy}
+     */
+    this.createDiffStrategy = (options) => {
+        return new DiffStrategy(options);
+    }
+
+    initialize();
+}
+
+module.exports = Factory;
+
+},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js","./DiffStrategy":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/DiffStrategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/index.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+    Factory: require('./Factory')
+}
+
+},{"./Factory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/Factory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Protocol/EDFS.js":[function(require,module,exports){
+'use strict';
+
+require('edfs');
+const EDFSBrickStorage = require('edfs-brick-storage');
+
+function EDFS(options) {
+    options = options || {};
+
+    this.endpoint = options.endpoint;
+
+    if (!this.endpoint) {
+        throw new Error('EDFS endpoint is required');
+    }
+
+    this.edfsDriver = EDFSBrickStorage.create(this.endpoint);
+
+
+    this.getBrick = (domain, hash, callback) => {
+        this.edfsDriver.getBrick(hash, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, result);
+        });
+    }
+
+    this.getMultipleBricks = (domain, hashes, callback) => {
+        this.edfsDriver.getMultipleBricks(hashes, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, result);
+        })
+    }
+
+    this.putBrick = (domain, brick, callback) => {
+        this.edfsDriver.putBrick(brick, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, result);
+        });
+    }
+
+    this.updateAlias = (alias, value, lastValue, callback) => {
+        this.edfsDriver.attachHashToAlias(alias, value, lastValue, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback();
+        });
+    }
+
+    this.getAliasVersions = (alias, callback) => {
+        this.edfsDriver.getHashForAlias(alias, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, result);
+        });
+    }
+}
+
+module.exports = EDFS;
+
+},{"edfs":"edfs","edfs-brick-storage":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Protocol/index.js":[function(require,module,exports){
+'use strict';
+
+const protocols = {
+    'EDFS': require('./EDFS')
+}
+
+function isValid(protocolName) {
+    return Object.keys(protocols).indexOf(protocolName) !== -1;
+}
+
+function factory(name, config) {
+    config = config || {};
+    const ProtocolConstructor = protocols[name];
+    return new ProtocolConstructor(config);
+}
+
+module.exports = {
+    isValid,
+    factory
+};
+
+},{"./EDFS":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Protocol/EDFS.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
+'use strict';
+
+function RequestsChain() {
+    const chain = [];
+
+    /**
+     * Check if error fatal
+     * If this returns true, the chain should break
+     * @param {object} err
+     * @return {boolean}
+     */
+    const isFatalError = (err) => {
+        return true;
+    }
+
+    /**
+     * @param {object} handler
+     * @param {string} method
+     * @param {Array} args
+     */
+    this.add = (handler, method, args) => {
+        chain.push([handler, method, args]);
+    }
+
+    /**
+     * @param {callback} callback
+     */
+    const executeChain = (callback) => {
+        const chainLink = chain.shift();
+        const handler = chainLink[0];
+        const method = chainLink[1];
+        const args = chainLink[2].slice();
+
+        const next = (err, result) => {
+            if (err) {
+                if (isFatalError(err)) {
+                    return callback(err);
+                }
+
+                if (!chain.length) {
+                    return callback(err);
+                }
+
+                return executeChain(callback);
+            }
+
+            return callback(undefined, result);
+        };
+
+        args.push(next);
+        handler[method].apply(handler, args);
+    }
+
+    /**
+     * @param {callback} callback
+     */
+    this.execute = function (callback) {
+        executeChain(callback);
+    }
+};
+
+module.exports = RequestsChain;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Service.js":[function(require,module,exports){
+'use strict';
+
+const Protocol = require('./Protocol');
+const RequestsChain = require('./RequestsChain');
+
+function Service(options) {
+    options = options || {};
+
+    const brickEndpoints = [];
+    const aliasEndpoints = [];
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+    const initialize = () => {
+        if (Array.isArray(options.brickEndpoints)) {
+            for (const endpointConfig of options.brickEndpoints) {
+                const { endpoint, protocol } = endpointConfig;
+                this.addBrickStorageEndpoint(endpoint, protocol);
+            }
+        }
+
+        if (Array.isArray(options.aliasEndpoints)) {
+            for (const endpointConfig of options.aliasEndpoints) {
+                const { endpoint, protocol } = endpointConfig;
+                this.addAliasingEndpoint(endpoint, protocol);
+            }
+        }
+    };
+
+    /**
+     * @param {Array<object>} pool
+     * @param {string} endpoint
+     * @param {string} name
+     */
+    const createProtocol = (pool, endpoint, name) => {
+        if (!Protocol.isValid(name)) {
+            throw new Error(`Invalid protocol: ${name}`);
+        }
+
+        const protocol = Protocol.factory(name, {
+            endpoint: endpoint
+        })
+
+        pool.push({
+            endpoint,
+            protocol
+        });
+    }
+
+    /**
+     * @param {Array<object>} pool
+     * @param {string} favEndpoint
+     */
+    const getEndpointsSortedByFav = (pool, favEndpoint) => {
+        pool.sort((a, b) => {
+            if (a.endpoint === favEndpoint) {
+                return -1;
+            }
+
+            return 0;
+        });
+
+        return pool;
+    };
+
+    /**
+     * @param {string} method
+     * @param {Array<object>} endpointsPool
+     * @param {string} favEndpoint
+     * @param {...} args
+     * @return {RequestChain}
+     */
+    const createRequestsChain = (method, endpointsPool, favEndpoint, ...args) => {
+        const requestsChain = new RequestsChain();
+
+        if (favEndpoint) {
+            endpointsPool = getEndpointsSortedByFav(endpointsPool, favEndpoint);
+        }
+        for (const endpointConfig of endpointsPool) {
+            const protocol = endpointConfig.protocol;
+            requestsChain.add(protocol, method, args);
+        }
+
+        return requestsChain;
+    };
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+    this.addBrickStorageEndpoint = (endpoint, protocolName) => {
+        createProtocol(brickEndpoints, endpoint, protocolName);
+    }
+
+    this.addAliasingEndpoint = (endpoint, protocolName) => {
+        createProtocol(aliasEndpoints, endpoint, protocolName);
+    }
+
+    this.getBrick = (favEndpoint, dlDomain, hash, callback) => {
+        const requestsChain = createRequestsChain('getBrick', brickEndpoints, favEndpoint, dlDomain, hash);
+        requestsChain.execute(callback);
+    }
+
+    this.getMultipleBricks = (favEndpoint, dlDomain, hashes, callback) => {
+        const requestsChain = createRequestsChain('getMultipleBricks', brickEndpoints, favEndpoint, dlDomain, hashes);
+        requestsChain.execute(callback);
+    }
+
+    this.putBrick = (favEndpoint, dlDomain, brick, callback) => {
+        const requestsChain = createRequestsChain('putBrick', brickEndpoints, favEndpoint, dlDomain, brick);
+        requestsChain.execute(callback);
+    }
+
+    this.getAliasVersions = (favEndpoint, alias, callback) => {
+        const requestsChain = createRequestsChain('getAliasVersions', aliasEndpoints, favEndpoint, alias);
+        requestsChain.execute(callback);
+    }
+
+    this.updateAlias = (favEndpoint, alias, value, lastValue, callback) => {
+        const requestsChain = createRequestsChain('updateAlias', aliasEndpoints, favEndpoint, alias, value, lastValue);
+        requestsChain.execute(callback);
+    }
+    initialize();
+}
+
+module.exports = Service;
+
+},{"./Protocol":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Protocol/index.js","./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/RequestsChain.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/index.js":[function(require,module,exports){
+'use strict';
+
+const Service = require('./Service');
+
+module.exports = {
+    Service
+};
+
+
+},{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/CryptoAlgorithmsSchemeVersioning.js":[function(require,module,exports){
+'use strict';
+
+const CryptoAlgorithmsSchemeVersioning = {
+    '1': {
+        'hash': 'pskhash',
+        'encryption': 'aes-256-gcm',
+        'signature': 'pskhash'
+    }
+}
+
+module.exports = CryptoAlgorithmsSchemeVersioning;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDMixin.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require("pskcrypto");
+const CryptoAlgorithmsSchemeVersioning = require('./CryptoAlgorithmsSchemeVersioning');
+
+const DIDMixin = {
+    url: null,
+    KEY_LENGTH: 32,
+    options: null,
+    dlDomain: null,
+    key: null,
+    favouriteEndpoint: null,
+    version: null,
+    hashAlgorithm: null,
+    encryptionAlgorithm: null,
+    signatureAlgorithm: null,
+
+    /**
+     * @param {string|object} url
+     * @param {object|undefined} options
+     * @param {string} options.version
+     * @param {string} options.dlDomain
+     * @param {string} options.favouriteEndpoint
+     */
+    initialize: function (url, options) {
+        if (typeof url === 'object') {
+            options = url;
+            url = undefined;
+        }
+
+        this.url = url;
+        this.options = options || {};
+        this.dlDomain = this.options.dlDomain;
+        this.key = this.options.key;
+        this.favouriteEndpoint = this.options.favouriteEndpoint;
+        this.version = this.options.version;
+    },
+
+    /**
+     * Choose and set cryptography algorithms
+     * based on DID version
+     *
+     * @throws Error
+     */
+    setupCryptoAlgorithmsScheme: function () {
+        const algorithms = CryptoAlgorithmsSchemeVersioning[this.version];
+
+        if (typeof algorithms !== 'object') {
+            throw new Error(`Unable to find crypto algorithms scheme based on version: ${this.version}`);
+        }
+
+        this.setEncryptionAlgorithm(algorithms.encryption);
+        this.setHashAlgorithm(algorithms.hash);
+        this.setSignatureAlgorithm(algorithms.signature);
+    },
+
+    /**
+     * @return {string}
+     */
+    getAnchorAlias: function () {
+        throw new Error('Unimplemented');
+    },
+
+    /**
+     * @return {string}
+     */
+    getDLDomain: function () {
+        return this.dlDomain;
+    },
+
+    /**
+     * @return {string}
+     */
+    getFavouriteEndpoint: function () {
+        return this.favouriteEndpoint;
+    },
+
+    /**
+     * @return {Buffer}
+     */
+    getKey: function () {
+        return this.key;
+    },
+
+    /**
+     * @return {string}
+     */
+    getKeyHash: function () {
+        const key = this.getKey();
+        let keyHash;
+
+        if (key) {
+            keyHash = crypto.pskHash(key, 'hex');
+        }
+
+        return keyHash;
+    },
+
+    /**
+     * @return {string}
+     */
+    toUrl: function () {
+        throw new Error('Unimplemented');
+    },
+
+    /**
+     * @return {string}
+     * @throws Error
+     */
+    getHashAlgorithm: function () {
+        if (!this.hashAlgorithm) {
+            this.setupCryptoAlgorithmsScheme();
+        }
+        return this.hashAlgorithm;
+    },
+
+    /**
+     * @return {string}
+     * @throws Error
+     */
+    getEncryptionAlgorithm: function () {
+        if (!this.encryptionAlgorithm) {
+            this.setupCryptoAlgorithmsScheme();
+        }
+        return this.encryptionAlgorithm;
+    },
+
+    /**
+     * @return {string}
+     * @throws Error
+     */
+    getSignatureAlgorithm: function () {
+        if (!this.encryptionAlgorithm) {
+            this.setupCryptoAlgorithmsScheme();
+        }
+        return this.signatureAlgorithm;
+    },
+
+    /**
+     * @param {string} alg
+     */
+    setHashAlgorithm: function (alg) {
+        this.hashAlgorithm = alg;
+    },
+
+    /**
+     * @param {string} alg
+     */
+    setEncryptionAlgorithm: function (alg) {
+        this.encryptionAlgorithm = alg;
+    },
+
+    /**
+     * @param {string} alg
+     */
+    setSignatureAlgorithm: function (alg) {
+        this.signatureAlgorithm = alg;
+    }
+}
+
+module.exports = DIDMixin;
+},{"./CryptoAlgorithmsSchemeVersioning":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/CryptoAlgorithmsSchemeVersioning.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDUrl.js":[function(require,module,exports){
+'use strict';
+
+/**
+ * @param {string|object} url
+ * @param {object|undefined} options
+ * @param {string} options.dlDomain
+ * @param {string} options.favouriteEndpoint
+ */
+function DIDUrl(url, options) {
+    if (typeof url === 'object') {
+        options = url;
+        url = undefined;
+    }
+
+    if (typeof url === 'undefined' && typeof options === 'undefined') {
+        throw new Error('An url or options object is required');
+    }
+    options = options || {};
+
+    this.prefix = options.prefix || 'kdid';
+    this.type = null;
+    this.segments = [];
+    this.hashFragment = null;
+    this.validator = options.validator;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * Validate state
+     * @param {object} validator
+     * @param {string} validator.prefix Expected prefix
+     * @param {string} validator.type Expected type
+     * @param {callback} validator.segments Callback that validates the did segments
+     * @throws Error
+     */
+    const validate = (validator) => {
+        if (validator.prefix) {
+            if (this.prefix !== validator.prefix) {
+                throw new Error(`Invalid did. Expected: ${validator.prefix}`);
+            }
+        }
+
+        if (validator.type) {
+            if (this.type !== validator.type) {
+                throw new Error(`Invalid type. Expected: ${validator.type} `);
+            }
+        }
+
+        if (typeof validator.segments === 'function') {
+            if (!validator.segments(this.segments)) {
+                throw new Error('Invalid did segments');
+            }
+        }
+
+    }
+
+    /**
+     * @param {string} url
+     */
+    const parseUrl = (url) => {
+        let segments = url.split('#');
+        if (segments.length > 1) {
+            this.hashFragment = segments.slice(1).join('#');
+        }
+
+        segments = segments.shift().split(':');
+
+        const prefix = segments.shift();
+        if (prefix !== this.prefix) {
+            throw new Error('Not a valid did');
+        }
+
+        const type = segments.shift();
+        if (!type) {
+            throw new Error('Invalid did type');
+        }
+
+        this.type = type;
+
+        if (!segments.length) {
+            throw new Error('Incomplete did');
+        }
+
+        this.segments = segments;
+    }
+
+    if (typeof url === 'string') {
+        parseUrl(url);
+        if (typeof options.validator === 'object') {
+            validate(options.validator);
+        }
+    } else {
+        this.type = options.type;
+        this.segments = Array.isArray(options.segments) ? options.segments.slice() : [];
+        this.hashFragment = options.hashFragment;
+    }
+
+    /**
+     * @return {Array}
+     */
+    this.getSegments = () => {
+        return this.segments.slice();
+    }
+
+    /**
+     * @return {string}
+     */
+    this.getHashFragment = () => {
+        return this.hashFragment;
+    }
+
+    /**
+     * @return {string}
+     */
+    this.getType = () => {
+        return this.type;
+    }
+
+    /**
+     * @return {string}
+     */
+    this.toString = () => {
+        let url = `${this.prefix}:${this.type}:${this.segments.join(':')}`;
+
+        if (this.hashFragment) {
+            url += `#${this.hashFragment}`;
+        }
+
+        return url;
+    };
+}
+
+module.exports = DIDUrl;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/Factory.js":[function(require,module,exports){
+'use strict';
+
+const constants = require('../constants');
+const DID_VERSION = constants.DID_VERSION;
+const didTypes = constants.didTypes;
+
+const DIDUrl = require('./DIDUrl');
+const SecretDID = require('./SecretDID');
+const ZKDID = require('./ZKDID');
+
+/**
+ * @param {object} options
+ */
+function Factory(options) {
+    options = options || {};
+
+    const didVersion = options.version || DID_VERSION
+    const urlToTypeMapping = {
+        'sa': didTypes.SECRET,
+        'alias': didTypes.ZK
+    }
+    const factories = {};
+
+    const initialize = () => {
+        factories[didTypes.SECRET] = createSecretDID;
+        factories[didTypes.ZK] = createZKDID;
+    };
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} url
+     * @return {string|undefined}
+     */
+    const detectTypeFromURL = (url) => {
+        let didUrl;
+        try {
+            didUrl = new DIDUrl(url);
+        } catch (e) {
+            return;
+        }
+
+        const typeIdentifier = didUrl.getType();
+        return urlToTypeMapping[typeIdentifier];
+    };
+
+    /**
+     * @param {string} type
+     * @return {function}
+     */
+    const isValidType = (type) => {
+        return typeof factories[type] === 'function';
+    }
+
+    /**
+     * @param {string} url
+     * @param {object} options
+     * @param {string} options.key
+     * @param {string} options.dlDomain
+     * @param {string} options.favouriteEndpoint
+     * @return {BaseDID}
+     */
+    const createSecretDID = (url, options) => {
+        options.didFactory = this;
+        return new SecretDID(url, options);
+    }
+
+    /**
+     * @param {string} url
+     * @param {object} options
+     * @param {string} options.dlDomain
+     * @param {string} options.favouriteEndpoint
+     * @return {BaseDID}
+     */
+    const createZKDID = (url, options) => {
+        return new ZKDID(url, options);
+    }
+
+    initialize();
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} url
+     * @param {string} type
+     * @param {object} options Parameter required when creating a new DID
+     * @param {string} options.key
+     * @param {string} options.dlDomain
+     * @param {string} options.favouriteEndpoint
+     * @return {BaseDID}
+     */
+    this.create = (url, type, options) => {
+        if (typeof type === 'object') {
+            options = type;
+            type = url;
+            url = undefined;
+        }
+
+        if (url && typeof type === 'undefined' && typeof options === 'undefined') {
+            type = detectTypeFromURL(url);
+
+            if (!type) {
+                throw new Error('Invalid URL. Are you trying to create a new DID? Make sure you pass the options object');
+            }
+        }
+
+        if (!isValidType(type)) {
+            throw new Error('Invalid DID type');
+        }
+
+        const factoryMethod = factories[type];
+        options = options || {};
+        if (typeof options.version === 'undefined') {
+            options.version = didVersion;
+        }
+
+        return factoryMethod(url, options);
+    }
+}
+
+module.exports = Factory;
+
+},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js","./DIDUrl":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDUrl.js","./SecretDID":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/SecretDID.js","./ZKDID":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/ZKDID.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/SecretDID.js":[function(require,module,exports){
+(function (Buffer){
+'use strict';
+const crypto = require("pskcrypto");
+
+const DIDUrl = require('./DIDUrl');
+const ZKDID = require('./ZKDID');
+const DIDMixin = require('./DIDMixin');
+
+const didTypes = require('../constants').didTypes;
+
+/**
+ * @param {string|object} url
+ * @param {object|undefined} options
+ * @param {string} options.key
+ * @param {string} options.dlDomain
+ * @param {string} options.favouriteEndpoint
+ * @param {string} options.version
+ */
+function SecretDID(url, options) {
+    Object.assign(this, DIDMixin);
+    this.initialize(url, options);
+
+    this.key = this.options.key;
+    this.zkdid = null;
+    this.didFactory = options.didFactory;
+
+    if (!this.didFactory) {
+        throw new Error('A DID Factory is required');
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+    /**
+     * Restore DID data from url
+     *
+     * @param {string} url
+     */
+    const restoreFromUrl = (url) => {
+        const didUrl = new DIDUrl(url, {
+            validator: {
+                prefix: 'kdid',
+                type: 'sa',
+                segments: (segments) => {
+                    if (segments.length !== 3) {
+                        return false;
+                    }
+
+                    if (!segments[0].length || !segments[1].length || !segments[2].length) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+        });
+
+        const segments = didUrl.getSegments();
+        this.version = segments.shift();
+        this.dlDomain = segments.shift();
+        this.key = crypto.pskBase58Decode(segments.pop());
+        this.favouriteEndpoint = didUrl.getHashFragment();
+    }
+
+    /**
+     * @return {Buffer}
+     */
+    const generateKey = () => {
+        const key = Buffer.from(crypto.randomBytes(this.KEY_LENGTH));
+        return key;
+    }
+
+    /**
+     * Initialize the DID state
+     */
+    const initialize = () => {
+        if (this.url) {
+            restoreFromUrl(this.url);
+            return;
+        }
+        if (!this.key) {
+            this.key = generateKey();
+        }
+
+        if (!this.dlDomain) {
+            throw new Error('Missing the DLDomain');
+        }
+    }
+
+    initialize();
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+    /**
+     * @return {string}
+     */
+    this.getAnchorAlias = () => {
+        const zkdid = this.getZKDID();
+        return zkdid.getAnchorAlias();
+    }
+
+    /**
+     * @return {ZKDID}
+     */
+    this.getZKDID = () => {
+        if (!this.zkdid) {
+            this.zkdid = this.didFactory.create(didTypes.ZK, {
+                dlDomain: this.dlDomain,
+                version: this.version,
+                secret: this.key.toString('hex'),
+                favouriteEndpoint: this.favouriteEndpoint
+            });
+        }
+        return this.zkdid;
+    }
+
+    /**
+     * @param {boolean} includeHashFragment
+     * @return {string}
+     */
+    this.toUrl = (includeHashFragment) => {
+        includeHashFragment = (typeof includeHashFragment === 'undefined') ? true : includeHashFragment;
+        const urlParts = {
+            type: 'sa',
+            segments: [
+                this.version,
+                this.dlDomain,
+                crypto.pskBase58Encode(this.key)
+            ],
+        }
+        if (includeHashFragment) {
+            urlParts.hashFragment = this.favouriteEndpoint;
+        }
+
+        const didUrl = new DIDUrl(urlParts);
+        return didUrl.toString();
+    }
+}
+
+module.exports = SecretDID;
+}).call(this,require("buffer").Buffer)
+
+},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js","./DIDMixin":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDMixin.js","./DIDUrl":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDUrl.js","./ZKDID":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/ZKDID.js","buffer":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/ZKDID.js":[function(require,module,exports){
+(function (Buffer){
+'use strict';
+const crypto = require("pskcrypto");
+
+const DIDUrl = require('./DIDUrl');
+const DIDMixin = require('./DIDMixin');
+
+/**
+ * @param {string|object} url
+ * @param {object|undefined} options
+ * @param {string} options.secret
+ * @param {string} options.dlDomain
+ * @param {string} options.favouriteEndpoint
+ */
+function ZKDID(url, options) {
+    Object.assign(this, DIDMixin);
+    this.initialize(url, options);
+
+    this.secret = this.options.secret;
+    this.alias = this.options.alias;
+    this.signature = null;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} url
+     */
+    const restoreFromUrl = (url) => {
+        const didUrl = new DIDUrl(url, {
+            validator: {
+                prefix: 'kdid',
+                type: 'alias',
+                segments: (segments) => {
+                    if (segments.length !== 3) {
+                        return false;
+                    }
+
+                    if (!segments[0].length || !segments[1].length || !segments[2].length) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+        });
+
+        const segments = didUrl.getSegments();
+        this.version = segments.shift();
+        this.dlDomain = segments.shift();
+        let aliasSegments = crypto.pskBase58Decode(segments.pop()).toString();
+        aliasSegments = aliasSegments.split('-');
+        if (aliasSegments.length !== 2) {
+            throw new Error('Invalid alias');
+        }
+
+        this.alias = aliasSegments.shift();
+        this.signature = aliasSegments.pop();
+        this.favouriteEndpoint = didUrl.getHashFragment();
+    }
+
+    /**
+     * @return {string}
+     */
+    const generateAlias = () => {
+        if (!this.secret) {
+            this.secret = Buffer.from(crypto.randomBytes(this.KEY_LENGTH));
+        }
+
+        const alias = crypto.pskHash(crypto.pskHash(this.secret), 'hex');
+        return alias;
+    }
+
+    /**
+     * @return {string}
+     */
+    const generateSignature = () => {
+        if (!this.secret) {
+            throw new Error('Missing did secret. Is the alias generated?');
+        }
+
+        const signature = crypto.pskHash(crypto.pskHash(this.secret) + crypto.pskHash(this.secret), 'hex')
+        return signature;
+    }
+
+    /**
+     * Initialize the DID state
+     */
+    const initialize = () => {
+        if (this.url) {
+            restoreFromUrl(this.url);
+            return;
+        }
+        if (!this.alias) {
+            this.alias = generateAlias();
+            this.signature = generateSignature();
+        }
+
+        if (!this.dlDomain) {
+            throw new Error('Missing the DLDomain');
+        }
+    }
+
+    initialize();
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+    /**
+     * @return {string}
+     */
+    this.getAnchorAlias = () => {
+        return this.alias;
+    }
+
+    /**
+     * @return {string}
+     */
+    this.getSignature = () => {
+        return this.signature;
+    }
+
+    /**
+     * @throws Error
+     */
+    this.getKey = () => {
+        throw new Error('Unimplemented! TODO: Get key from Security Context');
+    }
+
+    /**
+     * @return {string}
+     */
+    this.toUrl = () => {
+        const urlParts = {
+            type: 'alias',
+            segments: [
+                this.version,
+                this.dlDomain,
+                crypto.pskBase58Encode(`${this.alias}-${this.signature}`)
+            ],
+            hashFragment: this.favouriteEndpoint
+        };
+
+        const didUrl = new DIDUrl(urlParts);
+        return didUrl.toString();
+    }
+}
+
+module.exports = ZKDID;
+
+}).call(this,require("buffer").Buffer)
+
+},{"./DIDMixin":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDMixin.js","./DIDUrl":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDUrl.js","buffer":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/BarFactory.js":[function(require,module,exports){
+'use strict';
+
+const barModule = require('bar');
+const fsAdapter = require('bar-fs-adapter');
+const cache = require('psk-cache').factory();
+
+const constants = require('../constants');
+const didTypes = constants.didTypes;
+const DEFAULT_BAR_MAP_STRATEGY = constants.DEFAULT_BAR_MAP_STRATEGY;
+
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {DIDFactory} options.didFactory
+ * @param {BarMapStrategyFactory} options.barMapStrategyFactory
+ */
+function BarFactory(options) {
+    options = options || {};
+    this.bootstrapingService = options.bootstrapingService;
+    this.dlDomain = options.dlDomain;
+    this.didFactory = options.didFactory;
+    this.barMapStrategyFactory = options.barMapStrategyFactory;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {BaseDID} did
+     * @param {object} options
+     * @return {Archive}
+     */
+    const createInstance = (did, options) => {
+        const ArchiveConfigurator = barModule.ArchiveConfigurator;
+        ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
+        const archiveConfigurator = new ArchiveConfigurator();
+        archiveConfigurator.setCache(cache);
+        archiveConfigurator.setFsAdapter("FsAdapter");
+        archiveConfigurator.setBufferSize(65535);
+        archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
+        archiveConfigurator.setDID(did);
+        archiveConfigurator.setBootstrapingService(this.bootstrapingService);
+
+        let barMapStrategyName = options.barMapStrategy;
+        let anchoringOptions = options.anchoringOptions;
+        if (!barMapStrategyName) {
+            barMapStrategyName = DEFAULT_BAR_MAP_STRATEGY;
+        }
+        const barMapStrategy = createBarMapStrategy(barMapStrategyName, anchoringOptions);
+
+        archiveConfigurator.setBarMapStrategy(barMapStrategy);
+
+        if (options.validationRules) {
+            archiveConfigurator.setValidationRules(options.validationRules);
+        }
+
+        const bar = barModule.createArchive(archiveConfigurator);
+        return bar;
+    }
+
+    /**
+     * @return {object}
+     */
+    const createBarMapStrategy = (name, options) => {
+        const strategy = this.barMapStrategyFactory.create(name, options);
+        return strategy;
+    }
+
+    /**
+     * @param {object} options
+     * @return {SecretDID}
+     */
+    const createDID = (options) => {
+        return this.didFactory.create(didTypes.SECRET, {
+            dlDomain: this.dlDomain,
+            favouriteEndpoint: options.favouriteEndpoint
+        });
+    }
+
+    /**
+     * @param {string} did
+     * @return {BaseDID}
+     */
+    const restoreDID = (did) => {
+        return this.didFactory.create(did);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.barMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.create = (options, callback) => {
+        options = options || {};
+        let did;
+
+        try {
+            did = createDID(options);
+        } catch (e) {
+            return callback(e);
+        }
+
+        const bar = createInstance(did, options);
+        bar.init((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, bar);
+        });
+    }
+
+    /**
+     * @param {string} did
+     * @param {object} options
+     * @param {string} options.barMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.load = (did, options, callback) => {
+        options = options || {};
+        let didInstance;
+
+        try {
+            didInstance = restoreDID(did);
+        } catch (e) {
+            return callback(e);
+        }
+
+        const bar = createInstance(didInstance, options);
+        bar.load((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, bar);
+        })
+    }
+}
+
+module.exports = BarFactory;
+
+},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js","bar":false,"bar-fs-adapter":false,"psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/Factory.js":[function(require,module,exports){
+'use strict';
+
+const BarFactory = require('./BarFactory');
+const RawDossierFactory = require('./RawDossierFactory');
+const constants = require('../constants');
+
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {DIDFactory} options.didFactory
+ * @param {BarMapStrategyFactory} options.barMapStrategyFactory
+ */
+function Factory(options) {
+    options = options || {};
+
+    const bootstrapingService = options.bootstrapingService;
+    const dlDomain = options.dlDomain;
+    const didFactory = options.didFactory;
+    const barMapStrategyFactory = options.barMapStrategyFactory
+    const factories = {};
+
+    if (!bootstrapingService) {
+        throw new Error('BootstrapingService is required');
+    }
+
+    if (!dlDomain) {
+        throw new Error('DLDomain is required');
+    }
+
+    if (!didFactory) {
+        throw new Error('A DID factory is required');
+    }
+
+    if (!barMapStrategyFactory) {
+        throw new Error('A BarMapStratregy factory is required');
+    }
+
+    /**
+     * Initialize the factory state
+     */
+    const initialize = () => {
+        const builtinDSURepr = constants.builtinDSURepr;
+
+        const barFactory = new BarFactory({
+            bootstrapingService,
+            dlDomain,
+            didFactory,
+            barMapStrategyFactory
+        });
+
+        const rawDossierFactory = new RawDossierFactory({
+            barFactory
+        });
+
+        this.registerRepresentation(builtinDSURepr.BAR, barFactory);
+        this.registerRepresentation(builtinDSURepr.RAW_DOSSIER, rawDossierFactory);
+
+        const WebDossierFactory = require("./WebDossierFactory");
+        const webDossierFactory = new WebDossierFactory({});
+        this.registerRepresentation(builtinDSURepr.WEB_DOSSIER, webDossierFactory);
+
+        const NodeDossierFactory = require("./NodeDossierFactory");
+        const nodeDossierFactory = new NodeDossierFactory({});
+        this.registerRepresentation(builtinDSURepr.NODE_DOSSIER, nodeDossierFactory);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} representation
+     * @return {boolean}
+     */
+    this.isValidRepresentation = (representation) => {
+        return typeof factories[representation] !== 'undefined';
+    };
+
+    /**
+     * @param {string} representation
+     * @param {object} factory
+     */
+    this.registerRepresentation = (representation, factory) => {
+        factories[representation] = factory;
+    }
+
+    /**
+     * @param {string} representation
+     * @param {object} dsuConfiguration
+     * @param {string} dsuConfiguration.favouriteEndpoint
+     * @param {string} dsuConfiguration.barMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} dsuConfiguration.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} dsuConfiguration.anchoringOptions.anchoringCb A callback which is called when the strategy anchors the changes
+     * @param {callback} dsuConfiguration.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} dsuConfiguration.validationRules 
+     * @param {object} dsuConfiguration.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.create = (representation, dsuConfiguration, callback) => {
+        const factory = factories[representation];
+        factory.create(dsuConfiguration, callback);
+    }
+
+    /**
+     * @param {string} did
+     * @param {string} representation
+     * @param {object} dsuConfiguration
+     * @param {string} dsuConfiguration.barMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} dsuConfiguration.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} dsuConfiguration.anchoringOptions.anchoringCb A callback which is called when the strategy anchors the changes
+     * @param {callback} dsuConfiguration.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} dsuConfiguration.validationRules 
+     * @param {object} dsuConfiguration.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.load = (did, representation, dsuConfiguration, callback) => {
+        const factory = factories[representation];
+        return factory.load(did, dsuConfiguration, callback);
+    }
+
+    initialize();
+}
+
+module.exports = Factory;
+
+},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js","./BarFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/BarFactory.js","./NodeDossierFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/NodeDossierFactory.js","./RawDossierFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/RawDossierFactory.js","./WebDossierFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/WebDossierFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/InteractionBase.js":[function(require,module,exports){
+function InteractionBase(){
+	const se = require("swarm-engine");
+	if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
+		se.initialise();
+	}
+
+	this.createHandler = function(keyDID, powerCord, callback){
+		let identity = "anonymousIdentity"; // this should be get from securityContext
+
+		let cord_identity;
+		try{
+			const crypto = require("pskcrypto");
+			cord_identity = crypto.pskHash(keyDID, "hex");
+			$$.swarmEngine.plug(cord_identity, powerCord);
+		}catch(err){
+			return callback(err);
+		}
+		$$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, "TooShortBlockChainWorkaroundDeleteThis", "add").onReturn(err => {
+			if (err) {
+				return callback(err);
+			}
+
+			const handler = {
+				attachTo : $$.interactions.attachTo,
+				startTransaction : function (transactionTypeName, methodName, ...args) {
+					//todo: get identity from context somehow
+					return $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, transactionTypeName, methodName, ...args);
+				}
+			};
+			//todo implement a way to know when thread/worker/isolate is ready
+			setTimeout(()=>{
+				callback(undefined, handler);
+			}, 100);
+		});
+	}
+
+}
+module.exports = new InteractionBase();
+},{"pskcrypto":"pskcrypto","swarm-engine":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/NodeDossierFactory.js":[function(require,module,exports){
+'use strict';
+
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {DIDFactory} options.didFactory
+ * @param {BarMapStrategyFactory} options.barMapStrategyFactory
+ */
+function NodeDossierFactory(options) {
+    options = options || {};
+    this.didFactory = options.didFactory;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+    /**
+     * @param {string} did
+     * @return {BaseDID}
+     */
+    const restoreDID = (did) => {
+        return this.didFactory.create(did);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {object} options
+     * @param {callback} callback
+     */
+    this.create = (options, callback) => {
+        return callback(new Error("Wrong usage of create function. NodeDossier representation is just for loading and interacting purpose."));
+    }
+
+    /**
+     * @param {string} did
+     * @param {object} options
+     * @param {callback} callback
+     */
+    this.load = (did, options, callback) => {
+
+        const envTypes = require("overwrite-require").constants;
+        if($$.environmentType !== envTypes.NODEJS_ENVIRONMENT_TYPE){
+            return callback(new Error(`NodeDossier representation should be used only in NodeJS. Current environment type is <${$$.environmentType}>`));
+        }
+
+        options = options || {};
+        let didInstance;
+
+        try {
+            didInstance = restoreDID(did);
+        } catch (e) {
+            return callback(e);
+        }
+
+        const pathName = "path";
+        const path = require(pathName);
+        const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
+        let InteractionBase = require("./InteractionBase");
+        InteractionBase.createHandler(did, powerCord, callback);
+    }
+}
+
+module.exports = NodeDossierFactory;
+
+},{"./InteractionBase":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/InteractionBase.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/RawDossierFactory.js":[function(require,module,exports){
+'use strict';
+
+const RawDossier = require('edfs').RawDossier;
+
+/**
+ * @param {object} options
+ * @param {BarFactory} options.barFactory
+ */
+function RawDossierFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.barMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.create = (options, callback) => {
+        this.barFactory.create(options, (err, bar) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const rawDossier = new RawDossier(bar);
+            callback(undefined, rawDossier);
+        })
+
+    };
+
+    /**
+     * @param {string} did
+     * @param {object} options
+     * @param {string} options.barMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.load = (did, options, callback) => {
+        this.barFactory.load(did, options, (err, bar) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const rawDossier = new RawDossier(bar);
+            callback(undefined, rawDossier);
+        })
+
+    };
+}
+
+module.exports = RawDossierFactory;
+
+},{"edfs":"edfs"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/WebDossierFactory.js":[function(require,module,exports){
+'use strict';
+
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {DIDFactory} options.didFactory
+ * @param {BarMapStrategyFactory} options.barMapStrategyFactory
+ */
+function WebDossierFactory(options) {
+    options = options || {};
+    this.didFactory = options.didFactory;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+    /**
+     * @param {string} did
+     * @return {BaseDID}
+     */
+    const restoreDID = (did) => {
+        return this.didFactory.create(did);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {object} options
+     * @param {callback} callback
+     */
+    this.create = (options, callback) => {
+        return callback(new Error("Wrong usage of create function. WebDossier representation is just for loading and interacting purpose."));
+    }
+
+    /**
+     * @param {string} did
+     * @param {object} options
+     * @param {callback} callback
+     */
+    this.load = (did, options, callback) => {
+
+        const envTypes = require("overwrite-require").constants;
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE){
+            return callback(new Error(`WebDossier representation should be used only in browser. Current environment type is <${$$.environmentType}>`));
+        }
+
+        options = options || {};
+        let didInstance;
+
+        try {
+            didInstance = restoreDID(did);
+        } catch (e) {
+            return callback(e);
+        }
+
+        let InteractionBase = require("./InteractionBase");
+        const pc = new se.OuterWebWorkerPowerCord("path_to_boot_script", seed);
+        InteractionBase.createHandler(did, pc, callback);
+    }
+}
+
+module.exports = WebDossierFactory;
+
+},{"./InteractionBase":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/InteractionBase.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/index.js":[function(require,module,exports){
+module.exports = {
+    Factory: require('./Factory')
+};
+
+},{"./Factory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/Factory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/KeyDIDResolver.js":[function(require,module,exports){
+'use strict';
+
+const constants = require('./constants');
+const DSUFactory = require('./DSUFactory').Factory;
+const DIDFactory = require('./DID/Factory');
+const BarMapStrategyFactory = require('./BarMapStrategy').Factory;
+
+/**
+ * @param {string} options.dlDomain
+ * @param {BoostrapingService} options.bootstrapingService
+ * @param {BarMapStrategyFactory} options.barMapStrategyFactory
+ * @param {DSUFactory} options.dsuFactory
+ */
+function KeyDIDResolver(options) {
+    options = options || {};
+
+    const bootstrapingService = options.bootstrapingService;
+    const dlDomain = options.dlDomain || constants.DEFAULT_DOMAIN;
+
+    if (!bootstrapingService) {
+        throw new Error('BootstrapingService is required');
+    }
+
+    if (!dlDomain) {
+        throw new Error('DLDomain is required');
+    }
+
+    const barMapStrategyFactory = options.barMapStrategyFactory || new BarMapStrategyFactory();
+
+    const dsuFactory = options.dsuFactory || new DSUFactory({
+        bootstrapingService,
+        dlDomain,
+        barMapStrategyFactory: barMapStrategyFactory,
+        didFactory: new DIDFactory
+    });
+
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} dsuRepresentation
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.barMapStrategy 'Diff' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn A function which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.createDSU = (dsuRepresentation, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        if (!dsuFactory.isValidRepresentation(dsuRepresentation)) {
+            return callback(new Error(`Invalid DSU representation: ${dsuRepresentation}`));
+        }
+
+        dsuFactory.create(dsuRepresentation, options, callback);
+    };
+
+    /**
+     * @param {string} did
+     * @param {string} dsuRepresentation
+     * @param {object} options
+     * @param {string} options.barMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BarMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BarMap
+     * @param {callback} callback
+     */
+    this.loadDSU = (did, dsuRepresentation, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        if (!dsuFactory.isValidRepresentation(dsuRepresentation)) {
+            return callback(new Error(`Invalid DSU representation: ${dsuRepresentation}`));
+        }
+
+        dsuFactory.load(did, dsuRepresentation, options, callback);
+    };
+
+    /**
+     * @return {DSUFactory}
+     */
+    this.getDSUFactory = () => {
+        return dsuFactory;
+    }
+
+    /**
+     * @return {BootstrapingService}
+     */
+    this.getBootstrapingService = () => {
+        return bootstrapingService;
+    }
+
+    /**
+     * @return {BarMapStrategyFactory}
+     */
+    this.getBarMapStrategyFactory = () => {
+        return barMapStrategyFactory;
+    }
+}
+
+module.exports = KeyDIDResolver;
+
+},{"./BarMapStrategy":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/index.js","./DID/Factory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/Factory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DSUFactory/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+    DEFAULT_DOMAIN: 'localDomain',
+    DID_VERSION: '1',
+    didTypes: {
+        SECRET: 'SecretDID',
+        ZK: 'ZKDID'
+    },
+    builtinDSURepr: {
+        BAR: 'Bar',
+        RAW_DOSSIER: 'RawDossier',
+        WEB_DOSSIER: 'WebDossier',
+        NODE_DOSSIER: 'NodeDossier',
+    },
+    DEFAULT_BAR_MAP_STRATEGY: 'Diff',
+    builtinBarMapStrategies: {
+        DIFF: 'Diff'
+    }
+}
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
 function Agent(agentId, publicKey){
     this.agentId = agentId;
     this.publicKey = publicKey;
@@ -9577,7 +11766,59 @@ if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
 } else {
 	require("./lib/psk-node-client");
 }
-},{"./lib/psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-security-context":[function(require,module,exports){
+},{"./lib/psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-key-did-resolver":[function(require,module,exports){
+'use strict';
+
+const KeyDIDResolver = require('./lib/KeyDIDResolver');
+const BootstrapingService = require('./lib/BootstrapingService').Service;
+const constants = require('./lib/constants');
+
+/**
+ * Create a new KeyDIDResolver instance
+ * @param {object} options
+ * @param {object} options.endpointsConfiguration
+ * @param {Array<object>} options.endpointsConfiguration.brickEndpoints
+ * @param {Array<object>} options.endpointsConfiguration.aliasEndpoints
+ */
+function factory(options) {
+    options = options || {};
+    const bootstrapingService = new BootstrapingService(options.endpointsConfiguration);
+
+    const keyDidResolver = new KeyDIDResolver({
+        bootstrapingService,
+        dlDomain: options.dlDomain
+    });
+
+    return keyDidResolver;
+}
+
+/**
+ * Create a new KeyDIDResolver instance and append it to
+ * global object $$
+ *
+ * @param {object} options
+ * @param {object} options.endpointsConfiguration
+ * @param {Array<object>} options.endpointsConfiguration.brick
+ * @param {Array<object>} options.endpointsConfiguration.alias
+ * @param {string} options.dlDomain
+ */
+function initialize(options) {
+    $$.keyDidResolver = factory(options);
+    $$.dsuFactory = $$.keyDidResolver.getDSUFactory();
+    $$.bootstrapingService = $$.keyDidResolver.getBootstrapingService();
+    $$.barMapStrategyFactory = $$.keyDidResolver.getBarMapStrategyFactory();
+}
+
+module.exports = {
+    initialize,
+    constants,
+    DIDMixin: require('./lib/DID/DIDMixin'),
+    BarMapStrategyMixin: require('./lib/BarMapStrategy/BarMapStrategyMixin'),
+    // TODO: exposed for compatibility reasons. Remove it after switching completely to psk-key-did-resolver
+    BarMapStrategyFactory: require('./lib/BarMapStrategy/Factory')
+};
+
+},{"./lib/BarMapStrategy/BarMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/BarMapStrategyMixin.js","./lib/BarMapStrategy/Factory":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BarMapStrategy/Factory.js","./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/BootstrapingService/index.js","./lib/DID/DIDMixin":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/DID/DIDMixin.js","./lib/KeyDIDResolver":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/KeyDIDResolver.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-key-did-resolver/lib/constants.js"}],"psk-security-context":[function(require,module,exports){
 const RawCSBSecurityContext = require("./lib/RawCSBSecurityContext");
 const RootCSBSecurityContext = require("./lib/RootCSBSecurityContext");
 const SecurityContext = require("./lib/SecurityContext");
