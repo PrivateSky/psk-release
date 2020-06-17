@@ -3957,6 +3957,7 @@ function makePluggable(powerCord) {
             if(typeof powerCord.__identity === "undefined"){
                 powerCord.__identity = value;
             }
+            return true;
         }, get: () => {
             return powerCord.__identity;
         }
@@ -3966,6 +3967,7 @@ function makePluggable(powerCord) {
 }
 
 module.exports = SwarmEngine;
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/SwarmEngine.js","/modules/swarm-engine")
 
 },{"./interactions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js","./swarms":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
@@ -5164,11 +5166,13 @@ function SSAppPowerCord(reference){
 			if(p === 'identity') {
 				setupConnection();
 			}
+			return true;
 		}
 	});
 }
 
 module.exports = SSAppPowerCord;
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","/modules/swarm-engine/powerCords/browser")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){

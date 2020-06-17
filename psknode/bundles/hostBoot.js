@@ -13984,6 +13984,7 @@ function makePluggable(powerCord) {
             if(typeof powerCord.__identity === "undefined"){
                 powerCord.__identity = value;
             }
+            return true;
         }, get: () => {
             return powerCord.__identity;
         }
@@ -13993,6 +13994,7 @@ function makePluggable(powerCord) {
 }
 
 module.exports = SwarmEngine;
+
 },{"./interactions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js","./swarms":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
@@ -15202,11 +15204,13 @@ function SSAppPowerCord(reference){
 			if(p === 'identity') {
 				setupConnection();
 			}
+			return true;
 		}
 	});
 }
 
 module.exports = SSAppPowerCord;
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
 module.exports = function(swarmEngineApi){
     const cm = require("callflow");
