@@ -841,7 +841,7 @@ function Archive(archiveConfigurator) {
      */
     this.delete = (barPath, callback) => {
         barMap.delete(barPath);
-        callback();
+        this.saveBarMap(callback);
     };
 
     /**
