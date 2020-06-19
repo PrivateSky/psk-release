@@ -20030,11 +20030,24 @@ function getLength(buf, p) {
     return initial;
   }
   var octetLen = initial & 0xf;
+
+  // Indefinite length or overflow
+  if (octetLen === 0 || octetLen > 4) {
+    return false;
+  }
+
   var val = 0;
   for (var i = 0, off = p.place; i < octetLen; i++, off++) {
     val <<= 8;
     val |= buf[off];
+    val >>>= 0;
   }
+
+  // Leading zeroes
+  if (val <= 0x7f) {
+    return false;
+  }
+
   p.place = off;
   return val;
 }
@@ -20058,6 +20071,9 @@ Signature.prototype._importDER = function _importDER(data, enc) {
     return false;
   }
   var len = getLength(data, p);
+  if (len === false) {
+    return false;
+  }
   if ((len + p.place) !== data.length) {
     return false;
   }
@@ -20065,21 +20081,37 @@ Signature.prototype._importDER = function _importDER(data, enc) {
     return false;
   }
   var rlen = getLength(data, p);
+  if (rlen === false) {
+    return false;
+  }
   var r = data.slice(p.place, rlen + p.place);
   p.place += rlen;
   if (data[p.place++] !== 0x02) {
     return false;
   }
   var slen = getLength(data, p);
+  if (slen === false) {
+    return false;
+  }
   if (data.length !== slen + p.place) {
     return false;
   }
   var s = data.slice(p.place, slen + p.place);
-  if (r[0] === 0 && (r[1] & 0x80)) {
-    r = r.slice(1);
+  if (r[0] === 0) {
+    if (r[1] & 0x80) {
+      r = r.slice(1);
+    } else {
+      // Leading zeroes
+      return false;
+    }
   }
-  if (s[0] === 0 && (s[1] & 0x80)) {
-    s = s.slice(1);
+  if (s[0] === 0) {
+    if (s[1] & 0x80) {
+      s = s.slice(1);
+    } else {
+      // Leading zeroes
+      return false;
+    }
   }
 
   this.r = new BN(r);
@@ -21323,9 +21355,9 @@ arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node
 },{"buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
 module.exports={
   "_from": "elliptic@^6.5.2",
-  "_id": "elliptic@6.5.2",
+  "_id": "elliptic@6.5.3",
   "_inBundle": false,
-  "_integrity": "sha512-f4x70okzZbIQl/NSRLkI/+tteV/9WqL98zx+SQ69KbXxmVrmjwsNUPn/gYJJ0sHvEak24cZgHIPegRePAtA/xw==",
+  "_integrity": "sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==",
   "_location": "/elliptic",
   "_phantomChildren": {},
   "_requested": {
@@ -21342,8 +21374,8 @@ module.exports={
     "/browserify-sign",
     "/create-ecdh"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.2.tgz",
-  "_shasum": "05c5678d7173c049d8ca433552224a495d0e3762",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.3.tgz",
+  "_shasum": "cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6",
   "_spec": "elliptic@^6.5.2",
   "_where": "/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign",
   "author": {
@@ -21406,7 +21438,7 @@ module.exports={
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
     "version": "grunt dist && git add dist/"
   },
-  "version": "6.5.2"
+  "version": "6.5.3"
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js":[function(require,module,exports){
