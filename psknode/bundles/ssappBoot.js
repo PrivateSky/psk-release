@@ -430,13 +430,8 @@ module.exports.createFileBrickStorage = createFileBrickStorage;
 },{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/BarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BarMap.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js","./lib/Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require('./Brick');
-const pathModule = "path";
-const path = require(pathModule);
 const isStream = require("../utils/isStream");
 const stream = require('stream');
-const swarmutils = require("swarmutils");
-const TaskCounter = swarmutils.TaskCounter;
-const pskPth = swarmutils.path;
 const crypto = require('pskcrypto');
 const adler32 = require('adler32');
 const BrickStorageService = require('./BrickStorageService').Service;
@@ -445,6 +440,10 @@ const BrickStorageService = require('./BrickStorageService').Service;
  * @param {ArchiveConfigurator} archiveConfigurator
  */
 function Archive(archiveConfigurator) {
+    const swarmutils = require("swarmutils");
+    const TaskCounter = swarmutils.TaskCounter;
+    const pskPth = swarmutils.path;
+
     let cachedSEED;
     let barMap;
     let cachedMapDigest;
@@ -825,7 +824,7 @@ function Archive(archiveConfigurator) {
                 if (fsFolderPath.includes(filePath)) {
                     actualPath = fsFolderPath;
                 } else {
-                    actualPath = path.join(fsFolderPath, filePath);
+                    actualPath = require("path").join(fsFolderPath, filePath);
                 }
             } else {
                 actualPath = filePath;
@@ -866,7 +865,7 @@ function Archive(archiveConfigurator) {
     this.listFiles = (folderBarPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {recursive:true};
+            options = {recursive: true};
         } else if (typeof folderBarPath === "function") {
             callback = folderBarPath;
             options = {recursive: true};
@@ -964,7 +963,7 @@ module.exports = Archive;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","pskcrypto":"pskcrypto","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","pskcrypto":"pskcrypto","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 const Seed = require("./Seed");
@@ -1175,17 +1174,6 @@ module.exports = ArchiveConfigurator;
 },{"./Seed":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Seed.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BarMap.js":[function(require,module,exports){
 (function (Buffer){
 const Brick = require("./Brick");
-const pathModule = "path";
-let path;
-try {
-    path = require(pathModule);
-} catch (err) {
-} finally {
-    if (typeof path === "undefined") {
-        path = {sep: "/"};
-    }
-}
-
 function BarMap(header) {
     header = header || {};
     const pskPath = require("swarmutils").path;
@@ -1707,8 +1695,6 @@ module.exports = Brick;
 (function (Buffer){
 'use strict';
 
-const pathModule = "path";
-const path = require(pathModule);
 const envTypes = require("overwrite-require").constants;
 const isStream = require("../../utils/isStream");
 const stream = require('stream');
@@ -1728,7 +1714,6 @@ const stream = require('stream');
  */
 function Service(options) {
     options = options || {};
-
     this.cache = options.cache;
     this.bufferSize = parseInt(options.bufferSize, 10);
     this.storageProvider = options.storageProvider;
@@ -2144,7 +2129,7 @@ function Service(options) {
             }
 
             const filePath = files.pop();
-            const filename = path.basename(filePath);
+            const filename = require("path").basename(filePath);
 
             this.ingestFile(filePath, (err, result) => {
                 if (err) {
@@ -2179,7 +2164,7 @@ function Service(options) {
                 return callback(undefined, bricksSummary);
             }
 
-            const filePath = path.join(dirname, filename);
+            const filePath = require("path").join(dirname, filename);
             this.ingestFile(filePath, (err, result) => {
                 if (err) {
                     return callback(err);
@@ -2392,7 +2377,7 @@ module.exports = Service;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
