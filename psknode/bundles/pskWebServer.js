@@ -1041,7 +1041,6 @@ exports.createSwarmEngine = function(swarmType, utils){
  */
 
 var util = require("util");
-var fs = require("fs");
 global.cprint = console.log;
 global.wprint = console.warn;
 global.dprint = console.debug;
@@ -1186,6 +1185,7 @@ global.delayExit = function (msg, retCode,timeout) {
 
 
 function localLog (logType, message, err) {
+    var fs = require("fs");
     var time = new Date();
     var now = time.getDate() + "-" + (time.getMonth() + 1) + "," + time.getHours() + ":" + time.getMinutes();
     var msg;
@@ -2370,11 +2370,14 @@ function EDFS(endpoint, options) {
 
 //------------------------------------------------ internal methods -------------------------------------------------
     function createArchiveConfig(seed) {
+        const envTypes = require("overwrite-require").constants;
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
         ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
         ArchiveConfigurator.prototype.registerStorageProvider("EDFSBrickStorage", require("edfs-brick-storage").create);
         const archiveConfigurator = new ArchiveConfigurator();
-        archiveConfigurator.setFsAdapter("FsAdapter");
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+            archiveConfigurator.setFsAdapter("FsAdapter");
+        }
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
         archiveConfigurator.setBufferSize(1000000);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
@@ -2392,7 +2395,7 @@ function EDFS(endpoint, options) {
 
 module.exports = EDFS;
 
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false,"overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
 function Manifest(archive, callback) {
@@ -2912,6 +2915,7 @@ function RawDossier(endpoint, seed, cache) {
     }
 
     function createBar(localSeed) {
+        const envTypes = require("overwrite-require").constants;
         const createEDFSBrickStorage = require("edfs-brick-storage").create;
         const createFsAdapter = require("bar-fs-adapter").createFsAdapter;
 
@@ -2920,7 +2924,9 @@ function RawDossier(endpoint, seed, cache) {
         ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", createFsAdapter);
 
         const archiveConfigurator = new ArchiveConfigurator();
-        archiveConfigurator.setFsAdapter("FsAdapter");
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+            archiveConfigurator.setFsAdapter("FsAdapter");
+        }
 
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
         archiveConfigurator.setBufferSize(1000000);
@@ -2938,7 +2944,7 @@ function RawDossier(endpoint, seed, cache) {
 
 module.exports = RawDossier;
 
-},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false,"overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 

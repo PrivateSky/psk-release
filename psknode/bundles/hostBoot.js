@@ -208,13 +208,12 @@ module.exports.createFsAdapter = () => {
 };
 },{"./lib/FsAdapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 (function (Buffer){
-const fsModule = "fs";
-const fs = require(fsModule);
-const pathModule = "path";
-const path = require(pathModule);
-const PathAsyncIterator = require('./PathAsyncIterator');
-
 function FsAdapter() {
+    const fsModule = "fs";
+    const fs = require(fsModule);
+    const pathModule = "path";
+    const path = require(pathModule);
+    const PathAsyncIterator = require('./PathAsyncIterator');
 
     this.getFileSize = function (filePath, callback) {
         fs.stat(filePath, (err, stats) => {
@@ -272,14 +271,13 @@ module.exports = FsAdapter;
 }).call(this,require("buffer").Buffer)
 
 },{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
-const fsModule = "fs";
-const fs = require(fsModule);
-const pathModule = "path";
-const path = require(pathModule);
-const TaskCounter = require("swarmutils").TaskCounter;
-
-
 function PathAsyncIterator(inputPath) {
+    const fsModule = "fs";
+    const fs = require(fsModule);
+    const pathModule = "path";
+    const path = require(pathModule);
+    const TaskCounter = require("swarmutils").TaskCounter;
+
     inputPath = path.normalize(inputPath);
     let removablePathLen;
     const fileList = [];
@@ -1707,11 +1705,11 @@ module.exports = Brick;
 
 },{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"/home/travis/build/PrivateSky/privatesky/modules/adler32/index.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 (function (Buffer){
-'use strict'
+'use strict';
 
 const pathModule = "path";
 const path = require(pathModule);
-
+const envTypes = require("overwrite-require").constants;
 const isStream = require("../../utils/isStream");
 const stream = require('stream');
 
@@ -1751,7 +1749,7 @@ function Service(options) {
         throw new Error('A brick factory callback is required');
     }
 
-    if (!this.fsAdapter) {
+    if (!this.fsAdapter && $$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE) {
         throw new Error('A file system adapter is required');
     }
 
@@ -1773,7 +1771,7 @@ function Service(options) {
         }
 
         return this.cache.has(key);
-    }
+    };
 
     /**
      * @param {*} key
@@ -1785,7 +1783,7 @@ function Service(options) {
         }
 
         this.cache.set(key, value);
-    }
+    };
 
     /**
      * Creates writable stream to a EDFSBrickStorage instance
@@ -1799,7 +1797,7 @@ function Service(options) {
 
             const writableStream = new stream.Writable({
                 write(brickContainer, encoding, callback) {
-                    let { brick, brickMeta } = brickContainer;
+                    let {brick, brickMeta} = brickContainer;
                     if (typeof beforeCopyCallback === 'function') {
                         brick = beforeCopyCallback(brickMeta, brick);
                     }
@@ -1823,7 +1821,7 @@ function Service(options) {
             return writableStream;
 
         })(storageProvider, beforeCopyCallback);
-    }
+    };
 
     /**
      * Create a readable stream of Brick objects
@@ -1873,7 +1871,7 @@ function Service(options) {
             return readableStream;
 
         })(bricksMeta);
-    }
+    };
 
     /**
      * Retrieves a Brick from storage and converts
@@ -2225,7 +2223,7 @@ function Service(options) {
         };
 
         getBricksAsBufferRecursive(0, callback);
-    }
+    };
 
     /**
      * Retrieve all the Bricks identified by `bricksMeta`
@@ -2268,7 +2266,7 @@ function Service(options) {
         };
 
         callback(undefined, readableStream);
-    }
+    };
 
     /**
      * Retrieve all the Bricks identified by `bricksMeta`
@@ -2304,7 +2302,7 @@ function Service(options) {
         };
 
         getBricksAsBufferRecursive(0, callback);
-    }
+    };
 
     /**
      * Copy all the Bricks identified by `bricksList`
@@ -2379,7 +2377,7 @@ function Service(options) {
             this.storageProvider.setBarMap(map);
             callback(undefined, map);
         })
-    }
+    };
 
     /**
      * @param {BarMap} barMap
@@ -2394,7 +2392,7 @@ module.exports = Service;
 
 }).call(this,require("buffer").Buffer)
 
-},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -2403,13 +2401,12 @@ module.exports = {
 
 },{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
 (function (Buffer){
-const BarMap = require("./obsolete/FileBarMap");
-const util = require("../utils/utilities");
-const fs = require("fs");
-const Brick = require("./Brick");
-const AsyncDispatcher = require("../utils/AsyncDispatcher");
-
 function FileBrickStorage(filePath) {
+    const fsModuleName = "fs";
+    const fs = require(fsModuleName);
+    const BarMap = require("./obsolete/FileBarMap");
+    const util = require("../utils/utilities");
+    const Brick = require("./Brick");
 
     let isFirstBrick = true;
     let map;
@@ -2622,13 +2619,13 @@ module.exports = {
 
 }).call(this,require("buffer").Buffer)
 
-},{"../utils/AsyncDispatcher":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js","../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBarMap.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
-const fs = require("fs");
-const path = require("path");
+},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBarMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBarMap.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
 const BarMap = require("./BarMap");
 const Brick = require("./Brick");
 
 function FolderBrickStorage(location) {
+    const fs = require("fs");
+    const path = require("path");
     let map;
 
     this.setBarMap = (barMap) => {
@@ -3396,57 +3393,7 @@ function EncryptionGenerator(config) {
 }
 
 module.exports = EncryptionGenerator;
-},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/AsyncDispatcher.js":[function(require,module,exports){
-
-function AsyncDispatcher(finalCallback) {
-	let results = [];
-	let errors = [];
-
-	let started = 0;
-
-	function markOneAsFinished(err, res) {
-		if(err) {
-			errors.push(err);
-		}
-
-		if(arguments.length > 2) {
-			arguments[0] = undefined;
-			res = arguments;
-		}
-
-		if(typeof res !== "undefined") {
-			results.push(res);
-		}
-
-		if(--started <= 0) {
-            return callCallback();
-		}
-	}
-
-	function dispatchEmpty(amount = 1) {
-		started += amount;
-	}
-
-	function callCallback() {
-	    if(errors && errors.length === 0) {
-	        errors = undefined;
-        }
-
-	    if(results && results.length === 0) {
-	        results = undefined;
-        }
-
-        finalCallback(errors, results);
-    }
-
-	return {
-		dispatchEmpty,
-		markOneAsFinished
-	};
-}
-
-module.exports = AsyncDispatcher;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -3479,7 +3426,6 @@ module.exports = {
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
-const fs = require('fs');
 const OFFSET_SIZE = 8;
 
 function getBarMapOffsetSize() {
@@ -3487,6 +3433,7 @@ function getBarMapOffsetSize() {
 }
 
 function ensureFileDoesNotExist(filePath, callback) {
+    const fs = require('fs');
     fs.access(filePath, (err) => {
         if (!err) {
             fs.unlink(filePath, callback);
@@ -7154,7 +7101,6 @@ exports.createSwarmEngine = function(swarmType, utils){
  */
 
 var util = require("util");
-var fs = require("fs");
 global.cprint = console.log;
 global.wprint = console.warn;
 global.dprint = console.debug;
@@ -7299,6 +7245,7 @@ global.delayExit = function (msg, retCode,timeout) {
 
 
 function localLog (logType, message, err) {
+    var fs = require("fs");
     var time = new Date();
     var now = time.getDate() + "-" + (time.getMonth() + 1) + "," + time.getHours() + ":" + time.getMinutes();
     var msg;
@@ -8091,11 +8038,14 @@ function EDFS(endpoint, options) {
 
 //------------------------------------------------ internal methods -------------------------------------------------
     function createArchiveConfig(seed) {
+        const envTypes = require("overwrite-require").constants;
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
         ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
         ArchiveConfigurator.prototype.registerStorageProvider("EDFSBrickStorage", require("edfs-brick-storage").create);
         const archiveConfigurator = new ArchiveConfigurator();
-        archiveConfigurator.setFsAdapter("FsAdapter");
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+            archiveConfigurator.setFsAdapter("FsAdapter");
+        }
         archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
         archiveConfigurator.setBufferSize(1000000);
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
@@ -8113,7 +8063,7 @@ function EDFS(endpoint, options) {
 
 module.exports = EDFS;
 
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
 function Manifest(archive, callback) {
@@ -8633,6 +8583,7 @@ function RawDossier(endpoint, seed, cache) {
     }
 
     function createBar(localSeed) {
+        const envTypes = require("overwrite-require").constants;
         const createEDFSBrickStorage = require("edfs-brick-storage").create;
         const createFsAdapter = require("bar-fs-adapter").createFsAdapter;
 
@@ -8641,7 +8592,9 @@ function RawDossier(endpoint, seed, cache) {
         ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", createFsAdapter);
 
         const archiveConfigurator = new ArchiveConfigurator();
-        archiveConfigurator.setFsAdapter("FsAdapter");
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+            archiveConfigurator.setFsAdapter("FsAdapter");
+        }
 
         archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
         archiveConfigurator.setBufferSize(1000000);
@@ -8659,7 +8612,7 @@ function RawDossier(endpoint, seed, cache) {
 
 module.exports = RawDossier;
 
-},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
+},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js","edfs-brick-storage":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
 const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
 HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
 

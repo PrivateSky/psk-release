@@ -1007,7 +1007,6 @@ exports.createSwarmEngine = function(swarmType, utils){
  */
 
 var util = require("util");
-var fs = require("fs");
 global.cprint = console.log;
 global.wprint = console.warn;
 global.dprint = console.debug;
@@ -1152,6 +1151,7 @@ global.delayExit = function (msg, retCode,timeout) {
 
 
 function localLog (logType, message, err) {
+    var fs = require("fs");
     var time = new Date();
     var now = time.getDate() + "-" + (time.getMonth() + 1) + "," + time.getHours() + ":" + time.getMinutes();
     var msg;
