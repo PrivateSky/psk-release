@@ -9517,10 +9517,6 @@ function enableForEnvironment(envType){
             }
         }
 
-        if (!result) {
-            $$.log("Failed to load module ", request, result);
-        }
-
         enableRequire(request);
         if (previousRequireChanged) {
             //console.log("End loading library for require", request, $$.__global.requireLibrariesNames[request]);
