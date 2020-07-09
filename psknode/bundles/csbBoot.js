@@ -1915,6 +1915,10 @@ function enableForEnvironment(envType){
             }
         }
 
+        if (!result) {
+            throw Error(`Failed to load module ${request}`);
+        }
+
         enableRequire(request);
         if (previousRequireChanged) {
             //console.log("End loading library for require", request, $$.__global.requireLibrariesNames[request]);

@@ -9517,6 +9517,10 @@ function enableForEnvironment(envType){
             }
         }
 
+        if (!result) {
+            throw Error(`Failed to load module ${request}`);
+        }
+
         enableRequire(request);
         if (previousRequireChanged) {
             //console.log("End loading library for require", request, $$.__global.requireLibrariesNames[request]);
@@ -9803,11 +9807,11 @@ function HttpServer({listeningPort, rootFolder, sslConfig}, callback) {
 	server.on('error', bindErrorHandler);
 
 	function checkPortInUse(port, sslConfig, callback){
-		let http = require("http");
+		let commType = "http";
 		if (typeof sslConfig !== "undefined") {
-			http = require("https");
+			commType += 's';
 		}
-		http.request({port}, (res) => {
+		require(commType).request({port}, (res) => {
 			callback(undefined, true);
 		}).on("error", (err) => {
 			callback(undefined, false);
@@ -9940,7 +9944,7 @@ module.exports.getServerConfig = function () {
 	return utils.getServerConfig();
 };
 
-},{"./AnchoringService.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js","./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js","./StaticServer.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","http":false,"https":false,"path":false}],"pskcrypto":[function(require,module,exports){
+},{"./AnchoringService.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/AnchoringService.js","./ChannelsManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/ChannelsManager.js","./FilesManager.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/FilesManager.js","./StaticServer.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/StaticServer.js","./VMQRequestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/VMQRequestFactory.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/libs/http-wrapper/src/index.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-webserver/utils.js","path":false}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
