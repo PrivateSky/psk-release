@@ -11,16 +11,16 @@ global.csbBootLoadModules = function(){
 		$$.__runtimeModules["overwrite-require"] = require("overwrite-require");
 	}
 
-	if(typeof $$.__runtimeModules["edfs"] === "undefined"){
-		$$.__runtimeModules["edfs"] = require("edfs");
-	}
-
 	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
 		$$.__runtimeModules["psk-cache"] = require("psk-cache");
 	}
 
 	if(typeof $$.__runtimeModules["dossier"] === "undefined"){
 		$$.__runtimeModules["dossier"] = require("dossier");
+	}
+
+	if(typeof $$.__runtimeModules["key-ssi-resolver"] === "undefined"){
+		$$.__runtimeModules["key-ssi-resolver"] = require("key-ssi-resolver");
 	}
 };
 if (false) {
@@ -33,1013 +33,1711 @@ if (typeof $$ !== "undefined") {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"dossier":"dossier","edfs":"edfs","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
-(function (Buffer){
-function FetchBrickTransportStrategy(initialConfig) {
-    const url = initialConfig;
-    this.send = (name, data, callback) => {
-
-        fetch(url + "/EDFS/" + name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: data
-        }).then(function (response) {
-            if (response.status >= 400) {
-                throw new Error(`An error occurred ${response.statusText}`);
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(function (data) {
-            callback(null, data)
-        }).catch(error => {
-            callback(error);
-        });
-
-    };
-
-    this.get = (name, callback) => {
-        fetch(url + "/EDFS/" + name, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response => {
-            if (response.status >= 400) {
-                throw new Error(`An error occurred ${response.statusText}`);
-            }
-            return response.arrayBuffer();
-        }).then(arrayBuffer => {
-            let buffer = new Buffer(arrayBuffer.byteLength);
-            let view = new Uint8Array(arrayBuffer);
-            for (let i = 0; i < buffer.length; ++i) {
-                buffer[i] = view[i];
-            }
-
-            callback(null, buffer);
-        }).catch(error => {
-            callback(error);
-        });
-    };
-
-    this.getHashForAlias = (alias, callback) => {
-        fetch(url + "/anchoring/getVersions/" + alias, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-        }).then(response => {
-            if (response.status >= 400) {
-                throw new Error(`An error occurred ${response.statusText}`);
-            }
-            return response.json().then(data => {
-                callback(null, data);
-            }).catch(error => {
-                callback(error);
-            })
-        });
-    };
-
-    this.attachHashToAlias = (alias, name, callback) => {
-        fetch(url + '/anchoring/attachHashToAlias/' + name, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            },
-            body: alias
-        }).then(response => {
-            if (response.status >= 400) {
-                throw new Error(`An error occurred ${response.statusText}`);
-            }
-            return response.json().catch((err) => {
-                // This happens when the response is empty
-                return {};
-            });
-        }).then(data => {
-            callback(null, data);
-        }).catch(error => {
-            callback(error);
-        })
-    };
-
-    this.getLocator = () => {
-        return url;
-    };
-}
-
-//TODO:why we use this?
-FetchBrickTransportStrategy.prototype.FETCH_BRICK_TRANSPORT_STRATEGY = "FETCH_BRICK_TRANSPORT_STRATEGY";
-FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
-    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
-};
-
-
-module.exports = FetchBrickTransportStrategy;
-
-}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
-function HTTPBrickTransportStrategy(endpoint) {
-    require("psk-http-client");
-
-    this.send = (name, data, callback) => {
-        $$.remote.doHttpPost(endpoint + "/EDFS/" + name, data, (err, brickDigest) => {
-            if (err) {
-                return callback(err);
-            }
-
-            try {
-                brickDigest = JSON.parse(brickDigest);
-            } catch (e) {
-                return callback(e);
-            }
-            callback(undefined, brickDigest);
-        });
-    };
-
-    this.get = (name, callback) => {
-        $$.remote.doHttpGet(endpoint + "/EDFS/" + name, callback);
-    };
-
-    this.getMultipleBricks = (brickHashes, callback) => {
-        let query = "?";
-        brickHashes.forEach(brickHash => {
-            query += "hashes=" + brickHash + "&";
-        });
-        $$.remote.doHttpGet(endpoint + "/EDFS/downloadMultipleBricks" + query, callback);
-    };
-
-    this.getHashForAlias = (alias, callback) => {
-        $$.remote.doHttpGet(endpoint + "/anchoring/getVersions/" + alias, (err, hashesList) => {
-            if (err) {
-                return callback(err)
-            }
-
-            callback(undefined, JSON.parse(hashesList.toString()))
-        });
-    };
-
-    this.attachHashToAlias = (alias, name, callback) => {
-        $$.remote.doHttpPost(endpoint + "/anchoring/attachHashToAlias/" + name, alias, callback);
-    };
-
-    this.getLocator = () => {
-        return endpoint;
-    };
-}
-
-HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
-    return endpoint.indexOf("http:") === 0 || endpoint.indexOf("https:") === 0;
-};
-
-module.exports = HTTPBrickTransportStrategy;
-
-},{"psk-http-client":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
-(function (Buffer){
-function BrickTransportStrategiesRegistry() {
-    const strategies = {};
-
-    this.remove = (transportStrategyName) => {
-        strategies[transportStrategyName] = undefined;
-    };
-
-    this.add = (transportStrategyName, strategy) => {
-        if (typeof strategy.prototype.canHandleEndpoint === "function") {
-            strategies[transportStrategyName] = strategy;
-        } else {
-            throw Error("Missing function from strategy prototype");
-        }
-    };
-
-    this.get = (endpoint) => {
-        if (typeof endpoint !== "string" || endpoint.length === 0) {
-            throw Error(`Invalid endpoint ${endpoint}, ${typeof endpoint} ${Buffer.isBuffer(endpoint)}`);
-        }
-
-        const strategyName = getStrategyNameFromEndpoint(endpoint);
-        if (!strategyName) {
-            throw Error(`No strategy available to handle endpoint ${endpoint}`);
-        }
-
-        return new strategies[strategyName](endpoint);
-    };
-
-    this.has = (transportStrategyName) => {
-        return strategies.hasOwnProperty(transportStrategyName);
-    };
-
-    function getStrategyNameFromEndpoint(endpoint) {
-        for(let key in strategies){
-            if (strategies[key] && strategies[key].prototype.canHandleEndpoint(endpoint)) {
-                return key;
-            }
-        }
-    }
-}
-
-if (!$$.brickTransportStrategiesRegistry) {
-    $$.brickTransportStrategiesRegistry = new BrickTransportStrategiesRegistry();
-}
-}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
-
-},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js":[function(require,module,exports){
-function EDFS(endpoint, options) {
-    options = options || {};
-
-    const RawDossier = require("./RawDossier");
-    const barModule = require("bar");
-    const fsAdapter = require("bar-fs-adapter");
-    const constants = require('../moduleConstants');
-    const pskPath = require("swarmutils").path;
-    const cache = options.cache;
-
-    this.createRawDossier = (callback) => {
-        const dossier = new RawDossier(endpoint, undefined, cache);
-        dossier.load(err => callback(err, dossier));
-    };
-
-    this.createBar = (callback) => {
-        const bar = barModule.createArchive(createArchiveConfig());
-        bar.load(err => callback(err, bar));
-    };
-
-    this.bootRawDossier = (seed, callback) => {
-        const rawDossier = new RawDossier(endpoint, seed, cache);
-        rawDossier.load((err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            rawDossier.start(err => callback(err, rawDossier));
-        })
-    };
-
-    this.loadRawDossier = (seed, callback) => {
-        const dossier = new RawDossier(endpoint, seed, cache);
-        dossier.load((err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(undefined, dossier);
-        });
-    };
-
-    this.loadBar = (seed, callback) => {
-        const bar = barModule.createArchive(createArchiveConfig(seed));
-        bar.load((err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(undefined, bar);
-        });
-    };
-
-    this.clone = (seed, callback) => {
-        const edfsBrickStorage = require("edfs-brick-storage").create(endpoint);
-        this.loadBar(seed, (err, bar) => {
-            if (err) {
-                return callback(err);
-            }
-            bar.clone(edfsBrickStorage, true, callback);
-        })
-    };
-
-    this.createWallet = (templateSeed, password, overwrite, callback) => {
-        if (typeof overwrite === "function") {
-            callback = overwrite;
-            overwrite = false;
-        }
-        this.createRawDossier((err, wallet) => {
-            if (err) {
-                return callback(err);
-            }
-
-            wallet.mount(pskPath.ensureIsAbsolute(pskPath.join(constants.CSB.CODE_FOLDER, constants.CSB.CONSTITUTION_FOLDER)), templateSeed, (err => {
-                if (err) {
-                    return callback(err);
-                }
-
-                const seed = wallet.getSeed();
-                if (typeof password !== "undefined") {
-                    require("../seedCage").putSeed(seed, password, overwrite, (err) => {
-                        if (err) {
-                            return callback(err);
-                        }
-                        callback(undefined, seed.toString());
-                    });
-                } else {
-                    callback(undefined, seed.toString());
-                }
-            }));
-        })
-    };
-
-    this.loadWallet = function (walletSeed, password, overwrite, callback) {
-        if (typeof overwrite === "function") {
-            callback = overwrite;
-            overwrite = password;
-            password = walletSeed;
-            walletSeed = undefined;
-        }
-        if (typeof walletSeed === "undefined") {
-            require("../seedCage").getSeed(password, (err, seed) => {
-                if (err) {
-                    return callback(err);
-                }
-                this.loadRawDossier(seed, (err, dossier) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    return callback(undefined, dossier);
-                });
-            });
-            return;
-        }
-
-        this.loadRawDossier(walletSeed, (err, dossier) => {
-            if (err) {
-                return callback(err);
-            }
-
-            if (typeof password !== "undefined" && password !== null) {
-                require("../seedCage").putSeed(walletSeed, password, overwrite, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback(undefined, dossier);
-                });
-            } else {
-                return callback(undefined, dossier);
-            }
-        });
-    };
-
-//------------------------------------------------ internal methods -------------------------------------------------
-    function createArchiveConfig(seed) {
-        const envTypes = require("overwrite-require").constants;
-        const ArchiveConfigurator = barModule.ArchiveConfigurator;
-        ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
-        ArchiveConfigurator.prototype.registerStorageProvider("EDFSBrickStorage", require("edfs-brick-storage").create);
-        const archiveConfigurator = new ArchiveConfigurator();
-        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
-            archiveConfigurator.setFsAdapter("FsAdapter");
-        }
-        archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
-        archiveConfigurator.setBufferSize(1000000);
-        archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
-        archiveConfigurator.setCache(cache);
-
-        if (seed) {
-            archiveConfigurator.setSeed(seed);
-        } else {
-            archiveConfigurator.setSeedEndpoint(endpoint);
-        }
-
-        return archiveConfigurator;
-    }
-}
-
-module.exports = EDFS;
-
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","../seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","./RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js","bar":false,"bar-fs-adapter":false,"edfs-brick-storage":false,"overwrite-require":"overwrite-require","swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js":[function(require,module,exports){
-const MANIFEST_PATH = "/manifest";
-
-function Manifest(archive, callback) {
-    const pskPath = require("swarmutils").path;
-    let manifest;
-    let temporary = {};
-    let manifestHandler = {};
-
-
-    manifestHandler.mount = function (path, archiveIdentifier, options, callback) {
-        if (typeof options === "function") {
-            callback = options;
-            options = {persist: true};
-        }
-
-        if (typeof options === "undefined") {
-            options = {persist: true};
-        }
-        // if (/\W-_/.test(name) === true) {
-        //     return callback(Error("Invalid mount name"));
-        // }
-
-        for (let mountingPoint in manifest.mounts) {
-            if (pskPath.isSubpath(path, mountingPoint) || pskPath.isSubpath(path, mountingPoint)) {
-                return callback(Error(`Mount not allowed. Already exist a mount for ${mountingPoint}`));
-            }
-        }
-
-        manifest.mounts[path] = archiveIdentifier;
-        if (options.persist === true) {
-            return persist(callback);
-        } else {
-            temporary[path] = true;
-        }
-
-        callback(undefined);
-    };
-
-    manifestHandler.unmount = function (path, callback) {
-        if (typeof manifest.mounts[path] === "undefined") {
-            return callback(Error(`No mount found at path ${path}`));
-        }
-
-        delete manifest.mounts[path];
-
-        if (temporary[path]) {
-            delete temporary[path];
-        } else {
-            persist(callback);
-        }
-    };
-
-    manifestHandler.getArchiveIdentifier = function (path, callback) {
-        if (typeof manifest.mounts[path] === "undefined") {
-            return callback(Error(`No mount found at path ${path}`));
-        }
-
-        callback(undefined, manifest.mounts[path]);
-    };
-
-    manifestHandler.getArchiveForPath = function (path, callback) {
-        for (let mountingPoint in manifest.mounts) {
-            if (mountingPoint === path) {
-                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive});
-                });
-            }
-
-            if (pskPath.isSubpath(path, mountingPoint)) {
-                return getArchive(manifest.mounts[mountingPoint], true,(err, archive) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    let remaining = path.substring(mountingPoint.length);
-                    remaining = pskPath.ensureIsAbsolute(remaining);
-                    return archive.getArchiveForPath(remaining, function (err, result) {
-                        if (err) {
-                            return callback(err);
-                        }
-                        result.prefixPath = pskPath.join(mountingPoint, result.prefixPath);
-                        callback(undefined, result);
-                    });
-                });
-            }
-        }
-
-        callback(undefined, {prefixPath: "/", relativePath: path, archive: archive});
-    };
-
-    manifestHandler.getMountedDossiers = function (path, callback) {
-        let mountedDossiers = [];
-        for (let mountPoint in manifest.mounts) {
-            if (pskPath.isSubpath(mountPoint, path)) {
-                let mountPath = mountPoint.substring(path.length);
-                if (mountPath[0] === "/") {
-                    mountPath = mountPath.substring(1);
-                }
-                mountedDossiers.push({
-                    path: mountPath,
-                    identifier: manifest.mounts[mountPoint]
-                });
-            }
-        }
-
-        const mountPaths = mountedDossiers.map(mountedDossier => mountedDossier.path);
-        mountedDossiers = mountedDossiers.filter((mountedDossier, index) => {
-            return mountPaths.indexOf(mountedDossier.path) === index;
-        });
-
-        callback(undefined, mountedDossiers);
-    };
-
-    function getArchive(seed, asDossier, callback) {
-        if (typeof asDossier === "function") {
-            callback = asDossier;
-            asDossier = false;
-        }
-        let edfsModuleName = "edfs";
-        let EDFS = require(edfsModuleName);
-        EDFS.attachWithSeed(seed, function (err, edfs) {
-            if (err) {
-                return callback(err);
-            }
-
-            if (asDossier) {
-                return edfs.loadRawDossier(seed, (err, dossier) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback(undefined, dossier);
-                })
-            }
-
-            edfs.loadBar(seed, (err, bar) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                callback(undefined, bar);
-            })
-        });
-    }
-
-    function persist(callback) {
-        archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
-    }
-
-    function init(callback) {
-        archive.readFile(MANIFEST_PATH, (err, manifestContent) => {
-            if (err) {
-                manifest = {mounts: {}};
-            } else {
-                try {
-                    manifest = JSON.parse(manifestContent.toString());
-                } catch (e) {
-                    return callback(e);
-                }
-            }
-
-            callback(undefined, manifestHandler);
-        });
-    }
-
-    init(callback);
-}
-
-module.exports.getManifest = function getManifest(archive, callback) {
-    Manifest(archive, callback);
-};
-
-
-},{"swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/RawDossier.js":[function(require,module,exports){
-function RawDossier(endpoint, seed, cache) {
-    const barModule = require("bar");
-    const Manifest = require("./Manifest");
-    const pskPath = require("swarmutils").path;
-    let manifestHandler;
-    const bar = createBar(seed);
-
-    this.getSeed = () => {
-        return bar.getSeed();
-    };
-
-    this.start = (callback) => {
-        createBlockchain(bar).start(callback);
-    };
-
-    this.load = (callback) => {
-        bar.load(callback);
-    };
-
-    function getManifest(callback) {
-        if (typeof manifestHandler === "undefined") {
-            Manifest.getManifest(bar, (err, handler) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                manifestHandler = handler;
-                return callback(undefined, manifestHandler);
-            });
-        } else {
-            return callback(undefined, manifestHandler);
-        }
-    }
-
-    this.addFolder = (fsFolderPath, barPath, options, callback) => {
-        const defaultOpts = {encrypt: true, ignoreMounts: true};
-        if (typeof options === "function") {
-            callback = options;
-            options = {};
-        }
-
-        Object.assign(defaultOpts, options);
-        options = defaultOpts;
-
-        if (options.ignoreMounts === true) {
-            bar.addFolder(fsFolderPath, barPath, options, callback);
-        } else {
-            this.getArchiveForPath(barPath, (err, result) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                result.archive.addFolder(fsFolderPath, result.relativePath, options, callback);
-            });
-        }
-    };
-
-    this.addFile = (fsFilePath, barPath, options, callback) => {
-        const defaultOpts = {encrypt: true, ignoreMounts: true};
-        if (typeof options === "function") {
-            callback = options;
-            options = {};
-        }
-
-        Object.assign(defaultOpts, options);
-        options = defaultOpts;
-
-        if (options.ignoreMounts === true) {
-            bar.addFile(fsFilePath, barPath, options, (err, barMapDigest) => callback(err, barMapDigest));
-        } else {
-            this.getArchiveForPath(barPath, (err, result) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                result.archive.addFile(fsFilePath, result.relativePath, options, callback);
-            });
-        }
-    };
-
-    this.readFile = (fileBarPath, callback) => {
-        this.getArchiveForPath(fileBarPath, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.readFile(result.relativePath, callback);
-        });
-    };
-
-    this.createReadStream = (fileBarPath, callback) => {
-        this.getArchiveForPath(fileBarPath, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.createReadStream(result.relativePath, callback);
-        });
-    };
-
-    this.extractFolder = (fsFolderPath, barPath, callback) => {
-        this.getArchiveForPath(barPath, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.extractFolder(fsFolderPath, result.relativePath, callback);
-        });
-    };
-
-    this.extractFile = (fsFilePath, barPath, callback) => {
-        this.getArchiveForPath(barPath, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.extractFile(fsFilePath, result.relativePath, callback);
-        });
-    };
-
-    this.writeFile = (path, data, options, callback) => {
-        const defaultOpts = {encrypt: true, ignoreMounts: true};
-        if (typeof options === "function") {
-            callback = options;
-            options = {};
-        }
-
-        Object.assign(defaultOpts, options);
-        options = defaultOpts;
-
-        // if (path.split("/").includes(constants.MANIFEST_FILE)) {
-        //     return callback(Error("Trying to overwrite the manifest file. This is not allowed"));
-        // }
-
-
-        if (options.ignoreMounts === true) {
-            bar.writeFile(path, data, options, callback);
-        } else {
-            this.getArchiveForPath(path, (err, dossierContext) => {
-                if (err) {
-                    return callback(err);
-                }
-                if (dossierContext.readonly === true) {
-                    return callback(Error("Tried to write in a readonly mounted RawDossier"));
-                }
-
-                dossierContext.archive.writeFile(dossierContext.relativePath, data, options, callback);
-            });
-        }
-    };
-
-    this.delete = (barPath, callback) => {
-        bar.delete(barPath, callback);
-    };
-
-    this.listFiles = (path, options, callback) => {
-        if (typeof options === "function") {
-            callback = options;
-            options = {recursive: true};
-        }
-        this.getArchiveForPath(path, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.listFiles(result.relativePath, options, (err, files) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                callback(undefined, files);
-            });
-        });
-    };
-
-    this.listFolders = (path, callback) => {
-        this.getArchiveForPath(path, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.listFolders(result.relativePath, (err, folders) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                callback(undefined, folders);
-            });
-        });
-    };
-
-    this.readDir = (folderPath, options, callback) => {
-        if (typeof options === "function") {
-            callback = options;
-            options = {
-                withFileTypes: false
-            };
-        }
-
-        const entries = {};
-        this.getArchiveForPath(folderPath, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            result.archive.listFiles(result.relativePath, {recursive: false}, (err, files) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                entries.files = files;
-
-                result.archive.listFolders(result.relativePath, {recursive: false}, (err, folders) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    if (options.withFileTypes) {
-                        entries.folders = folders;
-                    } else {
-                        entries.files = [...entries.files, ...folders];
-                    }
-                    if (result.archive === bar) {
-                        getManifest(listMounts);
-                    } else {
-                        Manifest.getManifest(result.archive, listMounts);
-                    }
-
-                    function listMounts(err, handler) {
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        handler.getMountedDossiers(result.relativePath, (err, mounts) => {
-                            if (err) {
-                                return callback(err);
-                            }
-                            let mountPaths = mounts.map(mount => mount.path);
-                            let folders = mountPaths.filter(mountPath =>  mountPath.split('/').length >= 2);
-                            folders = folders.map(mountPath => mountPath.split('/').shift());
-                            let mountedDossiers = mountPaths.filter(mountPath => mountPath.split('/').length === 1);
-                            mountedDossiers = mountedDossiers.map(mountPath => mountPath.split('/').shift());
-                            if (options.withFileTypes) {
-                                entries.mounts = mountedDossiers;
-                                entries.folders = Array.from(new Set([...entries.folders, ...folders]));
-                                entries.mounts = entries.mounts.filter(mount => entries.folders.indexOf(mount) === -1);
-                                return callback(undefined, entries);
-                            }
-                            entries.files = Array.from(new Set([...entries.files, ...mounts, ...folders]));
-                            return callback(undefined, entries.files);
-                        });
-                    }
-                });
-            });
-        });
-    };
-
-
-    this.mount = (path, archiveIdentifier, options, callback) => {
-        if (typeof options === "function") {
-            callback = options;
-            options = undefined;
-        }
-
-        bar.listFiles(path, (err, files) => {
-            if (!err && files.length > 0) {
-                return callback(Error("Tried to mount in a non-empty folder"));
-            }
-            getManifest((err, manifestHandler) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                manifestHandler.mount(path, archiveIdentifier, options, callback);
-            });
-        });
-    };
-
-    this.unmount = (path, callback) => {
-        getManifest((err, manifestHandler) => {
-            if (err) {
-                return callback(err);
-            }
-
-            manifestHandler.unmount(path, callback);
-        });
-    };
-
-    this.listMountedDossiers = (path, callback) => {
-        this.getArchiveForPath(path, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
-
-            if (result.archive === bar) {
-                getManifest(listMounts);
-            } else {
-                Manifest.getManifest(result.archive, listMounts);
-            }
-
-            function listMounts(err, handler) {
-                if (err) {
-                    return callback(err);
-                }
-
-                handler.getMountedDossiers(result.relativePath, callback);
-            }
-        });
-    };
-
-
-    this.getArchiveForPath = function (path, callback) {
-        getManifest((err, handler) => {
-            if (err) {
-                return callback(err);
-            }
-
-            handler.getArchiveForPath(path, callback);
-        });
-    };
-
-
-    /**
-     * @param {object} validator
-     * @param {callback} validator.writeRule Writes validator
-     * @param {callback} validator.readRule Reads validator
-     */
-    this.setValidator = (validator) => {
-        bar.setValidator(validator);
-    };
-
-    //------------------------------------------------- internal functions ---------------------------------------------
-    function createBlockchain(bar) {
-        const blockchainModule = require("blockchain");
-        const worldStateCache = blockchainModule.createWorldStateCache("bar", bar);
-        const historyStorage = blockchainModule.createHistoryStorage("bar", bar);
-        const consensusAlgorithm = blockchainModule.createConsensusAlgorithm("direct");
-        const signatureProvider = blockchainModule.createSignatureProvider("permissive");
-        return blockchainModule.createBlockchain(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, true);
-    }
-
-    function createBar(localSeed) {
-        const envTypes = require("overwrite-require").constants;
-        const createEDFSBrickStorage = require("edfs-brick-storage").create;
-        const createFsAdapter = require("bar-fs-adapter").createFsAdapter;
-
-        const ArchiveConfigurator = barModule.ArchiveConfigurator;
-        ArchiveConfigurator.prototype.registerStorageProvider("EDFSBrickStorage", createEDFSBrickStorage);
-        ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", createFsAdapter);
-
-        const archiveConfigurator = new ArchiveConfigurator();
-        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
-            archiveConfigurator.setFsAdapter("FsAdapter");
-        }
-
-        archiveConfigurator.setEncryptionAlgorithm("aes-256-gcm");
-        archiveConfigurator.setBufferSize(1000000);
-        if (!localSeed) {
-            archiveConfigurator.setStorageProvider("EDFSBrickStorage", endpoint);
-            archiveConfigurator.setSeedEndpoint(endpoint);
-        } else {
-            archiveConfigurator.setSeed(localSeed);
-        }
-        archiveConfigurator.setCache(cache);
-
-        return barModule.createArchive(archiveConfigurator);
-    }
+},{"dossier":"dossier","key-ssi-resolver":"key-ssi-resolver","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier/lib/RawDossier.js":[function(require,module,exports){
+function RawDossier(bar) {
+    Object.assign(this, bar);
 }
 
 module.exports = RawDossier;
 
-},{"./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/Manifest.js","bar":false,"bar-fs-adapter":false,"blockchain":false,"edfs-brick-storage":false,"overwrite-require":"overwrite-require","swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js":[function(require,module,exports){
-const HTTPBrickTransportStrategy = require("./brickTransportStrategies/HTTPBrickTransportStrategy");
-HTTPBrickTransportStrategy.prototype.HTTP_BRICK_TRANSPORT_STRATEGY = "HTTP_BRICK_TRANSPORT_STRATEGY";
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
+'use strict';
+
+function RequestsChain() {
+    const chain = [];
+
+    /**
+     * Check if error fatal
+     * If this returns true, the chain should break
+     * @param {object} err
+     * @return {boolean}
+     */
+    const isFatalError = (err) => {
+        return true;
+    }
+
+    /**
+     * @param {object} handler
+     * @param {string} method
+     * @param {Array} args
+     */
+    this.add = (handler, method, args) => {
+        chain.push([handler, method, args]);
+    }
+
+    /**
+     * @param {callback} callback
+     */
+    const executeChain = (callback) => {
+        if (chain.length === 0) {
+            return callback('No endpoint provided. Check EDFS documentation!')
+        }
+        const chainLink = chain.shift();
+        const handler = chainLink[0];
+        const method = chainLink[1];
+        const args = chainLink[2].slice();
+
+        const next = (err, result) => {
+            if (err) {
+                if (isFatalError(err)) {
+                    return callback(err);
+                }
+
+                if (!chain.length) {
+                    return callback(err);
+                }
+
+                return executeChain(callback);
+            }
+
+            return callback(undefined, result);
+        };
+
+        args.push(next);
+        handler[method].apply(handler, args);
+    }
+
+    /**
+     * @param {callback} callback
+     */
+    this.execute = function (callback) {
+        executeChain(callback);
+    }
+}
+
+module.exports = RequestsChain;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js":[function(require,module,exports){
+'use strict';
+
+const RequestsChain = require('./RequestsChain');
+const BRICK_STORAGE = 'brickStorage';
+const ANCHOR_SERVICE = 'anchorService';
+
+/**
+ *
+ * @param options.endpoints - array of objects that contain an endpoint and the endpoint's type
+ * @constructor
+ */
+
+function BootstrapingService(options) {
+    const openDSU = require("opendsu");
+    const services = {
+        'brickStorage': openDSU.loadApi("bricking"),
+        'anchorService': openDSU.loadApi("anchoring")
+    }
+    const bdns = openDSU.loadApi("bdns");
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+
+    /**
+     * @param {string} method
+     * @param {Array<object>} endpointsPool
+     * @param {string} favEndpoint
+     * @param {...} args
+     * @return {RequestChain}
+     */
+    const createRequestsChain = (method, serviceName, ...args) => {
+        const requestsChain = new RequestsChain();
+        const service = services[serviceName];
+
+        requestsChain.add(service, method, args);
+
+        return requestsChain;
+    };
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+    this.getBrick = (hashLinkSSI, callback) => {
+        const requestsChain = createRequestsChain('getBrick', BRICK_STORAGE, hashLinkSSI);
+        requestsChain.execute(callback);
+    }
+
+    this.getMultipleBricks = (hashLinkSSIs, callback) => {
+        const requestsChain = createRequestsChain('getMultipleBricks', BRICK_STORAGE, hashLinkSSIs);
+        requestsChain.execute(callback);
+    }
+
+    this.putBrick = (keySSI, brick, callback) => {
+        const requestsChain = createRequestsChain('putBrick', BRICK_STORAGE, keySSI, brick);
+        requestsChain.execute(callback);
+    }
+
+    this.versions = (keySSI, callback) => {
+        const requestsChain = createRequestsChain('versions', ANCHOR_SERVICE, keySSI);
+        requestsChain.execute(callback);
+
+    }
+
+    this.addVersion = (keySSI, hashLinkSSI, lastHashLinkSSI, callback) => {
+        const requestsChain = createRequestsChain('addVersion', ANCHOR_SERVICE, keySSI, hashLinkSSI, lastHashLinkSSI);
+        requestsChain.execute(callback);
+    }
+}
+
+module.exports = BootstrapingService;
+
+},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {DIDFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+const cache = require('psk-cache').factory();
+function BarFactory(options) {
+    const barModule = require('bar');
+    const fsAdapter = require('bar-fs-adapter');
+
+    const DEFAULT_BRICK_MAP_STRATEGY = "Diff";
+
+    options = options || {};
+    this.bootstrapingService = options.bootstrapingService;
+    this.keySSIFactory = options.keySSIFactory;
+    this.brickMapStrategyFactory = options.brickMapStrategyFactory;
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {BaseDID} keySSI
+     * @param {object} options
+     * @return {Archive}
+     */
+    const createInstance = (keySSI, options) => {
+        const ArchiveConfigurator = barModule.ArchiveConfigurator;
+        ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
+        const archiveConfigurator = new ArchiveConfigurator();
+        archiveConfigurator.setCache(cache);
+        const envTypes = require("overwrite-require").constants;
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+            archiveConfigurator.setFsAdapter("FsAdapter");
+        }
+        archiveConfigurator.setBufferSize(1000000);
+        archiveConfigurator.setKeySSI(keySSI);
+        archiveConfigurator.setBootstrapingService(this.bootstrapingService);
+        let brickMapStrategyName = options.brickMapStrategy;
+        let anchoringOptions = options.anchoringOptions;
+        if (!brickMapStrategyName) {
+            brickMapStrategyName = DEFAULT_BRICK_MAP_STRATEGY;
+        }
+        let brickMapStrategy;
+        try {
+            brickMapStrategy = createBrickMapStrategy(brickMapStrategyName, anchoringOptions);
+
+            archiveConfigurator.setBrickMapStrategy(brickMapStrategy);
+
+            if (options.validationRules) {
+                archiveConfigurator.setValidationRules(options.validationRules);
+            }
+        }catch(e) {
+            throw e;
+        }
+        const bar = barModule.createArchive(archiveConfigurator);
+        return bar;
+    }
+
+    /**
+     * @return {object}
+     */
+    const createBrickMapStrategy = (name, options) => {
+        const strategy = this.brickMapStrategyFactory.create(name, options);
+        return strategy;
+    }
+
+    /**
+     * @return {SecretDID}
+     * @param templateKeySSI
+     * @param callback
+     */
+    const initializeKeySSI = (templateKeySSI, callback) => {
+        if (typeof templateKeySSI === "function") {
+            callback = templateKeySSI;
+            templateKeySSI = undefined;
+        }
+
+        if (typeof templateKeySSI === "undefined") {
+            return callback(Error("A template keySSI should be provided when creating a new DSU."));
+        }
+        const KeySSIFactory = require("../KeySSIs/KeySSIFactory");
+        const keySSI = KeySSIFactory.createType(templateKeySSI.getName());
+        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, undefined, callback);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        options = options || {};
+        if (options.useSSIAsIdentifier) {
+            const bar = createInstance(keySSI, options);
+            return bar.init(err => callback(err, bar));
+        }
+
+        initializeKeySSI(keySSI, (err, _keySSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const bar = createInstance(_keySSI, options);
+            bar.init(err => callback(err, bar));
+        });
+    }
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        options = options || {};
+        const bar = createInstance(keySSI, options);
+        bar.load(err => callback(err, bar));
+    }
+}
+
+module.exports = BarFactory;
+
+},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","bar":false,"bar-fs-adapter":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function ConstDSUFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.load(keySSI, options, callback);
+    };
+}
+
+module.exports = ConstDSUFactory;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function WalletFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        const defaultOpts = {overwrite: false};
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        this.barFactory.create(keySSI, options, (err, wallet) => {
+            if (err) {
+                return callback(err);
+            }
+
+            wallet.mount("/code", options.dsuTypeSSI, (err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                return callback(undefined, wallet);
+
+                /*wallet.getKeySSI((err, _keySSI) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    callback(undefined, wallet);
+                });*/
+
+            }));
+        })
+
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        const defaultOpts = {overwrite: false};
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        this.barFactory.load(keySSI, options, (err, dossier) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, dossier);
+        });
+    };
+}
+
+module.exports = WalletFactory;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js":[function(require,module,exports){
+const BarFactory = require('./BarFactory');
+
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+const factories = {};
+
+function Factory(options) {
+    options = options || {};
+
+    const bootstrapingService = options.bootstrapingService;
+    const keySSIFactory = options.keySSIFactory;
+    const brickMapStrategyFactory = options.brickMapStrategyFactory
+
+    if (!bootstrapingService) {
+        throw new Error('BootstrapingService is required');
+    }
+
+    if (!keySSIFactory) {
+        throw new Error('A KeySSI factory is required');
+    }
+
+    if (!brickMapStrategyFactory) {
+        throw new Error('A BrickMapStratregy factory is required');
+    }
+
+    /**
+     * Initialize the factory state
+     */
+    const initialize = () => {
+        const barFactory = new BarFactory({
+            bootstrapingService,
+            keySSIFactory,
+            brickMapStrategyFactory
+        });
+
+        this.registerDSUType("seed", barFactory);
+        const WalletFactory = require("./WalletFactory");
+        const walletFactory = new WalletFactory({barFactory});
+        this.registerDSUType("wallet", walletFactory);
+        const ConstDSUFactory = require("./ConstDSUFactory");
+        const constDSUFactory = new ConstDSUFactory({barFactory});
+        this.registerDSUType("const", constDSUFactory);
+        this.registerDSUType("array", constDSUFactory);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} representation
+     * @return {boolean}
+     */
+    this.isValidKeySSI = (keySSI) => {
+        return typeof factories[keySSI.getName()] !== 'undefined';
+    };
+
+
+    /**
+     * @param {object} keySSI
+     * @param {object} dsuConfiguration
+     * @param {string} dsuConfiguration.favouriteEndpoint
+     * @param {string} dsuConfiguration.brickMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} dsuConfiguration.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} dsuConfiguration.anchoringOptions.anchoringCb A callback which is called when the strategy anchors the changes
+     * @param {callback} dsuConfiguration.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} dsuConfiguration.validationRules
+     * @param {object} dsuConfiguration.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, dsuConfiguration, callback) => {
+        let type = keySSI.getName();
+        if (keySSI.options && keySSI.options.dsuFactoryType) {
+            type = keySSI.options.dsuFactoryType;
+        }
+        const factory = factories[type];
+        factory.create(keySSI, dsuConfiguration, callback);
+    }
+
+    /**
+     * @param {object} keySSI
+     * @param {string} representation
+     * @param {object} dsuConfiguration
+     * @param {string} dsuConfiguration.brickMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} dsuConfiguration.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} dsuConfiguration.anchoringOptions.anchoringCb A callback which is called when the strategy anchors the changes
+     * @param {callback} dsuConfiguration.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} dsuConfiguration.validationRules
+     * @param {object} dsuConfiguration.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, dsuConfiguration, callback) => {
+        let type = keySSI.getName();
+        if (keySSI.options && keySSI.options.dsuFactoryType) {
+            type = keySSI.options.dsuFactoryType;
+        }
+        const factory = factories[type];
+        return factory.load(keySSI, dsuConfiguration, callback);
+    }
+
+    initialize();
+}
+
+/**
+ * @param {string} dsuType
+ * @param {object} factory
+ */
+Factory.prototype.registerDSUType = (dsuType, factory) => {
+    factories[dsuType] = factory;
+}
+
+Factory.prototype.getDSUFactory = (dsuType) => {
+    return factories[dsuType];
+}
+
+module.exports = Factory;
+},{"./BarFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+const constants = require('./constants');
+const defaultBootStrapingService = require("./BootstrapingService");
+/**
+ * @param {string} options.dlDomain
+ * @param {BoostrapingService} options.bootstrapingService
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ * @param {DSUFactory} options.dsuFactory
+ */
+function KeySSIResolver(options) {
+    options = options || {};
+
+    const bootstrapingService = options.bootstrapingService || defaultBootStrapingService;
+    const dlDomain = options.dlDomain || constants.DEFAULT_DOMAIN;
+
+    if (!bootstrapingService) {
+        throw new Error('BootstrapingService is required');
+    }
+
+    const brickMapStrategyFactory = options.brickMapStrategyFactory;
+
+    const dsuFactory = options.dsuFactory;
+
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {string} dsuRepresentation
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn A function which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.createDSU = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        dsuFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {string} dsuRepresentation
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules 
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.loadDSU = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        if (!dsuFactory.isValidKeySSI(keySSI)) {
+            return callback(new Error(`Invalid KeySSI: ${keySSI.getName()}`));
+        }
+
+        dsuFactory.load(keySSI, options, callback);
+    };
+
+    /**
+     * @return {DSUFactory}
+     */
+    this.getDSUFactory = () => {
+        return dsuFactory;
+    }
+
+    /**
+     * @return {BootstrapingService}
+     */
+    this.getBootstrapingService = () => {
+        return bootstrapingService;
+    }
+
+    /**
+     * @return {BrickMapStrategyFactory}
+     */
+    this.getBrickMapStrategyFactory = () => {
+        return brickMapStrategyFactory;
+    }
+}
+
+module.exports = KeySSIResolver;
+
+},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+function ArraySSI(identifier) {
+    const SSITypes = require("../SSITypes");
+    const KeySSIMixin = require("../KeySSIMixin");
+    const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.getName = () => {
+        return SSITypes.ARRAY_SSI;
+    };
+
+    this.initialize = (dlDomain, arr,   vn, hint) => {
+        this.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getKeyDerivationFunction(this)(arr.join(''), 1000), "", vn, hint);
+    };
+
+    this.derive = () => {
+        const ConstSSI = require("./ConstSSI");
+        const constSSI = ConstSSI.createConstSSI();
+        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), getEncryptionKey(), this.getControl(), this.getVn(), this.getHint());
+        return constSSI;
+    };
+
+    let getEncryptionKey = this.getEncryptionKey;
+    this.getEncryptionKey = () => {
+        return this.derive().getEncryptionKey();
+    };
+}
+
+function createArraySSI(identifier) {
+    return new ArraySSI(identifier);
+}
 
 module.exports = {
-    CSB: {
-        CODE_FOLDER: "code",
-        CONSTITUTION_FOLDER: 'constitution',
-        BLOCKCHAIN_FOLDER: 'blockchain',
-        APP_FOLDER: 'app',
-        DOMAIN_IDENTITY_FILE: 'domain_identity',
-        ASSETS_FOLDER: "assets",
-        TRANSACTIONS_FOLDER: "transactions",
-        APPS_FOLDER: "apps",
-        DATA_FOLDER: "data",
-        MANIFEST_FILE: "manifest"
+    createArraySSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function CZaSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, hpk, vn, hint) => {
+        this.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
+    };
+
+    this.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createCZaSSI(identifier) {
+    return new CZaSSI(identifier);
+}
+
+module.exports = {
+    createCZaSSI
+};
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const CZaSSI = require("./CZaSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function ConstSSI(identifier){
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
+        this.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
+    };
+
+    this.derive = () => {
+        const cZaSSI = CZaSSI.createCZaSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
+        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        return cZaSSI;
+    };
+}
+
+function createConstSSI(identifier) {
+    return new ConstSSI(identifier);
+}
+
+module.exports = {
+    createConstSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const ConstSSI = require("./ConstSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function PasswordSSI(identifier){
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, context, password, kdfOptions, vn, hint) => {
+        const subtypeSpecificString = cryptoRegistry.getKeyDerivationFunction(this)(context + password, kdfOptions);
+        this.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
+    };
+
+    this.derive = () => {
+        const constSSI = ConstSSI.createConstSSI();
+        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), this.getSubtypeSpecificString(), this.getControl(), this.getVn(), this.getHint());
+        return constSSI;
+    };
+
+    this.getEncryptionKey = () => {
+        return this.derive().getEncryptionKey();
+    };
+}
+
+function createPasswordSSI(identifier) {
+    return new PasswordSSI(identifier);
+}
+
+module.exports = {
+    createPasswordSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
+(function (Buffer){
+const crypto = require("pskcrypto");
+const SSITypes = require("./SSITypes");
+const algorithms = {};
+const defaultAlgorithms = {
+    hash: (data) => {
+        return crypto.hash('sha256', data, 'hex');
+    },
+    keyDerivation: (password, iterations) => {
+        return crypto.deriveKey('aes-256-gcm', password, iterations);
+    },
+    encryptionKeyGeneration: () => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        return pskEncryption.generateEncryptionKey();
+    },
+    encryption: (plainData, encryptionKey, options) => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        return pskEncryption.encrypt(plainData, encryptionKey, options);
+    },
+    decryption: (encryptedData, decryptionKey, authTagLength, options) => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        const utils = require("swarmutils");
+        if (!Buffer.isBuffer(decryptionKey)) {
+            decryptionKey = utils.convertToBuffer(decryptionKey);
+        }
+        if (!Buffer.isBuffer(encryptedData)) {
+            encryptedData = utils.convertToBuffer(encryptedData);
+        }
+        return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
+    },
+    encoding: (data) => {
+        return crypto.pskBase58Encode(data);
+    },
+    decoding: (data) => {
+        return crypto.pskBase58Decode(data);
+    },
+    keyPairGenerator: () => {
+        return crypto.createKeyPairGenerator();
+    },
+    sign: (data, privateKey) => {
+        const keyGenerator = crypto.createKeyPairGenerator();
+        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+        return crypto.sign('sha256', data, keyGenerator.convertKeys(privateKey, rawPublicKey).privateKey);
+    },
+    verify: (data, privateKey, signature) => {
+        const keyGenerator = crypto.createKeyPairGenerator();
+        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+        const publicKey = keyGenerator.convertKeys(privateKey, rawPublicKey).publicKey;
+        return crypto.verify('sha256', data, publicKey, signature);
     }
 };
 
-},{"./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js":[function(require,module,exports){
+function CryptoAlgorithmsRegistry() {
+}
+
+const registerCryptoFunction = (keySSIType, vn, algorithmType, cryptoFunction) => {
+    if (typeof algorithms[keySSIType] !== "undefined" && typeof algorithms[vn] !== "undefined" && typeof algorithms[vn][algorithmType] !== "undefined") {
+        throw Error(`A ${algorithmType} is already registered for version ${vn}`);
+    }
+    if (typeof algorithms[keySSIType] === "undefined") {
+        algorithms[keySSIType] = {};
+    }
+
+    if (typeof algorithms[keySSIType][vn] === "undefined") {
+        algorithms[keySSIType][vn] = {};
+    }
+
+    algorithms[keySSIType][vn][algorithmType] = cryptoFunction;
+};
+
+const getCryptoFunction = (keySSI, algorithmType) => {
+    let cryptoFunction;
+    try {
+        cryptoFunction = algorithms[keySSI.getName()][keySSI.getVn()][algorithmType];
+    } catch (e) {
+        cryptoFunction = defaultAlgorithms[algorithmType];
+    }
+
+    if (typeof cryptoFunction === "undefined") {
+        throw Error(`Algorithm type <${algorithmType}> not recognized`);
+    }
+    return cryptoFunction;
+};
+
+
+CryptoAlgorithmsRegistry.prototype.registerHashFunction = (keySSIType, vn, hashFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'hash', hashFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getHashFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'hash');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerKeyDerivationFunction = (keySSIType, vn, keyDerivationFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'keyDerivation', keyDerivationFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getKeyDerivationFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'keyDerivation');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerEncryptionFunction = (keySSIType, vn, encryptionFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'encryption', encryptionFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncryptionFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'encryption');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerEncryptionKeyGenerationFunction = (keySSIType, vn, keyGeneratorFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'encryptionKeyGeneration', keyGeneratorFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncryptionKeyGenerationFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'encryptionKeyGeneration');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerDecryptionFunction = (keySSIType, vn, decryptionFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'decryption', decryptionFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getDecryptionFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'decryption');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerEncodingFunction = (keySSIType, vn, encodingFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'encoding', encodingFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'encoding');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerDecodingFunction = (keySSIType, vn, decodingFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'decoding', decodingFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getDecodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'decoding');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerKeyPairGenerator = (keySSIType, vn, keyPairGenerator) => {
+    registerCryptoFunction(keySSIType, vn, 'keyPairGenerator', keyPairGenerator);
+};
+
+CryptoAlgorithmsRegistry.prototype.getKeyPairGenerator = (keySSI) => {
+    return getCryptoFunction(keySSI, 'keyPairGenerator');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerSignFunction = (keySSIType, vn, signFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'sign', signFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'sign');
+};
+
+CryptoAlgorithmsRegistry.prototype.registerVerifyFunction = (keySSIType, vn, verifyFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'verify', verifyFunction);
+};
+
+CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'verify');
+};
+
+module.exports = new CryptoAlgorithmsRegistry();
+}).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
+
+},{"../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":false,"swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+const DSURepresentationNames = {
+    "seed": "RawDossier"
+}
+
+module.exports = DSURepresentationNames;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
+const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
+const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
+const createPublicSSI = require("./SecretSSIs/PublicSSI").createPublicSSI;
+const createZaSSI = require("./SecretSSIs/ZaSSI").createZaSSI;
+const createSeedSSI = require("./SeedSSIs/SeedSSI").createSeedSSI;
+const createWalletSSI = require("./OtherKeySSIs/WalletSSI").createWalletSSI;
+const createSReadSSI = require("./SeedSSIs/SReadSSI").createSReadSSI;
+const createSZaSSI = require("./SeedSSIs/SZaSSI").createSZaSSI;
+const createPasswordSSI = require("./ConstSSIs/PasswordSSI").createPasswordSSI;
+const createArraySSI = require("./ConstSSIs/ArraySSI").createArraySSI;
+const createConstSSI = require("./ConstSSIs/ConstSSI").createConstSSI;
+const createCZaSSI = require("./ConstSSIs/CZaSSI").createCZaSSI;
+const createHashLinkSSI = require("./OtherKeySSIs/HashLinkSSI").createHashLinkSSI;
+
+const SSITypes = require("./SSITypes");
+
+const registry = {};
+
+function KeySSIFactory() {
+}
+
+KeySSIFactory.prototype.registerFactory = (typeName, vn, derivedType, functionFactory) => {
+    if (typeof derivedType === "function") {
+        functionFactory = derivedType;
+        derivedType = undefined;
+    }
+
+    if (typeof registry[typeName] !== "undefined") {
+        throw Error(`A function factory for KeySSI of type ${typeName} is already registered.`);
+    }
+
+    registry[typeName] = {derivedType, functionFactory};
+};
+
+KeySSIFactory.prototype.create = (identifier, options) => {
+    if (typeof identifier === "undefined") {
+        throw Error("An SSI should be provided");
+    }
+
+    const KeySSIMixin = require("./KeySSIMixin");
+    let keySSI = {}
+    KeySSIMixin(keySSI);
+    keySSI.autoLoad(identifier);
+
+    const typeName = keySSI.getName();
+
+    keySSI = registry[typeName].functionFactory(identifier);
+    keySSI.options = options;
+    return keySSI;
+};
+
+KeySSIFactory.prototype.createType = (typeName)=>{
+    return registry[typeName].functionFactory();
+}
+
+KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
+    if (keySSI.getName() === otherType) {
+        return keySSI;
+    }
+    let currentEntry = registry[otherType];
+    if (typeof currentEntry === "undefined") {
+        return callback(Error(`${otherType} is not a registered KeySSI type.`))
+    }
+
+    while (typeof currentEntry.derivedType !== "undefined") {
+        if (currentEntry.derivedType === keySSI.getName()) {
+            return $$.securityContext.getRelatedSSI(keySSI, otherType, callback);
+        }
+        currentEntry = registry[currentEntry.derivedType];
+    }
+
+    let derivedKeySSI;
+    try {
+        derivedKeySSI = getDerivedType(keySSI, otherType);
+    } catch (err){
+        return callback(err);
+    }
+
+    callback(undefined, derivedKeySSI);
+};
+
+KeySSIFactory.prototype.getAnchorType = (keySSI) => {
+    let localKeySSI = keySSI;
+    while (typeof registry[localKeySSI.getName()].derivedType !== "undefined") {
+        localKeySSI = localKeySSI.derive();
+    }
+    return localKeySSI;
+};
+
+const getDerivedType = (keySSI, derivedTypeName) => {
+    let localKeySSI = keySSI;
+    let currentEntry = registry[localKeySSI.getName()];
+    while (typeof currentEntry.derivedType !== "undefined") {
+        if (currentEntry.derivedType === derivedTypeName) {
+            return localKeySSI.derive();
+        }
+        localKeySSI = localKeySSI.derive();
+        currentEntry = registry[currentEntry.derivedType];
+    }
+
+    throw Error(`${derivedTypeName} is not a valid KeySSI Type`);
+};
+
+KeySSIFactory.prototype.registerFactory(SSITypes.SECRET_SSI, 'v0', SSITypes.ANCHOR_SSI, createSecretSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.ANCHOR_SSI, 'v0', SSITypes.READ_SSI, createAnchorSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.READ_SSI, 'v0', SSITypes.PUBLIC_SSI, createReadSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_SSI, 'v0', SSITypes.ZERO_ACCESS_SSI, createPublicSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.ZERO_ACCESS_SSI, 'v0', undefined, createZaSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SEED_SSI, 'v0', SSITypes.SREAD_SSI, createSeedSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.WALLET_SSI, 'v0', SSITypes.SREAD_SSI, createWalletSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SREAD_SSI, 'v0', SSITypes.SZERO_ACCESS_SSI, createSReadSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SZERO_ACCESS_SSI, 'v0', undefined, createSZaSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.PASSWORD_SSI, 'v0', SSITypes.CONST_SSI, createPasswordSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.ARRAY_SSI, 'v0', SSITypes.CONST_SSI, createArraySSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.CONST_SSI, 'v0', SSITypes.CONSTANT_ZERO_ACCESS_SSI, createConstSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.CONSTANT_ZERO_ACCESS_SSI, 'v0', undefined, createCZaSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.HASH_LINK_SSI, 'v0', undefined, createHashLinkSSI);
+
+module.exports = new KeySSIFactory();
+},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+const cryptoRegistry = require("./CryptoAlgorithmsRegistry");
+const pskCrypto = require("pskcrypto");
+
+function keySSIMixin(target){
+        let _prefix = "ssi";
+        let _subtype;
+        let _dlDomain;
+        let _subtypeSpecificString;
+        let _control;
+        let _vn = "v0";
+        let _hint;
+
+    target.autoLoad = function (identifier) {
+        if(typeof identifier === "undefined"){
+            return;
+        }
+
+        if(typeof identifier !== "string"){
+            throw new Error("The identifier should be string");
+        }
+
+        let originalId = identifier;
+        if(identifier.indexOf(":") === -1){
+            identifier = pskCrypto.pskBase58Decode(identifier).toString();
+        }
+
+        if(identifier.indexOf(":") === -1){
+            throw new Error(`Wrong format of SSI. ${originalId} ${identifier}`);
+        }
+
+        let segments = identifier.split(":");
+        segments.shift();
+        _subtype = segments.shift();
+        _dlDomain = segments.shift();
+        _subtypeSpecificString = segments.shift();
+        _control = segments.shift();
+        let version = segments.shift();
+        if (version !== '') {
+            _vn = version;
+        }
+        if (segments.length > 0) {
+            _hint = segments.join(":");
+        }
+        _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
+    }
+
+    target.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
+        _subtype = subtype;
+        _dlDomain = dlDomain;
+        _subtypeSpecificString = subtypeSpecificString;
+        _control = control;
+        _vn = vn || "v0";
+        _hint = hint;
+    }
+
+    /**
+     *
+     * @param ssiType - string
+     * @param callback - function
+     */
+    target.getRelatedType = function (ssiType, callback) {
+        const KeySSIFactory = require("./KeySSIFactory");
+        KeySSIFactory.getRelatedType(target, ssiType, callback);
+    }
+
+    target.getAnchorId = function () {
+        const keySSIFactory = require("./KeySSIFactory");
+        return keySSIFactory.getAnchorType(target).getIdentifier();
+    }
+
+    target.getEncryptionKey = function () {
+        return _subtypeSpecificString;
+    }
+
+    target.getSpecificString = function () {
+        return _subtypeSpecificString;
+    }
+
+    target.getName = function () {
+        return _subtype;
+    }
+
+    target.getDLDomain = function () {
+        return _dlDomain;
+    }
+
+    target.getControl = function () {
+        return _control;
+    }
+
+    target.getHint = function () {
+        return _hint;
+    }
+
+    target.getVn = function () {
+        return _vn;
+    }
+
+    target.getDSURepresentationName = function () {
+        const DSURepresentationNames = require("./DSURepresentationNames");
+        return DSURepresentationNames[_subtype];
+    }
+
+    target.getIdentifier = function (plain) {
+        const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
+        let id = `${_prefix}:${target.getName()}:${_dlDomain}:${key}:${_control}:${_vn}`;
+
+        if (typeof _hint !== "undefined") {
+            id += ":" + _hint;
+        }
+
+        return plain ? id : pskCrypto.pskBase58Encode(id);
+    }
+
+    target.clone = function(){
+        let clone = {};
+        clone.prototype = target.prototype;
+        for (let attr in target) {
+            if (target.hasOwnProperty(attr)){
+                clone[attr] = target[attr];
+            }
+        }
+        keySSIMixin(clone);
+        return clone;
+    }
+}
+
+module.exports = keySSIMixin;
+},{"./CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","pskcrypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function HashLinkSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, hash, vn) => {
+        this.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
+    };
+
+    this.getHash = () => {
+        return this.getEncryptionKey();
+    };
+
+    this.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createHashLinkSSI(identifier) {
+    return new HashLinkSSI(identifier);
+}
+
+module.exports = {
+    createHashLinkSSI
+};
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+const SeedSSI = require("./../SeedSSIs/SeedSSI");
+const SSITypes = require("../SSITypes");
+
+function WalletSSI(identifier) {
+    const seedSSI = SeedSSI.createSeedSSI(identifier);
+
+    seedSSI.getName = () => {
+        return SSITypes.WALLET_SSI;
+    };
+
+    Object.assign(this, seedSSI);
+
+    this.initialize = (dlDomain, privateKey, publicKey, vn, hint, callback) => {
+
+        let oldLoad = seedSSI.load;
+        seedSSI.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
+            oldLoad(SSITypes.WALLET_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
+        }
+
+        seedSSI.initialize(dlDomain, privateKey, publicKey, vn, hint, callback);
+    }
+
+    this.store = (options, callback) => {
+        let ssiCage = require("./../../ssiCage");
+        if(typeof options !== "undefined" && typeof options.ssiCage !== "undefined"){
+            ssiCage = options.ssiCage;
+        }
+
+        ssiCage.putSSI(this.getIdentifier(), options.password, options.overwrite, (err) => {
+            if (err) {
+                return callback(err);
+            }
+            callback(undefined, this);
+        });
+    }
+
+    //options.ssiCage - custom implementation of a SSI Cage
+    this.getSeedSSI = (secret, options, callback) => {
+        if(typeof options === "function"){
+            callback = options;
+            options = {};
+        }
+
+        let ssiCage = require("../../ssiCage");
+        if(typeof options.ssiCage !== "undefined"){
+            ssiCage = options.ssiCage;
+        }
+        ssiCage.getSSI(secret, (err, ssiSerialization)=>{
+            if(err){
+                return callback(err);
+            }
+
+            //SeedSSI or WalletSSI ???????????
+            let keySSI = SeedSSI.createSeedSSI(ssiSerialization);
+            keySSI.options = options;
+            callback(undefined, keySSI);
+        });
+    }
+
+    this.checkForSSICage = (callback) => {
+        let ssiCage = require("../../ssiCage");
+        ssiCage.check(callback);
+    }
+}
+
+function createWalletSSI(identifier) {
+    return new WalletSSI(identifier);
+}
+
+module.exports = {
+    createWalletSSI
+}
+
+},{"../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+module.exports = {
+    DEFAULT: "default",
+    SECRET_SSI: "secret",
+    ANCHOR_SSI: "anchor",
+    READ_SSI: "read",
+    PUBLIC_SSI: "public",
+    ZERO_ACCESS_SSI: "za",
+    SEED_SSI: "seed",
+    SREAD_SSI: "sread",
+    SZERO_ACCESS_SSI: "sza",
+    PASSWORD_SSI: "pass",
+    CONST_SSI: "const",
+    CONSTANT_ZERO_ACCESS_SSI: "cza",
+    ARRAY_SSI: "array",
+    HASH_LINK_SSI: "hl",
+    WALLET_SSI: "wallet"
+};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const ReadSSI = require("./ReadSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function AnchorSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.derive = () => {
+        const readSSI = ReadSSI.createReadSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
+        readSSI.load(SSITypes.READ_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        return readSSI;
+    };
+}
+
+function createAnchorSSI(identifier) {
+    return new AnchorSSI(identifier);
+}
+
+module.exports = {
+    createAnchorSSI
+}
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const ZaSSI = require("./ZaSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function PublicSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.derive = () => {
+        const zaSSI = ZaSSI.createZaSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey())
+        zaSSI.initialize(SSITypes.ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        return zaSSI;
+    };
+}
+
+function createPublicSSI(identifier) {
+    return new PublicSSI(identifier);
+}
+
+module.exports = {
+    createPublicSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const PublicSSI = require("./PublicSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function ReadSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.load(identifier);
+    }
+
+    this.derive = () => {
+        const publicSSI = PublicSSI.createPublicSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
+        publicSSI.load(SSITypes.PUBLIC_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        return publicSSI;
+    };
+}
+
+function createReadSSI(identifier) {
+    return new ReadSSI(identifier);
+}
+
+module.exports = {
+    createReadSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const AnchorSSI = require("./AnchorSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function SecretSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.derive = () => {
+        const anchorSSI = AnchorSSI.createAnchorSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey())
+        anchorSSI.load(SSITypes.ANCHOR_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        return anchorSSI;
+    };
+}
+
+function createSecretSSI (identifier){
+    return new SecretSSI(identifier);
+}
+module.exports = {
+    createSecretSSI
+}
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+function ZaSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createZaSSI(identifier) {
+    return new ZaSSI(identifier);
+}
+
+module.exports = {
+    createZaSSI
+};
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+(function (Buffer){
+const KeySSIMixin = require("../KeySSIMixin");
+const SZaSSI = require("./SZaSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function SReadSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, vn, hint) => {
+        this.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
+    };
+
+    this.derive = () => {
+        const sZaSSI = SZaSSI.createSZaSSI();
+        const subtypeKey = '';
+        const subtypeControl = cryptoRegistry.getHashFunction(this)(this.getControl());
+        sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        return sZaSSI;
+    };
+
+    let getEncryptionKey = this.getEncryptionKey;
+
+    this.getEncryptionKey = () => {
+        return Buffer.from(getEncryptionKey(), 'hex');
+    };
+}
+
+function createSReadSSI(identifier) {
+    return new SReadSSI(identifier)
+}
+
+module.exports = {
+    createSReadSSI
+};
+}).call(this,require("buffer").Buffer)
+
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function SZaSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.initialize = (dlDomain, hpk, vn, hint) => {
+        this.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
+    };
+
+    this.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createSZaSSI(identifier) {
+    return new SZaSSI(identifier);
+}
+
+module.exports = {
+    createSZaSSI
+};
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SReadSSI = require("./SReadSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function SeedSSI(identifier) {
+    KeySSIMixin(this);
+
+    if (typeof identifier !== "undefined") {
+        this.autoLoad(identifier);
+    }
+
+    this.getName = () => {
+        return SSITypes.SEED_SSI;
+    };
+
+    this.initialize = function (dlDomain, privateKey, publicKey, vn, hint, callback){
+        let subtypeSpecificString = privateKey;
+
+        if (typeof subtypeSpecificString === "undefined") {
+            return cryptoRegistry.getKeyPairGenerator(this)().generateKeyPair((err, publicKey, privateKey) => {
+                if (err) {
+                    return callback(err);
+                }
+                subtypeSpecificString = privateKey;
+                this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
+                callback(undefined, this);
+            });
+        }
+        this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
+        callback(undefined, this);
+    };
+
+    this.derive = function() {
+        const sReadSSI = SReadSSI.createSReadSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getSpecificString());
+        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.getSpecificString());
+        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
+        sReadSSI.load(SSITypes.SREAD_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        return sReadSSI;
+
+        /*
+        const sReadSSI = SReadSSI.createSReadSSI();
+        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.subtypeSpecificString);
+        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.subtypeSpecificString);
+        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
+        sReadSSI.load(SSITypes.SREAD_SSI, this.dlDomain, subtypeKey, subtypeControl, this.vn, this.hint);
+        return sReadSSI;
+        * */
+    };
+
+    let getEncryptionKey = this.getEncryptionKey;
+
+    this.getEncryptionKey = function() {
+        return this.derive().getEncryptionKey();
+    };
+}
+
+function createSeedSSI(identifier) {
+    return new SeedSSI(identifier);
+}
+
+module.exports = {
+    createSeedSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+    DEFAULT_DOMAIN: 'localDomain',
+    DID_VERSION: '1',
+    DEFAULT_BAR_MAP_STRATEGY: 'Diff',
+}
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js":[function(require,module,exports){
 (function (Buffer){
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
-const storageLocation = "seedCage";
+
+const storageLocation = "SSICage";
 const algorithm = "aes-256-cfb";
 
 /**
  * local storage can't handle properly binary data
  *  https://stackoverflow.com/questions/52419694/how-to-store-uint8array-in-the-browser-with-localstorage-using-javascript
- * @param pin
+ * @param secret
  * @param callback
  * @returns {*}
  */
-function getSeed(pin, callback) {
-    let encryptedSeed;
-    let seed;
+function getSSI(secret, callback) {
+    let encryptedSSI;
+    let keySSI;
     try {
-        encryptedSeed = localStorage.getItem(storageLocation);
-        if (encryptedSeed === null || typeof encryptedSeed !== "string" || encryptedSeed.length === 0) {
-            return callback(new Error("SeedCage is empty or data was altered"));
+        encryptedSSI = localStorage.getItem(storageLocation);
+        if (encryptedSSI === null || typeof encryptedSSI !== "string" || encryptedSSI.length === 0) {
+            return callback(new Error("SSI Cage is empty or data was altered"));
         }
 
-        const retrievedEncryptedArr = JSON.parse(encryptedSeed);
-        encryptedSeed = new Uint8Array(retrievedEncryptedArr);
+        const retrievedEncryptedArr = JSON.parse(encryptedSSI);
+        encryptedSSI = new Uint8Array(retrievedEncryptedArr);
         const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, pin);
-        seed = pskEncryption.decrypt(encryptedSeed, encKey).toString();
+        const encKey = crypto.deriveKey(algorithm, secret);
+        keySSI = pskEncryption.decrypt(encryptedSSI, encKey).toString();
     } catch (e) {
         return callback(e);
     }
-    callback(undefined, seed);
+    callback(undefined, keySSI);
 }
 
-function putSeed(seed, pin, overwrite = false, callback) {
-    let encSeed;
+function putSSI(keySSI, secret, overwrite = false, callback) {
+    let encryptedSSI;
 
     if (typeof overwrite === "function") {
         callback(Error("TODO: api signature updated!"));
     }
     try {
-        if (typeof seed === "string") {
-            seed = Buffer.from(seed);
+        if (typeof keySSI === "string") {
+            keySSI = Buffer.from(keySSI);
         }
-        if (typeof seed === "object" && !Buffer.isBuffer(seed)) {
-            seed = Buffer.from(seed);
+        if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
+            keySSI = Buffer.from(keySSI);
         }
 
         const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, pin);
-        encSeed = pskEncryption.encrypt(seed, encKey);
-        const encParameters = pskEncryption.getEncryptionParameters();
-        encSeed = Buffer.concat([encSeed, encParameters.iv]);
-        if (encParameters.aad) {
-            encSeed = Buffer.concat([encSeed, encParameters.aad]);
-        }
-
-        if (encParameters.tag) {
-            encSeed = Buffer.concat([encSeed, encParameters.tag]);
-        }
-
-        const encryptedArray =  Array.from(encSeed);
+        const encKey = crypto.deriveKey(algorithm, secret);
+        encryptedSSI = pskEncryption.encrypt(keySSI, encKey);
+        const encryptedArray =  Array.from(encryptedSSI);
         const encryptedSeed = JSON.stringify(encryptedArray);
 
         localStorage.setItem(storageLocation, encryptedSeed);
@@ -1059,132 +1757,122 @@ function check(callback) {
     if (item) {
         return callback();
     }
-    callback(new Error("SeedCage does not exists"));
+    callback(new Error("SSI Cage does not exists"));
 }
 
 module.exports = {
     check,
-    putSeed,
-    getSeed
+    putSSI,
+    getSSI
 };
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js":[function(require,module,exports){
 (function (Buffer){
 const pth = "path";
 const path = require(pth);
-const os = "os";
+
 const fileSystem = "fs";
 const fs = require(fileSystem);
+
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
-
-
-const storageLocation = process.env.SEED_CAGE_LOCATION || require(os).homedir();
-const storageFileName = ".seedCage";
-const seedCagePath = path.join(storageLocation, storageFileName);
 const algorithm = "aes-256-cfb";
 
-function getSeed(password, callback) {
-    fs.readFile(seedCagePath, (err, encryptedSeed) => {
+const os = "os";
+const storageLocation = process.env.SEED_CAGE_LOCATION || require(os).homedir();
+const storageFileName = ".SSICage";
+const ssiCagePath = path.join(storageLocation, storageFileName);
+
+function getSSI(secret, callback) {
+    fs.readFile(ssiCagePath, (err, encryptedSeed) => {
         if (err) {
             return callback(err);
         }
 
-        let seed;
+        let keySSI;
         try {
             const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, password);
-            seed = pskEncryption.decrypt(encryptedSeed, encKey).toString();
+            const encKey = crypto.deriveKey(algorithm, secret);
+            keySSI = pskEncryption.decrypt(encryptedSeed, encKey).toString();
         } catch (e) {
             return callback(e);
         }
 
-        callback(undefined, seed);
+        callback(undefined, keySSI);
     });
 }
 
-function putSeed(seed, password, overwrite = false, callback) {
+function putSSI(keySSI, secret, overwrite = false, callback) {
     fs.mkdir(storageLocation, {recursive: true}, (err) => {
         if (err) {
             return callback(err);
         }
 
-        fs.stat(seedCagePath, (err, stats) => {
+        fs.stat(ssiCagePath, (err, stats) => {
             if (!err && stats.size > 0) {
                 if (overwrite) {
-                    __encryptSeed();
+                    __encryptSSI();
                 } else {
                     return callback(Error("Attempted to overwrite existing SEED."));
                 }
             } else {
-                __encryptSeed();
+                __encryptSSI();
             }
 
-            function __encryptSeed() {
+            function __encryptSSI() {
                 let encSeed;
                 try {
-                    if (typeof seed === "string") {
-                        seed = Buffer.from(seed);
+                    if (typeof keySSI === "string") {
+                        keySSI = Buffer.from(keySSI);
                     }
 
-                    if (typeof seed === "object" && !Buffer.isBuffer(seed)) {
-                        seed = Buffer.from(seed);
+                    if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
+                        keySSI = Buffer.from(keySSI);
                     }
-
 
                     const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, password);
-                    encSeed = pskEncryption.encrypt(seed, encKey);
-                    const encParameters = pskEncryption.getEncryptionParameters();
-                    encSeed = Buffer.concat([encSeed, encParameters.iv]);
-                    if (encParameters.aad) {
-                        encSeed = Buffer.concat([encSeed, encParameters.aad]);
-                    }
-
-                    if (encParameters.tag) {
-                        encSeed = Buffer.concat([encSeed, encParameters.tag]);
-                    }
+                    const encKey = crypto.deriveKey(algorithm, secret);
+                    encSeed = pskEncryption.encrypt(keySSI, encKey);
                 } catch (e) {
                     return callback(e);
                 }
 
-                console.log("To be removed later", seed.toString());
-                fs.writeFile(seedCagePath, encSeed, callback);
+                fs.writeFile(ssiCagePath, encSeed, callback);
             }
         });
     });
 }
 
 function check(callback) {
-    fs.access(seedCagePath, callback);
+    fs.access(ssiCagePath, callback);
 }
 
 module.exports = {
     check,
-    putSeed,
-    getSeed
+    putSSI,
+    getSSI
 };
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js":[function(require,module,exports){
+},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js":[function(require,module,exports){
 const or = require("overwrite-require");
 switch ($$.environmentType) {
     case or.constants.THREAD_ENVIRONMENT_TYPE:
     case or.constants.NODEJS_ENVIRONMENT_TYPE:
-        module.exports = require("./NodeSeedCage");
+        module.exports = require("./NodeSSICage");
         break;
     case or.constants.BROWSER_ENVIRONMENT_TYPE:
-        module.exports = require("./BrowserSeedCage");
+        module.exports = require("./BrowserSSICage");
         break;
     case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
     case or.constants.ISOLATE_ENVIRONMENT_TYPE:
     default:
-        throw new Error("No implementation of SeedCage for this env type.");
+        throw new Error("No implementation of SSI Cage for this env type.");
 }
-},{"./BrowserSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/BrowserSeedCage.js","./NodeSeedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/NodeSeedCage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./BrowserSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js","./NodeSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -1650,11 +2338,6 @@ function isSlowBuffer (obj) {
 }
 
 },{}],"dossier":[function(require,module,exports){
-const se = require("swarm-engine");
-if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
-    se.initialise();
-}
-
 function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{
@@ -1684,6 +2367,11 @@ function envSetup(powerCord, seed, identity, callback){
 }
 
 module.exports.load = function(seed, identity, callback){
+    const se = require("swarm-engine");
+    if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
+        se.initialise();
+    }
+
     const envTypes = require("overwrite-require").constants;
     switch($$.environmentType){
         case envTypes.BROWSER_ENVIRONMENT_TYPE:
@@ -1703,54 +2391,54 @@ module.exports.load = function(seed, identity, callback){
             return callback(new Error(`Dossier can not be loaded in <${$$.environmentType}> environment type for now!`));
     }
 }
-},{"overwrite-require":"overwrite-require","pskcrypto":false,"swarm-engine":false}],"edfs":[function(require,module,exports){
-require("./brickTransportStrategies/brickTransportStrategiesRegistry");
-const constants = require("./moduleConstants");
 
-const or = require("overwrite-require");
-const browserContexts = [or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
-const cache = require('psk-cache').factory();
+module.exports.RawDossier = require("./lib/RawDossier");
+},{"./lib/RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/dossier/lib/RawDossier.js","overwrite-require":"overwrite-require","pskcrypto":false,"swarm-engine":false}],"key-ssi-resolver":[function(require,module,exports){
+const KeySSIResolver = require('./lib/KeySSIResolver');
+const constants = require('./lib/constants');
+const DSUFactory = require("./lib/DSUFactory");
+const BootStrapingService = require("./lib/BootstrapingService");
 
-if (browserContexts.indexOf($$.environmentType) !== -1) {
-    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/FetchBrickTransportStrategy"));
-} else {
-    $$.brickTransportStrategiesRegistry.add("http", require("./brickTransportStrategies/HTTPBrickTransportStrategy"));
+/**
+ * Create a new KeyDIDResolver instance and append it to
+ * global object $$
+ *
+ * @param {object} options
+ * @param {object} options.endpointsConfiguration
+ * @param {Array<object>} options.endpointsConfiguration.brick
+ * @param {Array<object>} options.endpointsConfiguration.alias
+ * @param {string} options.dlDomain
+ */
+function initialize(options) {
+    options = options || {};
+
+    const BrickMapStrategyFactory = require("bar").BrickMapStrategyFactory;
+
+    const bootstrapingService = new BootStrapingService(options);
+    const brickMapStrategyFactory = new BrickMapStrategyFactory();
+    const keySSIFactory = require('./lib/KeySSIs/KeySSIFactory');
+
+    options.dsuFactory =  new DSUFactory({
+        bootstrapingService,
+        brickMapStrategyFactory,
+        keySSIFactory
+    });
+
+    const keySSIResolver = new KeySSIResolver(options);
+
+    return keySSIResolver;
 }
 
 module.exports = {
-    attachToEndpoint(endpoint) {
-        const EDFS = require("./lib/EDFS");
-        return new EDFS(endpoint, {
-            cache
-        });
-    },
-    attachWithSeed(compactSeed, callback) {
-        const SEED = require("bar").Seed;
-        let seed;
-        try {
-            seed = new SEED(compactSeed);
-        } catch (err) {
-            return callback(err);
-        }
-
-        callback(undefined, this.attachToEndpoint(seed.getEndpoint()));
-    },
-    attachWithPassword(password, callback) {
-        require("./seedCage").getSeed(password, (err, seed) => {
-            if (err) {
-                return callback(err);
-            }
-
-            this.attachWithSeed(seed, callback);
-        });
-    },
-    checkForSeedCage(callback) {
-        require("./seedCage").check(callback);
-    },
-    constants: constants
+    initialize,
+    constants,
+    KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
+    CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
+    SSITypes: require("./lib/KeySSIs/SSITypes"),
+    DSUFactory: require("./lib/DSUFactory")
 };
 
-},{"./brickTransportStrategies/FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/FetchBrickTransportStrategy.js","./brickTransportStrategies/HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/HTTPBrickTransportStrategy.js","./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs/brickTransportStrategies/brickTransportStrategiesRegistry.js","./lib/EDFS":"/home/travis/build/PrivateSky/privatesky/modules/edfs/lib/EDFS.js","./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/edfs/moduleConstants.js","./seedCage":"/home/travis/build/PrivateSky/privatesky/modules/edfs/seedCage/index.js","bar":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"overwrite-require":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":false}],"overwrite-require":[function(require,module,exports){
 (function (global){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.

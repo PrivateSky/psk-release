@@ -389,13 +389,13 @@ $$.asset.describe("BarAnchor", {
     public: {
         alias: "string",
         mountPoint: "string",
-        barMapDigest: "string",
+        brickMapDigest: "string",
         readList: "array", //encrypted seeds with public keys
         writeList: "array", //agentIds
     },
-    init: function (mountPoint, barMapDigest) {
+    init: function (mountPoint, brickMapDigest) {
         this.mountPoint = mountPoint;
-        this.barMapDigest = barMapDigest;
+        this.brickMapDigest = brickMapDigest;
     },
     updateReadList: function (encryptedSeed) {
         if (!this.readList) {
@@ -770,8 +770,8 @@ module.exports = {
 };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
 $$.transaction.describe("StandardCSBTransactions", {
-    addBarAnchor: function (mountPoint, barMapDigest) {
-        this.transaction.createAsset("BarAnchor", "init", mountPoint, barMapDigest);
+    addBarAnchor: function (mountPoint, brickMapDigest) {
+        this.transaction.createAsset("BarAnchor", "init", mountPoint, brickMapDigest);
         this.commit();
     },
 

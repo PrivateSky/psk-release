@@ -83,6 +83,8 @@ function pendGo(self, fn) {
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/bar.js":[function(require,module,exports){
 const utils = require("../utils/utils");
+const EDFS = require("edfs");
+const RAW_DOSSIER_TYPE = "RawDossier";
 
 function listFiles(alseed, folderPath) {
     if (arguments.length === 0) {
@@ -120,23 +122,17 @@ function listFiles(alseed, folderPath) {
                 });
             });
         } else {
-            utils.getEDFS(alseed, (err, edfs) => {
+            EDFS.resolveSSI(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
 
-                edfs.loadRawDossier(alseed, (err, rawDossier) => {
+                rawDossier.listFiles(folderPath, (err, fileList) => {
                     if (err) {
                         throw err;
                     }
 
-                    rawDossier.listFiles(folderPath, (err, fileList) => {
-                        if (err) {
-                            throw err;
-                        }
-
                     console.log("Files:", fileList);
-                });
                 });
             });
         }
@@ -163,23 +159,19 @@ function getApp(alseed, barPath, fsFolderPath) {
             });
         });
     } else {
-        utils.getEDFS(alseed, (err, edfs) => {
+
+
+        EDFS.resolveSSI(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
             if (err) {
                 throw err;
             }
 
-            edfs.loadRawDossier(alseed, (err, rawDossier) => {
+            rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
 
-                rawDossier.extractFolder(fsFolderPath, barPath, (err) => {
-                    if (err) {
-                        throw err;
-                    }
-
-                    console.log("Extracted folder.");
-                });
+                console.log("Extracted folder.");
             });
         });
     }
@@ -205,23 +197,18 @@ function extractFile(alseed, barPath, fsFilePath) {
             });
         });
     } else {
-        utils.getEDFS(alseed, (err, edfs) => {
+
+        EDFS.resolveSSI(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
             if (err) {
                 throw err;
             }
 
-            edfs.loadRawDossier(alseed, (err, rawDossier) => {
+            rawDossier.extractFile(fsFilePath, barPath, (err) => {
                 if (err) {
                     throw err;
                 }
 
-                rawDossier.extractFile(fsFilePath, barPath, (err) => {
-                    if (err) {
-                        throw err;
-                    }
-
-                    console.log("Extracted file.");
-                });
+                console.log("Extracted file.");
             });
         });
     }
@@ -232,15 +219,17 @@ addCommand("get", "app", getApp, " <archiveSeed>/<alias> <archivePath> <fsFolder
 addCommand("extract", "file", extractFile, " <archiveSeed>/<alias> <archivePath> <fsFilePath> \t\t |extracts the folder stored at <archivePath> inside the archive whose SEED is <archiveSeed> and writes all the extracted file on disk at path <fsFilePath>");
 
 
-},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/dossier.js":[function(require,module,exports){
+},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/dossier.js":[function(require,module,exports){
 const utils = require("../utils/utils");
 const AGENT_IDENTITY = require("../utils/utils").getOwnIdentity();
 const pth = "path";
 const path = require(pth);
-const EDFS = require("edfs");
+const openDSU = require("opendsu");
+const RAW_DOSSIER_TYPE = "RawDossier";
+const BAR_TYPE = "Bar";
+
 function createTemplateDossier(domainName, constitutionPath) {
-    const edfs = utils.getInitializedEDFS();
-    edfs.createBar((err, archive) => {
+    EDFS.createDSU(BAR_TYPE, (err, archive) => {
         if (err) {
             throw err;
         }
@@ -254,17 +243,24 @@ function createTemplateDossier(domainName, constitutionPath) {
                     throw err;
                 }
 
-                archive.writeFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, domainName, () => {
+                archive.writeFile(openDSU.constants.DOMAIN_IDENTITY_FILE, domainName, () => {
                     if (err) {
                         throw err;
                     }
-                    console.log("The dossier was created. Its SEED is the following.");
-                    console.log("SEED", archive.getSeed());
+                    archive.getKeySSI((err, keySSI) => {
+                        if (err) {
+                            throw err;
+                        }
+
+                        console.log("The dossier was created. Its SEED is the following.");
+                        console.log("SEED", keySSI);
+                    });
                 });
             });
         });
     });
 }
+
 function createDossier(domainName, constitutionPath, noSave) {
     if (noSave === "nosave") {
         createTemplateDossier(domainName, constitutionPath);
@@ -273,19 +269,18 @@ function createDossier(domainName, constitutionPath, noSave) {
             if (err) {
                 throw err;
             }
-            EDFS.attachWithPassword(password, (err, edfs) => {
+
+            EDFS.loadWallet(undefined, {password, overwrite: true}, (err, wallet) => {
                 if (err) {
-                    console.error("Invalid password");
-                    return;
+                    throw err;
                 }
 
-                edfs.loadWallet(undefined, password, true, (err, wallet) => {
+                const dossier = require("dossier");
+                wallet.getKeySSI((err, keySSI) => {
                     if (err) {
                         throw err;
                     }
-
-                    const dossier = require("dossier");
-                    dossier.load(wallet.getSeed(), AGENT_IDENTITY, (err, csb) => {
+                    dossier.load(keySSI, AGENT_IDENTITY, (err, csb) => {
                         if (err) {
                             console.error(err);
                             process.exit(1);
@@ -300,7 +295,7 @@ function createDossier(domainName, constitutionPath, noSave) {
                                 console.log(`Domain ${domainName} already exists!`);
                                 process.exit(1);
                             }
-                            edfs.createBar((err, archive) => {
+                            EDFS.createDSU(BAR_TYPE, (err, archive) => {
                                 if (err) {
                                     throw err;
                                 }
@@ -346,14 +341,13 @@ function setApp(alseed, appPath) {
         throw new Error('Missing the second argument, the app path');
     }
 
-    const EDFS = require("edfs");
     if (utils.isAlias(alseed)) {
         utils.loadArchiveWithAlias(alseed, (err, bar) => {
             if (err) {
                 throw err;
             }
 
-            bar.addFolder(appPath, EDFS.constants.CSB.APP_FOLDER, (err) => {
+            bar.addFolder(appPath, openDSU.constants.APP_FOLDER, (err) => {
                 if (err) {
                     throw err;
                 }
@@ -362,24 +356,18 @@ function setApp(alseed, appPath) {
             })
         });
     } else {
-        utils.getEDFS(alseed, (err, edfs) => {
+        EDFS.resolveSSI(alseed, BAR_TYPE, (err, bar) => {
             if (err) {
                 throw err;
             }
 
-            edfs.loadBar(alseed, (err, bar) => {
+            bar.addFolder(appPath, "app", (err) => {
                 if (err) {
                     throw err;
                 }
 
-                bar.addFolder(appPath, EDFS.constants.CSB.APP_FOLDER, (err) => {
-                    if (err) {
-                        throw err;
-                    }
-
-                    console.log('All done');
-                })
-            });
+                console.log('All done');
+            })
         });
     }
 }
@@ -422,19 +410,13 @@ function mount(alseed, path, archiveIdentifier) {
                 });
             });
         } else {
-            utils.getEDFS(alseed, (err, edfs) => {
-                if (err) {
-                    throw err;
-                }
+            EDFS.loadDSU(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
+                rawDossier.mount(path, archiveIdentifier, (err) => {
+                    if (err) {
+                        throw err;
+                    }
 
-                edfs.loadRawDossier(alseed, (err, rawDossier) => {
-                    rawDossier.mount(path, archiveIdentifier, (err) => {
-                        if (err) {
-                            throw err;
-                        }
-
-                        console.log("Successfully mounted.");
-                    });
+                    console.log("Successfully mounted.");
                 });
             });
         }
@@ -478,22 +460,16 @@ function unmount(alseed, path) {
                 });
             });
         } else {
-            utils.getEDFS(alseed, (err, edfs) => {
+            EDFS.loadDSU(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
-
-                edfs.loadRawDossier(alseed, (err, rawDossier) => {
+                rawDossier.unmount(path, (err) => {
                     if (err) {
                         throw err;
                     }
-                    rawDossier.unmount(path, (err) => {
-                        if (err) {
-                            throw err;
-                        }
 
-                        console.log("Successfully unmounted.");
-                    });
+                    console.log("Successfully unmounted.");
                 });
             });
         }
@@ -537,23 +513,17 @@ function listMounts(alseed, path) {
                 });
             });
         } else {
-            utils.getEDFS(alseed, (err, edfs) => {
+            EDFS.loadDSU(alseed, RAW_DOSSIER_TYPE, (err, rawDossier) => {
                 if (err) {
                     throw err;
                 }
 
-                edfs.loadRawDossier(alseed, (err, rawDossier) => {
+                rawDossier.listMountedDossiers(path, (err, mounts) => {
                     if (err) {
                         throw err;
                     }
 
-                    rawDossier.listMountedDossiers(path, (err, mounts) => {
-                        if (err) {
-                            throw err;
-                        }
-
-                        console.log(mounts);
-                    });
+                    console.log(mounts);
                 });
             });
         }
@@ -566,7 +536,7 @@ addCommand("mount", null, mount, "<seed>/<alias> <path> <archiveIdentifier> <> \
 addCommand("unmount", null, unmount, "<seed>/<alias> <path> \t\t\t\t |Unmounts the dossier mounted at <path>");
 addCommand("list", "mounts", listMounts, "<seed>/<alias> <path>\t\t\t\t |Lists the seeds of all dossiers mounted at <path>");
 
-},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
+},{"../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","dossier":false,"opendsu":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js":[function(require,module,exports){
 require("./wallet");
 require("./bar");
 require("./dossier");
@@ -574,21 +544,19 @@ require("./dossier");
 },{"./bar":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/bar.js","./dossier":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/dossier.js","./wallet":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/wallet.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/wallet.js":[function(require,module,exports){
 const consoleUtils = require("../utils/consoleUtils");
 const utils = require("../utils/utils");
+const EDFS = require("edfs");
 
-function createWallet(templateSeed) {
-    if (!templateSeed) {
+function createWallet(templateKeySSI) {
+    if (!templateKeySSI) {
         throw Error("No template seed received.")
     }
-    const Seed = require("bar").Seed;
     try {
-        new Seed(templateSeed);
+        require("key-ssi-resolver").KeySSIFactory.create(templateKeySSI)
     } catch (e) {
         throw Error("Invalid template seed");
     }
 
-    const EDFS = require("edfs");
     EDFS.checkForSeedCage(err => {
-        const edfs = utils.getInitializedEDFS();
         if (!err) {
             consoleUtils.getFeedback("A wallet already exists. Do you want to create a new one?(y/n)", (err, ans) => {
                 if (err) {
@@ -596,15 +564,15 @@ function createWallet(templateSeed) {
                 }
 
                 if (ans[0] === "y") {
-                    __createWallet(edfs, true);
+                    __createWallet(true);
                 }
             });
         } else {
-            __createWallet(edfs, false);
+            __createWallet(false);
         }
     });
 
-    function __createWallet(edfs, overwrite) {
+    function __createWallet(overwrite) {
         consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
             if (err) {
                 console.log(`Caught error: ${err.message}`);
@@ -622,14 +590,14 @@ function createWallet(templateSeed) {
 
                 if (password !== newPassword) {
                     console.log("The passwords do not coincide. Try again.");
-                    __createWallet(edfs, overwrite);
+                    __createWallet(overwrite);
                 } else {
-                    edfs.createWallet(templateSeed, password, overwrite, (err, seed) => {
+                    EDFS.createDSU("Wallet", {password, overwrite, templateKeySSI}, (err, keySSI) => {
                         if (err) {
                             throw err;
                         }
 
-                        console.log("Wallet with SEED was created. Please save the SEED:", seed);
+                        console.log("Wallet with KeySSI was created. Please save the KeySSI:", keySSI);
                     });
                 }
             });
@@ -638,49 +606,47 @@ function createWallet(templateSeed) {
 }
 
 
-function restore(seed) {
-    if (!seed) {
-        throw Error("No seed received.")
+function restore(keySSI) {
+    if (!keySSI) {
+        throw Error("No keySSI received.")
     }
-    const EDFS = require("edfs");
-    let edfs;
-    EDFS.attachWithSeed(seed, (err, edfs) => {
-        if (err) {
-            throw err;
-        }__saveSeed();
 
-        function __saveSeed() {
-            consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
+    if (err) {
+        throw err;
+    }
+    __saveKeySSI();
+
+    function __saveKeySSI() {
+        consoleUtils.insertPassword({validationFunction: utils.validatePassword}, (err, password) => {
+            if (err) {
+                console.log(`Caught error: ${err.message}`);
+                process.exit(1);
+            }
+
+            consoleUtils.insertPassword({
+                prompt: "Confirm password:",
+                validationFunction: utils.validatePassword
+            }, (err, newPassword) => {
                 if (err) {
                     console.log(`Caught error: ${err.message}`);
                     process.exit(1);
                 }
 
-                consoleUtils.insertPassword({
-                    prompt: "Confirm password:",
-                    validationFunction: utils.validatePassword
-                }, (err, newPassword) => {
-                    if (err) {
-                        console.log(`Caught error: ${err.message}`);
-                        process.exit(1);
-                    }
+                if (password !== newPassword) {
+                    console.log("The passwords do not coincide. Try again.");
+                    __saveKeySSI();
+                } else {
+                    EDFS.resolveSSI(keySSI, "Wallet", {password, overwrite: true}, (err, wallet) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    if (password !== newPassword) {
-                        console.log("The passwords do not coincide. Try again.");
-                        __saveSeed();
-                    } else {
-                        edfs.loadWallet(seed, password, true, (err, wallet) => {
-                            if (err) {
-                                throw err;
-                            }
-
-                            console.log("Wallet was restored");
-                        });
-                    }
-                });
+                        console.log("Wallet was restored");
+                    });
+                }
             });
-        }
-    });
+        });
+    }
 }
 
 function changePassword() {
@@ -689,17 +655,19 @@ function changePassword() {
             throw err;
         }
 
-        consoleUtils.insertPassword({prompt: "Insert a new password:", validationFunction: utils.validatePassword}, (err, password) => {
+        consoleUtils.insertPassword({
+            prompt: "Insert a new password:",
+            validationFunction: utils.validatePassword
+        }, (err, password) => {
             if (err) {
                 throw err;
             }
 
-            utils.getEDFS(wallet.getSeed(), (err, edfs) => {
+            wallet.getKeySSI((err, keySSI) => {
                 if (err) {
                     throw err;
                 }
-
-                edfs.loadWallet(wallet.getSeed(), password, true, (err) => {
+                EDFS.resolveSSI(keySSI, "Wallet", {password, overwrite: true}, (err) => {
                     if (err) {
                         throw err;
                     }
@@ -717,7 +685,7 @@ addCommand("restore", null, restore, "<seed> \t\t\t\t |Checks the seed is valid 
 addCommand("change", "password", changePassword, "\t\t\t\t |Asks for the password and then allows for the selection of a new password");
 
 
-},{"../utils/consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","bar":false,"edfs":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js":[function(require,module,exports){
+},{"../utils/consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","../utils/utils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js","edfs":false,"key-ssi-resolver":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js":[function(require,module,exports){
 const rl = "readline";
 const readline = require(rl);
 const getPassword = require("./getPassword").readPassword;
@@ -848,6 +816,7 @@ exports.readPassword = function (prompt, callback) {
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js":[function(require,module,exports){
 (function (global){
 const consoleUtils = require("./consoleUtils");
+const EDFS = require("edfs");
 
 function getEndpoint() {
     let endpoint = process.env.EDFS_ENDPOINT;
@@ -858,11 +827,6 @@ function getEndpoint() {
     return endpoint;
 }
 
-function getInitializedEDFS() {
-    const EDFS = require("edfs");
-    const endpoint = getEndpoint();
-    return EDFS.attachToEndpoint(endpoint);
-}
 
 function validatePassword(password, callback) {
     if (typeof password === "undefined" || password.length < 4) {
@@ -884,61 +848,26 @@ function checkPassword(password, callback) {
     if (/[\x00-\x03]|[\x05-\x07]/.test(password)) {
         return callback(undefined, false);
     }
-
-    const EDFS = require("edfs");
-    EDFS.attachWithPassword(password, (err) => {
-        if (err) {
-            return callback(undefined, false);
-        }
-
-        callback(undefined, true);
-    });
 }
 
-function getEDFS(seed, callback) {
-    const EDFS = require("edfs");
-    if (typeof seed === "function") {
-        callback = seed;
-        seed = undefined;
+function loadWallet(keySSI, callback) {
+    if (typeof keySSI === "function") {
+        callback = keySSI;
+        keySSI = undefined;
     }
 
-    if (typeof seed === "undefined") {
-        getPassword((err, password) => {
-            if (err) {
-                console.log("Error when loading EDFs");
-                return callback(err);
-            }
-
-            EDFS.attachWithPassword(password, callback);
-        });
-
-    } else {
-        EDFS.attachWithSeed(seed, callback);
-    }
-}
-
-function loadWallet(walletSeed, callback) {
-    if (typeof walletSeed === "function") {
-        callback = walletSeed;
-        walletSeed = undefined;
-    }
-    getEDFS(walletSeed, (err, edfs) => {
+    getPassword((err, password) => {
         if (err) {
             return callback(err);
         }
 
-        getPassword((err, password) => {
+
+        EDFS.resolveSSI(keySSI, "Wallet", {password, overwrite: true}, (err, wallet) => {
             if (err) {
                 return callback(err);
             }
 
-            edfs.loadWallet(walletSeed, password, true, (err, wallet) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                callback(undefined, wallet);
-            });
+            callback(undefined, wallet);
         });
     });
 }
@@ -950,22 +879,21 @@ function loadArchiveWithAlias(alias, callback) {
         }
 
         const dossier = require("dossier");
-        dossier.load(wallet.getSeed(), getOwnIdentity(), (err, csb) => {
+        wallet.getKeySSI((err, keySSI) => {
             if (err) {
                 return callback(err);
             }
-
-            csb.startTransaction("StandardCSBTransactions", "getSeed", alias).onReturn((err, seed) => {
+            dossier.load(keySSI, getOwnIdentity(), (err, csb) => {
                 if (err) {
                     return callback(err);
                 }
 
-                getEDFS(seed, (err, edfs) => {
+                csb.startTransaction("StandardCSBTransactions", "getSeed", alias).onReturn((err, keySSI) => {
                     if (err) {
                         return callback(err);
                     }
 
-                    edfs.loadRawDossier(seed, (err, rawDossier) => {
+                    EDFS.resolveSSI(keySSI, "RawDossier", (err, rawDossier) => {
                         if (err) {
                             return callback(err);
                         }
@@ -978,9 +906,8 @@ function loadArchiveWithAlias(alias, callback) {
 }
 
 function isAlias(str) {
-    const Seed = require("bar").Seed;
     try {
-        new Seed(str)
+        require("key-ssi-resolver").KeySSIFactory.create(str);
     } catch (e) {
         return true;
     }
@@ -1013,18 +940,16 @@ global.getPassword = function (callback) {
 };
 
 module.exports = {
-    getInitializedEDFS,
     validatePassword,
     isAlias,
     loadWallet,
-    getEDFS,
     getOwnIdentity,
     loadArchiveWithAlias,
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","bar":false,"dossier":false,"edfs":false}],"buffer-crc32":[function(require,module,exports){
+},{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","dossier":false,"edfs":false,"key-ssi-resolver":false}],"buffer-crc32":[function(require,module,exports){
 var Buffer = require('buffer').Buffer;
 
 var CRC_TABLE = [

@@ -28,9 +28,11 @@ try {
 
     throw e;
 }
-
 if (typeof config.source === 'string') {
     config.source = config.source.split(',');
+    for (let i = 0; i < config.source.length; i++) {
+        config.source[i] = path.resolve(config.source[i]);
+    }
 }
 
 // translating arguments in properties with more suitable names
@@ -362,14 +364,19 @@ function doBrowserify(targetName, src, dest, opt, externalModules, exportsModule
         browserifyPackage.bundle().pipe(sourceMapExtractor).pipe(out);
         endCallback(targetName);
 
-        if (config.externalTarget) {
-            ((dest) => {
-                out.on('finish', () => {
-                    copyToExternalDirectory(dest);
-                });
-            })(dest);
-        }
+        ((dest) => {
+            out.on('finish', () => {
 
+                if (typeof opt.exportedEsModule !== "undefined") {
+                    let moduleName = opt.exportedEsModule;
+                    fs.appendFileSync(dest, `\nexport default ${opt.externalRequireName}('${moduleName}')`)
+                }
+
+                if (config.externalTarget) {
+                    copyToExternalDirectory(dest);
+                }
+            });
+        })(dest)
 
     }
 

@@ -3,7 +3,8 @@
  *
  */
 const path = require('path');
-process.env.PSK_ROOT_INSTALATION_FOLDER = require("path").join(__dirname, "../../../");
+process.env.PSK_ROOT_INSTALATION_FOLDER = path.join(__dirname, "../../../");
+process.env.PSK_CONFIG_LOCATION = process.env.PSK_ROOT_INSTALATION_FOLDER + "/conf";
 
 require(path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/edfsBar.js")));
 require(path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/pskWebServer.js")));
@@ -155,14 +156,9 @@ function whenAllFinished(array, handler, callback) {
 }
 
 const Tir = function () {
-    const virtualMQ = require('psk-webserver');
+    const pskApiHub = require('psk-apihub');
     const pingPongFork = require('../../core/utils/pingpongFork');
-    const EDFS = require('edfs');
-    let edfs; // will be instantiated after getting virtualMQ node up and getting the url
-
-    if (!$$.securityContext) {
-        $$.securityContext = require("psk-security-context").createSecurityContext();
-    }
+    const openDSU = require('opendsu');
 
     const domainConfigs = {};
     const rootFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'psk_'));
@@ -228,6 +224,18 @@ const Tir = function () {
             }
 
             virtualMQPort = vmqPort;
+            $$.BDNS.addConfig("default", {
+                endpoints: [
+                    {
+                        endpoint: `http://localhost:${virtualMQPort}`,
+                        type: 'brickStorage'
+                    },
+                    {
+                        endpoint: `http://localhost:${virtualMQPort}`,
+                        type: 'anchorService'
+                    }
+                ]
+            })
 
             if (Object.keys(domainConfigs).length === 0) { // no domain added
                 prepareTeardownTimeout();
@@ -251,46 +259,53 @@ const Tir = function () {
                 fakeDomainFile
             ];
 
-            edfs.createBar((err, launcherBar) => {
+            EDFS.createDSU("Bar", (err, launcherBar) => {
                 if (err) {
                     throw err;
                 }
 
                 launcherBar.load((err) => {
-                    launcherBar.addFiles(defaultConstitutionBundlesPath, pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER), (err) => {
+                    if (err) {
+                        throw err;
+                    }
+                    launcherBar.addFiles(defaultConstitutionBundlesPath, openDSU.constants.CONSTITUTION_FOLDER, (err) => {
                         if (err) {
                             throw err;
                         }
 
-                        const launcherBarSeed = launcherBar.getSeed();
-                        const dossier = require("dossier");
-
-                        dossier.load(launcherBarSeed, "TIR_AGENT_IDENTITY", (err, csbHandler) => {
+                        launcherBar.getKeySSI((err, launcherKeySSI) => {
                             if (err) {
                                 throw err;
                             }
+                            const dossier = require("dossier");
 
-                            global.currentHandler = csbHandler;
-                            whenAllFinished(Object.values(domainConfigs), this.buildDomainConfiguration, (err) => {
+                            dossier.load(launcherKeySSI, "TIR_AGENT_IDENTITY", (err, csbHandler) => {
                                 if (err) {
                                     throw err;
                                 }
 
-                                const seed = launcherBarSeed;
-
-                                testerNode = pingPongFork.fork(
-                                    path.resolve(path.join(__dirname, "../../core/launcher.js")),
-                                    [seed, rootFolder],
-                                    {
-                                        stdio: 'inherit',
-                                        env: {
-                                            PSK_PUBLISH_LOGS_ADDR: `tcp://127.0.0.1:${zeroMQPort}`
-                                        }
+                                global.currentHandler = csbHandler;
+                                whenAllFinished(Object.values(domainConfigs), this.buildDomainConfiguration, (err) => {
+                                    if (err) {
+                                        throw err;
                                     }
-                                );
 
-                                initializeSwarmEngine(virtualMQPort);
-                                prepareTeardownTimeout();
+                                    const seed = launcherKeySSI;
+
+                                    testerNode = pingPongFork.fork(
+                                        path.resolve(path.join(__dirname, "../../core/launcher.js")),
+                                        [seed, rootFolder],
+                                        {
+                                            stdio: 'inherit',
+                                            env: {
+                                                PSK_PUBLISH_LOGS_ADDR: `tcp://127.0.0.1:${zeroMQPort}`
+                                            }
+                                        }
+                                    );
+
+                                    initializeSwarmEngine(virtualMQPort);
+                                    prepareTeardownTimeout();
+                                });
                             });
                         });
                     });
@@ -333,7 +348,7 @@ const Tir = function () {
 
         const virtualMQPort = getRandomPort();
         process.env.vmq_channel_storage = storageFolder;
-        virtualMQNode = virtualMQ.createPskWebServer(virtualMQPort, storageFolder, err => {
+        virtualMQNode = pskApiHub.createInstance(virtualMQPort, storageFolder, err => {
             if (err) {
 
                 if (maxTries === 0) {
@@ -344,8 +359,9 @@ const Tir = function () {
                 return
             }
 
-            const edfsURL = `http://localhost:${virtualMQPort}`;
-            edfs = EDFS.attachToEndpoint(edfsURL);
+            if (!$$.securityContext) {
+                $$.securityContext = require("psk-security-context").createSecurityContext();
+            }
 
             $$.securityContext.generateIdentity((err, agentId) => {
                 if (err) {
@@ -500,7 +516,9 @@ const Tir = function () {
                     if (err) {
                         return callback(err);
                     }
-                    callback(undefined, archive.getSeed());
+                    archive.getKeySSI((err, keySSI) => {
+                        callback(err, keySSI);
+                    });
                 });
             });
         }
@@ -512,7 +530,7 @@ const Tir = function () {
                 domainName = "";
             }
 
-            edfs.createBar((err, constitutionArchive) => {
+            EDFS.createDSU("Bar", (err, constitutionArchive) => {
                 if (err) {
                     return callback(err);
                 }
@@ -533,7 +551,7 @@ const Tir = function () {
                         if (index >= constitutionPaths.length) {
 
                             if (domainName !== "") {
-                                constitutionArchive.writeFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, domainName, lastHandler)
+                                constitutionArchive.writeFile(openDSU.constants.DOMAIN_IDENTITY_FILE, domainName, lastHandler)
                             } else {
                                 lastHandler();
                             }
@@ -542,7 +560,7 @@ const Tir = function () {
                         }
 
                         const currentPath = constitutionPaths[index];
-                        constitutionArchive.addFolder(currentPath, pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER), (err) => {
+                        constitutionArchive.addFolder(currentPath, pskPath.join(openDSU.constants.CODE_FOLDER, openDSU.constants.CONSTITUTION_FOLDER), (err) => {
                             if (err) {
                                 return callback(err);
                             }
@@ -611,7 +629,7 @@ const Tir = function () {
             if (err) {
                 return callback(err);
             }
-            targetArchive.addFile(fileName, pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, "domain.js"), callback);
+            targetArchive.addFile(fileName, pskPath.join(openDSU.constants.CONSTITUTION_FOLDER, "domain.js"), callback);
         });
     }
 
