@@ -1534,420 +1534,305 @@ function RawDossier(bar) {
 
 module.exports = RawDossier;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/DossierWizardMiddleware.js":[function(require,module,exports){
-const URL_PREFIX = "/dsuWizard";
-const dossierWizardStorage = "dossier-wizard-storage";
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js":[function(require,module,exports){
+function CommandRegistry(server){
+	const URL_PREFIX = require("./constants").URL_PREFIX;
 
-function DossierWizardMiddleware(server) {
-    const path = require('path');
-    const fs = require('fs');
-    const VirtualMQ = require('psk-apihub');
-    const httpWrapper = VirtualMQ.getHttpWrapper();
-    const httpUtils = httpWrapper.httpUtils;
-    const crypto = require('pskcrypto');
-    const serverCommands = require('./utils/serverCommands');
-    const executioner = require('./utils/executioner');
-    const randSize = 32;
+	this.register = (url, method, commandFactory)=>{
+		const fullUrl = URL_PREFIX+url+"/:transactionId";
+		console.log("Registering url", fullUrl, method);
+		server[method](fullUrl, (req, res)=>{
+			commandFactory(req, (err, command)=>{
+				if(err){
+					console.log(err);
+					res.statusCode = 500;
+					return res.end();
+				}
 
-    function setHeaders(req, res, next) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
+				const transactionManager = require("./TransactionManager");
+				transactionManager.addCommandToTransaction(req.params.transactionId, command, (err)=>{
+					if(err){
+						console.log(err);
+						res.statusCode = 500;
+						return res.end();
+					}
 
-        // Request methods you wish to allow
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-        // Request headers you wish to allow
-        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Content-Length, X-Content-Length');
-        next();
-    }
-
-    function beginSession(req, res) {
-        const transactionId = crypto.randomBytes(randSize).toString('hex');
-        fs.mkdir(path.join(server.rootFolder, dossierWizardStorage, transactionId), {recursive: true}, (err) => {
-            if (err) {
-                res.statusCode = 500;
-                res.end();
-                return;
-            }
-
-            res.end(transactionId);
-        });
-    }
-
-    function setKeySSI(req, res) {
-        const transactionId = req.params.transactionId;
-        serverCommands.setKeySSI(path.join(server.rootFolder, dossierWizardStorage, transactionId), req.body, (err) => {
-            if (err) {
-                res.statusCode = 500;
-            }
-
-            res.end();
-        });
-    }
-
-    function sendError(req, res) {
-        res.statusCode = 400;
-        res.end('Illegal url, missing transaction id');
-    }
-
-    function addFileToDossier(req, res) {
-        const transactionId = req.params.transactionId;
-        const fileObj = {
-            dossierPath: req.headers["x-dossier-path"],
-            stream: req
-        };
-
-        serverCommands.addFile(path.join(server.rootFolder, dossierWizardStorage, transactionId), fileObj, (err) => {
-            if (err) {
-                if (err.code === 'EEXIST') {
-                    res.statusCode = 409;
-                } else {
-                    res.statusCode = 500;
-                }
-            }
-
-            res.end();
-        });
-    }
-
-    function setDLDomain(req, res) {
-        const transactionId = req.params.transactionId;
-        serverCommands.setDLDomain(path.join(server.rootFolder, dossierWizardStorage, transactionId), req.body, (err) => {
-            if (err) {
-                res.statusCode = 500;
-            }
-
-            res.end();
-        });
-    }
-
-    function mount(req, res) {
-        const transactionId = req.params.transactionId;
-        const mountPoint = {
-            path: req.headers['x-mount-path'],
-            seed: req.headers['x-mounted-dossier-seed']
-        };
-
-        serverCommands.mount(path.join(server.rootFolder, dossierWizardStorage, transactionId), mountPoint, (err) => {
-            if (err) {
-                res.statusCode = 500;
-                console.log("Error", err);
-                res.end();
-                return;
-            }
-            res.end();
-        });
-    }
-
-    function buildDossier(req, res) {
-        const transactionId = req.params.transactionId;
-        executioner.executioner(path.join(server.rootFolder, dossierWizardStorage, transactionId), (err, seed) => {
-            if (err) {
-                res.statusCode = 500;
-                res.end();
-                return;
-            }
-
-            res.end(seed.toString());
-
-        });
-    }
-
-    function redirect(req, res) {
-        res.statusCode = 303;
-        let redirectLocation = 'index.html';
-
-        if (!req.url.endsWith('/')) {
-            redirectLocation = `${URL_PREFIX}/` + redirectLocation;
-        }
-
-        res.setHeader("Location", redirectLocation);
-        res.end();
-    }
-
-    server.use(`${URL_PREFIX}/*`, setHeaders);
-
-    server.post(`${URL_PREFIX}/begin`, beginSession);
-
-    server.post(`${URL_PREFIX}/setKeySSI/:transactionId`, httpUtils.bodyParser);
-    server.post(`${URL_PREFIX}/setKeySSI/:transactionId`, setKeySSI);
-
-    server.post(`${URL_PREFIX}/addFile`, sendError);
-    server.post(`${URL_PREFIX}/addFile/:transactionId`, addFileToDossier);
-
-    server.post(`${URL_PREFIX}/setDLDomain`, sendError);
-    server.post(`${URL_PREFIX}/setDLDomain/:transactionId`, httpUtils.bodyParser);
-    server.post(`${URL_PREFIX}/setDLDomain/:transactionId`, setDLDomain);
-
-    server.post(`${URL_PREFIX}/mount`, sendError);
-    server.post(`${URL_PREFIX}/mount/:transactionId`, mount);
-
-    server.post(`${URL_PREFIX}/build`, sendError);
-    server.post(`${URL_PREFIX}/build/:transactionId`, httpUtils.bodyParser);
-    server.post(`${URL_PREFIX}/build/:transactionId`, buildDossier);
-
-    server.use(`${URL_PREFIX}`, redirect);
-
-    server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dsu-wizard/web'), `${URL_PREFIX}/`));
-}
-
-module.exports = DossierWizardMiddleware;
-
-},{"./utils/executioner":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/executioner.js","./utils/serverCommands":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/serverCommands.js","fs":false,"path":false,"psk-apihub":"psk-apihub","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/TransactionManager.js":[function(require,module,exports){
-const fs = require('fs');
-const path = require('path');
-
-function TransactionManager(localFolder) {
-
-    const filePath = path.join(localFolder, 'commands.json');
-
-    function loadTransaction(callback) {
-        fs.mkdir(localFolder, {recursive: true}, (err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            fs.readFile(filePath, (err, transaction) => {
-                let transactionObj = {};
-                if (err) {
-                    return callback(undefined, transactionObj);
-                }
-
-                try {
-                    transactionObj = JSON.parse(transaction.toString());
-                } catch (e) {
-                    return callback(e);
-                }
-                callback(undefined, transactionObj);
-            });
-        });
-    }
-
-    function saveTransaction(transaction, callback) {
-        fs.mkdir(localFolder, {recursive: true}, (err) => {
-            if (err) {
-                return callback(err);
-            }
-
-            fs.writeFile(filePath, JSON.stringify(transaction), callback);
-        });
-    }
-
-    function addCommand(command, callback) {
-
-        loadTransaction((err, transaction) => {
-            if (err) {
-                return callback(err);
-            }
-
-            if (typeof transaction.commands === "undefined") {
-                transaction.commands = [];
-            }
-
-            transaction.commands.push(command);
-
-            saveTransaction(transaction, callback);
-        });
-    }
-
-    return {
-        addCommand,
-        loadTransaction,
-        saveTransaction
-    };
-}
-
-module.exports = TransactionManager;
-
-},{"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/dossierOperations.js":[function(require,module,exports){
-const openDSU = require("opendsu");
-const keyssi = openDSU.loadApi("keyssi");
-
-function createArchiveWithKeySSI(keySSI, callback) {
-    openDSU.loadApi("resolver").createDSU(keySSI, {useSSIAsIdentifier: true}, callback);
-}
-
-function createArchiveWithDomain(dlDomain, callback) {
-    openDSU.loadApi("resolver").createDSU(keyssi.buildSeedSSI(dlDomain), callback);
-}
-
-function addFile(workingDir, dossierPath, archive, callback) {
-    const path = require("path");
-    archive.addFile(path.join(workingDir, path.basename(dossierPath)), dossierPath, (err) => {
-
-        if (err) {
-            throw err;
-        }
-
-        callback(undefined);
-    });
-}
-
-function mount(workingDir, path, seed, archive, callback) {
-    archive.mount(path, seed, callback);
+					res.statusCode = 200;
+					res.end();
+				});
+			});
+		});
+	}
 }
 
 module.exports = {
-    addFile,
-    createArchiveWithDomain,
-    createArchiveWithKeySSI,
-    mount
+	getRegistry : function(server){
+		return new CommandRegistry(server);
+	}
 };
-},{"opendsu":"opendsu","path":false}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/executioner.js":[function(require,module,exports){
-const dossierOperations = require('./dossierOperations');
-const TransactionManager = require('./TransactionManager');
+},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js":[function(require,module,exports){
+transactions = {};
 
-function executioner(workingDir, callback) {
-    const manager = new TransactionManager(workingDir);
-    manager.loadTransaction((err, transaction) => {
-        if (err) {
-            return callback(err);
-        }
+function TransactionsManager(){
 
-        if (typeof transaction.keySSI === "undefined") {
-            dossierOperations.createArchiveWithDomain(transaction.dlDomain, (err, archive) => {
-                if (err) {
-                    return callback(err);
-                }
+	this.beginTransaction = function(callback){
+		const crypto = require("pskcrypto");
+		const Queue = require("swarmutils").Queue;
+		const randSize = require("./constants").transactionIdLength;
 
-                executeCommand(transaction.commands, archive, workingDir, 0, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
+		let transactionId = crypto.randomBytes(randSize).toString('hex');
+		transactions[transactionId] = {
+			id: transactionId,
+			commands: new Queue(),
+			context: {
+				result: {},
+				domain: "default",
+				options: {useSSIAsIdentifier: false}
+			}
+		}
+		return callback(undefined, transactionId);
+	}
 
-                    archive.getKeySSI(callback);
-                });
-            });
-        }else{
-            dossierOperations.createArchiveWithKeySSI(transaction.keySSI, (err, archive) => {
-                if (err) {
-                    return callback(err);
-                }
+	this.getTransaction = function(transactionId){
+		return transactions[transactionId];
+	}
 
-                console.log("Got archive using keySSI");
-                archive.getKeySSI(callback);
-            });
-        }
-    });
+	this.addCommandToTransaction = function(transactionId, command, callback){
+		let transaction = transactions[transactionId];
+		if(!transaction){
+			callback('Transaction could not be found');
+		}
+
+		if(typeof command.execute !== "function"){
+			callback('Wrong type of the argument called command');
+		}
+
+		transaction.commands.push(command);
+		return callback();
+	}
+
+	this.closeTransaction = function(transactionId, callback){
+		let transaction = transactions[transactionId];
+		if(!transaction){
+			callback('Transaction could not be found');
+		}
+
+		function executeCommand(){
+			let command = transaction.commands.pop();
+			if(!command){
+				if(transaction.commands.length === 0){
+					return transaction.context.dsu.getKeySSI(callback);
+				}
+			}
+
+			command.execute(transaction.context, (err)=>{
+				if(err){
+					return callback(err);
+				}
+
+				executeCommand();
+			});
+		}
+
+		const openDSU = require("opendsu");
+		const keyssi = openDSU.loadApi("keyssi");
+
+		if(typeof transaction.context.keySSI === "undefined"){
+			transaction.context.keySSI = keyssi.buildSeedSSI(transaction.context.domain);
+		}
+		openDSU.loadApi("resolver").createDSU(transaction.context.keySSI, transaction.context.options, (err, dsu)=>{
+			if(err){
+				return callback(err);
+			}
+			transaction.context.dsu = dsu;
+
+			//start executing the stored commands from transaction
+			executeCommand();
+		});
+	}
 }
 
-function executeCommand(commands, archive, workingDir, index = 0, callback) {
-    if (!Array.isArray(commands)) {
-        return callback(Error(`No commands`));
-    }
-    if (index === commands.length) {
-        return callback();
-    }
+module.exports = new TransactionsManager();
+},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","opendsu":"opendsu","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/addFile.js":[function(require,module,exports){
+function createAddFileCommand(filePath, dossierPath){
+	const command = {
+		execute: function(context, callback){
+			context.dsu.addFile(filePath, dossierPath, callback);
+		}
+	}
 
-    const match = judge(commands[index], archive, workingDir, (err) => {
-        if (err) {
-            return callback(err);
-        }
-
-        executeCommand(commands, archive, workingDir, ++index, callback);
-    });
-
-    if (!match) {
-        return callback(new Error('No match for command found' + commands[index].name));
-    }
+	return command;
 }
 
-function judge(command, archive, workingDir, callback) {
-    switch (command.name) {
-        case 'addFile':
-            dossierOperations.addFile(workingDir, command.params.dossierPath, archive, callback);
-            break;
+function AddFile(server){
+	const pathName = "path";
+	const path = require(pathName);
+	const fsName = "fs";
+	const fs = require(fsName);
+	const osName = "os";
+	const os = require(osName);
 
-        case 'mount':
-            dossierOperations.mount(workingDir, command.params.path, command.params.seed, archive, callback);
-            break;
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+	commandRegistry.register("/addFile", "post", (req, callback)=>{
+		const crypto = require("pskcrypto");
 
-        default:
-            return false;
-    }
+		const dossierPath = req.headers["x-dossier-path"];
+		let tempFileName = crypto.randomBytes(10).toString('hex');
 
-    return true;
+		fs.mkdtemp(path.join(os.tmpdir(), req.params.transactionId), (err, directory) => {
+			if (err){
+				return callback(err);
+			}
+
+			const tempFilePath = path.join(directory, tempFileName);
+			const file = fs.createWriteStream(tempFilePath);
+
+			file.on('close', () => {
+				return callback(undefined, createAddFileCommand(tempFilePath, dossierPath));
+			});
+
+			file.on('error', (err)=>{
+				return callback(err);
+			})
+
+			req.pipe(file);
+		});
+	});
+}
+
+module.exports = AddFile;
+},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js":[function(require,module,exports){
+module.exports = {
+	execute : function(context, callback){
+		//this kind of command isn't to operate on dsu rather on transaction object.
+		return callback();
+	}
+}
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/index.js":[function(require,module,exports){
+const addFile = require("./addFile");
+const mount = require("./mount");
+const setDLDomain = require("./setDLDomain");
+const setKeySSI = require("./setKeySSI");
+
+module.exports = {
+	addFile,
+	mount,
+	setDLDomain,
+	setKeySSI
+}
+},{"./addFile":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/addFile.js","./mount":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/mount.js","./setDLDomain":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/setDLDomain.js","./setKeySSI":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/setKeySSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/mount.js":[function(require,module,exports){
+function setDLDomain(server){
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+
+	commandRegistry.register("/mount", "post", (req, callback)=>{
+		const path = req.headers['x-mount-path'];
+		const keySSI = req.headers['x-mounted-dossier-seed'];
+
+		if(typeof path === "undefined" || typeof keySSI === "undefined"){
+			return callback('Wrong usage of the command');
+		}
+
+		const command = {
+			execute : function(context, callback){
+				context.dsu.mount(path, keySSI, callback);
+			}
+		}
+
+		return callback(undefined, command);
+	});
+}
+
+module.exports = setDLDomain;
+},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/setDLDomain.js":[function(require,module,exports){
+const command = require("./dummyCommand");
+
+function setDLDomain(server){
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+	const utils = require("../utils");
+
+	commandRegistry.register("/setDLDomain", "post", (req, callback)=>{
+		const transactionManager = require("../TransactionManager");
+		console.log("reading body...");
+		utils.bodyParser(req, (err)=>{
+			if(err){
+				return callback(err);
+			}
+			console.log("m citit transaction id-ul", req.params.transactionId, req.body);
+			const transaction = transactionManager.getTransaction(req.params.transactionId);
+			transaction.context.dlDomain = req.body;
+
+			return callback(undefined, command);
+		});
+	});
+}
+
+module.exports = setDLDomain;
+},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","../TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","../utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","./dummyCommand":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/setKeySSI.js":[function(require,module,exports){
+const command = require("./dummyCommand");
+
+function setKeySSI(server){
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+	const utils = require("../utils");
+
+	commandRegistry.register("/setKeySSI", "post", (req, callback)=>{
+		const transactionManager = require("../TransactionManager");
+		const keyssiSpace = require("opendsu").loadApi("keyssi");
+		utils.bodyParser(req, (err)=>{
+			if(err){
+				return callback(err);
+			}
+
+			const transaction = transactionManager.getTransaction(req.params.transactionId);
+			transaction.context.keySSI = keyssiSpace.parse(req.body);
+			transaction.context.options.useSSIAsIdentifier = true;
+
+			return callback(undefined, command);
+		});
+	});
+}
+
+module.exports = setKeySSI;
+},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","../TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","../utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","./dummyCommand":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js":[function(require,module,exports){
+const URL_PREFIX = '/dsuWizard';
+const transactionIdLength = 32;
+
+module.exports = { URL_PREFIX, transactionIdLength};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js":[function(require,module,exports){
+function bodyParser(req, callback) {
+	let bodyContent = '';
+
+	req.on('data', function (dataChunk) {
+		bodyContent += dataChunk;
+	});
+
+	req.on('end', function () {
+		req.body = bodyContent;
+		callback(undefined, req.body);
+	});
+
+	req.on('error', function (err) {
+		callback(err);
+	});
+}
+
+function redirect(req, res) {
+	const URL_PREFIX = require("./constants").URL_PREFIX;
+	res.statusCode = 303;
+	let redirectLocation = 'index.html';
+
+	if (!req.url.endsWith('/')) {
+		redirectLocation = `${URL_PREFIX}/` + redirectLocation;
+	}
+
+	res.setHeader("Location", redirectLocation);
+	res.end();
 }
 
 module.exports = {
-    executioner
-};
-
-},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/TransactionManager.js","./dossierOperations":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/dossierOperations.js"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/serverCommands.js":[function(require,module,exports){
-const fs = require("fs");
-const path = require("path");
-
-const TransactionManager = require("./TransactionManager");
-
-function setKeySSI(workingDir, keySSI, callback) {
-    const manager = new TransactionManager(workingDir);
-    manager.loadTransaction((err, transaction) => {
-        if (err) {
-            return callback(err);
-        }
-        transaction.keySSI = keySSI;
-        manager.saveTransaction(transaction, callback);
-    });
+	bodyParser,
+	redirect
 }
-
-function addFile(workingDir, FileObj, callback) {
-    const cmd = {
-        name: 'addFile',
-        params: {
-            dossierPath: FileObj.dossierPath
-        }
-    };
-
-    const manager = new TransactionManager(workingDir);
-    const filePath = path.join(workingDir, path.basename(FileObj.dossierPath));
-    fs.access(filePath, (err) => {
-        if (!err) {
-            const e = new Error('File already exists');
-            e.code = 'EEXIST';
-            return callback(e);
-        }
-
-        const file = fs.createWriteStream(filePath);
-
-        file.on('close', () => {
-            manager.addCommand(cmd, callback);
-        });
-
-        FileObj.stream.pipe(file);
-    });
-}
-
-function setDLDomain(workingDir, dlDomain, callback) {
-    const manager = new TransactionManager(workingDir);
-    manager.loadTransaction((err, transaction) => {
-        if (err) {
-            return callback(err);
-        }
-        transaction.dlDomain = dlDomain;
-
-        manager.saveTransaction(transaction, callback);
-    });
-}
-
-function mount(workingDir, mountPoint, callback) {
-    const cmd = {
-        name: 'mount',
-        params: {
-            path: mountPoint.path,
-            seed: mountPoint.seed
-        }
-    };
-
-    const manager = new TransactionManager(workingDir);
-    manager.addCommand(cmd, callback);
-}
-module.exports = {
-    setKeySSI,
-    addFile,
-    setDLDomain,
-    mount
-};
-
-},{"./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils/TransactionManager.js","fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/AnchorsManager.js":[function(require,module,exports){
+},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/AnchorsManager.js":[function(require,module,exports){
 (function (Buffer){
 const pathModule = "path";
 const path = require(pathModule);
@@ -4451,7 +4336,7 @@ const versions = (keySSI, authToken, callback) => {
         }
 
         const queries = anchoringServicesArray.map((service) => fetch(`${service}/anchor/versions/${keySSI.getAnchorId()}`));
-
+        //TODO: security issue (which response we trust)
         Promise.allSettled(queries).then((responses) => {
             const response = responses.find((response) => response.status === 'fulfilled');
 
@@ -7999,7 +7884,8 @@ const defaultConfig = {
             "enableSignatureCheck": true
         },
         "dsu-wizard": {
-            "module": "dsu-wizard"
+            "module": "dsu-wizard",
+            "function": "initWizard"
         },
         "bricks": {
             "module": "./components/bricks"
@@ -17199,15 +17085,64 @@ module.exports.load = function(seed, identity, callback){
 module.exports.RawDossier = require("./lib/RawDossier");
 },{"./lib/RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/dossier/lib/RawDossier.js","overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine":false}],"dsu-wizard":[function(require,module,exports){
 (function (__dirname){
-if (!process.env.PSK_ROOT_INSTALATION_FOLDER) {
-    process.env.PSK_ROOT_INSTALATION_FOLDER = require("path").resolve("." + __dirname + "/../..");
+function initWizard(server) {
+
+	const URL_PREFIX = require("./constants").URL_PREFIX;
+	const transactionManager = require("./TransactionManager");
+
+	server.post(`${URL_PREFIX}/begin`, (req, res)=>{
+		transactionManager.beginTransaction((err, transactionId)=>{
+			if(err){
+				res.statusCode = 500;
+				return res.end();
+			}
+			res.write(transactionId);
+			res.end();
+		});
+	});
+
+	server.post(`${URL_PREFIX}/build/:transactionId`, (req, res)=>{
+		transactionManager.closeTransaction(req.params.transactionId, (err, result)=>{
+			if(err){
+				res.statusCode = 500;
+				return res.end();
+			}
+			res.write(result);
+			res.end();
+		});
+	});
+
+	const commands = require("./commands");
+	Object.keys(commands).forEach((commandName)=>{
+		commands[commandName](server);
+	});
+
+	server.use(`${URL_PREFIX}`, require("./utils").redirect);
+
+	const pathName = "path";
+	const path = require(pathName);
+	if (!process.env.PSK_ROOT_INSTALATION_FOLDER) {
+		process.env.PSK_ROOT_INSTALATION_FOLDER = require("path").resolve("." + __dirname + "/../..");
+	}
+
+	const VirtualMQ = require('psk-apihub');
+	const httpWrapper = VirtualMQ.getHttpWrapper();
+	const httpUtils = httpWrapper.httpUtils;
+	server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dsu-wizard/web'), `${URL_PREFIX}/`));
 }
-module.exports = require("./DossierWizardMiddleware");
 
-
+module.exports = {
+	initWizard,
+	getTransactionManager : function(){
+		return require("./TransactionManager");
+	},
+	getCommandRegistry: function(){
+		return require("./CommandRegistry");
+	}
+}
 }).call(this,"/modules/dsu-wizard")
 
-},{"./DossierWizardMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/DossierWizardMiddleware.js","path":false}],"edfs-middleware":[function(require,module,exports){
+},{"./CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","./commands":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","path":false,"psk-apihub":"psk-apihub"}],"edfs-middleware":[function(require,module,exports){
 module.exports.BrickStorageMiddleware = require("./lib/BrickStorageMiddleware");
 module.exports.AnchoringMiddleware = require("./lib/AnchoringMiddleware");
 
@@ -17975,6 +17910,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 		if (typeof sslConfig !== 'undefined') {
 			commType += 's';
 		}
+
+		console.log(`Checking if port ${port} is available. Please wait...`);
+
 		require(commType).request({ port }, (res) => {
 			callback(undefined, true);
 		}).on('error', (err) => {

@@ -9466,7 +9466,7 @@ const versions = (keySSI, authToken, callback) => {
         }
 
         const queries = anchoringServicesArray.map((service) => fetch(`${service}/anchor/versions/${keySSI.getAnchorId()}`));
-
+        //TODO: security issue (which response we trust)
         Promise.allSettled(queries).then((responses) => {
             const response = responses.find((response) => response.status === 'fulfilled');
 

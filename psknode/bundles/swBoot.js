@@ -11724,7 +11724,7 @@ const versions = (keySSI, authToken, callback) => {
         }
 
         const queries = anchoringServicesArray.map((service) => fetch(`${service}/anchor/versions/${keySSI.getAnchorId()}`));
-
+        //TODO: security issue (which response we trust)
         Promise.allSettled(queries).then((responses) => {
             const response = responses.find((response) => response.status === 'fulfilled');
 
@@ -15642,7 +15642,8 @@ const defaultConfig = {
             "enableSignatureCheck": true
         },
         "dsu-wizard": {
-            "module": "dsu-wizard"
+            "module": "dsu-wizard",
+            "function": "initWizard"
         },
         "bricks": {
             "module": "./components/bricks"
@@ -15829,6 +15830,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 		if (typeof sslConfig !== 'undefined') {
 			commType += 's';
 		}
+
+		console.log(`Checking if port ${port} is available. Please wait...`);
+
 		require(commType).request({ port }, (res) => {
 			callback(undefined, true);
 		}).on('error', (err) => {
