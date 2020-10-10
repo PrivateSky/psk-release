@@ -4,7 +4,7 @@ or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
 
 require("./walletBoot_intermediar");
 },{"./walletBoot_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/walletBoot_intermediar.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/walletBoot_intermediar.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 global.walletBootLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["overwrite-require"] === "undefined"){
@@ -83,10 +83,10 @@ if (typeof $$ !== "undefined") {
 	$$.requireBundle("walletBoot");
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"adler32":"adler32","bar":"bar","bar-fs-adapter":"bar-fs-adapter","bdns":"bdns","callflow":"callflow","dossier":"dossier","edfs-brick-storage":"edfs-brick-storage","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","pskcrypto":"pskcrypto","pskwallet/index.js":"pskwallet/index.js","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate"}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 "use strict";
 
 var util = require('util');
@@ -153,7 +153,7 @@ Hash.prototype._flush = function(callback)
 	this.push(this.digest(encoding), encoding);
 	callback();
 };
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./algorithm":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js","buffer":false,"crypto":false,"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js":[function(require,module,exports){
 "use strict";
@@ -248,7 +248,7 @@ module.exports = function()
 	.bind(crypto.createHash.bind(this));
 };
 },{"./Hash":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -309,7 +309,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
@@ -2808,7 +2808,7 @@ function BrickMapDiff(header) {
 module.exports = BrickMapDiff;
 
 },{"./BrickMapMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict';
 
 const Brick = require("./Brick");
@@ -3574,7 +3574,7 @@ const BrickMapMixin = {
 }
 
 module.exports = BrickMapMixin;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
@@ -4064,7 +4064,7 @@ function Factory(options) {
 module.exports = Factory;
 
 },{"./DiffStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./bultinBrickMapStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict';
 
 const envTypes = require("overwrite-require").constants;
@@ -4788,7 +4788,7 @@ function Service(options) {
 
 module.exports = Service;
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
@@ -4798,7 +4798,7 @@ module.exports = {
 };
 
 },{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
@@ -5015,7 +5015,7 @@ module.exports = {
     }
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
 const BrickMap = require("./BrickMap");
@@ -5296,7 +5296,7 @@ module.exports = {
     }
 }
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const Brick = require("../Brick");
 const util = require("../../utils/utilities");
 const pathModule = "path";
@@ -5431,7 +5431,7 @@ function FileBrickMap(header) {
 
 module.exports = FileBrickMap;
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
 function BrickTransform(transformGenerator) {
@@ -5877,7 +5877,7 @@ $$.CONSTANTS.mixIn = function(otherConstants){
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
 function InterceptorRegistry() {
@@ -6069,7 +6069,7 @@ exports.createInterceptorRegistry = function () {
     return new InterceptorRegistry();
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
 /*
@@ -6805,7 +6805,7 @@ exports.createSwarmEngine = function(swarmType, utils){
 
 
 },{"./utilityFunctions/callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
  Contributors: Axiologic Research , PrivateSky project
@@ -7001,7 +7001,7 @@ function localLog (logType, message, err) {
 // }
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"fs":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
 var beesHealer = require("swarmutils").beesHealer;
@@ -7247,7 +7247,7 @@ module.exports = BrickStorageService;
 
 
 },{"./brickTransportStrategies/brickTransportStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/brickTransportStrategiesRegistry.js","bar":"bar"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/FetchBrickTransportStrategy.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function FetchBrickTransportStrategy(initialConfig) {
     const url = initialConfig;
     this.send = (data, callback) => {
@@ -7444,10 +7444,10 @@ FetchBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 
 module.exports = FetchBrickTransportStrategy;
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/HTTPBrickTransportStrategy.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function HTTPBrickTransportStrategy(endpoint) {
     require("psk-http-client");
 
@@ -7549,10 +7549,10 @@ HTTPBrickTransportStrategy.prototype.canHandleEndpoint = (endpoint) => {
 
 module.exports = HTTPBrickTransportStrategy;
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false,"psk-http-client":"psk-http-client"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/brickTransportStrategiesRegistry.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function BrickTransportStrategiesRegistry() {
     const strategies = {};
 
@@ -7604,7 +7604,7 @@ if (!$$.brickTransportStrategiesRegistry) {
         $$.brickTransportStrategiesRegistry.add("http", require("./HTTPBrickTransportStrategy"));
     }
 }
-}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
 },{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./FetchBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/FetchBrickTransportStrategy.js","./HTTPBrickTransportStrategy":"/home/travis/build/PrivateSky/privatesky/modules/edfs-brick-storage/brickTransportStrategies/HTTPBrickTransportStrategy.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
 'use strict';
@@ -8428,7 +8428,7 @@ module.exports = {
     createPasswordSSI
 };
 },{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
 const algorithms = {};
@@ -8594,7 +8594,7 @@ CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
 };
 
 module.exports = new CryptoAlgorithmsRegistry();
-}).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
 
 },{"../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
@@ -9108,7 +9108,7 @@ module.exports = {
     createZaSSI
 };
 },{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -9147,7 +9147,7 @@ function createSReadSSI(identifier) {
 module.exports = {
     createSReadSSI
 };
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
@@ -9252,7 +9252,7 @@ module.exports = {
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const pskcrypto = "pskcrypto";
 const crypto = require(pskcrypto);
 
@@ -9332,10 +9332,10 @@ module.exports = {
     getSSI
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const pth = "path";
 const path = require(pth);
 
@@ -9421,7 +9421,7 @@ module.exports = {
     getSSI
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js":[function(require,module,exports){
 const or = require("overwrite-require");
@@ -9604,7 +9604,7 @@ module.exports = {
     addReplicas
 }
 },{"bdns":"bdns"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
@@ -9765,10 +9765,10 @@ const putBrick = (keySSI, brick, authToken, callback) => {
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false,"opendsu":"opendsu","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const cryptoRegistry = require("key-ssi-resolver").CryptoAlgorithmsRegistry;
 
 const hash = (keySSI, data, callback) => {
@@ -9833,7 +9833,7 @@ module.exports = {
     decode
 };
 
-}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
 },{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
@@ -9842,7 +9842,7 @@ html API space
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js"][0].apply(exports,arguments)
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, callback) {
 		const xhr = new XMLHttpRequest();
@@ -9899,7 +9899,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
@@ -9931,7 +9931,7 @@ module.exports.unpoll = function(request){
 }
 
 },{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -10137,10 +10137,10 @@ function Response(httpRequest, httpResponse) {
 module.exports = {
 	fetch
 }
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -10240,7 +10240,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
@@ -10751,7 +10751,7 @@ module.exports = {
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
@@ -11062,7 +11062,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
     logger.log(...args);
 });
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
@@ -11661,7 +11661,7 @@ $$.apihub.createConnection = function(alias, url, ssi){
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
         const xhr = new XMLHttpRequest();
@@ -11796,10 +11796,10 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return window.atob(encodedString);
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 require("./psk-abstract-client");
 
 const http = require("http");
@@ -11984,7 +11984,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return Buffer.from(encodedString, 'base64').toString('ascii');
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 const crypto = require('crypto');
@@ -12034,7 +12034,7 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 },{"./keyEncoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
@@ -12223,10 +12223,10 @@ module.exports = new PskCrypto();
 
 
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require("crypto");
 const utils = require("./utils/cryptoUtils");
 
@@ -12312,7 +12312,7 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
@@ -12387,7 +12387,7 @@ asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
 },{"./api":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -12506,7 +12506,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
@@ -15961,7 +15961,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
 };
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -16231,7 +16231,7 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
@@ -16265,7 +16265,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 };
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -16429,7 +16429,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 }
 
 module.exports = KeyEncoder;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
@@ -16457,7 +16457,7 @@ DuplexStream.prototype._read = function (n) {
 
 module.exports = DuplexStream;
 },{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -16592,10 +16592,10 @@ module.exports = {
     encode,
     decode
 };
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require('crypto');
 const base58 = require('./base58');
 
@@ -16683,7 +16683,7 @@ module.exports = {
 };
 
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
@@ -17646,7 +17646,7 @@ exports.readPassword = function (prompt, callback) {
     stdin.on('data', readingInput);
 };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 const consoleUtils = require("./consoleUtils");
 const EDFS = require("edfs");
 
@@ -17779,7 +17779,7 @@ module.exports = {
     loadArchiveWithAlias,
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","dossier":"dossier","edfs":false,"key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js":[function(require,module,exports){
 function SwarmEngine(identity) {
@@ -18631,7 +18631,7 @@ exports.getTemplateHandler = function (swarmEngineApi) {
 };
 
 },{"callflow":"callflow"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 function InnerIsolatePowerCord() {
 
     let setterTransfer;
@@ -18678,7 +18678,7 @@ function InnerIsolatePowerCord() {
 
 module.exports = InnerIsolatePowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js":[function(require,module,exports){
 function InnerThreadPowerCord() {
@@ -18948,7 +18948,7 @@ function RemoteChannelPowerCord(receivingHost, receivingChannelName){
 
 module.exports = RemoteChannelPowerCord;
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const inbound = "inbound";
 
 function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, zeroMQAddress) {
@@ -19149,7 +19149,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
 module.exports = SmartRemoteChannelPowerCord;
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":false,"psk-apihub":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js":[function(require,module,exports){
 /*
@@ -20155,7 +20155,7 @@ exports.short_uuid = function(callback) {
     });
 };
 },{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require('crypto');
 const Queue = require("./Queue");
 var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : Buffer;
@@ -20258,10 +20258,10 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
-(function (setImmediate){
+(function (setImmediate){(function (){
 const {assert} = require('./utils');
 const util = require('util');
 const {EventEmitter} = require('events');
@@ -20370,7 +20370,7 @@ util.inherits(AbstractPool, EventEmitter);
 
 module.exports = AbstractPool;
 
-}).call(this,require("timers").setImmediate)
+}).call(this)}).call(this,require("timers").setImmediate)
 
 },{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/utils.js","events":false,"timers":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
@@ -20906,7 +20906,7 @@ module.exports.create = () => {
 };
 
 },{"./lib/BDNS":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/BDNS.js"}],"callflow":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 function initialise() {
     if($$.callflow){
         throw new Error("Callflow already initialized!");
@@ -20991,7 +20991,7 @@ module.exports = {
     initialise: initialise
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":false,"path":false,"soundpubsub":false}],"dossier":[function(require,module,exports){
 function envSetup(powerCord, seed, identity, callback){
@@ -21130,7 +21130,7 @@ module.exports.loadApi = function(apiSpaceName){
 
 module.exports.constants = require("./moduleConstants.js");
 },{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js"}],"overwrite-require":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
  The privatesky code for domains should work in node and browsers.
@@ -21469,7 +21469,7 @@ module.exports = {
     constants: require("./moduleConstants")
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
 const Cache = require("./lib/Cache")
@@ -21529,7 +21529,7 @@ module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
 },{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"pskwallet/index.js":[function(require,module,exports){
-(function (__dirname){
+(function (__dirname){(function (){
 const pskConsole = require('swarmutils').createPskConsole();
 const pathModule = "path";
 const path = require(pathModule);
@@ -21537,7 +21537,7 @@ process.env.PSK_ROOT_INSTALATION_FOLDER = path.resolve("." + __dirname + "/../..
 require("./cmds");
 pskConsole.runCommand();
 
-}).call(this,"/modules/pskwallet")
+}).call(this)}).call(this,"/modules/pskwallet")
 
 },{"./cmds":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js","swarmutils":"swarmutils"}],"swarm-engine":[function(require,module,exports){
 module.exports = {
@@ -21572,7 +21572,7 @@ if (browserContexts.indexOf($$.environmentType) !== -1) {
 }
 
 },{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
-(function (global,Buffer){
+(function (global,Buffer){(function (){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
 
@@ -21615,7 +21615,7 @@ module.exports.convertToBuffer = function(uint8array){
     return newBuffer;
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
 },{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js","buffer":false}],"syndicate":[function(require,module,exports){
 const PoolConfig = require('./lib/PoolConfig');

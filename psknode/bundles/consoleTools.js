@@ -1,5 +1,5 @@
 consoleToolsRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/consoleTools_intermediar.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 global.consoleToolsLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["pskwallet"] === "undefined"){
@@ -22,7 +22,7 @@ if (typeof $$ !== "undefined") {
 	$$.requireBundle("consoleTools");
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"buffer-crc32":"buffer-crc32","node-fd-slicer":"node-fd-slicer","pskwallet":"pskwallet"}],"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
 module.exports = Pend;
@@ -814,7 +814,7 @@ exports.readPassword = function (prompt, callback) {
     stdin.on('data', readingInput);
 };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/utils.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 const consoleUtils = require("./consoleUtils");
 const EDFS = require("edfs");
 
@@ -947,7 +947,7 @@ module.exports = {
     loadArchiveWithAlias,
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./consoleUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/utils/consoleUtils.js","dossier":false,"edfs":false,"key-ssi-resolver":false}],"buffer-crc32":[function(require,module,exports){
 var Buffer = require('buffer').Buffer;
@@ -1069,7 +1069,7 @@ crc32.unsigned = function () {
 module.exports = crc32;
 
 },{"buffer":false}],"node-fd-slicer":[function(require,module,exports){
-(function (Buffer,setImmediate){
+(function (Buffer,setImmediate){(function (){
 var fs = require('fs');
 var util = require('util');
 var stream = require('stream');
@@ -1367,10 +1367,10 @@ function createFromFd(fd, options) {
   return new FdSlicer(fd, options);
 }
 
-}).call(this,require("buffer").Buffer,require("timers").setImmediate)
+}).call(this)}).call(this,require("buffer").Buffer,require("timers").setImmediate)
 
 },{"./modules/node-pend":"/home/travis/build/PrivateSky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js","buffer":false,"events":false,"fs":false,"stream":false,"timers":false,"util":false}],"pskwallet":[function(require,module,exports){
-(function (__dirname){
+(function (__dirname){(function (){
 const pskConsole = require('swarmutils').createPskConsole();
 const pathModule = "path";
 const path = require(pathModule);
@@ -1378,6 +1378,6 @@ process.env.PSK_ROOT_INSTALATION_FOLDER = path.resolve("." + __dirname + "/../..
 require("./cmds");
 pskConsole.runCommand();
 
-}).call(this,"/modules/pskwallet")
+}).call(this)}).call(this,"/modules/pskwallet")
 
 },{"./cmds":"/home/travis/build/PrivateSky/privatesky/modules/pskwallet/cmds/index.js","swarmutils":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/consoleTools_intermediar.js"])

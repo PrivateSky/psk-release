@@ -1,5 +1,5 @@
 webshimsRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/webshims.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 if (typeof(window) !== "undefined") {
     if (typeof(global) !== "undefined") {
         global = window;
@@ -30,10 +30,10 @@ if (typeof($$.__runtimeModules) == "undefined") {
     $$.__runtimeModules = {};
 }
 require("./webshims_intermediar");
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./webshims_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/webshims_intermediar.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/webshims_intermediar.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 global.webshimsLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["overwrite-require"] === "undefined"){
@@ -92,7 +92,7 @@ if (typeof $$ !== "undefined") {
 	$$.requireBundle("webshims");
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"assert":"assert","buffer":"buffer","crypto":"crypto","events":"events","os":"os","overwrite-require":"overwrite-require","path":"path","pskcrypto":"pskcrypto","stream":"stream","timers":"timers","util":"util","zlib":"zlib"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
@@ -104,7 +104,7 @@ module.exports = {
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
@@ -415,7 +415,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
     logger.log(...args);
 });
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 const crypto = require('crypto');
@@ -465,7 +465,7 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 },{"./keyEncoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":"crypto"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
@@ -654,10 +654,10 @@ module.exports = new PskCrypto();
 
 
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":"buffer","crypto":"crypto","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require("crypto");
 const utils = require("./utils/cryptoUtils");
 
@@ -743,7 +743,7 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":"buffer","crypto":"crypto"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
@@ -818,7 +818,7 @@ asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
 },{"./api":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -937,7 +937,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
@@ -4392,7 +4392,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
 };
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -4662,7 +4662,7 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
@@ -4696,7 +4696,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 };
 
 },{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -4860,7 +4860,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 }
 
 module.exports = KeyEncoder;
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
@@ -4888,7 +4888,7 @@ DuplexStream.prototype._read = function (n) {
 
 module.exports = DuplexStream;
 },{"stream":"stream","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -5023,10 +5023,10 @@ module.exports = {
     encode,
     decode
 };
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const crypto = require('crypto');
 const base58 = require('./base58');
 
@@ -5114,7 +5114,7 @@ module.exports = {
 };
 
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","buffer":"buffer","crypto":"crypto"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
@@ -10625,7 +10625,7 @@ module.exports = function isBuffer(arg) {
     && typeof arg.readUInt8 === 'function';
 }
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/util.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11213,7 +11213,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./support/isBuffer":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/base64-js/index.js":[function(require,module,exports){
 'use strict'
@@ -16074,7 +16074,7 @@ module.exports={
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ofb.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var xor = require('buffer-xor')
 
 function getBlock (self) {
@@ -16092,7 +16092,7 @@ exports.encrypt = function (self, chunk) {
   return xor(chunk, pad)
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":"buffer","buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/streamCipher.js":[function(require,module,exports){
 var aes = require('./aes')
@@ -16271,7 +16271,7 @@ exports['des-ede'] = {
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var bn = require('bn.js');
 var randomBytes = require('randombytes');
 module.exports = crt;
@@ -16313,7 +16313,7 @@ function getr(priv) {
   return r;
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/node_modules/bn.js/lib/bn.js","buffer":"buffer","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
@@ -16939,7 +16939,7 @@ createErrorType('ERR_STREAM_UNSHIFT_AFTER_END_EVENT', 'stream.unshift() after en
 module.exports.codes = codes;
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -17079,7 +17079,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
     this._writableState.destroyed = value;
   }
 });
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
@@ -17122,7 +17122,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
 },{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -18247,7 +18247,7 @@ function indexOf(xs, x) {
 
   return -1;
 }
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"buffer","events":"events","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"util"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
@@ -18452,7 +18452,7 @@ function done(stream, er, data) {
   return stream.push(null);
 }
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -19150,10 +19150,10 @@ Writable.prototype._undestroy = destroyImpl.undestroy;
 Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"buffer","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict';
 
 var _Object$setPrototypeO;
@@ -19361,7 +19361,7 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 };
 
 module.exports = createReadableStreamAsyncIterator;
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
 'use strict';
@@ -19575,7 +19575,7 @@ function () {
   return BufferList;
 }();
 },{"buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
 function destroy(err, cb) {
@@ -19681,7 +19681,7 @@ module.exports = {
   undestroy: undestroy,
   errorOrDestroy: errorOrDestroy
 };
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
 // Ported from https://github.com/mafintosh/end-of-stream with
@@ -19934,7 +19934,7 @@ exports.finished = require('./lib/internal/streams/end-of-stream.js');
 exports.pipeline = require('./lib/internal/streams/pipeline.js');
 
 },{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
-(function (process,Buffer){
+(function (process,Buffer){(function (){
 'use strict';
 /* eslint camelcase: "off" */
 
@@ -20344,10 +20344,10 @@ Zlib.prototype._reset = function () {
 };
 
 exports.Zlib = Zlib;
-}).call(this,require('_process'),require("buffer").Buffer)
+}).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","assert":"assert","buffer":"buffer","pako/lib/zlib/constants":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/constants.js","pako/lib/zlib/deflate.js":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/deflate.js","pako/lib/zlib/inflate.js":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inflate.js","pako/lib/zlib/zstream":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/zstream.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 module.exports = function xor (a, b) {
   var length = Math.min(a.length, b.length)
   var buffer = new Buffer(length)
@@ -20359,7 +20359,7 @@ module.exports = function xor (a, b) {
   return buffer
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
@@ -20463,7 +20463,7 @@ CipherBase.prototype._toString = function (value, enc, fin) {
 module.exports = CipherBase
 
 },{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","stream":"stream","string_decoder":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -20572,10 +20572,10 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
 
 },{"../../is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var elliptic = require('elliptic')
 var BN = require('bn.js')
 
@@ -20701,7 +20701,7 @@ function formatReturnValue (bn, enc, len) {
   }
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js","buffer":"buffer","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
@@ -21534,7 +21534,7 @@ exports.padSplit = function padSplit(num, size, group) {
 };
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/browser.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var generatePrime = require('./lib/generatePrime')
 var primes = require('./lib/primes.json')
 
@@ -21578,10 +21578,10 @@ function createDiffieHellman (prime, enc, generator, genc) {
 exports.DiffieHellmanGroup = exports.createDiffieHellmanGroup = exports.getDiffieHellman = getDiffieHellman
 exports.createDiffieHellman = exports.DiffieHellman = createDiffieHellman
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./lib/dh":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/dh.js","./lib/generatePrime":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","./lib/primes.json":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/primes.json","buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/dh.js":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var BN = require('bn.js');
 var MillerRabin = require('miller-rabin');
 var millerRabin = new MillerRabin();
@@ -21747,7 +21747,7 @@ function formatReturnValue(bn, enc) {
   }
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"./generatePrime":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","buffer":"buffer","miller-rabin":"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js":[function(require,module,exports){
 var randomBytes = require('randombytes');
@@ -26013,7 +26013,7 @@ module.exports = HashBase
 },{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -26153,12 +26153,12 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
     this._writableState.destroyed = value;
   }
 });
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
 },{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27283,12 +27283,12 @@ function indexOf(xs, x) {
 
   return -1;
 }
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"buffer","events":"events","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"util"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27986,10 +27986,10 @@ Writable.prototype._undestroy = destroyImpl.undestroy;
 Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"buffer","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict';
 
 var _Object$setPrototypeO;
@@ -28197,12 +28197,12 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 };
 
 module.exports = createReadableStreamAsyncIterator;
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
 },{"buffer":"buffer","util":"util"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
 function destroy(err, cb) {
@@ -28308,7 +28308,7 @@ module.exports = {
   undestroy: undestroy,
   errorOrDestroy: errorOrDestroy
 };
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
@@ -36346,7 +36346,7 @@ exports.pbkdf2 = require('./lib/async')
 exports.pbkdf2Sync = require('./lib/sync')
 
 },{"./lib/async":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 var Buffer = require('safe-buffer').Buffer
 
 var checkParameters = require('./precondition')
@@ -36450,10 +36450,10 @@ module.exports = function (password, salt, iterations, keylen, digest, callback)
   }), callback)
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 var defaultEncoding
 /* istanbul ignore next */
 if (process.browser) {
@@ -36467,7 +36467,7 @@ if (process.browser) {
 }
 module.exports = defaultEncoding
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
 var MAX_ALLOC = Math.pow(2, 30) - 1 // default in iojs
@@ -36613,7 +36613,7 @@ module.exports = function (thing, encoding, name) {
 }
 
 },{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict';
 
 if (typeof process === 'undefined' ||
@@ -36660,7 +36660,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
@@ -37105,7 +37105,7 @@ module.exports = function xor (a, b) {
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 'use strict'
 
 // limit of Crypto.getRandomValues()
@@ -37157,10 +37157,10 @@ function randomBytes (size, cb) {
   return bytes
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/randomfill/browser.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 'use strict'
 
 function oldBrowser () {
@@ -37270,7 +37270,7 @@ function randomFillSync (buf, offset, size) {
   return actualFill(buf, offset, size)
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/duplex-browser.js":[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
@@ -37456,7 +37456,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
 },{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_transform.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -38476,7 +38476,7 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/BufferList":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","events":"events","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","isarray":"/home/travis/build/PrivateSky/privatesky/node_modules/isarray/index.js","process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js","util":"util"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
@@ -38694,7 +38694,7 @@ function done(stream, er, data) {
   return stream.push(null);
 }
 },{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
-(function (process,global,setImmediate){
+(function (process,global,setImmediate){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -39382,7 +39382,7 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
 
 },{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","timers":"timers","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js":[function(require,module,exports){
 'use strict';
@@ -40153,7 +40153,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 }
 
 },{"buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/node_modules/safer-buffer/safer.js":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 /* eslint-disable node/no-deprecated-api */
 
 'use strict'
@@ -40232,7 +40232,7 @@ if (!safer.constants) {
 
 module.exports = safer
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"buffer"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
@@ -41047,7 +41047,7 @@ module.exports = Sha512
 },{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js"][0].apply(exports,arguments)
 },{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 
 /**
  * Module exports.
@@ -41116,7 +41116,7 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],"/home/travis/build/PrivateSky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"][0].apply(exports,arguments)
@@ -41274,7 +41274,7 @@ exports.createContext = Script.createContext = function (context) {
 };
 
 },{}],"assert":[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 'use strict';
 
 var objectAssign = require('object-assign');
@@ -41782,10 +41782,10 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"object-assign":"/home/travis/build/PrivateSky/privatesky/node_modules/object-assign/index.js","util/":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/util.js"}],"buffer":[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -43564,7 +43564,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 
 },{"base64-js":"/home/travis/build/PrivateSky/privatesky/node_modules/base64-js/index.js","buffer":"buffer","ieee754":"/home/travis/build/PrivateSky/privatesky/node_modules/ieee754/index.js"}],"crypto":[function(require,module,exports){
 'use strict'
@@ -44242,7 +44242,7 @@ exports.homedir = function () {
 };
 
 },{}],"overwrite-require":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
  The privatesky code for domains should work in node and browsers.
@@ -44581,10 +44581,10 @@ module.exports = {
     constants: require("./moduleConstants")
 };
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"path":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
 
@@ -44888,7 +44888,7 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
@@ -45031,7 +45031,7 @@ Stream.prototype.pipe = function(dest, options) {
 };
 
 },{"events":"events","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream/duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/duplex-browser.js","readable-stream/passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/passthrough.js","readable-stream/readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/readable-browser.js","readable-stream/transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/transform.js","readable-stream/writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/writable-browser.js"}],"timers":[function(require,module,exports){
-(function (setImmediate,clearImmediate){
+(function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -45108,10 +45108,10 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
+}).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 
 },{"process/browser.js":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","timers":"timers"}],"util":[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -45699,10 +45699,10 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./support/isBuffer":"/home/travis/build/PrivateSky/privatesky/node_modules/util/support/isBufferBrowser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js"}],"zlib":[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -46312,6 +46312,6 @@ util.inherits(Gunzip, Zlib);
 util.inherits(DeflateRaw, Zlib);
 util.inherits(InflateRaw, Zlib);
 util.inherits(Unzip, Zlib);
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 
 },{"./binding":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","assert":"assert","buffer":"buffer","stream":"stream","util":"util"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/webshims.js"])

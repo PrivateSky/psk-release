@@ -1,5 +1,5 @@
 sandboxBaseRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/sandboxBase_intermediar.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 global.sandboxBaseLoadModules = function(){ 
 
 	if(typeof $$.__runtimeModules["callflow"] === "undefined"){
@@ -102,10 +102,10 @@ if (typeof $$ !== "undefined") {
 	$$.requireBundle("sandboxBase");
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/builds/tmp/sandboxBase_intermediar.js","/builds/tmp")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/builds/tmp/sandboxBase_intermediar.js","/builds/tmp")
 
 },{"assert":"assert","base64-js":"base64-js","buffer":"buffer","callflow":"callflow","events":"events","ieee754":"ieee754","inherits":"inherits","overwrite-require":"overwrite-require","path":"path","process/browser.js":"process/browser.js","pskbuffer":"pskbuffer","psklogger":"psklogger","querystring":"querystring","queue":"queue","soundpubsub":"soundpubsub","stream":"stream","string_decoder":"string_decoder","swarm-engine":"swarm-engine","swarmutils":"swarmutils","timers":"timers","url":"url","util":"util","zlib":"zlib"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -127,10 +127,10 @@ $$.CONSTANTS.mixIn = function(otherConstants){
     }
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/constants.js","/modules/callflow")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/constants.js","/modules/callflow")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
 function InterceptorRegistry() {
@@ -322,10 +322,10 @@ exports.createInterceptorRegistry = function () {
     return new InterceptorRegistry();
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/InterceptorRegistry.js","/modules/callflow/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/InterceptorRegistry.js","/modules/callflow/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -429,10 +429,10 @@ exports.loadLibrary = function(prefixName, folder){
 }
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/loadLibrary.js","/modules/callflow/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/loadLibrary.js","/modules/callflow/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 
 var globalJoinCounter = 0;
 
@@ -569,10 +569,10 @@ exports.createJoinPoint = function(swarm, callback, args){
     jp.__setProxyObject(p);
     return p;
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/parallelJoinPoint.js","/modules/callflow/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/parallelJoinPoint.js","/modules/callflow/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 
 var joinCounter = 0;
 
@@ -697,10 +697,10 @@ exports.createSerialJoinPoint = function(swarm, callback, args){
     jp.setProxyObject(p);
     return p;
 }
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/serialJoinPoint.js","/modules/callflow/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/serialJoinPoint.js","/modules/callflow/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const OwM = require("swarmutils").OwM;
 
 const swarmDescriptionsRegistry = {};
@@ -1067,10 +1067,10 @@ exports.createSwarmEngine = function(swarmType, utils){
 };
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/swarmDescription.js","/modules/callflow/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/swarmDescription.js","/modules/callflow/lib")
 
 },{"./utilityFunctions/callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
  Contributors: Axiologic Research , PrivateSky project
@@ -1266,10 +1266,10 @@ function localLog (logType, message, err) {
 // }
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/SwarmDebug.js","/modules/callflow/lib/utilityFunctions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/SwarmDebug.js","/modules/callflow/lib/utilityFunctions")
 
 },{"buffer":"buffer","fs":false,"timers":"timers","util":"util"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 var beesHealer = require("swarmutils").beesHealer;
 var swarmDebug = require("./SwarmDebug");
 
@@ -1401,18 +1401,18 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/base.js","/modules/callflow/lib/utilityFunctions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/base.js","/modules/callflow/lib/utilityFunctions")
 
 },{"../parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/callflow.js","/modules/callflow/lib/utilityFunctions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/lib/utilityFunctions/callflow.js","/modules/callflow/lib/utilityFunctions")
 
 },{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
@@ -1421,10 +1421,10 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/moduleConstants.js","/modules/overwrite-require")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/moduleConstants.js","/modules/overwrite-require")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 let logger = console;
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
@@ -1735,10 +1735,10 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
     logger.log(...args);
 });
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/standardGlobalSymbols.js","/modules/overwrite-require")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/standardGlobalSymbols.js","/modules/overwrite-require")
 
 },{"buffer":"buffer","psklogger":"psklogger","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 //to look nice the requireModule on Node
 require("./lib/psk-abstract-client");
 const or = require('overwrite-require');
@@ -1747,10 +1747,10 @@ if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
 } else {
 	require("./lib/psk-node-client");
 }
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/index.js","/modules/psk-http-client")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/index.js","/modules/psk-http-client")
 
 },{"./lib/psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js","buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /**********************  utility class **********************************/
 function RequestManager(pollingTimeOut) {
     if (!pollingTimeOut) {
@@ -2227,10 +2227,10 @@ $$.apihub.createConnection = function(alias, url, ssi){
     return $$.apihub.connections[alias];
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-abstract-client.js","/modules/psk-http-client/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-abstract-client.js","/modules/psk-http-client/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
         const xhr = new XMLHttpRequest();
@@ -2365,10 +2365,10 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return window.atob(encodedString);
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-browser-client.js","/modules/psk-http-client/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-browser-client.js","/modules/psk-http-client/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 require("./psk-abstract-client");
 
 const http = require("http");
@@ -2553,10 +2553,10 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return Buffer.from(encodedString, 'base64').toString('ascii');
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-node-client.js","/modules/psk-http-client/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psk-http-client/lib/psk-node-client.js","/modules/psk-http-client/lib")
 
 },{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":"buffer","http":false,"https":false,"timers":"timers","url":"url"}],"/home/travis/build/PrivateSky/privatesky/modules/pskbuffer/lib/PSKBuffer.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function PSKBuffer() {}
 
 function getArrayBufferInterface () {
@@ -2619,10 +2619,10 @@ PSKBuffer.alloc = function(size) {
 };
 
 module.exports = PSKBuffer;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/pskbuffer/lib/PSKBuffer.js","/modules/pskbuffer/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/pskbuffer/lib/PSKBuffer.js","/modules/pskbuffer/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/GenericLoggerClient.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const LogFactory = require('./LogFactory');
 
 /**
@@ -2684,10 +2684,10 @@ function GenericLoggerClient(messagePublisher) {
 
 module.exports = GenericLoggerClient;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/GenericLoggerClient.js","/modules/psklogger/src/LoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/GenericLoggerClient.js","/modules/psklogger/src/LoggerClient")
 
 },{"./LogFactory":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LogFactory.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LogFactory.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function getTime() {
     const envTypes = require("overwrite-require").constants;
     switch($$.environmentType) {
@@ -2722,10 +2722,10 @@ module.exports = {
     createEvent
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LogFactory.js","/modules/psklogger/src/LoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LogFactory.js","/modules/psklogger/src/LoggerClient")
 
 },{"buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LoggerClient.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const GenericLoggerClient = require('./GenericLoggerClient');
 const LogLevel = require('../utils/LogLevel');
 const LoggerInterface = require('./LoggerInterface');
@@ -2786,10 +2786,10 @@ function LoggerClient(messagePublisher) {
 
 module.exports = LoggerClient;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LoggerClient.js","/modules/psklogger/src/LoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LoggerClient.js","/modules/psklogger/src/LoggerClient")
 
 },{"../utils/LogLevel":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/LogLevel.js","./GenericLoggerClient":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/GenericLoggerClient.js","./LoggerInterface":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LoggerInterface.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LoggerInterface.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /**
  * @interface
  */
@@ -2809,10 +2809,10 @@ function LoggerInterface() {
 
 module.exports = LoggerInterface;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LoggerInterface.js","/modules/psklogger/src/LoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/LoggerInterface.js","/modules/psklogger/src/LoggerClient")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const GenericLoggerClient = require('./GenericLoggerClient');
 const LogFactory          = require('./LogFactory');
 const LoggerClient        = require('./LoggerClient');
@@ -2826,10 +2826,10 @@ module.exports = {
     LoggerInterface
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/index.js","/modules/psklogger/src/LoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/LoggerClient/index.js","/modules/psklogger/src/LoggerClient")
 
 },{"./GenericLoggerClient":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/GenericLoggerClient.js","./LogFactory":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LogFactory.js","./LoggerClient":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LoggerClient.js","./LoggerInterface":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/LoggerInterface.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/MessagePublisher.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const TransportInterface = require('./TransportInterface');
 const utils = require('../utils');
 const zeroMQModuleName = "zeromq";
@@ -2877,10 +2877,10 @@ function MessagePublisher(address) {
 
 module.exports = MessagePublisher;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/MessagePublisher.js","/modules/psklogger/src/MessagePublisher")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/MessagePublisher.js","/modules/psklogger/src/MessagePublisher")
 
 },{"../utils":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/index.js","./TransportInterface":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/TransportInterface.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/MessagePublisherForSandbox.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const TransportInterface = require('./TransportInterface');
 
 /**
@@ -2913,10 +2913,10 @@ function MessagePublisherForSandbox() {
 
 module.exports = MessagePublisherForSandbox;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/MessagePublisherForSandbox.js","/modules/psklogger/src/MessagePublisher")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/MessagePublisherForSandbox.js","/modules/psklogger/src/MessagePublisher")
 
 },{"./TransportInterface":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/TransportInterface.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/TransportInterface.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /**
  *
  * @interface
@@ -2929,10 +2929,10 @@ function TransportInterface() {
 
 module.exports = TransportInterface;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/TransportInterface.js","/modules/psklogger/src/MessagePublisher")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/TransportInterface.js","/modules/psklogger/src/MessagePublisher")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const TransportInterface = require('./TransportInterface');
 const MessagePublisher = require('./MessagePublisher');
 const MessagePublisherForSandbox = require('./MessagePublisherForSandbox');
@@ -2943,10 +2943,10 @@ module.exports = {
     MessagePublisherForSandbox
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/index.js","/modules/psklogger/src/MessagePublisher")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessagePublisher/index.js","/modules/psklogger/src/MessagePublisher")
 
 },{"./MessagePublisher":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/MessagePublisher.js","./MessagePublisherForSandbox":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/MessagePublisherForSandbox.js","./TransportInterface":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/TransportInterface.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessageSubscriber/MessageSubscriber.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const zeroMQModuleName = "zeromq";
 const zeroMQ = require(zeroMQModuleName);
 
@@ -2985,18 +2985,18 @@ function MessageSubscriber(address, subscriptions, onMessageCallback) {
 
 module.exports = MessageSubscriber;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessageSubscriber/MessageSubscriber.js","/modules/psklogger/src/MessageSubscriber")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessageSubscriber/MessageSubscriber.js","/modules/psklogger/src/MessageSubscriber")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessageSubscriber/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const MessageSubscriber = require('./MessageSubscriber');
 
 module.exports = {MessageSubscriber};
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessageSubscriber/index.js","/modules/psklogger/src/MessageSubscriber")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/MessageSubscriber/index.js","/modules/psklogger/src/MessageSubscriber")
 
 },{"./MessageSubscriber":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessageSubscriber/MessageSubscriber.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PSKLoggerClient/GenericPSKLogger.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const LoggerClientModule = require('../LoggerClient');
 
 const LoggerClient = LoggerClientModule.LoggerClient;
@@ -3076,10 +3076,10 @@ function GenericPSKLogger(messagePublisher) {
 
 module.exports = GenericPSKLogger;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PSKLoggerClient/GenericPSKLogger.js","/modules/psklogger/src/PSKLoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PSKLoggerClient/GenericPSKLogger.js","/modules/psklogger/src/PSKLoggerClient")
 
 },{"../LoggerClient":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/LoggerClient/index.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PSKLoggerClient/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const Configurator     = require('../utils/Configurator');
 const GenericPSKLogger = require('./GenericPSKLogger');
 
@@ -3102,10 +3102,10 @@ module.exports = {
     getLogger
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PSKLoggerClient/index.js","/modules/psklogger/src/PSKLoggerClient")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PSKLoggerClient/index.js","/modules/psklogger/src/PSKLoggerClient")
 
 },{"../MessagePublisher":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/index.js","../utils/Configurator":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/Configurator.js","./GenericPSKLogger":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PSKLoggerClient/GenericPSKLogger.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PubSubProxy/PubSubProxy.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const zeroMQModuleName = "zeromq";
 const zeroMQ = require(zeroMQModuleName);
 const utils = require('../utils');
@@ -3162,18 +3162,18 @@ function PubSubProxy({addressForPublishers, addressForSubscribers}) {
 
 module.exports = PubSubProxy;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PubSubProxy/PubSubProxy.js","/modules/psklogger/src/PubSubProxy")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PubSubProxy/PubSubProxy.js","/modules/psklogger/src/PubSubProxy")
 
 },{"../utils":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/index.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PubSubProxy/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const PubSubProxy = require('./PubSubProxy');
 
 module.exports = {PubSubProxy};
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PubSubProxy/index.js","/modules/psklogger/src/PubSubProxy")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/PubSubProxy/index.js","/modules/psklogger/src/PubSubProxy")
 
 },{"./PubSubProxy":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PubSubProxy/PubSubProxy.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/BufferedSocket.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const SocketType = require('./SocketType');
 
 /**
@@ -3241,10 +3241,10 @@ function BufferedSocket(socket, type, maxSize = 10000) {
 
 module.exports = BufferedSocket;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/BufferedSocket.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/BufferedSocket.js","/modules/psklogger/src/utils")
 
 },{"./SocketType":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/SocketType.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/Configurator.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const config = {
     addressForPublishers: process.env.PSK_PUBLISH_LOGS_ADDR || 'tcp://127.0.0.1:7000',
     addressForSubscribers: process.env.PSK_SUBSCRIBE_FOR_LOGS_ADDR || 'tcp://127.0.0.1:7001',
@@ -3257,10 +3257,10 @@ module.exports = {
     }
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/Configurator.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/Configurator.js","/modules/psklogger/src/utils")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/EnvironmentDataProvider.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function getEnvironmentData () {
     const or = require("overwrite-require");
     let data = {origin: $$.environmentType};
@@ -3336,10 +3336,10 @@ if(typeof global.$$.getEnvironmentData === "undefined"){
 }
 
 //no need to export anything directly
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/EnvironmentDataProvider.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/EnvironmentDataProvider.js","/modules/psklogger/src/utils")
 
 },{"buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/LogLevel.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const LogLevel = {};
 
 LogLevel[LogLevel["error"] = 0] = "error";
@@ -3350,20 +3350,20 @@ LogLevel[LogLevel["log"]   = 4] = "log";
 
 module.exports = Object.freeze(LogLevel);
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/LogLevel.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/LogLevel.js","/modules/psklogger/src/utils")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/SocketType.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const SocketType = {};
 SocketType[SocketType["connectable"] = 0] = "connectable"; // if .connect is called on socket
 SocketType[SocketType["bindable"] = 1] = "bindable"; // if .bind is called on socket
 
 module.exports = Object.freeze(SocketType);
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/SocketType.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/SocketType.js","/modules/psklogger/src/utils")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const Configurator            = require('./Configurator');
 const EnvironmentDataProvider = require('./EnvironmentDataProvider');
 const LogLevel                = require('./LogLevel');
@@ -3378,10 +3378,10 @@ module.exports = {
     SocketType
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/index.js","/modules/psklogger/src/utils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/src/utils/index.js","/modules/psklogger/src/utils")
 
 },{"./BufferedSocket":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/BufferedSocket.js","./Configurator":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/Configurator.js","./EnvironmentDataProvider":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/EnvironmentDataProvider.js","./LogLevel":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/LogLevel.js","./SocketType":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/SocketType.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -3757,10 +3757,10 @@ function SoundPubSub(){
 
 exports.soundPubSub = new SoundPubSub();
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/soundpubsub/lib/soundPubSub.js","/modules/soundpubsub/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/soundpubsub/lib/soundPubSub.js","/modules/soundpubsub/lib")
 
 },{"buffer":"buffer","queue":"queue","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function SwarmEngine(identity) {
     let myOwnIdentity = identity || SwarmEngine.prototype.ANONYMOUS_IDENTITY;
 
@@ -4033,10 +4033,10 @@ function makePluggable(powerCord) {
 
 module.exports = SwarmEngine;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/SwarmEngine.js","/modules/swarm-engine")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/SwarmEngine.js","/modules/swarm-engine")
 
 },{"./interactions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js","./swarms":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
 	if (typeof getKeySSI !== "function") {
@@ -4135,10 +4135,10 @@ function promisify(fn) {
 
 module.exports = BootEngine;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/BootEngine.js","/modules/swarm-engine/bootScripts")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/BootEngine.js","/modules/swarm-engine/bootScripts")
 
 },{"buffer":"buffer","opendsu":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/IsolateBootScript.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 
 async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
     const swarmUtils = require('swarmutils');
@@ -4233,10 +4233,10 @@ async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
 
 module.exports = getIsolatesWorker;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/IsolateBootScript.js","/modules/swarm-engine/bootScripts")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/IsolateBootScript.js","/modules/swarm-engine/bootScripts")
 
 },{"buffer":"buffer","events":"events","fs":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function boot() {
     const worker_threads ='worker_threads';
     const {parentPort, workerData} = require(worker_threads);
@@ -4306,10 +4306,10 @@ function boot() {
 boot();
 //module.exports = boot.toString();
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js","/modules/swarm-engine/bootScripts")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js","/modules/swarm-engine/bootScripts")
 
 },{"./BootEngine.js":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","buffer":"buffer","callflow":"callflow","opendsu":false,"swarm-engine":"swarm-engine","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/domainBootScript.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const path = require('path');
 //enabling life line to parent process
 require(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/core/utils/pingpongFork.js")).enableLifeLine();
@@ -4449,10 +4449,10 @@ function plugPowerCords() {
 
 boot();
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/domainBootScript.js","/modules/swarm-engine/bootScripts")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/domainBootScript.js","/modules/swarm-engine/bootScripts")
 
 },{"./BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","buffer":"buffer","dossier":false,"opendsu":false,"path":"path","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = {
     getIsolatesBootScript: function() {
         return require('./IsolateBootScript');
@@ -4464,10 +4464,10 @@ module.exports = {
         return require('./domainBootScript');
     }
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/index.js","/modules/swarm-engine/bootScripts")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/bootScripts/index.js","/modules/swarm-engine/bootScripts")
 
 },{"./IsolateBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/IsolateBootScript.js","./ThreadWorkerBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/ThreadWorkerBootScript.js","./domainBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/domainBootScript.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/InteractionSpace.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function InteractionSpace(swarmEngineApi) {
     const listeners = {};
     const interactionTemplate = require('./interaction_template').getTemplateHandler(swarmEngineApi);
@@ -4539,10 +4539,10 @@ function InteractionSpace(swarmEngineApi) {
 
 module.exports = InteractionSpace;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/InteractionSpace.js","/modules/swarm-engine/interactions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/InteractionSpace.js","/modules/swarm-engine/interactions")
 
 },{"./interaction_template":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/interaction_template.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = function (swarmEngineApi) {
     let cm = require("callflow");
     const InteractionSpace = require("./InteractionSpace");
@@ -4586,10 +4586,10 @@ module.exports = function (swarmEngineApi) {
     return is;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/index.js","/modules/swarm-engine/interactions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/index.js","/modules/swarm-engine/interactions")
 
 },{"./InteractionSpace":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/InteractionSpace.js","buffer":"buffer","callflow":"callflow","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/interaction_template.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 exports.getTemplateHandler = function (swarmEngineApi) {
 
     return {
@@ -4633,10 +4633,10 @@ exports.getTemplateHandler = function (swarmEngineApi) {
     }
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/interaction_template.js","/modules/swarm-engine/interactions")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/interactions/interaction_template.js","/modules/swarm-engine/interactions")
 
 },{"buffer":"buffer","callflow":"callflow","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function InnerIsolatePowerCord() {
 
     let setterTransfer;
@@ -4683,10 +4683,10 @@ function InnerIsolatePowerCord() {
 
 module.exports = InnerIsolatePowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function InnerThreadPowerCord() {
     const worker_threads = 'worker_threads';
     const {parentPort} = require(worker_threads);
@@ -4699,10 +4699,10 @@ function InnerThreadPowerCord() {
 
 module.exports = InnerThreadPowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
     const syndicate = require('syndicate');
     const bootScripts = require('../bootScripts');
@@ -4764,10 +4764,10 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
 
 module.exports = OuterIsolatePowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"../bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","buffer":"buffer","syndicate":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function OuterThreadPowerCord(threadBootScript, evaluate= false, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
     const syndicate = require('syndicate');
     let pool = null;
@@ -4816,10 +4816,10 @@ function OuterThreadPowerCord(threadBootScript, evaluate= false, energySourceSee
 
 module.exports = OuterThreadPowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"buffer":"buffer","syndicate":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const outbound = "outbound";
 const inbound = "inbound";
 
@@ -4898,10 +4898,10 @@ function RemoteChannelPairPowerCord(host, channelName, receivingHost, receivingC
 }
 
 module.exports = RemoteChannelPairPowerCord;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const inbound = "inbound";
 
 function RemoteChannelPowerCord(receivingHost, receivingChannelName){
@@ -4965,10 +4965,10 @@ function RemoteChannelPowerCord(receivingHost, receivingChannelName){
 }
 
 module.exports = RemoteChannelPowerCord;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"buffer","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const inbound = "inbound";
 
 function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, zeroMQAddress) {
@@ -5169,10 +5169,10 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
 module.exports = SmartRemoteChannelPowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","/modules/swarm-engine/powerCords")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","/modules/swarm-engine/powerCords")
 
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":"buffer","psk-apihub":false,"swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*
 	This type of PowerCord can be used from outer and inner SSApp in order to facilitate the SWARM communication
 	@param reference can be the parent (SSApp or wallet environment) or the iframe in which the SSApp gets loaded
@@ -5219,10 +5219,10 @@ function SSAppPowerCord(reference){
 
 module.exports = SSAppPowerCord;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","/modules/swarm-engine/powerCords/browser")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","/modules/swarm-engine/powerCords/browser")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = function(swarmEngineApi){
     const cm = require("callflow");
     const swarmUtils = require("./swarm_template-se");
@@ -5234,10 +5234,10 @@ module.exports = function(swarmEngineApi){
         swarmEngineApi.startSwarmAs(identity, swarmName, ctor, ...params);
     };
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/swarms/index.js","/modules/swarm-engine/swarms")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/swarms/index.js","/modules/swarm-engine/swarms")
 
 },{"./swarm_template-se":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/swarm_template-se.js","buffer":"buffer","callflow":"callflow","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/swarm_template-se.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 exports.getTemplateHandler = function (swarmEngine) {
     let cm = require("callflow");
 
@@ -5323,10 +5323,10 @@ exports.getTemplateHandler = function (swarmEngine) {
         }
     }
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/swarms/swarm_template-se.js","/modules/swarm-engine/swarms")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/swarms/swarm_template-se.js","/modules/swarm-engine/swarms")
 
 },{"buffer":"buffer","callflow":"callflow","swarmutils":"swarmutils","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -5352,10 +5352,10 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/Combos.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/Combos.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 var meta = "meta";
 
 function OwM(serialized){
@@ -5446,10 +5446,10 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/OwM.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/OwM.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -5517,10 +5517,10 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/Queue.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/Queue.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -5669,10 +5669,10 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/SwarmPacker.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/SwarmPacker.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -5722,10 +5722,10 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/TaskCounter.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/TaskCounter.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const OwM = require("./OwM");
 
 /*
@@ -5781,10 +5781,10 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/beesHealer.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/beesHealer.js","/modules/swarmutils/lib")
 
 },{"./OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function replaceAll(str, search, replacement) {
     return str.split(search).join(replacement);
 }
@@ -5971,10 +5971,10 @@ module.exports = {
     extname
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/path.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/path.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -6066,10 +6066,10 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/pingpongFork.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/pingpongFork.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","child_process":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 var commands = {};
 var commands_help = {};
 
@@ -6140,10 +6140,10 @@ module.exports = {
 };
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/pskconsole.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/pskconsole.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -6211,10 +6211,10 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/safe-uuid.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/safe-uuid.js","/modules/swarmutils/lib")
 
 },{"buffer":"buffer","crypto":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const crypto = require('crypto');
 const Queue = require("./Queue");
 var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : Buffer;
@@ -6317,10 +6317,10 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/uidGenerator.js","/modules/swarmutils/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/lib/uidGenerator.js","/modules/swarmutils/lib")
 
 },{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":"buffer","crypto":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict';
 /* eslint camelcase: "off" */
 
@@ -6730,10 +6730,10 @@ Zlib.prototype._reset = function () {
 };
 
 exports.Zlib = Zlib;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/browserify-zlib/lib/binding.js","/node_modules/browserify-zlib/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/browserify-zlib/lib/binding.js","/node_modules/browserify-zlib/lib")
 
 },{"assert":"assert","buffer":"buffer","pako/lib/zlib/constants":false,"pako/lib/zlib/deflate.js":false,"pako/lib/zlib/inflate.js":false,"pako/lib/zlib/zstream":false,"timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/decode.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6819,10 +6819,10 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/decode.js","/node_modules/querystring-es3")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/decode.js","/node_modules/querystring-es3")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/encode.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6909,10 +6909,10 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/encode.js","/node_modules/querystring-es3")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/encode.js","/node_modules/querystring-es3")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/node_modules/url/util.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict';
 
 module.exports = {
@@ -6930,20 +6930,20 @@ module.exports = {
   }
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/url/util.js","/node_modules/url")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/url/util.js","/node_modules/url")
 
 },{"buffer":"buffer","timers":"timers"}],"/home/travis/build/PrivateSky/privatesky/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/util/support/isBufferBrowser.js","/node_modules/util/support")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/util/support/isBufferBrowser.js","/node_modules/util/support")
 
 },{"buffer":"buffer","timers":"timers"}],"assert":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict';
 
 var objectAssign = require('object-assign');
@@ -7451,10 +7451,10 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/assert/assert.js","/node_modules/assert")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/assert/assert.js","/node_modules/assert")
 
 },{"buffer":"buffer","object-assign":false,"timers":"timers","util/":false}],"base64-js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict'
 
 exports.byteLength = byteLength
@@ -7608,10 +7608,10 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/base64-js/index.js","/node_modules/base64-js")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/base64-js/index.js","/node_modules/base64-js")
 
 },{"buffer":"buffer","timers":"timers"}],"buffer":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -9390,10 +9390,10 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/buffer/index.js","/node_modules/buffer")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/buffer/index.js","/node_modules/buffer")
 
 },{"base64-js":"base64-js","buffer":"buffer","ieee754":"ieee754","timers":"timers"}],"callflow":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function initialise() {
     if($$.callflow){
         throw new Error("Callflow already initialized!");
@@ -9478,10 +9478,10 @@ module.exports = {
     initialise: initialise
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/index.js","/modules/callflow")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/callflow/index.js","/modules/callflow")
 
 },{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js","buffer":"buffer","crypto":false,"path":"path","soundpubsub":"soundpubsub","timers":"timers"}],"events":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10006,10 +10006,10 @@ function functionBindPolyfill(context) {
   };
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/events/events.js","/node_modules/events")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/events/events.js","/node_modules/events")
 
 },{"buffer":"buffer","timers":"timers"}],"ieee754":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -10095,10 +10095,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/ieee754/index.js","/node_modules/ieee754")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/ieee754/index.js","/node_modules/ieee754")
 
 },{"buffer":"buffer","timers":"timers"}],"inherits":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -10127,10 +10127,10 @@ if (typeof Object.create === 'function') {
   }
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/inherits/inherits_browser.js","/node_modules/inherits")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/inherits/inherits_browser.js","/node_modules/inherits")
 
 },{"buffer":"buffer","timers":"timers"}],"overwrite-require":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
  The privatesky code for domains should work in node and browsers.
@@ -10469,10 +10469,10 @@ module.exports = {
     constants: require("./moduleConstants")
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/index.js","/modules/overwrite-require")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/overwrite-require/index.js","/modules/overwrite-require")
 
 },{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","buffer":"buffer","timers":"timers"}],"path":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
 
@@ -10776,10 +10776,10 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/path-browserify/index.js","/node_modules/path-browserify")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/path-browserify/index.js","/node_modules/path-browserify")
 
 },{"buffer":"buffer","timers":"timers"}],"process/browser.js":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -10965,18 +10965,18 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/process/browser.js","/node_modules/process")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/process/browser.js","/node_modules/process")
 
 },{"buffer":"buffer","timers":"timers"}],"pskbuffer":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 const PSKBuffer = require('./lib/PSKBuffer');
 
 module.exports = PSKBuffer;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/pskbuffer/index.js","/modules/pskbuffer")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/pskbuffer/index.js","/modules/pskbuffer")
 
 },{"./lib/PSKBuffer":"/home/travis/build/PrivateSky/privatesky/modules/pskbuffer/lib/PSKBuffer.js","buffer":"buffer","timers":"timers"}],"psklogger":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 try{
     const zmq = "zeromq";
     require(zmq);
@@ -11019,19 +11019,19 @@ switch ($$.environmentType) {
         //nothing to do here for now;
 }
 module.exports.PSKLogger = PSKLogger;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/index.js","/modules/psklogger")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/psklogger/index.js","/modules/psklogger")
 
 },{"./src/MessagePublisher":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessagePublisher/index.js","./src/MessageSubscriber":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/MessageSubscriber/index.js","./src/PSKLoggerClient/index":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PSKLoggerClient/index.js","./src/PubSubProxy":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/PubSubProxy/index.js","./src/utils":"/home/travis/build/PrivateSky/privatesky/modules/psklogger/src/utils/index.js","buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"querystring":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/index.js","/node_modules/querystring-es3")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/querystring-es3/index.js","/node_modules/querystring-es3")
 
 },{"./decode":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/decode.js","./encode":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/encode.js","buffer":"buffer","timers":"timers"}],"queue":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -11100,17 +11100,17 @@ Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/queue/index.js","/modules/queue")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/queue/index.js","/modules/queue")
 
 },{"buffer":"buffer","timers":"timers"}],"soundpubsub":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/soundpubsub/index.js","/modules/soundpubsub")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/soundpubsub/index.js","/modules/soundpubsub")
 
 },{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js","buffer":"buffer","timers":"timers"}],"stream":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11239,10 +11239,10 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/stream-browserify/index.js","/node_modules/stream-browserify")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/stream-browserify/index.js","/node_modules/stream-browserify")
 
 },{"buffer":"buffer","events":"events","inherits":"inherits","readable-stream/duplex.js":false,"readable-stream/passthrough.js":false,"readable-stream/readable.js":false,"readable-stream/transform.js":false,"readable-stream/writable.js":false,"timers":"timers"}],"string_decoder":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11539,10 +11539,10 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/string_decoder/lib/string_decoder.js","/node_modules/string_decoder/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/string_decoder/lib/string_decoder.js","/node_modules/string_decoder/lib")
 
 },{"buffer":"buffer","safe-buffer":false,"timers":"timers"}],"swarm-engine":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports = {
     initialise:function(...args){
         if(typeof $$.swarmEngine === "undefined"){
@@ -11574,10 +11574,10 @@ if (browserContexts.indexOf($$.environmentType) !== -1) {
     module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");*/
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/index.js","/modules/swarm-engine")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarm-engine/index.js","/modules/swarm-engine")
 
 },{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","buffer":"buffer","overwrite-require":"overwrite-require","timers":"timers"}],"swarmutils":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
 
@@ -11620,10 +11620,10 @@ module.exports.convertToBuffer = function(uint8array){
     return newBuffer;
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/index.js","/modules/swarmutils")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/modules/swarmutils/index.js","/modules/swarmutils")
 
 },{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js","buffer":"buffer","timers":"timers"}],"timers":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -11700,10 +11700,10 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/timers-browserify/main.js","/node_modules/timers-browserify")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/timers-browserify/main.js","/node_modules/timers-browserify")
 
 },{"buffer":"buffer","process/browser.js":"process/browser.js","timers":"timers"}],"url":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12437,10 +12437,10 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/url/url.js","/node_modules/url")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/url/url.js","/node_modules/url")
 
 },{"./util":"/home/travis/build/PrivateSky/privatesky/node_modules/url/util.js","buffer":"buffer","punycode":false,"querystring":"querystring","timers":"timers"}],"util":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13028,10 +13028,10 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/util/util.js","/node_modules/util")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/util/util.js","/node_modules/util")
 
 },{"./support/isBuffer":"/home/travis/build/PrivateSky/privatesky/node_modules/util/support/isBufferBrowser.js","buffer":"buffer","inherits":"inherits","timers":"timers"}],"zlib":[function(require,module,exports){
-(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){
+(function (global,Buffer,setImmediate,__argument0,__argument1,__argument2,__argument3,clearImmediate,__filename,__dirname){(function (){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -13641,6 +13641,6 @@ util.inherits(Gunzip, Zlib);
 util.inherits(DeflateRaw, Zlib);
 util.inherits(InflateRaw, Zlib);
 util.inherits(Unzip, Zlib);
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/browserify-zlib/lib/index.js","/node_modules/browserify-zlib/lib")
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,require("timers").setImmediate,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").clearImmediate,"/node_modules/browserify-zlib/lib/index.js","/node_modules/browserify-zlib/lib")
 
 },{"./binding":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js","assert":"assert","buffer":"buffer","stream":"stream","timers":"timers","util":"util"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/sandboxBase_intermediar.js"])
