@@ -1672,36 +1672,49 @@ function AddFile(server){
 	const osName = "os";
 	const os = require(osName);
 
+	const utils = require("../utils");
+
 	const commandRegistry = require("../CommandRegistry").getRegistry(server);
 	commandRegistry.register("/addFile", "post", (req, callback)=>{
-		const crypto = require("pskcrypto");
-
-		const dossierPath = req.headers["x-dossier-path"];
-		let tempFileName = crypto.randomBytes(10).toString('hex');
-
-		fs.mkdtemp(path.join(os.tmpdir(), req.params.transactionId), (err, directory) => {
-			if (err){
+		utils.formDataParser(req, (err, formData)=>{
+			if(err){
 				return callback(err);
 			}
+			if(formData.length === 0){
+				return callback('No files found');
+			}
 
-			const tempFilePath = path.join(directory, tempFileName);
-			const file = fs.createWriteStream(tempFilePath);
+			let fileContent = formData[0].content;
+			const crypto = require("pskcrypto");
 
-			file.on('close', () => {
+			const dossierPath = req.headers["x-dossier-path"];
+			let tempFileName = crypto.randomBytes(10).toString('hex');
+
+			fs.mkdtemp(path.join(os.tmpdir(), req.params.transactionId), (err, directory) => {
+				if (err){
+					return callback(err);
+				}
+
+				const tempFilePath = path.join(directory, tempFileName);
+				const file = fs.createWriteStream(tempFilePath);
+
+				/*file.on('close', () => {
+					return callback(undefined, createAddFileCommand(tempFilePath, dossierPath));
+				});
+
+				file.on('error', (err)=>{
+					return callback(err);
+				});*/
+
+				file.write(fileContent);
 				return callback(undefined, createAddFileCommand(tempFilePath, dossierPath));
 			});
-
-			file.on('error', (err)=>{
-				return callback(err);
-			})
-
-			req.pipe(file);
 		});
 	});
 }
 
 module.exports = AddFile;
-},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js":[function(require,module,exports){
+},{"../CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","../utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js":[function(require,module,exports){
 module.exports = {
 	execute : function(context, callback){
 		//this kind of command isn't to operate on dsu rather on transaction object.
@@ -1815,6 +1828,92 @@ function bodyParser(req, callback) {
 	});
 }
 
+function formDataParser(req, callback) {
+	let formData = [];
+	let currentFormItem;
+	let currentBoundary;
+	req.on('data', function (dataChunk) {
+		dataChunk = dataChunk.toString();
+		let dataArray = dataChunk.split("\r\n");
+		let removeOneLine = false;
+		dataArray.forEach((dataLine)=>{
+			let lineHandled = false;
+			if(dataLine.indexOf('------') === 0){
+				if(typeof currentBoundary === "undefined"){
+					//we got a new boundary
+					currentBoundary = dataLine;
+					lineHandled = true;
+				}else{
+					if(dataLine.indexOf(currentBoundary)+'--' !== -1){
+						//we found a boundary end
+						currentBoundary = undefined;
+						//we add the formItem to formData and consider that is done
+						formData.push(currentFormItem);
+						currentFormItem = undefined;
+						lineHandled = true;
+						removeOneLine = true;
+					}else{
+						//it's just content... we do nothing at this point
+					}
+				}
+			}
+			if(dataLine.indexOf('Content-Disposition:') !== -1){
+				const formItemMeta = dataLine.split("; ");
+				formItemMeta.forEach(meta=>{
+					if(meta.indexOf("name=") !== -1){
+						const itemType = meta.replace("name=", "");
+						currentFormItem = {
+							type: itemType,
+							content: "",
+							ingestContent: function(data){
+								currentFormItem.content += data+'\r\n';
+							}
+						}
+					}
+				});
+				lineHandled = true;
+				removeOneLine = true;
+			}
+			if(dataLine.indexOf('Content-Type:') !== -1){
+				const contentType = dataLine.replace('Content-Type: ', "");
+				switch(currentFormItem.type){
+					case "file":
+						if(contentType.indexOf("text/") !== -1){
+							currentFormItem.content = "";
+							currentFormItem.ingestContent = function(data){
+								currentFormItem.content += data+'\r\n';
+							}
+						}else{
+							currentFormItem.content = [];
+						}
+						break;
+					default:
+						currentFormItem.content = "";
+				}
+				lineHandled = true;
+				removeOneLine = true;
+			}
+			if(!lineHandled){
+				//it's pure content
+				if(!removeOneLine){
+					currentFormItem.ingestContent(dataLine);
+				}else{
+					removeOneLine = false;
+				}
+			}
+		});
+	});
+
+	req.on('end', function () {
+		req.formData = formData;
+		callback(undefined, req.formData);
+	});
+
+	req.on('error', function (err) {
+		callback(err);
+	});
+}
+
 function redirect(req, res) {
 	const URL_PREFIX = require("./constants").URL_PREFIX;
 	res.statusCode = 303;
@@ -1830,6 +1929,7 @@ function redirect(req, res) {
 
 module.exports = {
 	bodyParser,
+	formDataParser,
 	redirect
 }
 },{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/AnchorsManager.js":[function(require,module,exports){
@@ -17128,7 +17228,9 @@ function initWizard(server) {
 	const VirtualMQ = require('psk-apihub');
 	const httpWrapper = VirtualMQ.getHttpWrapper();
 	const httpUtils = httpWrapper.httpUtils;
-	server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dsu-wizard/web'), `${URL_PREFIX}/`));
+	setTimeout(()=>{
+		server.use(`${URL_PREFIX}/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dsu-wizard/web'), `${URL_PREFIX}/`));
+	}, 1000);
 }
 
 module.exports = {
@@ -17136,13 +17238,17 @@ module.exports = {
 	getTransactionManager : function(){
 		return require("./TransactionManager");
 	},
-	getCommandRegistry: function(){
-		return require("./CommandRegistry");
-	}
+	getCommandRegistry: function(server){
+		return require("./CommandRegistry").getRegistry(server);
+	},
+	getDummyCommand: function(){
+		return require("./commands/dummyCommand");
+	},
+	utils: require("./utils")
 }
 }).call(this)}).call(this,"/modules/dsu-wizard")
 
-},{"./CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","./commands":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","path":false,"psk-apihub":"psk-apihub"}],"edfs-middleware":[function(require,module,exports){
+},{"./CommandRegistry":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/CommandRegistry.js","./TransactionManager":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/TransactionManager.js","./commands":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/index.js","./commands/dummyCommand":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/dummyCommand.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js","path":false,"psk-apihub":"psk-apihub"}],"edfs-middleware":[function(require,module,exports){
 module.exports.BrickStorageMiddleware = require("./lib/BrickStorageMiddleware");
 module.exports.AnchoringMiddleware = require("./lib/AnchoringMiddleware");
 
