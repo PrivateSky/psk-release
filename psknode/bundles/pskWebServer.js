@@ -106,24 +106,8 @@ function BDNS() {
             return;
         }
 
-        try {
-            const path = require("swarmutils").path;
-            const FILE_PATH = path.join(process.env.PSK_CONFIG_LOCATION, "BDNS.hosts.json");
-            hosts = require(FILE_PATH);
-        } catch (e) {
-            hosts = {
-                "default": {
-                    "replicas": [],
-                    "brickStorages": [
-                        "http://localhost:8080"
-                    ],
-                    "anchoringServices": [
-                        "http://localhost:8080"
-                    ]
-                }
-            }
-        }
-
+        let initializeFn = require("./configStrategies").init;
+        hosts = initializeFn();
     };
 
     this.getRawInfo = (dlDomain, callback) => {
@@ -241,7 +225,74 @@ function BDNS() {
 }
 
 module.exports = BDNS;
-},{"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"./configStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js":[function(require,module,exports){
+let or = require("overwrite-require");
+const domain = "default";
+const defaultURL = "http://localhost:8080";
+
+function buildConfig(domainName, url) {
+	let config = {};
+	config[domainName] = {
+		"replicas": [],
+		"brickStorages": [url],
+		"anchoringServices": [url]
+	};
+	return config;
+}
+
+function defaultConfigInit() {
+	let hosts = buildConfig(domain, "http://localhost:8080");
+	return hosts;
+}
+
+function browserConfigInit() {
+	const protocol = window.location.protocol;
+	const host = window.location.hostname;
+	const port = window.location.port;
+
+	let url = `${protocol}//${host}:${port}`;
+	return buildConfig(domain, url);
+}
+
+function swConfigInit() {
+	let scope = self.registration.scope;
+
+	let parts = scope.split("/");
+	let url  = parts[0] + "//" + parts[2];
+
+	return buildConfig(domain, url);
+}
+
+function nodeConfigInit() {
+	let hosts;
+	try {
+		const path = require("swarmutils").path;
+		const FILE_PATH = path.join(process.env.PSK_CONFIG_LOCATION, "BDNS.hosts.json");
+		hosts = require(FILE_PATH);
+	} catch (e) {
+		console.log("BDNS config file not found. Using defaults.");
+		hosts = buildConfig(domain, defaultURL);
+	}
+	return hosts;
+}
+
+let result = {};
+switch ($$.environmentType) {
+	case or.constants.BROWSER_ENVIRONMENT_TYPE:
+		result.init = browserConfigInit;
+		break;
+	case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
+		result.init = swConfigInit;
+		break;
+	case or.constants.NODEJS_ENVIRONMENT_TYPE:
+		result.init = nodeConfigInit;
+		break;
+	default:
+		result.init = defaultConfigInit;
+}
+
+module.exports = result;
+},{"overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -1654,16 +1705,6 @@ function TransactionsManager(){
 
 module.exports = new TransactionsManager();
 },{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","opendsu":"opendsu","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/commands/addFile.js":[function(require,module,exports){
-function createAddFileCommand(filePath, dossierPath){
-	const command = {
-		execute: function(context, callback){
-			context.dsu.addFile(filePath, dossierPath, callback);
-		}
-	}
-
-	return command;
-}
-
 function AddFile(server){
 	const pathName = "path";
 	const path = require(pathName);
@@ -1673,6 +1714,25 @@ function AddFile(server){
 	const os = require(osName);
 
 	const utils = require("../utils");
+
+	function createAddFileCommand(filePath, dossierPath){
+		const command = {
+			execute: function(context, callback){
+				context.dsu.addFile(filePath, dossierPath, (err)=>{
+					if(err){
+						return callback(err);
+					}
+					//once the file is added into dossier we remove it.
+					fs.unlink(filePath, ()=>{
+						//we ignore errors that can appear during unlink on windows machines
+						return callback();
+					});
+				});
+			}
+		}
+
+		return command;
+	}
 
 	const commandRegistry = require("../CommandRegistry").getRegistry(server);
 	commandRegistry.register("/addFile", "post", (req, callback)=>{
@@ -1704,7 +1764,9 @@ function AddFile(server){
 
 				file.on('error', (err)=>{
 					return callback(err);
-				});*/
+				});
+				req.pipe(file);
+				*/
 
 				file.write(fileContent);
 				return callback(undefined, createAddFileCommand(tempFilePath, dossierPath));
