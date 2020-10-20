@@ -13123,7 +13123,17 @@ module.exports = {
     registerDSUFactory
 }
 },{"key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js"][0].apply(exports,arguments)
+const getMainDSU = () => {
+    if (typeof rawDossier === "undefined") {
+        throw Error("Main DSU does not exist in the current context.");
+    }
+
+    return rawDossier;
+};
+
+module.exports = {
+    getMainDSU
+}
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 function Observable(){
 	let handlers = {};
