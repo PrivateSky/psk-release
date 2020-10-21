@@ -1873,6 +1873,7 @@ const transactionIdLength = 32;
 
 module.exports = { URL_PREFIX, transactionIdLength};
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js":[function(require,module,exports){
+(function (Buffer){(function (){
 function bodyParser(req, callback) {
 	let bodyContent = '';
 
@@ -1894,9 +1895,24 @@ function formDataParser(req, callback) {
 	let formData = [];
 	let currentFormItem;
 	let currentBoundary;
-	req.on('data', function (dataChunk) {
-		dataChunk = dataChunk.toString();
-		let dataArray = dataChunk.split("\r\n");
+	let dataBuf = Buffer.alloc(0);
+	req.on('data', function (dataChunk){
+		dataBuf = Buffer.concat([dataBuf, dataChunk]);
+	});
+
+	req.on('end', function () {
+		formParser(dataBuf);
+		req.formData = formData;
+		callback(undefined, req.formData);
+	});
+
+	req.on('error', function (err) {
+		callback(err);
+	});
+
+	function formParser(data) {
+		data = data.toString();
+		let dataArray = data.split(/[\r\n]+/g);
 		let removeOneLine = false;
 		dataArray.forEach((dataLine)=>{
 			let lineHandled = false;
@@ -1957,23 +1973,12 @@ function formDataParser(req, callback) {
 			}
 			if(!lineHandled){
 				//it's pure content
-				if(!removeOneLine){
+				if(typeof currentFormItem !== "undefined"){
 					currentFormItem.ingestContent(dataLine);
-				}else{
-					removeOneLine = false;
 				}
 			}
 		});
-	});
-
-	req.on('end', function () {
-		req.formData = formData;
-		callback(undefined, req.formData);
-	});
-
-	req.on('error', function (err) {
-		callback(err);
-	});
+	}
 }
 
 function redirect(req, res) {
@@ -1994,7 +1999,9 @@ module.exports = {
 	formDataParser,
 	redirect
 }
-},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/AnchorsManager.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/constants.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/flows/AnchorsManager.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const pathModule = "path";
 const path = require(pathModule);
