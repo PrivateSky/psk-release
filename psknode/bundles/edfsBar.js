@@ -6879,7 +6879,71 @@ function BootstrapingService(options) {
 
 module.exports = BootstrapingService;
 
-},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js":[function(require,module,exports){
+},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function ConstDSUFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.load(keySSI, options, callback);
+    };
+}
+
+module.exports = ConstDSUFactory;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -6888,7 +6952,7 @@ module.exports = BootstrapingService;
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 const cache = require('psk-cache').factory();
-function BarFactory(options) {
+function DSUFactory(options) {
     const barModule = require('bar');
     const fsAdapter = require('bar-fs-adapter');
 
@@ -6937,7 +7001,11 @@ function BarFactory(options) {
         }catch(e) {
             throw e;
         }
+
         const bar = barModule.createArchive(archiveConfigurator);
+        const DSUBase = require("./mixins/DSUBase");
+        DSUBase(bar);
+
         return bar;
     }
 
@@ -7026,73 +7094,9 @@ function BarFactory(options) {
     }
 }
 
-module.exports = BarFactory;
+module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js":[function(require,module,exports){
-/**
- * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
- * @param {KeySSIFactory} options.keySSIFactory
- * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
- */
-function ConstDSUFactory(options) {
-    options = options || {};
-    this.barFactory = options.barFactory;
-
-    /**
-     * @param {object} options
-     * @param {string} options.favouriteEndpoint
-     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
-     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
-     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
-     *                                                              If empty, the changes will be anchored after each operation
-     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
-     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
-     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
-     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules
-     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
-     * @param {callback} callback
-     */
-    this.create = (keySSI, options, callback) => {
-        if (typeof options === 'function') {
-            callback = options;
-            options = {};
-        }
-        // enable options.validationRules.preWrite to stop content update
-        this.barFactory.create(keySSI, options, callback);
-    };
-
-    /**
-     * @param {string} keySSI
-     * @param {object} options
-     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
-     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
-     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
-     *                                                              If empty, the changes will be anchored after each operation
-     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
-     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
-     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
-     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules
-     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
-     * @param {callback} callback
-     */
-    this.load = (keySSI, options, callback) => {
-        if (typeof options === 'function') {
-            callback = options;
-            options = {};
-        }
-
-        // enable options.validationRules.preWrite to stop content update
-        this.barFactory.load(keySSI, options, callback);
-    };
-}
-
-module.exports = ConstDSUFactory;
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -7188,8 +7192,8 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js":[function(require,module,exports){
-const BarFactory = require('./BarFactory');
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+const BarFactory = require('./DSUFactory');
 
 /**
  * @param {object} options
@@ -7200,7 +7204,7 @@ const BarFactory = require('./BarFactory');
  */
 const factories = {};
 
-function Factory(options) {
+function Registry(options) {
     options = options || {};
 
     const bootstrapingService = options.bootstrapingService;
@@ -7309,16 +7313,52 @@ function Factory(options) {
  * @param {string} dsuType
  * @param {object} factory
  */
-Factory.prototype.registerDSUType = (dsuType, factory) => {
+Registry.prototype.registerDSUType = (dsuType, factory) => {
     factories[dsuType] = factory;
 }
 
-Factory.prototype.getDSUFactory = (dsuType) => {
+Registry.prototype.getDSUFactory = (dsuType) => {
     return factories[dsuType];
 }
 
-module.exports = Factory;
-},{"./BarFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+module.exports = Registry;
+},{"./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+module.exports = function(archive){
+	archive.call = (functionName, ...args) => {
+		if(args.length === 0){
+			throw Error('Missing arguments. Usage: call(functionName, [arg1, arg2 ...] callback)');
+		}
+
+		const callback = args.pop();
+
+		archive.readFile("/code/api.js", function(err, apiCode){
+			if(err){
+				return callback(err);
+			}
+
+			try{
+				//before eval we need to convert from Buffer/ArrayBuffer to String
+				const or = require("overwrite-require");
+				switch($$.environmentType){
+					case or.constants.BROWSER_ENVIRONMENT_TYPE:
+					case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
+						apiCode = new TextDecoder("utf-8").decode(apiCode);
+						break;
+					default:
+						apiCode = apiCode.toString();
+				}
+
+				const apis = eval(apiCode);
+				apis[functionName].call(this, ...args, callback);
+
+			}catch(err){
+				return callback(err);
+			}
+		});
+	}
+	return archive;
+}
+},{"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 const constants = require('./constants');
 const defaultBootStrapingService = require("./BootstrapingService");
 /**
@@ -16294,7 +16334,7 @@ module.exports.AnchoringMiddleware = require("./lib/AnchoringMiddleware");
 },{"./lib/AnchoringMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/AnchoringMiddleware.js","./lib/BrickStorageMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/BrickStorageMiddleware.js"}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const constants = require('./lib/constants');
-const DSUFactory = require("./lib/DSUFactory");
+const DSUFactory = require("./lib/DSUFactoryRegistry");
 const BootStrapingService = require("./lib/BootstrapingService");
 
 /**
@@ -16333,10 +16373,10 @@ module.exports = {
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
     CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
-    DSUFactory: require("./lib/DSUFactory")
+    DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":"bar"}],"overwrite-require":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":"bar"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.

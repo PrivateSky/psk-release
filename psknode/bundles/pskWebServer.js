@@ -1875,129 +1875,126 @@ module.exports = { URL_PREFIX, transactionIdLength};
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/dsu-wizard/utils.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function bodyParser(req, callback) {
-	let bodyContent = '';
+    let bodyContent = '';
 
-	req.on('data', function (dataChunk) {
-		bodyContent += dataChunk;
-	});
+    req.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
 
-	req.on('end', function () {
-		req.body = bodyContent;
-		callback(undefined, req.body);
-	});
+    req.on('end', function () {
+        req.body = bodyContent;
+        callback(undefined, req.body);
+    });
 
-	req.on('error', function (err) {
-		callback(err);
-	});
+    req.on('error', function (err) {
+        callback(err);
+    });
 }
 
 function formDataParser(req, callback) {
-	let formData = [];
-	let currentFormItem;
-	let currentBoundary;
-	let dataBuf = Buffer.alloc(0);
-	req.on('data', function (dataChunk){
-		dataBuf = Buffer.concat([dataBuf, dataChunk]);
-	});
+    let formData = [];
+    let currentFormItem;
+    let currentBoundary;
+    let dataBuf = Buffer.alloc(0);
+    let defaultItem = {
+        bufferStartIndex: 0,
+        bufferEndIndex: 0,
+        increaseBothBuffers: (size) => {
+            currentFormItem.bufferStartIndex += size;
+            currentFormItem.bufferEndIndex += size;
+        },
+        increaseEndBuffer: (size) => {
+            currentFormItem.bufferEndIndex += size;
+        }
+    }
 
-	req.on('end', function () {
-		formParser(dataBuf);
-		req.formData = formData;
-		callback(undefined, req.formData);
-	});
+    req.on('data', function (dataChunk) {
+        dataBuf = Buffer.concat([dataBuf, dataChunk]);
+    });
 
-	req.on('error', function (err) {
-		callback(err);
-	});
+    req.on('end', function () {
+        formParser(dataBuf);
+        req.formData = formData;
+        callback(undefined, req.formData);
+    });
 
-	function formParser(data) {
-		data = data.toString();
-		let dataArray = data.split(/[\r\n]+/g);
-		let removeOneLine = false;
-		dataArray.forEach((dataLine)=>{
-			let lineHandled = false;
-			if(dataLine.indexOf('------') === 0){
-				if(typeof currentBoundary === "undefined"){
-					//we got a new boundary
-					currentBoundary = dataLine;
-					lineHandled = true;
-				}else{
-					if(dataLine.indexOf(currentBoundary)+'--' !== -1){
-						//we found a boundary end
-						currentBoundary = undefined;
-						//we add the formItem to formData and consider that is done
-						formData.push(currentFormItem);
-						currentFormItem = undefined;
-						lineHandled = true;
-						removeOneLine = true;
-					}else{
-						//it's just content... we do nothing at this point
-					}
-				}
-			}
-			if(dataLine.indexOf('Content-Disposition:') !== -1){
-				const formItemMeta = dataLine.split("; ");
-				formItemMeta.forEach(meta=>{
-					if(meta.indexOf("name=") !== -1){
-						const itemType = meta.replace("name=", "");
-						currentFormItem = {
-							type: itemType,
-							content: "",
-							ingestContent: function(data){
-								currentFormItem.content += data+'\r\n';
-							}
-						}
-					}
-				});
-				lineHandled = true;
-				removeOneLine = true;
-			}
-			if(dataLine.indexOf('Content-Type:') !== -1){
-				const contentType = dataLine.replace('Content-Type: ', "");
-				switch(currentFormItem.type){
-					case "file":
-						if(contentType.indexOf("text/") !== -1){
-							currentFormItem.content = "";
-							currentFormItem.ingestContent = function(data){
-								currentFormItem.content += data+'\r\n';
-							}
-						}else{
-							currentFormItem.content = [];
-						}
-						break;
-					default:
-						currentFormItem.content = "";
-				}
-				lineHandled = true;
-				removeOneLine = true;
-			}
-			if(!lineHandled){
-				//it's pure content
-				if(typeof currentFormItem !== "undefined"){
-					currentFormItem.ingestContent(dataLine);
-				}
-			}
-		});
-	}
+    req.on('error', function (err) {
+        callback(err);
+    });
+
+    function formParser(data) {
+        let dataAsString = data.toString();
+        let dataArray = dataAsString.split(/[\r\n]+/g);
+
+        currentFormItem = defaultItem;
+        for (let dataLine of dataArray) {
+            let lineHandled = false;
+            if (dataLine.indexOf('------') === 0) {
+                if (typeof currentBoundary === "undefined") {
+                    //we got a new boundary
+                    currentBoundary = dataLine;
+
+                    currentFormItem.increaseBothBuffers(dataLine.length + 2)
+
+                    lineHandled = true;
+                } else if (dataLine.indexOf(currentBoundary) + '--' !== -1) {
+                    //we found a boundary end
+                    currentBoundary = undefined;
+
+                    //Due to encoding method of the characters, in some scenarios we will need to prevent the lose of bytes
+                    //That's why in the final boundary we add them back
+                    currentFormItem.increaseEndBuffer(data.byteLength - dataAsString.length);
+                    currentFormItem = {
+                        type: currentFormItem.type,
+                        content: data.slice(currentFormItem.bufferStartIndex + 2, currentFormItem.bufferEndIndex + 2)
+                    }
+                    //we add the formItem to formData and consider that is done
+                    formData.push(currentFormItem);
+
+                    currentFormItem = defaultItem;
+                    lineHandled = true;
+                }
+            }
+            if (dataLine.indexOf('Content-Disposition:') !== -1) {
+                const formItemMeta = dataLine.split("; ");
+                for (let meta of formItemMeta) {
+                    if (meta.indexOf("name=") === 0) {
+                        currentFormItem.type = meta.replace("name=", "").replace(/\"|'/g, "");
+                        break;
+                    }
+                }
+
+                currentFormItem.increaseBothBuffers(dataLine.length + 2)
+                lineHandled = true;
+            }
+            if (dataLine.indexOf('Content-Type:') !== -1) {
+                currentFormItem.increaseBothBuffers(dataLine.length + 2)
+                lineHandled = true;
+            }
+            if (!lineHandled) {
+                currentFormItem.increaseEndBuffer(dataLine.length + 1)
+            }
+        }
+    }
 }
 
 function redirect(req, res) {
-	const URL_PREFIX = require("./constants").URL_PREFIX;
-	res.statusCode = 303;
-	let redirectLocation = 'index.html';
+    const URL_PREFIX = require("./constants").URL_PREFIX;
+    res.statusCode = 303;
+    let redirectLocation = 'index.html';
 
-	if (!req.url.endsWith('/')) {
-		redirectLocation = `${URL_PREFIX}/` + redirectLocation;
-	}
+    if (!req.url.endsWith('/')) {
+        redirectLocation = `${URL_PREFIX}/` + redirectLocation;
+    }
 
-	res.setHeader("Location", redirectLocation);
-	res.end();
+    res.setHeader("Location", redirectLocation);
+    res.end();
 }
 
 module.exports = {
-	bodyParser,
-	formDataParser,
-	redirect
+    bodyParser,
+    formDataParser,
+    redirect
 }
 }).call(this)}).call(this,require("buffer").Buffer)
 
@@ -2729,7 +2726,71 @@ function BootstrapingService(options) {
 
 module.exports = BootstrapingService;
 
-},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js":[function(require,module,exports){
+},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
+ * @param {BootstrapingService} options.bootstrapingService
+ * @param {string} options.dlDomain
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function ConstDSUFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.favouriteEndpoint
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.load(keySSI, options, callback);
+    };
+}
+
+module.exports = ConstDSUFactory;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -2738,7 +2799,7 @@ module.exports = BootstrapingService;
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 const cache = require('psk-cache').factory();
-function BarFactory(options) {
+function DSUFactory(options) {
     const barModule = require('bar');
     const fsAdapter = require('bar-fs-adapter');
 
@@ -2787,7 +2848,11 @@ function BarFactory(options) {
         }catch(e) {
             throw e;
         }
+
         const bar = barModule.createArchive(archiveConfigurator);
+        const DSUBase = require("./mixins/DSUBase");
+        DSUBase(bar);
+
         return bar;
     }
 
@@ -2876,73 +2941,9 @@ function BarFactory(options) {
     }
 }
 
-module.exports = BarFactory;
+module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","bar":false,"bar-fs-adapter":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js":[function(require,module,exports){
-/**
- * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
- * @param {KeySSIFactory} options.keySSIFactory
- * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
- */
-function ConstDSUFactory(options) {
-    options = options || {};
-    this.barFactory = options.barFactory;
-
-    /**
-     * @param {object} options
-     * @param {string} options.favouriteEndpoint
-     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
-     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
-     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
-     *                                                              If empty, the changes will be anchored after each operation
-     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
-     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
-     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
-     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules
-     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
-     * @param {callback} callback
-     */
-    this.create = (keySSI, options, callback) => {
-        if (typeof options === 'function') {
-            callback = options;
-            options = {};
-        }
-        // enable options.validationRules.preWrite to stop content update
-        this.barFactory.create(keySSI, options, callback);
-    };
-
-    /**
-     * @param {string} keySSI
-     * @param {object} options
-     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
-     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
-     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
-     *                                                              If empty, the changes will be anchored after each operation
-     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
-     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
-     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
-     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules
-     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
-     * @param {callback} callback
-     */
-    this.load = (keySSI, options, callback) => {
-        if (typeof options === 'function') {
-            callback = options;
-            options = {};
-        }
-
-        // enable options.validationRules.preWrite to stop content update
-        this.barFactory.load(keySSI, options, callback);
-    };
-}
-
-module.exports = ConstDSUFactory;
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":false,"bar-fs-adapter":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -3038,8 +3039,8 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js":[function(require,module,exports){
-const BarFactory = require('./BarFactory');
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+const BarFactory = require('./DSUFactory');
 
 /**
  * @param {object} options
@@ -3050,7 +3051,7 @@ const BarFactory = require('./BarFactory');
  */
 const factories = {};
 
-function Factory(options) {
+function Registry(options) {
     options = options || {};
 
     const bootstrapingService = options.bootstrapingService;
@@ -3159,16 +3160,52 @@ function Factory(options) {
  * @param {string} dsuType
  * @param {object} factory
  */
-Factory.prototype.registerDSUType = (dsuType, factory) => {
+Registry.prototype.registerDSUType = (dsuType, factory) => {
     factories[dsuType] = factory;
 }
 
-Factory.prototype.getDSUFactory = (dsuType) => {
+Registry.prototype.getDSUFactory = (dsuType) => {
     return factories[dsuType];
 }
 
-module.exports = Factory;
-},{"./BarFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/BarFactory.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/ConstDSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+module.exports = Registry;
+},{"./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+module.exports = function(archive){
+	archive.call = (functionName, ...args) => {
+		if(args.length === 0){
+			throw Error('Missing arguments. Usage: call(functionName, [arg1, arg2 ...] callback)');
+		}
+
+		const callback = args.pop();
+
+		archive.readFile("/code/api.js", function(err, apiCode){
+			if(err){
+				return callback(err);
+			}
+
+			try{
+				//before eval we need to convert from Buffer/ArrayBuffer to String
+				const or = require("overwrite-require");
+				switch($$.environmentType){
+					case or.constants.BROWSER_ENVIRONMENT_TYPE:
+					case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
+						apiCode = new TextDecoder("utf-8").decode(apiCode);
+						break;
+					default:
+						apiCode = apiCode.toString();
+				}
+
+				const apis = eval(apiCode);
+				apis[functionName].call(this, ...args, callback);
+
+			}catch(err){
+				return callback(err);
+			}
+		});
+	}
+	return archive;
+}
+},{"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 const constants = require('./constants');
 const defaultBootStrapingService = require("./BootstrapingService");
 /**
@@ -17334,7 +17371,7 @@ module.exports.AnchoringMiddleware = require("./lib/AnchoringMiddleware");
 },{"./lib/AnchoringMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/AnchoringMiddleware.js","./lib/BrickStorageMiddleware":"/home/travis/build/PrivateSky/privatesky/modules/edfs-middleware/lib/BrickStorageMiddleware.js"}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const constants = require('./lib/constants');
-const DSUFactory = require("./lib/DSUFactory");
+const DSUFactory = require("./lib/DSUFactoryRegistry");
 const BootStrapingService = require("./lib/BootstrapingService");
 
 /**
@@ -17373,10 +17410,10 @@ module.exports = {
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
     CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
-    DSUFactory: require("./lib/DSUFactory")
+    DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactory/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":false}],"node-fd-slicer":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":false}],"node-fd-slicer":[function(require,module,exports){
 (function (Buffer,setImmediate){(function (){
 var fs = require('fs');
 var util = require('util');
