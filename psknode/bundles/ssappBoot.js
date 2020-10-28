@@ -10617,7 +10617,7 @@ module.exports = function(archive){
 					default:
 						apiCode = apiCode.toString();
 				}
-
+				apiCode = "let module = {exports: {}}\n" + apiCode + "\nmodule.exports";
 				const apis = eval(apiCode);
 				apis[functionName].call(this, ...args, callback);
 
@@ -13891,9 +13891,11 @@ const { ALIAS_SYNC_ERR_CODE } = require('./strategies/File');
 
 function addAnchor(request, response, next) {
     const strategy = require("./utils").getAnchoringStrategy(request.params.keyssi);
-    $$.flow.start(strategy.name).init(strategy.option.path);
+    //todo : refactor - init ar trebui sa primeasca option si sa preia din interior ce doreste
+    // todo : init trebuie sa aiba semnatura generica indiferent de stratergie/domeniu
+    $$.flow.start(strategy.type).init(strategy.option.path);
 
-    $$.flow.start(strategy.name).addAlias(request.params.keyssi, request, (err, result) => {
+    $$.flow.start(strategy.type).addAlias(request.params.keyssi, request, (err, result) => {
         if (err) {
             if (err.code === 'EACCES') {
                 return response.send(409);
@@ -13909,6 +13911,8 @@ function addAnchor(request, response, next) {
 
         response.send(201);
     });
+
+
 }
 
 module.exports = { addAnchor };
@@ -13926,7 +13930,7 @@ function Anchoring(server) {
 
     server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
     server.put(`${URL_PREFIX}/add/:keyssi`, requestBodyJSONMiddleware);
-    server.put(`${URL_PREFIX}/add/:keyssi`, addAnchor);
+    server.put(`${URL_PREFIX}/add/:keyssi`, addAnchor); // to do : add call in brickledger to store the trasantion call
 
     AnchorVersions(server);
     AnchorSubrscribe(server);
@@ -13944,7 +13948,7 @@ const ALIAS_SYNC_ERR_CODE = 'sync-error';
 
 let anchorsFolders;
 
-$$.flow.describe('File', {
+$$.flow.describe('FS', {
     init: function (rootFolder, folderName) {
         const storageFolder = path.join(rootFolder || server.rootFolder, folderName || 'anchors');
         anchorsFolders = path.resolve(storageFolder);
@@ -13958,6 +13962,13 @@ $$.flow.describe('File', {
     },
 
     addAlias: function (fileHash, request, callback) {
+
+        // get request.body
+        // requestToCommand (data {  jSON.... }, request, (err, res) => {
+            // callback(err, res.body) <--- de ascuns in requestCommand
+        // }) ) - apel syncron
+
+
         if (!fileHash || typeof fileHash !== 'string') {
             return callback(new Error('No fileId specified.'));
         }
@@ -14187,8 +14198,8 @@ function AnchorVersions(server) {
 
     server.get(`${URL_PREFIX}/versions/:keyssi`, (request, response, next) => {
         const strategy = require("../utils").getAnchoringStrategy(request.params.keyssi);
-        $$.flow.start(strategy.name).init(strategy.option.path);
-        $$.flow.start(strategy.name).readVersions(request.params.keyssi, (err, fileHashes) => {
+        $$.flow.start(strategy.type).init(strategy.option.path);
+        $$.flow.start(strategy.type).readVersions(request.params.keyssi, (err, fileHashes) => {
             if (err) {
                 return response.send(404, 'Anchor not found');
             }
@@ -14443,234 +14454,345 @@ module.exports = Bricks;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/controllers.js","./flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/flows/BricksManager.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/brickFabricStorage/index.js":[function(require,module,exports){
+},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/controllers.js","./flows/BricksManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/flows/BricksManager.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/constants.js":[function(require,module,exports){
+const URL_PREFIX='/bricksFabric';
 
-function BrickFabricStorage(server) {
-  const { URL_PREFIX } = require('./../constants');
-  const { brickFabricStorageService } = require('./services');
+module.exports = {URL_PREFIX};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/controllers.js":[function(require,module,exports){
 
-  server.put(`${URL_PREFIX}/bfs/storeCommand`, async (request, response, next) => {
-    await brickFabricStorageService(request.body.command, request.body.body, {});
+async function storeAnchor (request, response, callback) {
 
-    response.send(204, null, next);
-  });
-}
+    console.log('store anchored called');
 
-module.exports = BrickFabricStorage;
+    //get request info
+    const anchorId = request.params.anchorId;
 
-},{"./../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","./services":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/brickFabricStorage/services.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/brickFabricStorage/services.js":[function(require,module,exports){
+    const hashnew = request.body.hash.new;
+    const hashlast = request.body.hash.last;
 
-const { makeRequest } = require('../../../utils').requests;
-const config = require('../../../config');
-
-const brickURL = config.getConfig('endpointsConfig', 'bricksLedger', 'brickFabric', 'url');
-const fabricSize = config.getConfig('endpointsConfig', 'bricksLedger', 'brickFabric', 'size');
-
-const fs = require('fs');
-const fileName = './bfs.json';
-const pskCrypto = require('../../../../pskcrypto');
-
-async function brickFabricStorageService(commandType, comamndBody, commandResponse) {
-    const tempBrick = {
-        previousBrick: { brickHash: '', password: '' },
-        commands: []
+    const anchorData = {
+        anchorId : anchorId,
+        hash : {
+            last: hashlast,
+            new : hashnew
+        }
     };
 
-    if (!fs.existsSync(fileName)) {
-        const mockGenesisBrick = {
-            genesis: true,
-            id: $$.uidGenerator.safe_uuid()
-        };
+    console.log(anchorData);
 
-        tempBrick.previousBrick.brickHash = await addBrick(mockGenesisBrick);
-    } else {
-        const { previousBrick, commands } = await readFromFile();
+    const bricksFabricStrategy = require('./utils').getBricksFabricStrategy();
+    const strategyType = bricksFabricStrategy.name;
 
-        tempBrick.previousBrick = previousBrick;
-        tempBrick.commands = commands;
+    //strategy is already booted up
+    await $$.flow.start(strategyType).storeData(anchorData, callback);
 
-        if (tempBrick.commands.length === fabricSize) {
-            tempBrick.previousBrick.brickHash.password = pskCrypto.randomBytes();
-            const encryptedBrick = pskCrypto.privateEncrypt(tempBrick.previousBrick.brickHash.password, brickData);
 
-            tempBrick.previousBrick.brickHash = await addBrick(encryptedBrick);
-            tempBrick.commands = [];
-        }
-    }
 
-    tempBrick.commands.push({ commandType, comamndBody, commandResponse });
+    response.send(201);
 
-    await writeToFile(tempBrick).catch((err) => {
-        throw err;
-    });
-
-    return;
 }
 
-function writeToFile(data) {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(fileName, JSON.stringify(data), (err) => {
-            if (err) {
-                return reject(err);
-            }
 
-            resolve();
-        });
-    })
+
+
+module.exports = {storeAnchor};
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/index.js":[function(require,module,exports){
+
+const timeout = require('./utils').getBricksFabricStrategy().option.timeout;
+const strategy = require('./utils').getBricksFabricStrategy().name;
+
+async function AutoSavePendingTransactions () {
+    await $$.flow.start(strategy).completeBlock();
+    setTimeout ( async () => {
+        await AutoSavePendingTransactions();
+    }, timeout);
+
 }
 
-function readFromFile() {
-    return new Promise((resolve, reject) => {
-        fs.readFile(fileName, (err, data) => {
-            if (err) {
-                return reject(err);
-            }
 
-            resolve(JSON.parse(data));
-        });
-    })
-}
+setTimeout ( async () => {
+    //start forever loop starting in timeout
+    await AutoSavePendingTransactions();
+}, timeout)
 
-async function addBrick(brickData) {
-    const { body: brickHash } = await makeRequest(brickURL, 'POST', brickData).catch((err) => {
-        throw err;
-    });
-    
-    return brickHash;
-}
 
-module.exports.brickFabricStorageService = brickFabricStorageService;
+function BricksFabric(server) {
 
-},{"../../../../pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js","../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","../../../utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js":[function(require,module,exports){
-const URL_PREFIX = '/bricks-ledger';
+    console.log('init bricksFabric');
 
-module.exports = { URL_PREFIX };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/index.js":[function(require,module,exports){
+    require('./strategies/BrickStorage.js');
 
-function bricksLedger(server) {
-	const { URL_PREFIX } = require('./constants');
-	const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
-	const worldStateManager = require('./worldStateManager');
-	const brickFabricStorage = require('./brickFabricStorage');
-	const parentAnchoring = require('./parentAnchoring');
-	
-	server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
-	server.use(`${URL_PREFIX}/*`, requestBodyJSONMiddleware);
-	
-	worldStateManager(server);
-	brickFabricStorage(server);
-	parentAnchoring(server);
-}
+    const bricksFabricStrategy = require('./utils').getBricksFabricStrategy();
+    const rootFolder = require('./utils').getRootFolder();
+    //options
+    const noOfTran = bricksFabricStrategy.option.transactionsPerBlock;
+    const strategyType = bricksFabricStrategy.name;
 
-module.exports = bricksLedger;
+    //init strategy
+    $$.flow.start(strategyType).init(rootFolder,noOfTran);
 
-},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./brickFabricStorage":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/brickFabricStorage/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","./parentAnchoring":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/parentAnchoring/index.js","./worldStateManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/worldStateManager/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/parentAnchoring/index.js":[function(require,module,exports){
+    //resume if necessary
+    $$.flow.start(strategyType).bootUp();
 
-function ParentAnchoring(server) {
-    const { URL_PREFIX } = require('./../constants');
-    const anchoringService = require('./services');
-    
-    server.put(`${URL_PREFIX}/pas/anchor/:hashLink`, async (request, response, next) => {
-        await anchoringService.addAnchor(hashLink).catch((err) => response.send(400, err.message || 'Something went wrong'));
+    const { URL_PREFIX } = require('./constants.js');
+    const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
+    const { storeAnchor } = require('./controllers');
 
-        next();
-    });
-}
+    server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
+    // request.body is populated
+    // we will have anchor json in there
+    server.put(`${URL_PREFIX}/add/:anchorId`, requestBodyJSONMiddleware);
 
-module.exports = ParentAnchoring;
+    server.put(`${URL_PREFIX}/add/:anchorId`, async (request, response, next) => await storeAnchor(request, response, next));
 
-},{"./../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","./services":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/parentAnchoring/services.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/parentAnchoring/services.js":[function(require,module,exports){
+    console.log('middleware bricksFabric initialized');
+    console.log(`listening to ${URL_PREFIX}/add/:anchorId`);
+};
+
+
+
+
+
+
+module.exports = BricksFabric;
+},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/controllers.js","./strategies/BrickStorage.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/strategies/BrickStorage.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/strategies/BrickStorage.js":[function(require,module,exports){
 const fs = require('fs');
+const path = require('swarmutils').path;
+const BRICKSFABRIC_ERROR_CODE = 'bricks fabric error';
+let rootFolder;
+let transactionsPerBlock;
+const pendingTransactions = [];
+let lastBlockHashLink;
 
-function addAnchor(anchorId) {
-    return new Promise((resolve, reject) => {
-        fs.appendFile('anchor.txt', `${anchorId},`, (err) => {
-            if (err) {
-                return reject(err);
-            }
 
-            resolve();
-        })
-    })
-}
+const hashlinkfile = 'lasthashlink';
 
-module.exports = { addAnchor };
-},{"fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/worldStateManager/controllers.js":[function(require,module,exports){
-const makeRequest = require('../../../utils').requests;
-const config= require('../../../config');
 
-const { brickFabricStorageService } = require('../brickFabricStorage/services');
+$$.flow.describe('BrickStorage', {
 
-async function commandDispatcher(request, response, next) {
-    const queryParams = getQueryParam(request.url);
-    const command = config.getConfig('endpointsConfig', 'bricksLedger', 'commands', queryParams.type);
+    init : function (brickFabricRootFolder,noOfTransactionsPerBlock) {
+        rootFolder = brickFabricRootFolder;
+        transactionsPerBlock = noOfTransactionsPerBlock;
 
-    if (invalidCommand(command)) {
-        return response.send(400, 'Bad request. Invalid config', () => response.end());
-    }
+    },
+    bootUp : function(){
+      //get latest hashlink
+        const hashlinkpath = path.join(rootFolder,hashlinkfile);
+        if (fs.existsSync(hashlinkpath))
+        {
+            lastBlockHashLink = fs.readFileSync(hashlinkpath).toString();
+        }
+    },
+    __storeLastHashLink : function () {
+        const hashlinkpath = path.join(rootFolder,hashlinkfile);
+        fs.writeFileSync(hashlinkpath,lastBlockHashLink);
+    },
+    completeBlock : async function () {
 
-    let commandResponse;
 
-    if (command.url) {
-        commandResponse = await makeRequest(command.url, 'POST', request.body).catch((err) => {
-            return response.send(err.statusCode || 400, err.body || 'Bad request', () => response.end())
-        });
-    } else if (command.module) {
-        let module;
-
-        try {
-            module = require(command.module);
-        } catch (err) {
-            return response.send(400, 'Module not found', () => response.end());
+        if (pendingTransactions.length === 0)
+        {
+            //console.log('No pending transactions.');
+            return;
         }
 
-        commandResponse = {
-            statusCode: 200,
-            body: command.function ? module[command.function]() : module()
+        //build block
+        const blockId = $$.uidGenerator.safe_uuid();
+        const block = {
+            'blockId' : blockId,
+            'previousBlockHashLink' : lastBlockHashLink,
+            'transactions' : []
+
         };
+
+        for (let i = 0; i < pendingTransactions.length; i++) {
+            block.transactions.push(pendingTransactions[i])
+        }
+
+        lastBlockHashLink = await this.__SaveBlockToBrickStorage(JSON.stringify(block));
+        this.__storeLastHashLink();
+
+        pendingTransactions.splice(0, pendingTransactions.length);
+        console.log(block);
+        console.log('block finished');
+    },
+    __SaveBlockToBrickStorage : async function (data){
+
+        const putBrickAsync = require('../utils').putBrickAsync;
+        const result = await putBrickAsync(data);
+        const resultJson =  JSON.parse(result);
+        console.log('hashlink : ',resultJson.message);
+        console.log(resultJson);
+        return resultJson.message;
+    },
+    storeData : async function (anchorData) {
+        pendingTransactions.push(anchorData);
+        if (pendingTransactions.length === transactionsPerBlock)
+        {
+           await this.completeBlock();
+        }
     }
 
-    response.send(commandResponse.statusCode, commandResponse.body);
-    await brickFabricStorageService(queryParams.type, request.body, commandResponse.body);
 
-    next();
-}
 
-function getQueryParam(path) {
-    const query = path.split('?');
 
-    if (query.length === 1) {
-        return {}
+
+
+
+
+
+});
+
+module.exports = { BRICKSFABRIC_ERROR_CODE};
+},{"../utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js":[function(require,module,exports){
+(function (Buffer){(function (){
+
+const getBricksFabricStrategy = () => {
+    const config = require("../../../config");
+    return config.getConfig('endpointsConfig', 'bricksFabric', 'domainStrategies', 'default');
+};
+
+const getRootFolder = () => {
+    // temporary location where we store the last hashlink
+    const config = require("../../../config");
+    return config.getConfig('endpointsConfig', 'bricksFabric').path;
+};
+
+const http = require('http');
+
+const putBrickAsync = (data) =>
+    new Promise ( (resolve, reject) => {
+
+
+        const options = {
+            hostname : 'localhost',
+            port : 8080,
+            path : '/bricks/put-brick',
+            method : 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length
+            }
+        };
+
+        const req = http.request(options, response => {
+            console.log ('response status code', response.statusCode);
+            let data = [];
+            response.on('data', chunk => {
+                data.push(chunk);
+            });
+
+            response.on('end', () => {
+                const bodyContent = Buffer.concat(data).toString();
+                console.log('bodyContent received : ', bodyContent);
+                return resolve(bodyContent);
+            });
+        });
+
+        req.on('error', err => reject(err));
+
+        req.write(data);
+        req.end();
+
+
+    });
+
+
+
+
+module.exports.getBricksFabricStrategy = getBricksFabricStrategy;
+
+module.exports.getRootFolder = getRootFolder;
+
+module.exports.putBrickAsync = putBrickAsync;
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js":[function(require,module,exports){
+const URL_PREFIX = '/bricksledger';
+
+module.exports = {URL_PREFIX};
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/controlers.js":[function(require,module,exports){
+(function (process){(function (){
+const path = require('swarmutils').path;
+
+function executeCommand(request, response, next) {
+    console.log('runCommand received');
+    console.log(request.body);
+    console.log(request);
+    console.log(request.url);
+    console.log(request.headers.host);
+    console.log(request.headers);
+
+    console.log(request.connection.encrypted);
+    //console.log(request.secure);
+    const commandType = request.body.commandType;
+    const getCmdConfig = require('./utils').getCmdConfig(commandType);
+    const modulePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER,'modules/psk-apihub/components/bricksLedger/commands', getCmdConfig);
+    try {
+            require(`${modulePath}`)(request.body , (err, result) => {
+                if (err) {
+                    return response.send(500, err);
+                }
+
+                // recording int BricksFabric
+                // salveaza request.body in brickFabric
+                //
+                //
+            //}
+            //no err, then maybe we get something in result
+            return response.send(201, result);
+        });
+    } catch (err)
+    {
+        console.log(err);
+        return response.send(500, err);
     }
 
-    return query[1].split('&').reduce((acc, current) => {
-        const [key, value] = current.split('=');
-        acc[key] = value;
 
-        return acc;
-    }, {})
 }
 
-function invalidCommand(command) {
-    const regex = /^(?:http(s)?:\/\/)((:[\d]+)?)[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm;
 
-    return !command || !Object.keys(command).length || (command.url && !regex.test(command.url))
+module.exports = { executeCommand };
+}).call(this)}).call(this,require('_process'))
+
+},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/utils/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/index.js":[function(require,module,exports){
+function BricksLedger(server) {
+
+    console.log('init BricksLedger');
+
+    const {executeCommand} = require('./controlers');
+    const { URL_PREFIX } = require('./constants');
+    const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
+
+    server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
+
+    server.post(`${URL_PREFIX}/runCommand`, requestBodyJSONMiddleware);
+    server.post(`${URL_PREFIX}/runCommand`, executeCommand);
+
+    console.log(`listening on ${URL_PREFIX}/runCommand`)
 }
 
-module.exports = commandDispatcher;
 
-},{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","../../../utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/index.js","../brickFabricStorage/services":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/brickFabricStorage/services.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/worldStateManager/index.js":[function(require,module,exports){
+module.exports = BricksLedger;
+},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","./controlers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/controlers.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/utils/index.js":[function(require,module,exports){
+function getCmdConfig(commandType)
+{
+    const config = require('../../../config');
+    const cfg = config.getConfig('endpointsConfig', 'bricksLedger');
+    const cmdConfig = 'do' + capitalize(commandType);
+    console.log(cmdConfig);
+    console.log(cfg[cmdConfig]);
+    return cfg[cmdConfig];
 
-function WorldStateManagerStrategy(server) {
-    const { URL_PREFIX } = require('./../constants');
-    const commandDispatcher = require('./controllers');
-
-    server.put(`${URL_PREFIX}/wsms/command`, commandDispatcher);
 }
 
-module.exports = WorldStateManagerStrategy;
 
-},{"./../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/worldStateManager/controllers.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/channelManager/index.js":[function(require,module,exports){
+function capitalize(str){
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+module.exports = {getCmdConfig};
+},{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/channelManager/index.js":[function(require,module,exports){
 (function (process,Buffer,__dirname){(function (){
 const path = require("swarmutils").path;
 const fs = require("fs");
@@ -15815,7 +15937,7 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeEndpoints": ["virtualMQ", "messaging", "notifications", "filesManager", "bricksLedger", "bricks", "anchoring", "dsu-wizard", "staticServer"],
+    "activeEndpoints": ["virtualMQ", "messaging", "notifications", "filesManager", "bricksLedger", "bricks", "anchoring", "bricksFabric", "dsu-wizard", "staticServer"],
     "endpointsConfig": {
         "messaging": {
             "module": "./components/mqManager",
@@ -15845,20 +15967,40 @@ const defaultConfig = {
         "filesManager": {
             "module": "./components/fileManager"
         },
+        "bricksFabric":{
+          "module" : "./components/bricksFabric",
+            "path": "./",
+          "domainStrategies" : {
+              "default" : {
+                  "name": "BrickStorage",
+                  "option" : {
+                      "timeout" : 15000,
+                     "transactionsPerBlock" : 5
+                  }
+              }
+          },
+            "commands - asta e pe brickledger" : {
+              "doAnchor" :
+                   "cale catre fisierul care contine implementarea metodei doAcnhor. Se apeleaza cu parametrul JSON primit din post . require('').execute(JSOSNPOST, callback)"
+
+            }
+        },
         "anchoring": {
             "module": "./components/anchoring",
             "domainStrategies": {
                 "default": {
-                    "name": "File",
+                    "type": "FS",
                     "option": {
                         "path": "./"
+                    },
+                    "commands" : {
+                        "addAnchor": "doAnchor"
                     }
+
                 },
-                "test": {
-                    "name": "File",
-                    "option": {
-                        "path": "./../"
-                    }
+                "EPI": {
+                    "type" : "etherum",
+                    "EndPoint" : "http://localhost:3000" // endpoitn catre API care proceseaza cererile catre etherum network
                 }
             }
         },
@@ -15867,22 +16009,7 @@ const defaultConfig = {
         },
         "bricksLedger": {
             "module": "./components/bricksLedger",
-            "brickFabric": {
-                "url": "http://localhost:8080/bricks",
-                "size": 2
-            },
-            "commands": {
-                "addAnchor": {
-                    "url": "http://localhost:8080/test",
-                },
-                // "testurl2": {
-                //     "url": "httpa://localhost:8080/test",
-                // },
-                // "testmethod": {
-                //     "module": "./commands.mock2.js",
-                //     "function": "commandsMock2"
-                // },
-            }
+            "doAnchor" : "anchorCommand.js",
         }
     },
     "tokenBucket": {
@@ -15989,6 +16116,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 	require('./components/channelManager');
 	require('./components/fileManager');
 	require('./components/bricksLedger');
+	require('./components/bricksFabric');
 	require('./components/staticServer');
 	require('./components/mqManager');
 	require('./components/keySsiNotifications');
@@ -16112,11 +16240,12 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 				let middlewarePath;
 				if (middlewareConfigName) {
 					middlewarePath = middlewareConfig.module;
-					//console.log(middlewareConfig, middlewarePath)
+					//console.log(middlewareConfig, middlewarePath);
+					//console.log(conf.defaultEndpoints);
 					if (middlewarePath.startsWith('.') && conf.defaultEndpoints.indexOf(middleware) === -1) {
 						middlewarePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, middlewarePath);
 					}
-					//console.log(`Preparing to register middleware from path ${middlewarePath}`);
+					console.log(`Preparing to register middleware from path ${middlewarePath}`);
 					let middlewareImplementation = require(middlewarePath);
 					if (typeof middlewareConfig.function !== 'undefined') {
 						middlewareImplementation[middlewareConfig.function](server);
@@ -16170,7 +16299,7 @@ module.exports.getServerConfig = function () {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"./components/anchoring":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/index.js","./components/bricks":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/index.js","./components/bricksLedger":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/index.js","./components/channelManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/channelManager/index.js","./components/fileManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/fileManager/index.js","./components/keySsiNotifications":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/keySsiNotifications/index.js","./components/mqManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/mqManager/index.js","./components/staticServer":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/vmq/requestFactory.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/Notifications.js":[function(require,module,exports){
+},{"./components/anchoring":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/index.js","./components/bricks":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/index.js","./components/bricksFabric":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/index.js","./components/bricksLedger":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/index.js","./components/channelManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/channelManager/index.js","./components/fileManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/fileManager/index.js","./components/keySsiNotifications":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/keySsiNotifications/index.js","./components/mqManager":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/mqManager/index.js","./components/staticServer":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/vmq/requestFactory.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","./libs/TokenBucket":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/Notifications.js":[function(require,module,exports){
 const stateStorageFileName = 'queues.json';
 
 function NotificationsManager(workingFolderPath, storageFolderPath) {
@@ -16960,6 +17089,7 @@ const MiddlewareRegistry = require('./MiddlewareRegistry');
 const http = require('http');
 const https = require('https');
 
+
 function Server(sslOptions) {
     const middleware = new MiddlewareRegistry();
     const server = _initServer(sslOptions);
@@ -16997,7 +17127,9 @@ function Server(sslOptions) {
         middleware.use("OPTIONS", reqUrl, reqResolver);
     };
 
-
+    this.protocol = function getProtocol(){
+        return (sslOptions) ? 'https' : 'http';
+    };
     /* INTERNAL METHODS */
 
     function _initServer(sslConfig) {
@@ -55415,6 +55547,7 @@ function validateParams (params) {
 }
 
 },{"http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/ieee754/index.js":[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1

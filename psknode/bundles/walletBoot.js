@@ -8266,7 +8266,7 @@ module.exports = function(archive){
 					default:
 						apiCode = apiCode.toString();
 				}
-
+				apiCode = "let module = {exports: {}}\n" + apiCode + "\nmodule.exports";
 				const apis = eval(apiCode);
 				apis[functionName].call(this, ...args, callback);
 
