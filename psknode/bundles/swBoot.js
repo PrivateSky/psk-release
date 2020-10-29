@@ -24591,7 +24591,7 @@ function Middleware() {
      */
     async function extractBody(event) {
         let body;
-        let request = event.request;
+        let request = event.request.clone();
         let headers = request.headers;
         let contentType = "application/octet-stream";
 
@@ -74746,8 +74746,12 @@ function bootSWEnvironment(seed, callback) {
 function apiHandler(req, res){
     const fncName = req.query.name;
     let args = req.query.arguments;
-    if(typeof args === "string"){
-        args = args.split(",");
+
+    try{
+        args = JSON.parse(req.query.arguments);
+    }catch(err){
+        res.statusCode = 400;
+        return res.end();
     }
 
     global.rawDossier.call(fncName, ...args, (...result)=>{
