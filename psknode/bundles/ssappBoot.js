@@ -13887,45 +13887,57 @@ const URL_PREFIX = '/anchor';
 
 module.exports = { URL_PREFIX };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/controllers.js":[function(require,module,exports){
-const { ALIAS_SYNC_ERR_CODE } = require('./strategies/File');
+const { ALIAS_SYNC_ERR_CODE } = require('./strategies/FS');
 
-function addAnchor(request, response, next) {
-    const strategy = require("./utils").getAnchoringStrategy(request.params.keyssi);
-    //todo : refactor - init ar trebui sa primeasca option si sa preia din interior ce doreste
-    // todo : init trebuie sa aiba semnatura generica indiferent de stratergie/domeniu
-    $$.flow.start(strategy.type).init(strategy.option.path);
+function createHandler(server){
 
-    $$.flow.start(strategy.type).addAlias(request.params.keyssi, request, (err, result) => {
-        if (err) {
-            if (err.code === 'EACCES') {
-                return response.send(409);
+    return function  addAnchor(request, response, next) {
+
+
+        // get the strategy based on the domain extracted from keyssi. if no domain found fallback on default
+        const strategy = require("./utils").getAnchoringStrategy(request.params.keyssi);
+        //init will receive all the available context information : the whole strategy, body, keyssi from the query and the protocol
+        let flow = $$.flow.start(strategy.type);
+        flow.init(strategy, request.params.keyssi, request.body, server.rootFolder);
+
+        // all the available information was passed on init.
+        flow.addAlias(server, (err, result) => {
+            if (err) {
+                if (err.code === 'EACCES') {
+                    return response.send(409);
+                }
+                if (err.code === ALIAS_SYNC_ERR_CODE) {
+                    // see: https://tools.ietf.org/html/rfc6585#section-3
+                    return response.send(428);
+                }
+                return response.send(500);
             }
 
-            if (err.code === ALIAS_SYNC_ERR_CODE) {
-                // see: https://tools.ietf.org/html/rfc6585#section-3
-                return response.send(428);
-            }
-
-            return response.send(500);
-        }
-
-        response.send(201);
-    });
+            response.send(201);
+        });
 
 
+    }
 }
 
-module.exports = { addAnchor };
 
-},{"./strategies/File":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/File.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/utils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/index.js":[function(require,module,exports){
+
+
+module.exports = createHandler;
+
+},{"./strategies/FS":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js","./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/utils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/index.js":[function(require,module,exports){
+
+
 
 function Anchoring(server) {
-    require('./strategies/File');
+
+    require('./strategies/FS');
+
 
     const { URL_PREFIX } = require('./constants.js');
     const AnchorSubrscribe = require('./subscribe');
     const AnchorVersions = require('./versions');
-    const { addAnchor } = require('./controllers');
+    const  addAnchor = require('./controllers')(server);
     const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
 
     server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
@@ -13938,61 +13950,109 @@ function Anchoring(server) {
 
 module.exports = Anchoring;
 
-},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/controllers.js","./strategies/File":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/File.js","./subscribe":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/index.js","./versions":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/versions/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/File.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/controllers.js","./strategies/FS":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js","./subscribe":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/index.js","./versions":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/versions/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js":[function(require,module,exports){
+(function (process,Buffer){(function (){
 const fs = require('fs');
 const endOfLine = require('os').EOL;
 const path = require('swarmutils').path;
 
 const ALIAS_SYNC_ERR_CODE = 'sync-error';
 
-let anchorsFolders;
+let folderStrategy = [];
 
 $$.flow.describe('FS', {
-    init: function (rootFolder, folderName) {
-        const storageFolder = path.join(rootFolder || server.rootFolder, folderName || 'anchors');
-        anchorsFolders = path.resolve(storageFolder);
+    init: function (strategy, anchorId, jsonData, rootFolder) {
+            this.commandData = {};
+            this.commandData.option = strategy.option;
+            this.commandData.anchorId = anchorId;
+            this.commandData.jsonData = jsonData;
+            const folderPrepared = folderStrategy.find(elem => elem.type === strategy.type);
+
+            //because we work instance based, ensure that folder structure is done only once per strategy type
+            if (folderPrepared && folderPrepared.IsDone === true)
+            {
+                //skip, folder structure is already done for this strategy type
+            } else {
+                folderStrategy.push({
+                    "IsDone" : false,
+                    "type" : strategy.type
+                });
+                let storageFolder = path.join(rootFolder, strategy.option.path);
+                if (typeof process.env.ANCHOR_STORAGE_FOLDER !== 'undefined') {
+                    storageFolder = process.env.ANCHOR_STORAGE_FOLDER;
+                }
+                this.__prepareFolderStructure(storageFolder);
+            };
+
+
+    },
+
+    __prepareFolderStructure: function (storageFolder) {
+        this.anchorsFolders = path.resolve(storageFolder);
         try {
-            if (!fs.existsSync(anchorsFolders)) {
-                fs.mkdirSync(anchorsFolders, { recursive: true });
+            if (!fs.existsSync(this.anchorsFolders)) {
+                fs.mkdirSync(this.anchorsFolders, { recursive: true });
             }
         } catch (e) {
+            console.log('error creating anchoring folder', e);
             throw e;
         }
     },
-
-    addAlias: function (fileHash, request, callback) {
-
-        // get request.body
-        // requestToCommand (data {  jSON.... }, request, (err, res) => {
-            // callback(err, res.body) <--- de ascuns in requestCommand
-        // }) ) - apel syncron
-
-
+    addAlias : function (server, callback) {
+        const fileHash = this.commandData.anchorId;
         if (!fileHash || typeof fileHash !== 'string') {
             return callback(new Error('No fileId specified.'));
         }
-        const filePath = path.join(anchorsFolders, fileHash);
-
+        const filePath = path.join(this.anchorsFolders, fileHash);
         fs.stat(filePath, (err, stats) => {
             if (err) {
                 if (err.code !== 'ENOENT') {
                     console.log(err);
                 }
-                fs.writeFile(filePath, request.body.hash.new + endOfLine, callback);
+                fs.writeFile(filePath, this.commandData.jsonData.hash.new + endOfLine, callback);
                 return;
             }
 
-            this.__appendHash(filePath, request.body.hash.new, {
-                lastHash: request.body.hash.last,
+            this.__appendHash(filePath, this.commandData.jsonData.hash.new, {
+                lastHash: this.commandData.jsonData.hash.last,
                 fileSize: stats.size
             }, callback);
         });
+
+        //send log info
+        this.__logWriteRequest(server);
+    },
+
+    __logWriteRequest : function(server){
+        const runCommandBody = {
+            "commandType" : "anchor",
+            "data" : this.commandData
+        };
+        const bodyData = JSON.stringify(runCommandBody);
+        //build path
+        const runCommandPath = require('../../bricksLedger/constants').URL_PREFIX + '/runCommand';
+        //run Command method
+        const runCmdMethod = 'POST';
+        // run Command headers
+        const runCmdHeaders = {
+            'Content-Type': 'application/json',
+            'Content-Length': bodyData.length
+        };
+        try {
+            server.makeLocalRequest(runCmdMethod, runCommandPath, bodyData, runCmdHeaders, (err, result) => {
+                //callback is for local only if we register only access logs
+                if (err) {
+                    console.log(err);
+                }
+                //console.log(result);
+            })
+        }catch (err) {
+            console.log("anchoring ",err);
+        };
     },
 
     readVersions: function (alias, callback) {
-        const filePath = path.join(anchorsFolders, alias);
-
+        const filePath = path.join(this.anchorsFolders, alias);
         fs.readFile(filePath, (err, fileHashes) => {
             if (err) {
                 if (err.code === 'ENOENT') {
@@ -14018,12 +14078,13 @@ $$.flow.describe('FS', {
     __appendHash: function (path, hash, options, callback) {
         fs.open(path, fs.constants.O_RDWR, (err, fd) => {
             if (err) {
+                console.log("__appendHash-open-error : ",err);
                 return callback(err);
             }
 
             fs.read(fd, Buffer.alloc(options.fileSize), 0, options.fileSize, null, (err, bytesRead, buffer) => {
                 if (err) {
-                    console.log(err)
+                    console.log("__appendHash-read-error : ",err);
 
                     return callback(err);
                 }
@@ -14033,17 +14094,18 @@ $$.flow.describe('FS', {
                 const lastHash = hashes[hashes.length - 1];
 
                 if (lastHash !== options.lastHash) {
-                    console.log('ops', lastHash, options.lastHash)
-
+                    console.log('__appendHash error.Unable to add alias: versions out of sync.', lastHash, options.lastHash)
+                    console.log("existing hashes :", hashes);
+                    console.log("received hashes :", options);
                     return callback({
                         code: ALIAS_SYNC_ERR_CODE,
-                        message: 'Unable to add alias: versions out of sync.'
+                        message: 'Unable to add alias: versions out of sync'
                     });
                 }
 
                 fs.write(fd, hash + endOfLine, options.fileSize, (err) => {
                     if (err) {
-                        console.log('write', err)
+                        console.log("__appendHash-write : ",err);
                         return callback(err);
                     }
                     
@@ -14056,10 +14118,10 @@ $$.flow.describe('FS', {
 
 module.exports = {
     ALIAS_SYNC_ERR_CODE
-}
-}).call(this)}).call(this,require("buffer").Buffer)
+};
+}).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/controllers.js":[function(require,module,exports){
+},{"../../bricksLedger/constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/controllers.js":[function(require,module,exports){
 let pendingRequests = {};
 
 const readBody = require("../../../utils").readStringFromStream;
@@ -14198,8 +14260,9 @@ function AnchorVersions(server) {
 
     server.get(`${URL_PREFIX}/versions/:keyssi`, (request, response, next) => {
         const strategy = require("../utils").getAnchoringStrategy(request.params.keyssi);
-        $$.flow.start(strategy.type).init(strategy.option.path);
-        $$.flow.start(strategy.type).readVersions(request.params.keyssi, (err, fileHashes) => {
+        const flow = $$.flow.start(strategy.type);
+        flow.init(strategy,request.params.keyssi, request.body, server.rootFolder);
+        flow.readVersions(request.params.keyssi, (err, fileHashes) => {
             if (err) {
                 return response.send(404, 'Anchor not found');
             }
@@ -14460,65 +14523,37 @@ const URL_PREFIX='/bricksFabric';
 module.exports = {URL_PREFIX};
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/controllers.js":[function(require,module,exports){
 
-async function storeAnchor (request, response, callback) {
+function createHandler(flow, server) {
 
-    console.log('store anchored called');
+    return function storeTransaction (request, response, next) {
 
-    //get request info
-    const anchorId = request.params.anchorId;
+        console.log('store anchored called');
+        //strategy is already booted up
+        flow.storeData(request.body, server, (err, result) => {
+            if (err) {
+                return response.send(500,"Failed to store transaction."+ err.toString());
+            }
+            response.send(201, result);
+        });
 
-    const hashnew = request.body.hash.new;
-    const hashlast = request.body.hash.last;
-
-    const anchorData = {
-        anchorId : anchorId,
-        hash : {
-            last: hashlast,
-            new : hashnew
-        }
-    };
-
-    console.log(anchorData);
-
-    const bricksFabricStrategy = require('./utils').getBricksFabricStrategy();
-    const strategyType = bricksFabricStrategy.name;
-
-    //strategy is already booted up
-    await $$.flow.start(strategyType).storeData(anchorData, callback);
-
-
-
-    response.send(201);
-
+    }
 }
 
 
+module.exports = createHandler;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/index.js":[function(require,module,exports){
 
 
-module.exports = {storeAnchor};
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/index.js":[function(require,module,exports){
-
-const timeout = require('./utils').getBricksFabricStrategy().option.timeout;
-const strategy = require('./utils').getBricksFabricStrategy().name;
-
-async function AutoSavePendingTransactions () {
-    await $$.flow.start(strategy).completeBlock();
-    setTimeout ( async () => {
-        await AutoSavePendingTransactions();
+function AutoSavePendingTransactions (flow, timeout, server) {
+    flow.completeBlock(server);
+    setTimeout (  () => {
+         AutoSavePendingTransactions(flow, timeout, server);
     }, timeout);
 
 }
 
 
-setTimeout ( async () => {
-    //start forever loop starting in timeout
-    await AutoSavePendingTransactions();
-}, timeout)
-
-
 function BricksFabric(server) {
-
-    console.log('init bricksFabric');
 
     require('./strategies/BrickStorage.js');
 
@@ -14529,24 +14564,27 @@ function BricksFabric(server) {
     const strategyType = bricksFabricStrategy.name;
 
     //init strategy
-    $$.flow.start(strategyType).init(rootFolder,noOfTran);
+    let flow = $$.flow.start(strategyType);
+    flow.init(rootFolder,noOfTran);
 
     //resume if necessary
-    $$.flow.start(strategyType).bootUp();
+    flow.bootUp();
+
+    const timeout = bricksFabricStrategy.option.timeout;
+    setTimeout (  () => {
+        //start forever loop starting in timeout
+        AutoSavePendingTransactions(flow, timeout, server);
+    }, timeout);
 
     const { URL_PREFIX } = require('./constants.js');
     const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
-    const { storeAnchor } = require('./controllers');
+    const  storeTransaction  = require('./controllers')(flow, server);
 
     server.use(`${URL_PREFIX}/*`, responseModifierMiddleware);
-    // request.body is populated
-    // we will have anchor json in there
-    server.put(`${URL_PREFIX}/add/:anchorId`, requestBodyJSONMiddleware);
+    // request.body is populated with what data needs to be stored
+    server.put(`${URL_PREFIX}/add`, requestBodyJSONMiddleware);
 
-    server.put(`${URL_PREFIX}/add/:anchorId`, async (request, response, next) => await storeAnchor(request, response, next));
-
-    console.log('middleware bricksFabric initialized');
-    console.log(`listening to ${URL_PREFIX}/add/:anchorId`);
+    server.put(`${URL_PREFIX}/add`, storeTransaction);
 };
 
 
@@ -14559,40 +14597,43 @@ module.exports = BricksFabric;
 const fs = require('fs');
 const path = require('swarmutils').path;
 const BRICKSFABRIC_ERROR_CODE = 'bricks fabric error';
-let rootFolder;
-let transactionsPerBlock;
-const pendingTransactions = [];
-let lastBlockHashLink;
-
-
-const hashlinkfile = 'lasthashlink';
 
 
 $$.flow.describe('BrickStorage', {
 
     init : function (brickFabricRootFolder,noOfTransactionsPerBlock) {
-        rootFolder = brickFabricRootFolder;
-        transactionsPerBlock = noOfTransactionsPerBlock;
-
+        this.rootFolder = brickFabricRootFolder;
+        this.transactionsPerBlock = noOfTransactionsPerBlock;
+        this.hashlinkfile = 'lasthashlink';
+        this.lastBlockHashLink = undefined;
+        this.pendingTransactions = [];
+        this.pendingBuffer = [];
+        this.isCommitingBlock = false;
     },
     bootUp : function(){
       //get latest hashlink
-        const hashlinkpath = path.join(rootFolder,hashlinkfile);
+        const hashlinkpath = path.join(this.rootFolder,this.hashlinkfile);
         if (fs.existsSync(hashlinkpath))
         {
-            lastBlockHashLink = fs.readFileSync(hashlinkpath).toString();
+            this.lastBlockHashLink = fs.readFileSync(hashlinkpath).toString();
         }
     },
     __storeLastHashLink : function () {
-        const hashlinkpath = path.join(rootFolder,hashlinkfile);
-        fs.writeFileSync(hashlinkpath,lastBlockHashLink);
+        const hashlinkpath = path.join(this.rootFolder,this.hashlinkfile);
+        fs.writeFileSync(hashlinkpath,this.lastBlockHashLink);
     },
-    completeBlock : async function () {
+    completeBlock : function (server, callback) {
 
-
-        if (pendingTransactions.length === 0)
+        if (callback === undefined)
         {
-            //console.log('No pending transactions.');
+            callback = (err, result) => {
+                // Autosave callback.
+            };
+        }
+
+        if (this.pendingTransactions.length === 0)
+        {
+            //No pending transactions
             return;
         }
 
@@ -14600,36 +14641,82 @@ $$.flow.describe('BrickStorage', {
         const blockId = $$.uidGenerator.safe_uuid();
         const block = {
             'blockId' : blockId,
-            'previousBlockHashLink' : lastBlockHashLink,
+            'previousBlockHashLink' : this.lastBlockHashLink,
             'transactions' : []
 
         };
 
-        for (let i = 0; i < pendingTransactions.length; i++) {
-            block.transactions.push(pendingTransactions[i])
+        for (let i = 0; i < this.pendingTransactions.length; i++) {
+            block.transactions.push(this.pendingTransactions[i])
         }
 
-        lastBlockHashLink = await this.__SaveBlockToBrickStorage(JSON.stringify(block));
-        this.__storeLastHashLink();
-
-        pendingTransactions.splice(0, pendingTransactions.length);
-        console.log(block);
-        console.log('block finished');
+        this.__SaveBlockToBrickStorage(JSON.stringify(block), server, callback);
     },
-    __SaveBlockToBrickStorage : async function (data){
+    __SaveBlockToBrickStorage : function (data, server, callback){
 
-        const putBrickAsync = require('../utils').putBrickAsync;
-        const result = await putBrickAsync(data);
-        const resultJson =  JSON.parse(result);
-        console.log('hashlink : ',resultJson.message);
-        console.log(resultJson);
-        return resultJson.message;
-    },
-    storeData : async function (anchorData) {
-        pendingTransactions.push(anchorData);
-        if (pendingTransactions.length === transactionsPerBlock)
+        const blockHeaders = {
+            'Content-Type': 'application/json',
+            'Content-Length': data.length
+        };
+        const blockPath = require("../../bricks/constants").URL_PREFIX + "/put-brick";
+        const blockMethod = "PUT";
+        this.isCommitingBlock = true;
+
+        try {
+            server.makeLocalRequest(blockMethod, blockPath, data, blockHeaders, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    this.__pushBuffer();
+                    this.isCommitingBlock = false;
+                    callback(err, undefined);
+                }
+
+                if (result) {
+                    this.lastBlockHashLink = JSON.parse(result);
+                    this.__storeLastHashLink();
+                    this.pendingTransactions.splice(0, this.pendingTransactions.length);
+                    this.__pushBuffer();
+                    this.isCommitingBlock = false;
+                    //console.log(result);
+                    console.log('block finished');
+
+                    callback(undefined, result);
+                }
+
+
+            });
+        } catch (err)
         {
-           await this.completeBlock();
+            console.log("bricks fabric", err);
+        }
+    },
+    __pushBuffer : function (){
+        if (this.pendingBuffer.length > 0)
+        {
+            console.log("push buffer to pending block", this.pendingBuffer);
+            for (let i = 0; i < this.pendingBuffer.length; i++) {
+                this.pendingTransactions.push(this.pendingBuffer[i]);
+            }
+            this.pendingBuffer.splice(0, this.pendingBuffer.length);
+        }
+    },
+    storeData : function (anchorData, server, callback) {
+        if (this.isCommitingBlock === true)
+        {
+            console.log("transaction cached");
+            this.pendingBuffer.push(anchorData);
+            callback(undefined,"Transaction was added to the block.");
+            return;
+        }
+        console.log("transaction pushed to pending block");
+        this.pendingTransactions.push(anchorData);
+        if (this.pendingTransactions.length >= this.transactionsPerBlock)
+        {
+           // console.log("commit block callback");
+           this.completeBlock(server, callback);
+        }else {
+            //console.log("pending callback");
+            callback(undefined,"Transaction was added to the block.");
         }
     }
 
@@ -14644,8 +14731,7 @@ $$.flow.describe('BrickStorage', {
 });
 
 module.exports = { BRICKSFABRIC_ERROR_CODE};
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../../bricks/constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricks/constants.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksFabric/utils/index.js":[function(require,module,exports){
 
 const getBricksFabricStrategy = () => {
     const config = require("../../../config");
@@ -14658,56 +14744,11 @@ const getRootFolder = () => {
     return config.getConfig('endpointsConfig', 'bricksFabric').path;
 };
 
-const http = require('http');
-
-const putBrickAsync = (data) =>
-    new Promise ( (resolve, reject) => {
-
-
-        const options = {
-            hostname : 'localhost',
-            port : 8080,
-            path : '/bricks/put-brick',
-            method : 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': data.length
-            }
-        };
-
-        const req = http.request(options, response => {
-            console.log ('response status code', response.statusCode);
-            let data = [];
-            response.on('data', chunk => {
-                data.push(chunk);
-            });
-
-            response.on('end', () => {
-                const bodyContent = Buffer.concat(data).toString();
-                console.log('bodyContent received : ', bodyContent);
-                return resolve(bodyContent);
-            });
-        });
-
-        req.on('error', err => reject(err));
-
-        req.write(data);
-        req.end();
-
-
-    });
-
-
-
-
 module.exports.getBricksFabricStrategy = getBricksFabricStrategy;
-
 module.exports.getRootFolder = getRootFolder;
 
-module.exports.putBrickAsync = putBrickAsync;
-}).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js":[function(require,module,exports){
+},{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js":[function(require,module,exports){
 const URL_PREFIX = '/bricksledger';
 
 module.exports = {URL_PREFIX};
@@ -14715,52 +14756,44 @@ module.exports = {URL_PREFIX};
 (function (process){(function (){
 const path = require('swarmutils').path;
 
-function executeCommand(request, response, next) {
-    console.log('runCommand received');
-    console.log(request.body);
-    console.log(request);
-    console.log(request.url);
-    console.log(request.headers.host);
-    console.log(request.headers);
+function createHandler(server) {
 
-    console.log(request.connection.encrypted);
-    //console.log(request.secure);
-    const commandType = request.body.commandType;
-    const getCmdConfig = require('./utils').getCmdConfig(commandType);
-    const modulePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER,'modules/psk-apihub/components/bricksLedger/commands', getCmdConfig);
-    try {
-            require(`${modulePath}`)(request.body , (err, result) => {
+    return function executeCommand(request, response, next) {
+        console.log('runCommand received');
+
+        const commandType = request.body.commandType;
+        const getCmdConfig = require('./utils').getCmdConfig(commandType);
+        //we need to provide full path to the file, relative path will generate not found module error
+        const modulePath = path.join(process.env.PSK_ROOT_INSTALATION_FOLDER,'modules/psk-apihub/components/bricksLedger/commands', getCmdConfig);
+        try {
+            require(`${modulePath}`)(request.body , server, (err, result) => {
                 if (err) {
+                    console.log('command controler error. err :', err);
                     return response.send(500, err);
                 }
+                console.log("completed executedCommand", result);
+                //no err, then maybe we get something in result
+                return response.send(201, result);
+            });
+        } catch (err)
+        {
+            console.log("command controller catch error. err :",err);
+            return response.send(500, err);
+        }
 
-                // recording int BricksFabric
-                // salveaza request.body in brickFabric
-                //
-                //
-            //}
-            //no err, then maybe we get something in result
-            return response.send(201, result);
-        });
-    } catch (err)
-    {
-        console.log(err);
-        return response.send(500, err);
+
     }
-
 
 }
 
 
-module.exports = { executeCommand };
+module.exports = createHandler;
 }).call(this)}).call(this,require('_process'))
 
 },{"./utils":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/utils/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/index.js":[function(require,module,exports){
 function BricksLedger(server) {
 
-    console.log('init BricksLedger');
-
-    const {executeCommand} = require('./controlers');
+    const executeCommand= require('./controlers')(server);
     const { URL_PREFIX } = require('./constants');
     const { responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
 
@@ -14780,8 +14813,6 @@ function getCmdConfig(commandType)
     const config = require('../../../config');
     const cfg = config.getConfig('endpointsConfig', 'bricksLedger');
     const cmdConfig = 'do' + capitalize(commandType);
-    console.log(cmdConfig);
-    console.log(cfg[cmdConfig]);
     return cfg[cmdConfig];
 
 }
@@ -15978,12 +16009,7 @@ const defaultConfig = {
                      "transactionsPerBlock" : 5
                   }
               }
-          },
-            "commands - asta e pe brickledger" : {
-              "doAnchor" :
-                   "cale catre fisierul care contine implementarea metodei doAcnhor. Se apeleaza cu parametrul JSON primit din post . require('').execute(JSOSNPOST, callback)"
-
-            }
+          }
         },
         "anchoring": {
             "module": "./components/anchoring",
@@ -15991,16 +16017,22 @@ const defaultConfig = {
                 "default": {
                     "type": "FS",
                     "option": {
-                        "path": "./"
+                        "path": "/anchors"
                     },
                     "commands" : {
-                        "addAnchor": "doAnchor"
+                        "addAnchor": "anchor"
+                        // anchor se trimite in body ca si commandType, apoi este tradus in doAnchor si acesta e cautat in settings pentru a vedea ce executa
+                        // domainStrategies : sunt legate intre ele ? adica anchoring va trimite strategia sa catre bricksLedger si acesta o va trimite catree bricksFabric ?
+                        // momentan strategia pare sa poata fii determinata doar de anchoring care primeste un keySSI in params. Restul componentelor nu au metode prin care sa poata determina o strategie
                     }
 
                 },
                 "EPI": {
                     "type" : "etherum",
-                    "EndPoint" : "http://localhost:3000" // endpoitn catre API care proceseaza cererile catre etherum network
+                    "endpoint" : "http://localhost:3000", // endpoitn catre API care proceseaza cererile catre etherum network
+                    "option" : {
+                       //maybe other options will be required
+                    } // operation will be done dirrectlly into the Ethereum API -> jsonrpc-> network
                 }
             }
         },
@@ -16010,6 +16042,7 @@ const defaultConfig = {
         "bricksLedger": {
             "module": "./components/bricksLedger",
             "doAnchor" : "anchorCommand.js",
+            "doEPIAnchor" : "EPIAnchorCommand.js"
         }
     },
     "tokenBucket": {
@@ -17085,6 +17118,7 @@ function serverWrapper(baseUrl, server) {
 module.exports = Router;
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/classes/Server.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const MiddlewareRegistry = require('./MiddlewareRegistry');
 const http = require('http');
 const https = require('https');
@@ -17126,18 +17160,73 @@ function Server(sslOptions) {
     this.options = function optionsReq(reqUrl, reqResolver) {
         middleware.use("OPTIONS", reqUrl, reqResolver);
     };
+    this.makeLocalRequest = function (method,path, body,headers, callback)
+    {
+        if (typeof headers === "function")
+        {
+            callback = headers;
+            headers = undefined;
+        }
 
-    this.protocol = function getProtocol(){
-        return (sslOptions) ? 'https' : 'http';
+        if (typeof body === "function")
+        {
+            callback = body;
+            headers = undefined;
+            body = undefined;
+        }
+
+        const protocol =  require(this.protocol);
+        const options = {
+            hostname : 'localhost',
+            port : server.address().port,
+            path,
+            method,
+            headers
+        };
+        const req = protocol.request(options, response => {
+
+            if (response.statusCode < 200 || response.statusCode >= 300) {
+
+                return callback(new Error("Failed to execute command. StatusCode " + response.statusCode));
+            }
+            let data = [];
+            response.on('data', chunk => {
+                data.push(chunk);
+            });
+
+            response.on('end', () => {
+                try {
+                    const bodyContent = Buffer.concat(data).toString();
+                    console.log('resolve will be called. bodyContent received : ', bodyContent);
+                    return callback(undefined,bodyContent);
+                } catch (err) {
+                    return callback(err);
+                }
+            });
+        });
+
+        req.on('error', err => {
+            console.log("reject will be called. err :", err);
+            return callback(err);
+        });
+
+        req.write(body);
+        req.end();
     };
+
     /* INTERNAL METHODS */
 
     function _initServer(sslConfig) {
+        let server;
         if (sslConfig) {
-            return https.createServer(sslConfig, middleware.go);
+             server = https.createServer(sslConfig, middleware.go);
+             server.protocol = "https";
         } else {
-            return http.createServer(middleware.go);
+            server = http.createServer(middleware.go);
+            server.protocol = "http";
         }
+
+        return server;
     }
 
     return new Proxy(this, {
@@ -17158,7 +17247,9 @@ function Server(sslOptions) {
 }
 
 module.exports = Server;
-},{"./MiddlewareRegistry":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/classes/MiddlewareRegistry.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"./MiddlewareRegistry":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/classes/MiddlewareRegistry.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
 const fs = require('fs');
 const path = require("swarmutils").path;
 
