@@ -18371,7 +18371,11 @@ function generateMethodForRequestWithData(httpMethod) {
             });
         }
         else {
-            if(ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+            if(data instanceof ArrayBuffer){
+                data = new DataView(data);
+            }
+
+            if(ArrayBuffer.isView(data)) {
                 xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
                 /**
@@ -24725,7 +24729,8 @@ function Middleware() {
         this.requestedHosts.add(requestedUrl.host);
 
         return extractBody(event).then((body) => {
-            event.request.body = body;
+            Object.defineProperty(event.request, "body", {value: body});
+            //event.request.body = body;
             let request = new EventRequest(event);
             let response = new EventResponse(event);
 

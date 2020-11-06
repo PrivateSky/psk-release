@@ -11537,7 +11537,11 @@ function generateMethodForRequestWithData(httpMethod) {
             });
         }
         else {
-            if(ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+            if(data instanceof ArrayBuffer){
+                data = new DataView(data);
+            }
+
+            if(ArrayBuffer.isView(data)) {
                 xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
                 /**

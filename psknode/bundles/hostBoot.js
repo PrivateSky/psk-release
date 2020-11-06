@@ -18501,7 +18501,11 @@ function generateMethodForRequestWithData(httpMethod) {
             });
         }
         else {
-            if(ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+            if(data instanceof ArrayBuffer){
+                data = new DataView(data);
+            }
+
+            if(ArrayBuffer.isView(data)) {
                 xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
                 /**
@@ -24717,7 +24721,13 @@ function HostBootScript(identity) {
     }
 
     const SRPC = se.SmartRemoteChannelPowerCord;
-    let swUrl = "http://localhost:8080/";
+    let location = window.location;
+    let port = "";
+    if(location.port !== "" && location.host.indexOf(":")===-1){
+        port = `:${location.port}`;
+    }
+    let swUrl = `${location.protocol}//${location.host}${port}/`;
+
     const powerCord = new SRPC([swUrl]);
     $$.swarmEngine.plug("test/agent/007", powerCord);
 }
