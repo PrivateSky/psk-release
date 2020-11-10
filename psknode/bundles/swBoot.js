@@ -13805,6 +13805,7 @@ function createHandler(server){
         const strategy = require("./utils").getAnchoringStrategy(request.params.keyssi);
         //init will receive all the available context information : the whole strategy, body, keyssi from the query and the protocol
         let flow = $$.flow.start(strategy.type);
+        //let flow = $$.flow.start('ETH');
         flow.init(strategy, request.params.keyssi, request.body, server.rootFolder);
 
         // all the available information was passed on init.
@@ -13839,6 +13840,7 @@ module.exports = createHandler;
 function Anchoring(server) {
 
     require('./strategies/FS');
+    require('./strategies/ETH');
 
 
     const { URL_PREFIX } = require('./constants.js');
@@ -13853,11 +13855,196 @@ function Anchoring(server) {
 
     AnchorVersions(server);
     AnchorSubrscribe(server);
+
+    //todo : check for body & param
+    // de verificat daca ce primim in body si parameters este corect si nu e malformat - Pentru entry points apelate din extern
+    // ancorare - validat body structure
+    // bricks - nu e nimic de validat. Ce se primeste in stream se pune in brick
+    // bricksFabric - e folosit intern. Nu validam
+    // BricksLedger - e folosit intern. Nu validam
+    // todo : de revizuit operatiile I/O  de read/write file codate cu Sync, exceptie bootup. Recodare folosind callback
+    // discutat locatie fisiere. Momentan e folosit server.rootFolder. De revizuit codul ca toate sa fie relativ la server.rootFolder
+    // pentru deployment locatia va fi mounted. Se poate folosi similar cu implementarea de la bricks :
+    //if (typeof process.env.EDFS_BRICK_STORAGE_FOLDER !== 'undefined') {
+    //    storageFolder = process.env.EDFS_BRICK_STORAGE_FOLDER;
+    //}
+    // Intrebare : Ar fi ok sa folosesc aceiasi abordare pentru tot, folosind intrari diferite pentru fiecare entrypoint?
+    // validare date primite din exterior
+    // revizuire : https://privatesky.xyz/?API/api-hub/overview
 }
 
 module.exports = Anchoring;
 
-},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/controllers.js","./strategies/FS":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js","./subscribe":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/index.js","./versions":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/versions/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js":[function(require,module,exports){
+},{"../../utils/middlewares":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/utils/middlewares/index.js","./constants.js":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/controllers.js","./strategies/ETH":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/ETH.js","./strategies/FS":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js","./subscribe":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/index.js","./versions":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/versions/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/ETH.js":[function(require,module,exports){
+(function (Buffer){(function (){
+
+const ALIAS_SYNC_ERR_CODE = 'sync-error';
+
+
+function makeRequest(protocol, hostname, port, method, path, body, headers, callback) {
+
+    const http = require("http");
+    const https = require("https");
+
+    if (typeof headers === "function") {
+        callback = headers;
+        headers = undefined;
+    }
+
+    if (typeof body === "function") {
+        callback = body;
+        headers = undefined;
+        body = undefined;
+    }
+
+    protocol = require(protocol);
+    const options = {
+        hostname: hostname,
+        port: port,
+        path,
+        method,
+        headers
+    };
+    const req = protocol.request(options, response => {
+
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+            return callback({
+                statusCode: response.statusCode,
+                err: new Error("Failed to execute command. StatusCode " + response.statusCode)
+            }, null);
+        }
+        let data = [];
+        response.on('data', chunk => {
+            data.push(chunk);
+        });
+
+        response.on('end', () => {
+            try {
+                const bodyContent = Buffer.concat(data).toString();
+                return callback(undefined, bodyContent);
+            } catch (error) {
+                return callback({
+                    statusCode: 500,
+                    err: error
+                }, null);
+            }
+        });
+    });
+
+    req.on('error', err => {
+        console.log(err);
+        return callback({
+            statusCode: 500,
+            err: err
+        });
+    });
+
+    req.write(body);
+    req.end();
+};
+
+
+
+
+
+$$.flow.describe('ETH',{
+    init : function (strategy, anchorId, jsonData, rootFolder) {
+        this.commandData = {};
+        this.commandData.anchorId = anchorId;
+        this.commandData.jsonData = jsonData;
+    },
+    addAlias : function (server, callback) {
+        console.log("add anchor",this.commandData.anchorId);
+        this.__SendToBlockChain(callback);
+    },
+    __SendToBlockChain : function(callback){
+        const body = {
+            "hash": {
+                "newHashLinkSSI" : this.commandData.jsonData.hash.new,
+                "lastHashLinkSSI" : this.commandData.jsonData.hash.last
+            }
+        };
+        const bodyData = JSON.stringify(body);
+        //build path
+        const apiPath = '/addAnchor/'+this.commandData.anchorId;
+        //run Command method
+        const apiMethod = 'PUT';
+        // run Command headers
+        const apiHeaders = {
+            'Content-Type': 'application/json',
+            'Content-Length': bodyData.length
+        };
+        const apiEndpoint = 'a14306cc05c5746bd8c4a24afca52a12-837176892.eu-west-2.elb.amazonaws.com';
+        const apiPort = 3000;
+        const protocol = "http";
+        try {
+            makeRequest(protocol, apiEndpoint, apiPort, apiMethod, apiPath, bodyData, apiHeaders, (err, result) => {
+
+                if (err) {
+                    if (err.statusCode === 428){
+                        return callback({
+                            code: ALIAS_SYNC_ERR_CODE,
+                            message: 'Unable to add alias: versions out of sync'
+                        });
+                    }
+                    console.log(err);
+                    callback(err, null);
+                    return;
+
+                }
+                console.log(result);
+                callback (null, result);
+            })
+        }catch (err) {
+            console.log("anchoring smart contract ",err);
+            callback(err, null);
+        }
+    },
+    readVersions: function (anchorID,server, callback) {
+        console.log("get version anchor",this.commandData.anchorId);
+        this.__ReadFromBlockChain(anchorID, callback);
+    },
+    __ReadFromBlockChain : function(anchorID, callback){
+        const body = {};
+        const bodyData = JSON.stringify(body);
+        //build path
+        const apiPath = '/getAnchorVersions/'+anchorID;
+        //run Command method
+        const apiMethod = 'GET';
+        // run Command headers
+        const apiHeaders = {
+            'Content-Type': 'application/json',
+            'Content-Length': bodyData.length
+        };
+        const apiEndpoint = 'a14306cc05c5746bd8c4a24afca52a12-837176892.eu-west-2.elb.amazonaws.com';
+        const apiPort = 3000;
+        const protocol = 'http';
+        try {
+            makeRequest(protocol, apiEndpoint, apiPort, apiMethod, apiPath, bodyData, apiHeaders, (err, result) => {
+
+                if (err) {
+                    console.log(err);
+                    callback(err, null);
+                    return;
+                }
+
+                console.log(result);
+                callback(null, JSON.parse(result));
+            })
+        }catch (err) {
+            console.log("anchoring smart contract ",err);
+            callback(err, null);
+        }
+    }
+});
+
+
+module.exports = {
+    ALIAS_SYNC_ERR_CODE
+};
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/strategies/FS.js":[function(require,module,exports){
 (function (process,Buffer){(function (){
 const fs = require('fs');
 const endOfLine = require('os').EOL;
@@ -13871,34 +14058,44 @@ $$.flow.describe('FS', {
     init: function (strategy, anchorId, jsonData, rootFolder) {
             this.commandData = {};
             this.commandData.option = strategy.option;
+            this.commandData.strategyType = strategy.type;
             this.commandData.anchorId = anchorId;
             this.commandData.jsonData = jsonData;
-            const folderPrepared = folderStrategy.find(elem => elem.type === strategy.type);
+            this.domain = require('../utils/index').getDomainFromKeySSI(anchorId);
+
+            let folderPrepared = this.__getFolderStrategy(strategy, this.domain);
 
             //because we work instance based, ensure that folder structure is done only once per strategy type
             if (folderPrepared && folderPrepared.IsDone === true)
             {
                 //skip, folder structure is already done for this strategy type
             } else {
-                folderStrategy.push({
+                let folderPrepared = {
                     "IsDone" : false,
-                    "type" : strategy.type
-                });
-                let storageFolder = path.join(rootFolder, strategy.option.path);
+                    "type" : strategy.type,
+                    "domain" : this.domain,
+                    "anchorsFolders" : ""
+                };
+                folderStrategy.push(folderPrepared);
+                let anchorFolder = strategy.option.path;
                 if (typeof process.env.ANCHOR_STORAGE_FOLDER !== 'undefined') {
-                    storageFolder = process.env.ANCHOR_STORAGE_FOLDER;
+                    anchorFolder = process.env.ANCHOR_STORAGE_FOLDER;
                 }
-                this.__prepareFolderStructure(storageFolder);
+                let storageFolder = path.join(rootFolder,'external-volume/domains',this.domain, anchorFolder);
+
+                this.__prepareFolderStructure(storageFolder, folderPrepared);
             };
 
 
     },
-
-    __prepareFolderStructure: function (storageFolder) {
-        this.anchorsFolders = path.resolve(storageFolder);
+    __getFolderStrategy(){
+        return folderStrategy.find(elem => elem.type === this.commandData.strategyType && elem.domain === this.domain);
+    },
+    __prepareFolderStructure: function (storageFolder, folderPrepared) {
+        folderPrepared.anchorsFolders = path.resolve(storageFolder);
         try {
-            if (!fs.existsSync(this.anchorsFolders)) {
-                fs.mkdirSync(this.anchorsFolders, { recursive: true });
+            if (!fs.existsSync(folderPrepared.anchorsFolders)) {
+                fs.mkdirSync(folderPrepared.anchorsFolders, { recursive: true });
             }
         } catch (e) {
             console.log('error creating anchoring folder', e);
@@ -13907,10 +14104,11 @@ $$.flow.describe('FS', {
     },
     addAlias : function (server, callback) {
         const fileHash = this.commandData.anchorId;
+        const anchorsFolders = this.__getFolderStrategy().anchorsFolders;
         if (!fileHash || typeof fileHash !== 'string') {
             return callback(new Error('No fileId specified.'));
         }
-        const filePath = path.join(this.anchorsFolders, fileHash);
+        const filePath = path.join(anchorsFolders, fileHash);
         fs.stat(filePath, (err, stats) => {
             if (err) {
                 if (err.code !== 'ENOENT') {
@@ -13958,8 +14156,9 @@ $$.flow.describe('FS', {
         };
     },
 
-    readVersions: function (alias, callback) {
-        const filePath = path.join(this.anchorsFolders, alias);
+    readVersions: function (alias,server, callback) {
+        const anchorsFolders = this.__getFolderStrategy().anchorsFolders;
+        const filePath = path.join(anchorsFolders, alias);
         fs.readFile(filePath, (err, fileHashes) => {
             if (err) {
                 if (err.code === 'ENOENT') {
@@ -14028,7 +14227,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 
-},{"../../bricksLedger/constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/controllers.js":[function(require,module,exports){
+},{"../../bricksLedger/constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/bricksLedger/constants.js","../utils/index":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/utils/index.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/travis/build/PrivateSky/privatesky/node_modules/os-browserify/browser.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/controllers.js":[function(require,module,exports){
 let pendingRequests = {};
 
 const readBody = require("../../../utils").readStringFromStream;
@@ -14146,11 +14345,7 @@ module.exports = AnchorSubrscribe;
 },{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/constants.js","./controllers":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/subscribe/controllers.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/utils/index.js":[function(require,module,exports){
 const getAnchoringStrategy = (ssiString) => {
     const config = require("../../../config");
-    const openDSU = require("opendsu");
-    const keySSISpace = openDSU.loadApi("keyssi");
-
-    const keySSI = keySSISpace.parse(ssiString);
-    const domain = keySSI.getDLDomain();
+    const domain = getDomainFromKeySSI(ssiString);
     let strategy = config.getConfig('endpointsConfig', 'anchoring', 'domainStrategies', domain);
 
     if (!strategy) {
@@ -14160,7 +14355,17 @@ const getAnchoringStrategy = (ssiString) => {
     return strategy;
 };
 
-module.exports = {getAnchoringStrategy}
+const getDomainFromKeySSI = function (ssiString) {
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadApi("keyssi");
+
+    const keySSI = keySSISpace.parse(ssiString);
+    const domain = keySSI.getDLDomain();
+
+    return domain;
+}
+
+module.exports = {getAnchoringStrategy, getDomainFromKeySSI}
 },{"../../../config":"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/config/index.js","opendsu":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-apihub/components/anchoring/versions/index.js":[function(require,module,exports){
 function AnchorVersions(server) {
     const { URL_PREFIX } = require('./../constants.js');
@@ -14168,8 +14373,9 @@ function AnchorVersions(server) {
     server.get(`${URL_PREFIX}/versions/:keyssi`, (request, response, next) => {
         const strategy = require("../utils").getAnchoringStrategy(request.params.keyssi);
         const flow = $$.flow.start(strategy.type);
+        //const flow = $$.flow.start('ETH');
         flow.init(strategy,request.params.keyssi, request.body, server.rootFolder);
-        flow.readVersions(request.params.keyssi, (err, fileHashes) => {
+        flow.readVersions(request.params.keyssi,server, (err, fileHashes) => {
             if (err) {
                 return response.send(404, 'Anchor not found');
             }
