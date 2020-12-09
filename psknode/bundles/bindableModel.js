@@ -37,6 +37,7 @@ if (typeof $$ !== "undefined") {
 },{"overwrite-require":"overwrite-require","psk-bindable-model":"psk-bindable-model","queue":"queue","soundpubsub":"soundpubsub"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
+  MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
   ISOLATE_ENVIRONMENT_TYPE: 'isolate',
   THREAD_ENVIRONMENT_TYPE: 'thread',
@@ -46,6 +47,15 @@ module.exports = {
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
+
+if(typeof $$.Buffer === "undefined"){
+    $$.Buffer = require("buffer").Buffer;
+}
+
+if (typeof global.$$.uidGenerator == "undefined") {
+    $$.uidGenerator = {};
+    $$.uidGenerator.safe_uuid = require("swarmutils").safe_uuid;
+}
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
@@ -357,7 +367,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
 const SoundPubSub = require("soundpubsub").soundPubSub;
 const CHAIN_CHANGED = 'chainChanged';
 const WILDCARD = "*";
@@ -1128,6 +1138,8 @@ function enableForEnvironment(envType){
         case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
             global = self;
             break;
+        default:
+            Error.stackTraceLimit = Infinity;
     }
 
     if (typeof(global.$$) == "undefined") {
@@ -1142,6 +1154,9 @@ function enableForEnvironment(envType){
         $$.__global = {};
     }
 
+    if (typeof global.wprint === "undefined") {
+        global.wprint = console.warn;
+    }
     Object.defineProperty($$, "environmentType", {
         get: function(){
             return envType;
@@ -1262,6 +1277,15 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
+                    if(typeof err == "SyntaxError"){
+                        console.error(err);
+                    } else{
+                        if(request === 'zeromq'){
+                            console.error("Failed to load module ", request," with error:", err.message);
+                        }else{
+                            console.error("Failed to load module ", request," with error:", err);
+                        }
+                    }
                     //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }

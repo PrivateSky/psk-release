@@ -1,4 +1,9 @@
-openDSURequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU_intermediar.js":[function(require,module,exports){
+openDSURequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU.js":[function(require,module,exports){
+const or = require('overwrite-require');
+or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
+
+require("./openDSU_intermediar");
+},{"./openDSU_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU_intermediar.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.openDSULoadModules = function(){ 
 
@@ -8,10 +13,6 @@ global.openDSULoadModules = function(){
 
 	if(typeof $$.__runtimeModules["opendsu"] === "undefined"){
 		$$.__runtimeModules["opendsu"] = require("opendsu");
-	}
-
-	if(typeof $$.__runtimeModules["bdns"] === "undefined"){
-		$$.__runtimeModules["bdns"] = require("bdns");
 	}
 
 	if(typeof $$.__runtimeModules["swarmutils"] === "undefined"){
@@ -37,14 +38,6 @@ global.openDSULoadModules = function(){
 	if(typeof $$.__runtimeModules["psk-cache"] === "undefined"){
 		$$.__runtimeModules["psk-cache"] = require("psk-cache");
 	}
-
-	if(typeof $$.__runtimeModules["dossier"] === "undefined"){
-		$$.__runtimeModules["dossier"] = require("dossier");
-	}
-
-	if(typeof $$.__runtimeModules["adler32"] === "undefined"){
-		$$.__runtimeModules["adler32"] = require("adler32");
-	}
 };
 if (false) {
 	openDSULoadModules();
@@ -56,170 +49,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"adler32":"adler32","bar":"bar","bar-fs-adapter":"bar-fs-adapter","bdns":"bdns","dossier":"dossier","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js":[function(require,module,exports){
-(function (Buffer){(function (){
-"use strict";
-
-var util = require('util');
-var Transform = require('stream').Transform;
-var crypto = require('crypto');
-var algorithm = require('./algorithm');
-
-// Provides a node.js Hash style interface for _sum32: http://nodejs.org/api/crypto.html#crypto_class_hash
-var Hash = module.exports = function Hash(options)
-{
-	if (!(this instanceof Hash))
-		return new Hash(options);
-
-	Transform.call(this, options);
-
-	this._sum = 1;
-};
-
-util.inherits(Hash, Transform);
-
-Hash.prototype.update = function(data, encoding)
-{
-	if (this._done)
-		throw new TypeError('HashUpdate fail');
-
-	encoding = encoding || crypto.DEFAULT_ENCODING;
-
-	if (!(data instanceof Buffer)) {
-		data = new Buffer(''+data, encoding === 'buffer' ? 'binary' : encoding);
-	}
-
-	this._sum = algorithm.sum(data, this._sum);
-
-	return this;
-};
-
-Hash.prototype.digest = function(encoding)
-{
-	if (this._done)
-		throw new Error('Not initialized');
-	
-	this._done = true;
-
-	var buf = new Buffer(4);
-	buf.writeUInt32BE(this._sum, 0);
-
-	encoding = encoding || crypto.DEFAULT_ENCODING;
-
-	if (encoding === 'buffer')
-		return buf;
-	else
-		return buf.toString(encoding);
-};
-
-Hash.prototype._transform = function(chunk, encoding, callback)
-{
-	this.update(chunk, encoding);
-	callback();
-};
-
-Hash.prototype._flush = function(callback)
-{
-	var encoding = this._readableState.encoding || 'buffer';
-	this.push(this.digest(encoding), encoding);
-	callback();
-};
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./algorithm":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js","buffer":false,"crypto":false,"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js":[function(require,module,exports){
-"use strict";
-
-/**
- * Largest prime smaller than 2^16 (65536)
- */
-var BASE = 65521;
-
-/**
- * Largest value n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1
- *
- * NMAX is just how often modulo needs to be taken of the two checksum word halves to prevent overflowing a 32 bit
- * integer. This is an optimization. We "could" take the modulo after each byte, and it must be taken before each
- * digest.
- */
-var NMAX = 5552;
-
-exports.sum = function(buf, sum)
-{
-	if (sum == null)
-		sum = 1;
-
-	var a = sum & 0xFFFF,
-		b = (sum >>> 16) & 0xFFFF,
-		i = 0,
-		max = buf.length,
-		n, value;
-
-	while (i < max)
-	{
-		n = Math.min(NMAX, max - i);
-
-		do
-		{
-			a += buf[i++]<<0;
-			b += a;
-		}
-		while (--n);
-
-		a %= BASE;
-		b %= BASE;
-	}
-
-	return ((b << 16) | a) >>> 0;
-};
-
-exports.roll = function(sum, length, oldByte, newByte)
-{
-	var a = sum & 0xFFFF,
-		b = (sum >>> 16) & 0xFFFF;
-
-	if (newByte != null)
-	{
-		a = (a - oldByte + newByte + BASE) % BASE;
-		b = (b - ((length * oldByte) % BASE) + a - 1 + BASE) % BASE;
-	}
-	else
-	{
-		a = (a - oldByte + BASE) % BASE;
-		b = (b - ((length * oldByte) % BASE) - 1 + BASE) % BASE;
-	}
-
-	return ((b << 16) | a) >>> 0;
-};
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/register.js":[function(require,module,exports){
-"use strict";
-
-module.exports = function()
-{
-	var crypto = require('crypto');
-	var Hash = require('./Hash');
-
-	// Silently abort if the adler32 algorithm is already supported by the
-	// crypto module.
-	if (crypto.getHashes().indexOf('adler32') != -1)
-		return;
-
-	crypto.getHashes = function()
-	{
-		return this().concat(['adler32']);
-	}
-	.bind(crypto.getHashes.bind(crypto));
-
-	crypto.createHash = function(algorithm)
-	{
-		if (algorithm === 'adler32')
-			return new Hash();
-		else
-			return this(algorithm);
-	}
-	.bind(crypto.createHash.bind(this));
-};
-},{"./Hash":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"bar":"bar","bar-fs-adapter":"bar-fs-adapter","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -243,10 +73,10 @@ function FsAdapter() {
             end: blockEnd
         });
 
-        let data = Buffer.alloc(0);
+        let data = $$.Buffer.alloc(0);
 
         readStream.on("data", (chunk) => {
-            data = Buffer.concat([data, chunk]);
+            data = $$.Buffer.concat([data, chunk]);
         });
 
         readStream.on("error", (err) => {
@@ -280,9 +110,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -469,9 +297,14 @@ function Archive(archiveConfigurator) {
     const TaskCounter = swarmutils.TaskCounter;
     const pskPth = swarmutils.path;
 
+    const mountedArchivesForBatchOperations = [];
+
     let brickMapController;
     let brickStorageService;
     let manifestHandler;
+    let batchOperationsInProgress = false;
+    let previousAnchoringDecisionFn;
+
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
@@ -506,8 +339,16 @@ function Archive(archiveConfigurator) {
             storageProvider: storageProvider,
             keySSI,
 
-            brickFactoryCallback: () => {
-                return new Brick(keySSI);
+            brickFactoryFunction: (encrypt) => {
+                encrypt = (typeof encrypt === 'undefined') ? true : !!encrypt;
+                if (encrypt) {
+                    return new Brick(keySSI);
+                }
+
+                // Strip the encryption key from the SeedSSI
+                const SSIKeys = require("opendsu").loadApi("keyssi");
+                let key = SSIKeys.buildSeedSSI(keySSI.getDLDomain(), undefined, keySSI.getControl(), keySSI.getVn());
+                return new Brick(key);
             },
 
             brickDataExtractorCallback: (brickMeta, brick, callback) => {
@@ -523,6 +364,91 @@ function Archive(archiveConfigurator) {
 
         return instance;
     }
+
+    const beginBatchInMountedArchive = (archive) => {
+        if (archive === this) {
+            return;
+        }
+
+        if (!archive.batchInProgress()) {
+            archive.beginBatch();
+        }
+
+        if (mountedArchivesForBatchOperations.indexOf(archive) === -1) {
+            mountedArchivesForBatchOperations.push(archive);
+        }
+    }
+
+    const cancelBatchesInMountedArchives = (callback) => {
+        const cancelBatch = (dossierContext) => {
+            if (!dossierContext) {
+                return callback();
+            }
+
+            dossierContext.archive.cancelBatch((err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                cancelBatch(mountedArchivesForBatchOperations.pop());
+            })
+        }
+
+        cancelBatch(mountedArchivesForBatchOperations.pop());
+    }
+
+    const commitBatchesInMountedArchives = (callback) => {
+        const results = [];
+
+        const commitBatch = (dossierContext) => {
+            if (!dossierContext) {
+                return callback(undefined, results);
+            }
+
+            dossierContext.archive.commitBatch((err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                results.push(result);
+                commitBatch(mountedArchivesForBatchOperations.pop());
+            });
+        }
+
+        commitBatch(mountedArchivesForBatchOperations.pop());
+    }
+
+    const getArchiveForBatchOperations = (manifestHandler, path, callback) => {
+        manifestHandler.getArchiveForPath(path, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (result.archive === this) {
+                return callback(undefined, result);
+            }
+
+            result.archive.getKeySSI((err, keySSI) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const cachedArchive = mountedArchivesForBatchOperations.find((archive) => {
+                    return archive.identifier === keySSI;
+                });
+
+                if (cachedArchive) {
+                    cachedArchive.relativePath = result.relativePath;
+                    return callback(undefined, cachedArchive);
+                }
+
+                result.identifier = keySSI;
+                result.archive.beginBatch();
+                mountedArchivesForBatchOperations.push(result);
+                callback(undefined, result);
+            });
+        });
+    };
 
     ////////////////////////////////////////////////////////////
     // Public methods
@@ -571,22 +497,28 @@ function Archive(archiveConfigurator) {
     }
 
     /**
+     * @return {string}
+     */
+    this.getCreationSSI = (plain) => {
+        return archiveConfigurator.getCreationSSI(plain);
+    }
+
+    /**
      * @param {string} barPath
-     * @param {string|Buffer|stream.ReadableStream} data
+     * @param {string|$$.Buffer|stream.ReadableStream} data
      * @param {object} options
      * @param {callback} callback
      */
     const _writeFile = (barPath, data, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {};
-            options.encrypt = true;
+            options = {
+                encrypt: true
+            }
         }
         barPath = pskPth.normalize(barPath);
 
-        archiveConfigurator.setIsEncrypted(options.encrypt);
-
-        brickStorageService.ingestData(data, (err, result) => {
+        brickStorageService.ingestData(data, options, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -651,14 +583,14 @@ function Archive(archiveConfigurator) {
     const _addFile = (fsFilePath, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {};
-            options.encrypt = true;
+            options = {
+                encrypt: true
+            }
         }
 
         barPath = pskPth.normalize(barPath);
-        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        brickStorageService.ingestFile(fsFilePath, (err, result) => {
+        brickStorageService.ingestFile(fsFilePath, options, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -676,16 +608,19 @@ function Archive(archiveConfigurator) {
     const _addFiles = (files, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {};
-            options.encrypt = true;
+            options = {
+                encrypt: true,
+                batch: false
+            };
         }
 
         barPath = pskPth.normalize(barPath);
-        archiveConfigurator.setIsEncrypted(options.encrypt);
 
         const filesArray = files.slice();
 
-        brickStorageService.ingestFiles(filesArray, (err, result) => {
+        const ingestionMethod = (!options.batch) ? 'ingestFiles' :'createBrickFromFiles';
+
+        brickStorageService[ingestionMethod](filesArray, options, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -697,9 +632,11 @@ function Archive(archiveConfigurator) {
     this.addFiles = (files, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {};
-            options.encrypt = true;
-            options.ignoreMounts = false;
+            options = {
+                encrypt: true,
+                ignoreMounts: false,
+                batch: false
+            };
         }
 
         if (options.ignoreMounts === true) {
@@ -741,19 +678,41 @@ function Archive(archiveConfigurator) {
 
     /**
      * @param {string} barPath
-     * @param {string|Buffer|stream.ReadableStream} data
+     * @param {string|$$.Buffer|stream.ReadableStream} data
      * @param {callback} callback
      */
-    this.appendToFile = (barPath, data, callback) => {
-        barPath = pskPth.normalize(barPath);
+    this.appendToFile = (barPath, data, options, callback) => {
+        const defaultOpts = {encrypt: true, ignoreMounts: false};
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
 
-        brickStorageService.ingestData(data, (err, result) => {
-            if (err) {
-                return callback(err);
-            }
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
-            brickMapController.appendToFile(barPath, result, callback);
-        });
+        if (options.ignoreMounts) {
+            barPath = pskPth.normalize(barPath);
+            brickStorageService.ingestData(data, options, (err, result) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                brickMapController.appendToFile(barPath, result, callback);
+            });
+        } else {
+            this.getArchiveForPath(barPath, (err, dossierContext) => {
+                if (err) {
+                    return callback(err);
+                }
+                if (dossierContext.readonly === true) {
+                    return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                }
+
+                options.ignoreMounts = true;
+                dossierContext.archive.appendToFile(dossierContext.relativePath, data, options, callback);
+            });
+        }
     };
 
     /**
@@ -765,13 +724,16 @@ function Archive(archiveConfigurator) {
     const _addFolder = (fsFolderPath, barPath, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {};
-            options.encrypt = true;
+            options = {
+                encrypt: true,
+                batch: false
+            };
         }
         barPath = pskPth.normalize(barPath);
-        archiveConfigurator.setIsEncrypted(options.encrypt);
 
-        brickStorageService.ingestFolder(fsFolderPath, (err, result) => {
+        const ingestionMethod = (!options.batch) ? 'ingestFolder' :'createBrickFromFolder';
+
+        brickStorageService[ingestionMethod](fsFolderPath, options, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -854,13 +816,50 @@ function Archive(archiveConfigurator) {
         }
 
         let fileList;
+        let error;
         try {
             fileList = brickMapController.getFileList(folderBarPath, options.recursive);
         } catch (e) {
-            return callback(e);
+            error = e;
         }
 
-        callback(undefined, fileList);
+        setTimeout(() => {
+            callback(error, fileList);
+        }, 0)
+    };
+
+    const _listMountedFiles = (mountPoints, result, callback) => {
+        if (typeof result === 'function') {
+            callback = result;
+            result = [];
+        }
+        let mountPoint = mountPoints.shift();
+
+        if (!mountPoint) {
+            return callback(undefined, result)
+        }
+
+        mountPoint = pskPth.normalize(mountPoint);
+
+        this.listFiles(mountPoint, {
+            recursive: true,
+            ignoreMounts: false
+        }, (err, files) => {
+            if (err) {
+                return callback(err);
+            }
+
+            result.push(files.map((file) => {
+                let prefix = mountPoint;
+                if (prefix[0] === '/') {
+                    prefix = prefix.substring(1);
+                }
+
+                return pskPth.normalize(`${prefix}/${file}`);
+            }));
+
+            _listMountedFiles(mountPoints, result, callback);
+        });
     };
 
     /**
@@ -876,6 +875,40 @@ function Archive(archiveConfigurator) {
         }
 
         callback(undefined, brickMapController.getFolderList(folderBarPath, options.recursive));
+    };
+
+    const _listMountedFolders = (mountPoints, result, callback) => {
+        if (typeof result === 'function') {
+            callback = result;
+            result = [];
+        }
+
+        let mountPoint = mountPoints.shift();
+        if (!mountPoint) {
+            return callback(undefined, result);
+        }
+
+        mountPoint = pskPth.normalize(mountPoint);
+
+        this.listFolders(mountPoint, {
+            recursive: true,
+            ignoreMounts: false
+        }, (err, folders) => {
+            if (err) {
+                return callback(err);
+            }
+
+            result.push((folders.map((folder) => {
+                let prefix = mountPoint;
+                if (prefix[0] === '/') {
+                    prefix = prefix.substring(1);
+                }
+
+                return pskPth.normalize(`${prefix}/${folder}`);
+            })));
+
+            _listMountedFolders(mountPoints, result, callback);
+        })
     };
 
     /**
@@ -948,32 +981,32 @@ function Archive(archiveConfigurator) {
     }
 
     /**
-     * @param {callback} callback
+     * @param {callback} listener
      */
-    this.setAnchoringCallback = (callback) => {
-        archiveConfigurator.getAnchoringStrategy().setAnchoringCallback(callback);
+    this.setAnchoringEventListener = (listener) => {
+        this.getAnchoringStrategy().setAnchoringEventListener(listener);
     }
 
     /**
      * @param {callback} callback
      */
     this.setDecisionCallback = (callback) => {
-        archiveConfigurator.getAnchoringStrategy().setDecisionCallback(callback);
+        this.getAnchoringStrategy().setDecisionCallback(callback);
     }
 
     /**
      * @return {AnchoringStrategy}
      */
     this.getAnchoringStrategy = () => {
-        return archiveConfigurator.getAnchoringStrategy();
+        return archiveConfigurator.getBrickMapStrategy();
     }
 
     /**
      * Manually anchor any changes
      */
-    this.doAnchoring = () => {
+    this.doAnchoring = (callback) => {
         const strategy = this.getAnchoringStrategy();
-        const anchoringEventListener = strategy.getAnchoringEventListener();
+        const anchoringEventListener = strategy.getAnchoringEventListener() || callback;
         if (typeof anchoringEventListener !== 'function') {
             throw new Error('An anchoring event listener is required');
         }
@@ -996,8 +1029,17 @@ function Archive(archiveConfigurator) {
         }
     }
 
+    this.getSSIForMount = (mountPoint, callback) => {
+        getManifest(  (err, manifestHandler) => {
+            if(err){
+                return callback(createOpenDSUErrorWrapper("Failed to load manifest for " + mountPoint, err));
+            }
+            manifestHandler.getArchiveIdentifier(mountPoint, callback);
+        });
+    }
+
     this.addFolder = (fsFolderPath, barPath, options, callback) => {
-        const defaultOpts = {encrypt: true, ignoreMounts: false};
+        const defaultOpts = {encrypt: true, ignoreMounts: false, batch: false};
         if (typeof options === "function") {
             callback = options;
             options = {};
@@ -1005,6 +1047,7 @@ function Archive(archiveConfigurator) {
 
         Object.assign(defaultOpts, options);
         options = defaultOpts;
+
 
         if (options.ignoreMounts === true) {
             _addFolder(fsFolderPath, barPath, options, callback);
@@ -1235,37 +1278,93 @@ function Archive(archiveConfigurator) {
         }
 
         if (options.ignoreMounts === true) {
-            _listFiles(path, options, callback);
-        } else {
-            this.getArchiveForPath(path, (err, result) => {
+            if (!options.recursive) {
+                return _listFiles(path, options, callback);
+            }
+
+            return _listFiles(path, options, (err, files) => {
                 if (err) {
                     return callback(err);
                 }
 
-                options.ignoreMounts = true;
-                result.archive.listFiles(result.relativePath, options, callback);
-            });
+                getManifest((err, manifest) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    const mountPoints = manifest.getMountPoints();
+                    if (!mountPoints.length) {
+                        return callback(undefined, files);
+                    }
+
+                    _listMountedFiles(mountPoints, (err, mountedFiles) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        files = files.concat(...mountedFiles);
+                        return callback(undefined, files);
+                    });
+                })
+            })
         }
+
+        this.getArchiveForPath(path, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            options.ignoreMounts = true;
+            result.archive.listFiles(result.relativePath, options, callback);
+        });
     };
 
     this.listFolders = (path, options, callback) => {
         if (typeof options === "function") {
             callback = options;
-            options = {ignoreMounts: false};
+            options = {ignoreMounts: false, recursive: false};
         }
 
         if (options.ignoreMounts === true) {
-            _listFolders(path, options, callback);
-        } else {
-            this.getArchiveForPath(path, (err, result) => {
+            if (!options.recursive) {
+                return _listFolders(path, options, callback);
+            }
+
+            return _listFolders(path, options, (err, folders) => {
                 if (err) {
                     return callback(err);
                 }
 
-                options.ignoreMounts = true;
-                result.archive.listFolders(result.relativePath, options, callback);
-            });
+                getManifest((err, manifest) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    const mountPoints = manifest.getMountPoints();
+                    if (!mountPoints.length) {
+                        return callback(undefined, folders);
+                    }
+
+                    _listMountedFolders(mountPoints, (err, mountedFolders) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        folders = folders.concat(...mountedFolders);
+                        return callback(undefined, folders);
+                    });
+                })
+            })
         }
+
+        this.getArchiveForPath(path, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            options.ignoreMounts = true;
+            result.archive.listFolders(result.relativePath, options, callback);
+        });
     };
 
     this.createFolder = (barPath, options, callback) => {
@@ -1279,9 +1378,9 @@ function Archive(archiveConfigurator) {
         options = defaultOpts;
 
         if (options.ignoreMounts === true) {
-            _createFolder(barPath, options, callback);
+            _createFolder(barPath, callback);
         } else {
-            this.getArchiveForPath(path, (err, dossierContext) => {
+            this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
                     return callback(err);
                 }
@@ -1417,6 +1516,12 @@ function Archive(archiveConfigurator) {
         });
     };
 
+    this.hasUnanchoredChanges = () => {
+        const changesExist = mountedArchivesForBatchOperations.reduce((acc, dossierContext) => {
+            return acc || dossierContext.archive.hasUnanchoredChanges();
+        }, false);
+        return brickMapController.hasUnanchoredChanges() || changesExist;
+    };
 
     this.getArchiveForPath = (path, callback) => {
         getManifest((err, handler) => {
@@ -1424,9 +1529,106 @@ function Archive(archiveConfigurator) {
                 return callback(err);
             }
 
+            if (this.batchInProgress()) {
+                return getArchiveForBatchOperations(handler, path, callback);
+            }
+
             handler.getArchiveForPath(path, callback);
         });
     };
+
+    /**
+     * Start a batch of operations
+     * This will force the anchoring when the
+     * batch is commited
+     */
+    this.beginBatch = () => {
+        if (batchOperationsInProgress) {
+            throw new Error("Another anchoring transaction is already in progress. Cancel the previous batch and try again.");
+        }
+
+        batchOperationsInProgress = true;
+
+        // Save the previous decision function
+        const anchoringStrategy = this.getAnchoringStrategy();
+        previousAnchoringDecisionFn = anchoringStrategy.getDecisionFunction();;
+
+        // Prevent anchoring after each operation
+        anchoringStrategy.setDecisionFunction((brickMap, callback) => {
+            return callback(undefined, false);
+        })
+    };
+
+    /**
+     * @return {boolean}
+     */
+    this.batchInProgress = () => {
+        return batchOperationsInProgress;
+    }
+
+    /**
+     * Anchor batch of changes
+     * @param {callback} callback
+     */
+    this.commitBatch = (callback) => {
+        if (!batchOperationsInProgress) {
+            return callback(new Error("No batch operations have been scheduled"))
+        }
+        commitBatchesInMountedArchives((err) => {
+            this.doAnchoring((err, result) => {
+                batchOperationsInProgress = false;
+                this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
+
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, result);
+            });
+        });
+    };
+
+    /**
+     * Cancel the current anchoring batch
+     */
+    this.cancelBatch = (callback) => {
+        if (!batchOperationsInProgress) {
+            return callback(new Error("No batch operations have been scheduled"))
+        }
+
+        cancelBatchesInMountedArchives((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            batchOperationsInProgress = false;
+            this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
+            this.load((err) => {
+                if (err) {
+                    return callback(err);
+                }
+                callback();
+            })
+        });
+    };
+
+    /**
+     * Execute a batch of operations
+     * then anchor the changes
+     *
+     * @param {function} batch
+     * @param {callback} callback
+     */
+    this.batch = (batch, callback) => {
+        this.beginBatch();
+        batch((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            this.commitBatch(callback);
+        });
+    }
 
     this.start = (callback) => {
         createBlockchain().start(callback);
@@ -1444,7 +1646,7 @@ function Archive(archiveConfigurator) {
 
 module.exports = Archive;
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Manifest.js","blockchain":false,"path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Manifest.js","blockchain":false,"opendsu":"opendsu","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 
@@ -1452,6 +1654,10 @@ function ArchiveConfigurator() {
     const config = {};
     let cache;
     let keySSI;
+
+    this.getCreationSSI = function(plain){
+        return config.keySSI.getIdentifier(plain);
+    }
 
     this.setBufferSize = (bufferSize) => {
         if (bufferSize < 65535) {
@@ -1503,14 +1709,6 @@ function ArchiveConfigurator() {
 
     this.getBufferSize = () => {
         return config.bufferSize;
-    };
-
-    this.setIsEncrypted = (flag) => {
-        config.isEncrypted = flag;
-    };
-
-    this.getIsEncrypted = () => {
-        return config.isEncrypted;
     };
 
     this.setFsAdapter = (fsAdapterName, ...args) => {
@@ -1667,7 +1865,7 @@ const crypto = openDSU.loadApi("crypto");
 const keyssi = openDSU.loadApi("keyssi");
 const BrickTransformFactory = require("./transforms/BrickTransformFactory");
 const transformFactory = new BrickTransformFactory();
-const adler32 = require("adler32");
+// const adler32 = require("adler32");
 
 function Brick(keySSI) {
     let rawData;
@@ -1720,6 +1918,11 @@ function Brick(keySSI) {
             return callback(undefined, rawData);
         }
 
+        if (!transformParameters.key) {
+            rawData = transformedData;
+            return this.getRawData(callback);
+        }
+
         if (transformedData) {
             transform = transformFactory.createBrickTransform(keySSI);
             return transform.applyInverseTransform(transformedData, transformParameters, (err, _rawData) => {
@@ -1742,6 +1945,11 @@ function Brick(keySSI) {
     this.getTransformedData = (callback) => {
         if (typeof transformedData !== "undefined") {
             return callback(undefined, transformedData);
+        }
+
+        if (!keySSI.getSpecificString()) {
+            transformedData = rawData;
+            return this.getTransformedData(callback);
         }
 
         transformData((err, _transformedData) => {
@@ -1818,12 +2026,12 @@ function Brick(keySSI) {
                 encryptionKey
             };
 
-            this.getAdler32((err, adler32) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                summary.checkSum = adler32;
+            // this.getAdler32((err, adler32) => {
+            //     if (err) {
+            //         return callback(err);
+            //     }
+            //
+            //     summary.checkSum = adler32;
                 this.getHashLink((err, _hashLink) => {
                     if (err) {
                         return callback(err);
@@ -1833,7 +2041,7 @@ function Brick(keySSI) {
                     callback(undefined, summary);
                 });
             });
-        });
+        // });
     }
 
 //----------------------------------------------- internal methods -----------------------------------------------------
@@ -1863,7 +2071,7 @@ function Brick(keySSI) {
 
 module.exports = Brick;
 
-},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","adler32":"adler32","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
+},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
 const BrickMapMixin = require('./BrickMapMixin');
 
 /**
@@ -1913,17 +2121,6 @@ module.exports = BrickMap;
 },{"./BrickMapMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
 'use strict';
 
-const swarmutils = require("swarmutils");
-const BrickMap = require('./BrickMap');
-const Brick = require('./Brick');
-const AnchorValidator = require('./AnchorValidator');
-const pskPth = swarmutils.path;
-const BrickMapDiff = require('./BrickMapDiff');
-const BrickMapStrategyFactory = require('./BrickMapStrategy');
-const anchoringStatus = require('./constants').anchoringStatus;
-
-const DEFAULT_BRICK_MAP_STRATEGY = "Diff";
-
 /**
  * BrickMap Proxy
  *
@@ -1945,12 +2142,21 @@ const DEFAULT_BRICK_MAP_STRATEGY = "Diff";
  * @param {BrickStorageService} options.brickStorageService
  */
 function BrickMapController(options) {
+    const swarmutils = require("swarmutils");
+    const BrickMap = require('./BrickMap');
+    const Brick = require('./Brick');
+    const AnchorValidator = require('./AnchorValidator');
+    const pskPth = swarmutils.path;
+    const BrickMapDiff = require('./BrickMapDiff');
+    const BrickMapStrategyFactory = require('./BrickMapStrategy');
+    const anchoringStatus = require('./constants').anchoringStatus;
+
+    const DEFAULT_BRICK_MAP_STRATEGY = "LatestVersion";
     options = options || {};
 
     const config = options.config;
     const keySSI = options.keySSI;
     const brickStorageService = options.brickStorageService;
-    let legacyMode = false;
     const keyssi = require("opendsu").loadApi("keyssi");
     if (!config) {
         throw new Error('An ArchiveConfigurator is required!');
@@ -1964,8 +2170,8 @@ function BrickMapController(options) {
     // when trying to anchor outdated changes
     const ALIAS_SYNC_ERR_CODE = 428;
 
-    // let strategy = config.getBrickMapStrategy();
-    let strategy;
+    let strategy = config.getBrickMapStrategy();
+
     let validator = new AnchorValidator({
         rules: config.getValidationRules()
     });
@@ -2000,7 +2206,6 @@ function BrickMapController(options) {
      */
     const initialize = () => {
         if (!strategy) {
-            legacyMode = true;
             strategy = getDefaultStrategy();
         }
         strategy.setCache(config.getCache());
@@ -2090,7 +2295,9 @@ function BrickMapController(options) {
         }
 
         currentDiffBrickMap = brickMapDiff;
-        callback(undefined, brickMapDiff);
+        setTimeout(() => {
+            callback(undefined, brickMapDiff);
+        })
     }
 
     /**
@@ -2192,9 +2399,6 @@ function BrickMapController(options) {
 
             strategy.load(keySSI, (err, brickMap) => {
                 if (err) {
-                    if (legacyMode && typeof err.message === 'string' && err.message.startsWith('No data found for alias')) {
-                        return this.init(callback);
-                    }
                     return callback(err);
                 }
 
@@ -2507,6 +2711,13 @@ function BrickMapController(options) {
     }
 
     /**
+     * @param {BrickMap}
+     */
+    this.setValidBrickMap = (brickMap) => {
+        validBrickMap = brickMap;
+    }
+
+    /**
      * @param {BrickMap} brickMap
      * @param callback
      */
@@ -2572,62 +2783,67 @@ function BrickMapController(options) {
             }
 
             if (!pendingAnchoringDiffs.length) {
-                return;
+                return listener();
             }
 
             if (anchoringInProgress) {
-                return;
+                return listener();
             }
 
             anchoringInProgress = true;
 
             // Use the strategy to compact/merge any BrickMapDiff objects into a single
             // diff object. Once this happens the "pendingAnchoringDiff" list is emptied
-            const brickMap = strategy.compactDiffs(pendingAnchoringDiffs);
-
-            this.saveBrickMap(keySSI, brickMap, (err, hash) => {
+            strategy.compactDiffs(pendingAnchoringDiffs, (err, brickMap) => {
                 if (err) {
-                    pendingAnchoringDiffs.unshift(brickMap);
-                    return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
+                    return callback(err);
                 }
 
-                const hashLink = keyssi.buildHashLinkSSI(keySSI.getDLDomain(), hash, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-                // TODO: call strategy.signHash() and pass the signedHash
-                this.addVersion(keySSI, hashLink, lastValidHashLink, (err) => {
+                this.saveBrickMap(keySSI, brickMap, (err, hash) => {
                     if (err) {
-                        // In case of any errors, the compacted BrickMapDiff object
-                        // is put back into the "pending anchoring" state in case
-                        // we need to retry the anchoring process
                         pendingAnchoringDiffs.unshift(brickMap);
-
-                        // The anchoring middleware detected that we were trying
-                        // to anchor outdated changes. In order to finish anchoring
-                        // these changes the conflict must be first resolved
-                        if (err.statusCode === ALIAS_SYNC_ERR_CODE) {
-                            return this.handleAnchoringConflict(listener);
-                        }
-
-                        return endAnchoring(listener, anchoringStatus.ANCHOR_VERSION_ERR, err);
+                        return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
                     }
 
-                    // After the alias is updated, the strategy is tasked
-                    // with updating the valid BrickMap with the new changes
-                    strategy.afterBrickMapAnchoring(brickMap, hashLink, (err, _hashLink) => {
+                    const hashLink = keyssi.buildHashLinkSSI(keySSI.getDLDomain(), hash, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+                    // TODO: call strategy.signHash() and pass the signedHash
+                    this.addVersion(keySSI, hashLink, lastValidHashLink, (err) => {
                         if (err) {
-                            return endAnchoring(listener, anchoringStatus.BRICKMAP_UPDATE_ERR, err);
+                            // In case of any errors, the compacted BrickMapDiff object
+                            // is put back into the "pending anchoring" state in case
+                            // we need to retry the anchoring process
+                            pendingAnchoringDiffs.unshift(brickMap);
+
+                            // The anchoring middleware detected that we were trying
+                            // to anchor outdated changes. In order to finish anchoring
+                            // these changes the conflict must be first resolved
+                            if (err.statusCode === ALIAS_SYNC_ERR_CODE) {
+                                return this.handleAnchoringConflict(listener);
+                            }
+
+                            return endAnchoring(listener, anchoringStatus.ANCHOR_VERSION_ERR, err);
                         }
 
-                        lastValidHashLink = _hashLink;
-                        endAnchoring(listener, anchoringStatus.OK, _hashLink);
+                        // After the alias is updated, the strategy is tasked
+                        // with updating the valid BrickMap with the new changes
+                        strategy.afterBrickMapAnchoring(brickMap, hashLink, (err, _hashLink) => {
+                            if (err) {
+                                return endAnchoring(listener, anchoringStatus.BRICKMAP_UPDATE_ERR, err);
+                            }
 
-                        if (anchoringRequestExists()) {
-                            // Another anchoring was requested during the time this one
-                            // was in progress, as such, we start the process again
-                            this.anchorChanges(listener);
-                        }
-                    });
+                            lastValidHashLink = _hashLink;
+                            endAnchoring(listener, anchoringStatus.OK, _hashLink);
+
+                            if (anchoringRequestExists()) {
+                                // Another anchoring was requested during the time this one
+                                // was in progress, as such, we start the process again
+                                this.anchorChanges(listener);
+                            }
+                        });
+                    })
                 })
-            })
+            });
+
         })
     }
 
@@ -2673,6 +2889,13 @@ function BrickMapController(options) {
      */
     this.setDirtyBrickMap = (brickMap) => {
         dirtyBrickMap = brickMap;
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.hasUnanchoredChanges = () => {
+        return newDiffs.length || anchoringRequestExists();
     }
 
     initialize();
@@ -2779,7 +3002,6 @@ function BrickMapDiff(header) {
 module.exports = BrickMapDiff;
 
 },{"./BrickMapMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
-(function (Buffer){(function (){
 'use strict';
 
 const Brick = require("./Brick");
@@ -3236,7 +3458,7 @@ const BrickMapMixin = {
     toBrick: function () {
         const brick = new Brick(this.keySSI);
         brick.setTransformParameters({key: this.keySSI.getEncryptionKey()});
-        brick.setRawData(Buffer.from(JSON.stringify(this.header)));
+        brick.setRawData($$.Buffer.from(JSON.stringify(this.header)));
         return brick;
     },
 
@@ -3321,19 +3543,19 @@ const BrickMapMixin = {
 
     /**
      * @param {object} brickMeta
-     * @param {Buffer} brickMeta.key
+     * @param {$$.Buffer} brickMeta.key
      * @return {object}
      */
     getTransformParameters: function (brickMeta) {
         if (typeof brickMeta === "undefined") {
-            return {key: this.keySSI.getEncryptionKey()}
+            return {key: this.keySSI.getIdentifier()}
         }
 
         const addTransformData = {};
-        if (brickMeta.key) {
-            addTransformData.key = Buffer.from(brickMeta.key);
-        }
-
+        // if (brickMeta.key) {
+        //     addTransformData.key = $$.Buffer.from(brickMeta.key);
+        // }
+        addTransformData.key = brickMeta.key;
         return addTransformData;
     },
 
@@ -3343,7 +3565,7 @@ const BrickMapMixin = {
     load: function (callback) {
         /**
          * JSON reviver callback
-         * Convert serialized Buffer to Buffer instance
+         * Convert serialized $$.Buffer to $$.Buffer instance
          * @param {string} key
          * @param {string} value
          * @return {*}
@@ -3361,15 +3583,15 @@ const BrickMapMixin = {
                 return value;
             }
 
-            if (value.type !== 'Buffer' || !Array.isArray(value.data)) {
+            if (value.type !== '$$.Buffer' || !Array.isArray(value.data)) {
                 return value;
             }
-            return Buffer.from(value.data);
+            return $$.Buffer.from(value.data);
         };
 
         if (this.header instanceof Brick) {
             this.header.setKeySSI(this.keySSI);
-            this.header.setTransformParameters({key: this.keySSI.getEncryptionKey()});
+            this.header.setTransformParameters({key: this.keySSI.getIdentifier()});
             this.header.getRawData((err, rawData) => {
                 if (err) {
                     return callback(err);
@@ -3379,7 +3601,7 @@ const BrickMapMixin = {
                 callback();
             });
         } else {
-            if (Buffer.isBuffer(this.header)) {
+            if ($$.Buffer.isBuffer(this.header)) {
                 this.header = this.header.toString();
             }
 
@@ -3545,9 +3767,8 @@ const BrickMapMixin = {
 }
 
 module.exports = BrickMapMixin;
-}).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
+},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
     brickMapController: null,
     anchoringEventListener: null,
@@ -3557,6 +3778,8 @@ const BrickMapStrategyMixin = {
     cache: null,
     lastHashLink: null,
     validator: null,
+    delay: null,
+    anchoringTimeout: null,
 
     initialize: function (options) {
         if (typeof options.anchoringEventListener === 'function') {
@@ -3573,6 +3796,13 @@ const BrickMapStrategyMixin = {
 
         if (typeof options.signingFn === 'function') {
             this.setSigningFunction(options.signingFn);
+        }
+
+        if (typeof options.delay !== 'undefined' ) {
+            if (!this.anchoringEventListener) {
+                throw new Error("An anchoring event listener is required when choosing to delay anchoring");
+            }
+            this.delay = options.delay;
         }
     },
 
@@ -3591,8 +3821,8 @@ const BrickMapStrategyMixin = {
     },
 
     /**
-     * 
-     * @param {callback} listener 
+     *
+     * @param {callback} listener
      */
     setAnchoringEventListener: function (listener) {
         this.anchoringEventListener = listener;
@@ -3610,6 +3840,13 @@ const BrickMapStrategyMixin = {
      */
     setDecisionFunction: function (fn) {
         this.decisionFunction = fn;
+    },
+
+    /**
+     * @return {function}
+     */
+    getDecisionFunction: function () {
+        return this.decisionFunction;
     },
 
     /**
@@ -3663,16 +3900,24 @@ const BrickMapStrategyMixin = {
     },
 
     /**
-     * 
-     * @param {BrickMap} brickMap 
-     * @param {callback} callback 
+     *
+     * @param {BrickMap} brickMap
+     * @param {callback} callback
      */
     ifChangesShouldBeAnchored: function (brickMap, callback) {
-        if (typeof this.decisionFunction !== 'function') {
-            return callback(undefined, true);
+        if (typeof this.decisionFunction === 'function') {
+            return this.decisionFunction(brickMap, callback);
         }
 
-        this.decisionFunction(brickMap, callback);
+        if (this.delay !== null) {
+            clearTimeout(this.anchoringTimeout);
+            this.anchoringTimeout = setTimeout(() => {
+                const anchoringEventListener = this.getAnchoringEventListener();
+                this.brickMapController.anchorChanges(anchoringEventListener);
+            }, this.delay);
+            return callback(undefined, false);
+        }
+        return callback(undefined, true);
     },
 
     /**
@@ -3705,6 +3950,7 @@ const BrickMapStrategyMixin = {
 }
 
 module.exports = BrickMapStrategyMixin;
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
 'use strict';
 
@@ -3880,7 +4126,7 @@ function DiffStrategy(options) {
      * @param {Array<BrickMapDiff} diffsList
      * @return {BrickMapDiff}
      */
-    this.compactDiffs = (diffsList) => {
+    this.compactDiffs = (diffsList, callback) => {
         const brickMap = diffsList.shift();
 
         while (diffsList.length) {
@@ -3889,7 +4135,7 @@ function DiffStrategy(options) {
             brickMap.applyDiff(brickMapDiff);
         }
 
-        return brickMap;
+        callback(undefined, brickMap);
     }
 
     /**
@@ -3974,16 +4220,329 @@ function DiffStrategy(options) {
 
 module.exports = DiffStrategy;
 
-},{"../../lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js":[function(require,module,exports){
-module.exports = {
-    DIFF: 'Diff'
+},{"../../lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
+'use strict';
+
+const BrickMapDiff = require('../BrickMapDiff');
+const BrickMap = require('../BrickMap');
+const BrickMapStrategyMixin = require('./BrickMapStrategyMixin');
+const Brick = require("../../lib/Brick");
+
+/**
+ * @param {object} options
+ * @param {callback} options.decisionFn Callback which will decide when to effectively anchor changes
+ *                                                              If empty, the changes will be anchored after each operation
+ * @param {callback} options.anchoringCb A callback which is called when the strategy anchors the changes
+ * @param {callback} options.signingFn  A function which will sign the new alias
+ * @param {callback} callback
+ */
+function LatestVersionStrategy(options) {
+    options = options || {};
+    Object.assign(this, BrickMapStrategyMixin);
+
+    ////////////////////////////////////////////////////////////
+    // Private methods
+    ////////////////////////////////////////////////////////////
+
+    /**
+     * @param {Array<string>} hashes
+     * @return {string}
+     */
+    const createBricksCacheKey = (hashes) => {
+        return hashes.map(hash => {
+            return hash.getIdentifier();
+        }).join(':');
+    };
+
+    /**
+     * @param {Array<Brick>} bricks
+     * @return {Array<BrickMapDiff}
+     */
+    const createMapsFromBricks = (bricks, callback) => {
+        const brickMaps = [];
+        const __createBrickMapsRecursively = (_bricks) => {
+            if (_bricks.length === 0) {
+                return setTimeout(() => {
+                    callback(undefined, brickMaps);
+                }, 0)
+            }
+
+            const brick = _bricks.shift();
+            this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                brickMaps.push(brickMap);
+                __createBrickMapsRecursively(_bricks);
+            });
+        };
+
+        __createBrickMapsRecursively(bricks);
+    }
+
+    /**
+     * Get a list of BrickMap objects either from cache
+     * or from Brick storage
+     *
+     * @param {Array<string>} hashes
+     * @param {callback} callback
+     */
+    const createBrickMapsFromHistory = (hashes, callback) => {
+        const cacheKey = createBricksCacheKey(hashes);
+        if (this.hasInCache(cacheKey)) {
+            const brickMaps = this.getFromCache(cacheKey);
+            return setTimeout(() => {
+                callback(undefined, brickMaps);
+            }, 0)
+        }
+
+        const TaskCounter = require("swarmutils").TaskCounter;
+        const bricks = [];
+        const taskCounter = new TaskCounter(() => {
+            createMapsFromBricks(bricks, (err, brickMaps) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                this.storeInCache(cacheKey, brickMaps);
+                callback(undefined, brickMaps);
+            });
+        });
+        taskCounter.increment(hashes.length);
+        this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
+            if (err) {
+                return callback(err);
+            }
+
+            bricks.push(createBrick(brickData));
+            taskCounter.decrement();
+        });
+    }
+
+    const createBrick = (brickData) => {
+        const brick = new Brick();
+        brick.setTransformedData(brickData);
+        return brick;
+    };
+
+    /**
+     * Get the latest BrickMap version after validating the
+     * history
+     *
+     * @param {Array<string>} hashes
+     * @param {callback} callback
+     */
+    const getLatestVersion = (hashes, callback) => {
+        this.lastHashLink = hashes[hashes.length - 1];
+        createBrickMapsFromHistory([this.lastHashLink], (err, brickMaps) => {
+            if (err) {
+                return callback(err);
+            }
+
+            this.validator.validate('brickMapHistory', brickMaps, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const latestBrickMap = brickMaps[brickMaps.length - 1];
+                callback(undefined, latestBrickMap);
+            });
+        })
+    }
+
+
+    ////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////
+
+    this.load = (keySSI, callback) => {
+        this.brickMapController.versions(keySSI, (err, versionHashes) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (!versionHashes.length) {
+                return callback(new Error(`No data found for alias <${keySSI.getAnchorId()}>`));
+            }
+
+            getLatestVersion(versionHashes, callback);
+        })
+    }
+
+
+    /**
+     * Compact a list of BrickMapDiff objects
+     * into a single BrickMap object
+     *
+     * @param {Array<BrickMapDiff>} diffsList
+     * @return {BrickMapDiff}
+     */
+    this.compactDiffs = (diffsList, callback) => {
+        if (diffsList[0].constructor === BrickMap) {
+            const brickMap = this.mergeDiffs(diffsList);
+            return setTimeout(() => {
+                callback(undefined, brickMap);
+            }, 0)
+        }
+
+        this.brickMapController.getValidBrickMap().clone((err, validBrickMapClone) => {
+            if (err) {
+                return callback(err);
+            }
+            const brickMap = this.mergeDiffs(validBrickMapClone, diffsList);
+            callback(undefined, brickMap);
+        })
+    }
+
+    /**
+     * Tell the BrickMapController to use the newly anchored
+     * BrickMap as a valid one
+     *
+     * @param {BrickMap} diff
+     * @param {string} brickMapHashLink
+     * @param {callback} callback
+     */
+    this.afterBrickMapAnchoring = (brickMap, brickMapHashLink, callback) => {
+        //console.log('==============', JSON.stringify(brickMap.header, undefined, 2));
+        this.brickMapController.setValidBrickMap(brickMap)
+        this.lastHashLink = brickMapHashLink;
+        this.lastAnchorTimestamp = new Date().getTime();
+
+        setTimeout(() => {
+            callback(undefined, brickMapHashLink);
+        }, 0)
+    }
+
+    /**
+     * Call the `conflictResolutionFn` if it exists
+     * @param {object} conflictInfo
+     * @param {BrickMap} conflictInfo.brickMap The up to date valid BrickMap
+     * @param {Array<BrickMapDiff} conflictInfo.pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
+     * @param {Array<BrickMapDiff} conflictInfo.newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
+     * @param {callback} callback
+     */
+    this.handleConflict = (conflictInfo, callback) => {
+        if (typeof this.conflictResolutionFn !== 'function') {
+            return setTimeout(() => {
+                callback(conflictInfo.error);
+            }, 0)
+        }
+
+        this.conflictResolutionFn(this.brickMapController, {
+            validBrickMap: conflictInfo.brickMap,
+            pendingAnchoringDiffs: conflictInfo.pendingAnchoringDiffs,
+            newDiffs: conflictInfo.newDiffs,
+            error: conflictInfo.error
+        }, callback);
+    }
+
+    /**
+     * Try and fix an anchoring conflict
+     *
+     * Merge any "pending anchoring" BrickMapDiff objects in a clone
+     * of the valid brickMap. If merging fails, call the 'conflictResolutionFn'
+     * in order to fix the conflict. If merging succeeds, update the "dirtyBrickMap"
+     *
+     * @param {BrickMap} brickMap The up to date valid BrickMap
+     * @param {Array<BrickMapDiff} pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
+     * @param {Array<BrickMapDiff} newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
+     * @param {callback} callback
+     */
+    this.reconcile = (brickMap, pendingAnchoringDiffs, newDiffs, callback) => {
+        // Try and apply the changes on a brickMap copy
+        brickMap.clone((err, brickMapCopy) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                // create a copy of the pending diffs array because the merge function
+                // empties the array, and we need it intact in case conflict resolution
+                // is needed
+                const pendingAnchoringDiffsCopy = pendingAnchoringDiffs.map((diff) => diff);
+                brickMapCopy = this.mergeDiffs(brickMapCopy, pendingAnchoringDiffs);
+            } catch (e) {
+                return this.handleConflict({
+                    brickMap,
+                    pendingAnchoringDiffs,
+                    newDiffs,
+                    error: e
+                }, callback);
+            }
+
+            this.brickMapController.setDirtyBrickMap(brickMapCopy);
+            callback();
+        });
+    };
+
+    /**
+     * Merge diffs into a single BrickMap object
+     * Handles the case when the list of diffs contains
+     * whole BrickMap objects
+     *
+     * @param {BrickMap|Array<BrickMapMixin>} brickMap
+     * @param {Array<BrickMapMixin>|undefined} diffs
+     * @return {BrickMap}
+     */
+    this.mergeDiffs = (brickMap, diffs) => {
+        if (typeof diffs === 'undefined') {
+            diffs = brickMap;
+            brickMap = undefined;
+        }
+
+        if (!Array.isArray(diffs)) {
+            diffs = [diffs];
+        }
+
+        if (!brickMap && (!Array.isArray(diffs) || diffs.length < 2)) {
+            throw new Error('A target and a list of diffs is required');
+        }
+
+        if (!brickMap) {
+            brickMap = diffs.shift();
+        }
+
+        if (brickMap.constructor !== BrickMap) {
+            throw new Error('The target brick map instance is invalid');
+        }
+
+        while (diffs.length) {
+            const brickMapDiff = diffs.shift();
+
+            // If the diff is a whole BrickMap object
+            // use it as a target for the next diffs
+            // and discard the previous history because
+            // it will already have all the previous changes
+            if (brickMapDiff.constructor === BrickMap) {
+                brickMap = brickMapDiff;
+                continue;
+            }
+
+            brickMap.applyDiff(brickMapDiff);
+        }
+
+        return brickMap;
+    };
+
+    this.initialize(options);
 }
+
+module.exports = LatestVersionStrategy;
+
+},{"../../lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js":[function(require,module,exports){
+module.exports = {
+    DIFF: 'Diff',
+    LATEST_VERSION: 'LatestVersion'
+}
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
 /**
  * @param {object} options
  */
 function Factory(options) {
     const DiffStrategy = require('./DiffStrategy');
+    const LastestVersionStrategy = require('./LatestVersionStrategy');
 
     options = options || {};
 
@@ -3996,6 +4555,7 @@ function Factory(options) {
     const initialize = () => {
         const builtinStrategies = require("./bultinBrickMapStrategies");
         this.registerStrategy(builtinStrategies.DIFF, this.createDiffStrategy);
+        this.registerStrategy(builtinStrategies.LATEST_VERSION, this.createLatestVersionStrategy);
     }
 
     ////////////////////////////////////////////////////////////
@@ -4029,18 +4589,22 @@ function Factory(options) {
         return new DiffStrategy(options);
     }
 
+    /**
+     * @param {object} options
+     * @return {LastestVersionStrategy}
+     */
+    this.createLatestVersionStrategy = (options) => {
+        return new LastestVersionStrategy(options);
+    }
+
     initialize();
 }
 
 module.exports = Factory;
 
-},{"./DiffStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./bultinBrickMapStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"./DiffStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./bultinBrickMapStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 'use strict';
 
-const envTypes = require("overwrite-require").constants;
-const isStream = require("../../utils/isStream");
-const stream = require('stream');
 
 /**
  * Brick storage layer
@@ -4050,30 +4614,38 @@ const stream = require('stream');
  * @param {Cache} options.cache
  * @param {number} options.bufferSize
  * @param {EDFSBrickStorage} options.storageProvider
- * @param {callback} options.brickFactoryCallback
+ * @param {callback} options.brickFactoryFunction
  * @param {FSAdapter} options.fsAdapter
  * @param {callback} options.brickDataExtractorCallback
  */
 function Service(options) {
+    const envTypes = require("overwrite-require").constants;
+    const isStream = require("../../utils/isStream");
+    const stream = require('stream');
+    const utils = require("swarmutils");
+    const HASHLINK_EMBEDDED_HINT_PREFIX = 'embedded/';
+
     options = options || {};
     this.cache = options.cache;
     this.bufferSize = parseInt(options.bufferSize, 10);
     this.storageProvider = options.storageProvider;
-    this.brickFactoryCallback = options.brickFactoryCallback;
+    this.brickFactoryFunction = options.brickFactoryFunction;
     this.fsAdapter = options.fsAdapter;
     this.brickDataExtractorCallback = options.brickDataExtractorCallback;
     this.keySSI = options.keySSI;
 
+    const SSIKeys = require("opendsu").loadApi("keyssi");
+
     if (isNaN(this.bufferSize) || this.bufferSize < 1) {
-        throw new Error('Buffer size is required');
+        throw new Error('$$.Buffer size is required');
     }
 
     if (!this.storageProvider) {
         throw new Error('Storage provider is required');
     }
 
-    if (typeof this.brickFactoryCallback !== 'function') {
-        throw new Error('A brick factory callback is required');
+    if (typeof this.brickFactoryFunction !== 'function') {
+        throw new Error('A brick factory function is required');
     }
 
     if (!this.fsAdapter && $$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE) {
@@ -4083,6 +4655,19 @@ function Service(options) {
     if (typeof this.brickDataExtractorCallback !== 'function') {
         throw new Error('A Brick data extractor callback is required');
     }
+
+    /**
+     * @param {HashLinkSSI} hlSSI
+     * @return {HashLinkSSI}
+     */
+    const stripHintFromHashLinkSSI = (hlSSI) => {
+        return SSIKeys.buildHashLinkSSI(
+            hlSSI.getDLDomain(),
+            hlSSI.getSpecificString(),
+            hlSSI.getControl(),
+            hlSSI.getVn()
+        ).getIdentifier();
+    };
 
     /**
      * @param {*} key
@@ -4187,8 +4772,7 @@ function Service(options) {
             const self = this;
             readableStream.getBrick = function (brickIndex) {
                 const brickMeta = bricksMeta[brickIndex];
-                const keyssi = require("opendsu").loadApi("keyssi");
-                const hlSSI = keyssi.parse(brickMeta.hashLink);
+                const hlSSI = SSIKeys.parse(brickMeta.hashLink);
                 self.getBrick(hlSSI, (err, brick) => {
                     if (err) {
                         this.destroy(err);
@@ -4219,20 +4803,83 @@ function Service(options) {
     };
 
     /**
+     * @param {HashLinkSSI} hlSSI
+     * @return {boolean}
+     */
+    const hashLinkHasEmbeddedHint = (hlSSI) => {
+        const hlSSIHint = hlSSI.getHint();
+        return (hlSSIHint && hlSSIHint.indexOf(HASHLINK_EMBEDDED_HINT_PREFIX) === 0)
+    }
+
+    /**
+     * Extract an embedded Brick from an unencrypted Brick container
+     * @param {HashLinkSSI} hlSSI
+     * @param {object} brickMeta
+     * @param {callback} callback
+     */
+    const getEmbeddedBrickAsBuffer = (hlSSI, brickMeta, callback) => {
+        const hlSSIHint = hlSSI.getHint();
+        const hintSegments = hlSSIHint.split('/').pop();
+        let [ offset, size, embeddedHlSSI ] = hintSegments.split(',');
+
+        offset = parseInt(offset, 10);
+        size = parseInt(size, 10);
+
+        if (isNaN(offset) || isNaN(size) || !embeddedHlSSI) {
+            return callback(new Error(`Embedded hint is invalid. Expected offset,size,hlSSI and got: ${hintSegments}`));
+        }
+
+        const cacheKey = embeddedHlSSI;
+
+        if (hasInCache(cacheKey)) {
+            const data = this.cache.get(cacheKey);
+            return callback(undefined, data);
+        }
+
+        const containerBrickMeta = Object.assign({}, brickMeta);
+        // The container Brick is not encrypted
+        delete containerBrickMeta.key;
+        // The container Brick doesn't need the hint
+        containerBrickMeta.hashLink = stripHintFromHashLinkSSI(hlSSI);
+
+        // Get the container Brick data
+        getBrickAsBuffer(containerBrickMeta, (err, data) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const brickData = data.slice(offset, offset + size);
+            return this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                storeInCache(cacheKey, data);
+                return callback(undefined, data);
+            });
+        });
+    }
+
+    /**
      * Retrieves a Brick from storage and converts
-     * it into a Buffer
+     * it into a $$.Buffer
      *
      * @param {object} brickMeta
      * @param {callback} callback
      */
     const getBrickAsBuffer = (brickMeta, callback) => {
-        if (hasInCache(brickMeta.hashLink)) {
-            const data = this.cache.get(brickMeta.hashLink);
+        const hlSSI = SSIKeys.parse(brickMeta.hashLink);
+
+        if (hashLinkHasEmbeddedHint(hlSSI)) {
+            return getEmbeddedBrickAsBuffer(hlSSI, brickMeta, callback);
+        }
+
+        let cacheKey = brickMeta.hashLink;
+        if (hasInCache(cacheKey)) {
+            const data = this.cache.get(cacheKey);
             return callback(undefined, data);
         }
 
-        const keyssi = require("opendsu").loadApi("keyssi");
-        const hlSSI = keyssi.parse(brickMeta.hashLink);
         this.getBrick(hlSSI, (err, brickData) => {
             if (err) {
                 return callback(err);
@@ -4243,12 +4890,15 @@ function Service(options) {
                     return callback(err);
                 }
 
-                storeInCache(brickMeta.hashLink, data);
-                callback(undefined, data);
+                if (!$$.Buffer.isBuffer(data) && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
+                    data = utils.convertToBuffer(data);
+                }
+
+                storeInCache(cacheKey, data);
+                return callback(undefined, data);
             });
         });
     };
-
 
     /**
      * Counts the number of blocks in a file
@@ -4272,14 +4922,19 @@ function Service(options) {
     };
 
     /**
-     * Creates a Brick from a Buffer
+     * Creates a Brick from a $$.Buffer
      * and saves it into brick storage
      *
-     * @param {Buffer} data
-     * @param {callback} callback
+     * @param {$$.Buffer} data
+     * @param {boolean|callback} encrypt Defaults to `true`
+     * @param {callback|undefined} callback
      */
-    const convertDataBlockToBrick = (data, callback) => {
-        const brick = this.brickFactoryCallback();
+    const convertDataBlockToBrick = (data, encrypt, callback) => {
+        if (typeof encrypt === 'function') {
+            callback = encrypt;
+            encrypt = true;
+        }
+        const brick = this.brickFactoryFunction(encrypt);
         brick.setRawData(data);
         brick.getTransformedData((err, brickData) => {
             if (err) {
@@ -4309,20 +4964,23 @@ function Service(options) {
      * stores them into storage
      *
      * @param {Array<object>} resultContainer
-     * @param {Buffer} buffer
+     * @param {$$.Buffer} buffer
      * @param {number} blockIndex
-     * @param {number} blockSize
+     * @param {object} options
+     * @param {number} options.bufferSize
      * @param {callback} callback
      */
-    const convertBufferToBricks = (resultContainer, buffer, blockIndex, blockSize, callback) => {
-        let blocksCount = Math.floor(buffer.length / blockSize);
-        if ((buffer.length % blockSize) > 0) {
+    const convertBufferToBricks = (resultContainer, buffer, blockIndex, options, callback) => {
+        const bufferSize = options.bufferSize;
+        let blocksCount = Math.floor(buffer.length / bufferSize);
+        if ((buffer.length % bufferSize) > 0) {
             ++blocksCount;
         }
 
-        const blockData = buffer.slice(blockIndex * blockSize, (blockIndex + 1) * blockSize);
+        const encrypt = (typeof options.encrypt === 'undefined') ? true : options.encrypt;
+        const blockData = buffer.slice(blockIndex * bufferSize, (blockIndex + 1) * bufferSize);
 
-        convertDataBlockToBrick(blockData, (err, result) => {
+        convertDataBlockToBrick(blockData, encrypt, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -4331,7 +4989,7 @@ function Service(options) {
             ++blockIndex;
 
             if (blockIndex < blocksCount) {
-                return convertBufferToBricks(resultContainer, buffer, blockIndex, blockSize, callback);
+                return convertBufferToBricks(resultContainer, buffer, blockIndex, options, callback);
             }
 
             return callback();
@@ -4343,17 +5001,26 @@ function Service(options) {
      *
      * @param {Array<object>} resultContainer
      * @param {string} filePath
-     * @param {number} blockIndex
-     * @param {number} blocksCount
+     * @param {object} options
+     * @param {number} options.blockIndex
+     * @param {number} options.blocksCount
+     * @param {boolean} options.encrypt
      * @param {callback} callback
      */
-    const convertFileToBricks = (resultContainer, filePath, blockIndex, blocksCount, callback) => {
-        if (typeof blocksCount === 'function') {
-            callback = blocksCount;
-            blocksCount = blockIndex;
-            blockIndex = 0;
+    const convertFileToBricks = (resultContainer, filePath, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
         }
 
+        if (typeof options.blockIndex === 'undefined') {
+            options.blockIndex = 0;
+        }
+
+        let blockIndex = options.blockIndex;
+        const blocksCount = options.blocksCount;
         const blockOffset = blockIndex * this.bufferSize;
         const blockEndOffset = (blockIndex + 1) * this.bufferSize - 1;
         this.fsAdapter.readBlockFromFile(filePath, blockOffset, blockEndOffset, (err, data) => {
@@ -4361,7 +5028,7 @@ function Service(options) {
                 return callback(err);
             }
 
-            convertDataBlockToBrick(data, (err, result) => {
+            convertDataBlockToBrick(data, options.encrypt, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
@@ -4370,7 +5037,8 @@ function Service(options) {
                 ++blockIndex;
 
                 if (blockIndex < blocksCount) {
-                    return convertFileToBricks(resultContainer, filePath, blockIndex, blocksCount, callback);
+                    options.blockIndex = blockIndex;
+                    return convertFileToBricks(resultContainer, filePath, options, callback);
                 }
 
                 return callback();
@@ -4379,20 +5047,72 @@ function Service(options) {
     };
 
     /**
-     * Stores a Buffer as Bricks into brick storage
+     * Save the buffer containing multiple files as a single brick
+     * and generate the proper HashLinkSSI for each file in the brick
      *
-     * @param {Buffer} buffer
-     * @param {number|callback} bufferSize
+     * Each file's HashLinkSSI is constructed by appending the `embedded/${offset},${size}` hint
+     * at the end of the Brick's HashLinkSSI. Ex:
+     * Brick HashLinkSSI:
+     *      ssi:hl:default:29LuHPtSrCG7u4nKNPB8KbG2EuK1U84X5pTTTko2GGcpxZGyPFC1jG8hAh6g2DbYKJxYumJFmNyQWu3iNpQe5jHR::v0
+     * File in brick HashLinkSSI:
+     *      ssi:hl:default:29LuHPtSrCG7u4nKNPB8KbG2EuK1U84X5pTTTko2GGcpxZGyPFC1jG8hAh6g2DbYKJxYumJFmNyQWu3iNpQe5jHR::v0:embedded/0,5
+     *
+     * @param {$$.Buffer} buffer
+     * @param {Array<Object>} filesList
+     * @param {string} filesList[].filename
+     * @param {Number} filesList[].offset
+     * @param {Number} filesList[].size
+     * @param {callback} callback
+     */
+    const storeCompactedFiles = (buffer, filesList, callback) => {
+        return convertDataBlockToBrick(buffer, false, (err, brickMeta) => {
+            if (err) {
+                return callback(err);
+            }
+            const files = {};
+            const brickHLSSI = SSIKeys.parse(brickMeta.hashLink);
+
+            for (const fileInfo of filesList) {
+                const fileHLSSIHint = `${HASHLINK_EMBEDDED_HINT_PREFIX}${fileInfo.offset},${fileInfo.size},${fileInfo.brickSummary.hashLink}`;
+
+                const fileHLSSI = SSIKeys.buildHashLinkSSI(
+                    brickHLSSI.getDLDomain(),
+                    brickHLSSI.getSpecificString(),
+                    brickHLSSI.getControl(),
+                    brickHLSSI.getVn(),
+                    fileHLSSIHint
+                );
+                fileInfo.brickSummary.hashLink = fileHLSSI.getIdentifier();
+                files[fileInfo.filename] = [fileInfo.brickSummary];
+            }
+
+            return callback(undefined, files);
+        });
+    }
+
+    /**
+     * Stores a $$.Buffer as Bricks into brick storage
+     *
+     * @param {$$.Buffer} buffer
+     * @param {objects|callback} options
+     * @param {number|callback} options.bufferSize
      * @param {callback|undefined} callback
      */
-    this.ingestBuffer = (buffer, bufferSize, callback) => {
-        if (typeof bufferSize === 'function') {
-            callback = bufferSize;
-            bufferSize = this.bufferSize;
+    this.ingestBuffer = (buffer, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
         }
+
+        if (!options.bufferSize) {
+            options.bufferSize = this.bufferSize;
+        }
+
         const bricksSummary = [];
 
-        convertBufferToBricks(bricksSummary, buffer, 0, bufferSize, (err) => {
+        convertBufferToBricks(bricksSummary, buffer, 0, options, (err) => {
             if (err) {
                 return callback(err);
             }
@@ -4406,22 +5126,35 @@ function Service(options) {
      * stored in brick storage
      *
      * @param {stream.Readable} stream
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
      * @param {callback}
      */
-    this.ingestStream = (stream, callback) => {
+    this.ingestStream = (stream, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            };
+        }
+
         let bricksSummary = [];
         let receivedData = [];
         stream.on('data', (chunk) => {
             if (typeof chunk === 'string') {
-                chunk = Buffer.from(chunk);
+                chunk = $$.Buffer.from(chunk);
             }
 
             receivedData.push(chunk);
-            let noChunks = this.bufferSize / chunk.length;
-            if (receivedData.length >= noChunks) {
-                const buffer = Buffer.concat(receivedData.splice(0, noChunks));
+            let chunksCount = this.bufferSize / chunk.length;
+            if (receivedData.length >= chunksCount) {
+                const buffer = $$.Buffer.concat(receivedData.splice(0, chunksCount));
                 stream.pause();
-                this.ingestBuffer(buffer, buffer.length, (err, summary) => {
+                const ingestBufferOptions = {
+                    bufferSize: buffer.length,
+                    encrypt: options.encrypt
+                };
+                this.ingestBuffer(buffer, ingestBufferOptions, (err, summary) => {
                     if (err) {
                         stream.destroy(err);
                         return;
@@ -4435,8 +5168,12 @@ function Service(options) {
             callback(err);
         });
         stream.on('end', () => {
-            const buffer = Buffer.concat(receivedData);
-            this.ingestBuffer(buffer, buffer.length, (err, summary) => {
+            const buffer = $$.Buffer.concat(receivedData);
+            const ingestBufferOptions = {
+                bufferSize: buffer.length,
+                encrypt: options.encrypt
+            };
+            this.ingestBuffer(buffer, ingestBufferOptions, (err, summary) => {
                 if (err) {
                     return callback(err);
                 }
@@ -4448,32 +5185,47 @@ function Service(options) {
     };
 
     /**
-     * @param {string|Buffer|stream.Readable} data
+     * @param {string|$$.Buffer|stream.Readable} data
      * @param {callback} callback
      */
-    this.ingestData = (data, callback) => {
+    this.ingestData = (data, options, callback) => {
         if (typeof data === 'string') {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
-        if (!Buffer.isBuffer(data) && !isStream.isReadable(data)) {
-            return callback(Error(`Type of data is ${typeof data}. Expected Buffer or Stream.Readable`));
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true,
+            };
         }
 
-        if (Buffer.isBuffer(data)) {
-            return this.ingestBuffer(data, callback);
+        if (!$$.Buffer.isBuffer(data) && !isStream.isReadable(data)) {
+            return callback(Error(`Type of data is ${typeof data}. Expected $$.Buffer or Stream.Readable`));
         }
 
-        return this.ingestStream(data, callback);
+        if ($$.Buffer.isBuffer(data)) {
+            return this.ingestBuffer(data, options, callback);
+        }
+
+        return this.ingestStream(data, options, callback);
     };
 
     /**
      * Copy the contents of a file into brick storage
      *
      * @param {string} filePath
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
      * @param {callback} callback
      */
-    this.ingestFile = (filePath, callback) => {
+    this.ingestFile = (filePath, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
+        }
         const bricksSummary = [];
 
         getFileBlocksCount(filePath, (err, blocksCount) => {
@@ -4481,7 +5233,9 @@ function Service(options) {
                 return callback(err);
             }
 
-            convertFileToBricks(bricksSummary, filePath, blocksCount, (err, result) => {
+            const conversionOptions = Object.assign({}, options);
+            conversionOptions.blocksCount = blocksCount;
+            convertFileToBricks(bricksSummary, filePath, conversionOptions, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
@@ -4495,9 +5249,18 @@ function Service(options) {
      * Copy the contents of multiple files into brick storage
      *
      * @param {Array<string>} filePath
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
      * @param {callback} callback
      */
-    this.ingestFiles = (files, callback) => {
+    this.ingestFiles = (files, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
+        }
+
         const bricksSummary = {};
 
         const ingestFilesRecursive = (files, callback) => {
@@ -4508,7 +5271,7 @@ function Service(options) {
             const filePath = files.pop();
             const filename = require("path").basename(filePath);
 
-            this.ingestFile(filePath, (err, result) => {
+            this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
@@ -4523,12 +5286,158 @@ function Service(options) {
     };
 
     /**
+     * Copy the contents of folder into a single brick
+     *
+     * @param {string} folderPath
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
+     * @param {callback} callback
+     */
+    this.createBrickFromFolder = (folderPath, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
+        }
+        const filesIterator = this.fsAdapter.getFilesIterator(folderPath);
+        const filesList = [];
+
+        const brickBuffers = [];
+        let currentOffset = 0;
+
+        const iteratorHandler = (err, filename, dirname) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof filename === 'undefined') {
+                const buffer = $$.Buffer.concat(brickBuffers);
+                return storeCompactedFiles(buffer, filesList, callback);
+            }
+
+            const filePath = require("path").join(dirname, filename);
+            this.readFile(filePath, (err, fileBuffer) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const fileBrick = this.brickFactoryFunction(options.encrypt);
+                fileBrick.setRawData(fileBuffer);
+                fileBrick.getTransformedData((err, brickData) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    fileBrick.getSummary((err, brickSummary) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        const size = brickData.length;
+                        const offset = currentOffset;
+
+                        currentOffset += size;
+                        filesList.push({
+                            filename,
+                            offset,
+                            size,
+                            brickSummary
+                        });
+                        brickBuffers.push(brickData);
+
+                        filesIterator.next(iteratorHandler);
+                    })
+                });
+            });
+        };
+
+        filesIterator.next(iteratorHandler);
+
+    };
+
+    /**
+     * Copy the contents of multiple files into a single brick
+     *
+     * @param {string} folderPath
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
+     * @param {callback} callback
+     */
+    this.createBrickFromFiles = (files, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            }
+        }
+        const filesList = [];
+
+        const brickBuffers = [];
+        let currentOffset = 0;
+
+        const readFilesRecursive = (files, callback) => {
+            if (!files.length) {
+                const buffer = $$.Buffer.concat(brickBuffers);
+                return storeCompactedFiles(buffer, filesList, callback);
+            }
+
+            const filePath = files.pop();
+            const filename = require("path").basename(filePath);
+
+            this.readFile(filePath, (err, fileBuffer) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const fileBrick = this.brickFactoryFunction(options.encrypt);
+                fileBrick.setRawData(fileBuffer);
+                fileBrick.getTransformedData((err, brickData) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    fileBrick.getSummary((err, brickSummary) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        const size = brickData.length;
+                        const offset = currentOffset;
+
+                        currentOffset += size;
+                        filesList.push({
+                            filename,
+                            offset,
+                            size,
+                            brickSummary
+                        });
+                        brickBuffers.push(brickData);
+
+                        readFilesRecursive(files, callback);
+                    });
+                });
+            });
+        }
+
+        readFilesRecursive(files, callback);
+    };
+
+    /**
      * Copy the contents of folder into brick storage
      *
      * @param {string} folderPath
+     * @param {object|callback} options
+     * @param {boolean} options.encrypt
      * @param {callback} callback
      */
-    this.ingestFolder = (folderPath, callback) => {
+    this.ingestFolder = (folderPath, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {
+                encrypt: true
+            };
+        }
         const bricksSummary = {};
         const filesIterator = this.fsAdapter.getFilesIterator(folderPath);
 
@@ -4542,7 +5451,7 @@ function Service(options) {
             }
 
             const filePath = require("path").join(dirname, filename);
-            this.ingestFile(filePath, (err, result) => {
+            this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
                     return callback(err);
                 }
@@ -4557,13 +5466,13 @@ function Service(options) {
 
     /**
      * Retrieve all the Bricks identified by `bricksMeta`
-     * from storage and create a Buffer using their data
+     * from storage and create a $$.Buffer using their data
      *
      * @param {Array<object>} bricksMeta
      * @param {callback} callback
      */
     this.createBufferFromBricks = (bricksMeta, callback) => {
-        let buffer = Buffer.alloc(0);
+        const buffers = [];
 
         const getBricksAsBufferRecursive = (index, callback) => {
             const brickMeta = bricksMeta[index];
@@ -4573,13 +5482,14 @@ function Service(options) {
                     return callback(err);
                 }
 
-                buffer = Buffer.concat([buffer, data]);
+                buffers.push(data);
                 ++index;
 
                 if (index < bricksMeta.length) {
                     return getBricksAsBufferRecursive(index, callback);
                 }
 
+                const buffer = $$.Buffer.concat(buffers);
                 callback(undefined, buffer);
             });
         };
@@ -4715,6 +5625,23 @@ function Service(options) {
     };
 
     /**
+     * @param {string} filePath
+     * @param {callback} callback
+     */
+    this.readFile = (filePath, callback) => {
+        this.fsAdapter.getFileSize(filePath, (err, size) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (!size) {
+                size = 1;
+            }
+            this.fsAdapter.readBlockFromFile(filePath, 0, size - 1, callback);
+        });
+    };
+
+    /**
      * @param {string} keySSI
      * @param {callback} callback
      */
@@ -4759,9 +5686,7 @@ function Service(options) {
 
 module.exports = Service;
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false,"opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -4769,7 +5694,6 @@ module.exports = {
 };
 
 },{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
@@ -4856,7 +5780,7 @@ function FileBrickStorage(filePath) {
 
                     const brickMapOffset = stats.size;
 
-                    const bufferBrickMapOffset = Buffer.alloc(util.getBrickMapOffsetSize());
+                    const bufferBrickMapOffset = $$.Buffer.alloc(util.getBrickMapOffsetSize());
                     bufferBrickMapOffset.writeBigUInt64LE(BigInt(brickMapOffset));
                     mapOffset = brickMapOffset;
                     const offsetWriteStream = fs.createWriteStream(filePath, {flags: "r+", start: 0});
@@ -4913,7 +5837,7 @@ function FileBrickStorage(filePath) {
     function readBrickMapOffset(callback) {
         const readStream = fs.createReadStream(filePath, {start: 0, end: util.getBrickMapOffsetSize() - 1});
 
-        const buffer = Buffer.alloc(util.getBrickMapOffsetSize());
+        const buffer = $$.Buffer.alloc(util.getBrickMapOffsetSize());
         let offsetBuffer = 0;
 
         readStream.on("data", (chunk) => {
@@ -4942,10 +5866,10 @@ function FileBrickStorage(filePath) {
 
             mapOffset = brickMapOffset;
             const readStream = fs.createReadStream(filePath, {start: Number(brickMapOffset)});
-            let brickMapData = Buffer.alloc(0);
+            const buffs = [];
 
             readStream.on("data", (chunk) => {
-                brickMapData = Buffer.concat([brickMapData, chunk]);
+                buffs.push(chunk);
             });
 
             readStream.on("error", (err) => {
@@ -4953,6 +5877,7 @@ function FileBrickStorage(filePath) {
             });
 
             readStream.on("end", () => {
+                const brickMapData = $$.Buffer.concat(buffs);
                 const mapBrick = new Brick();
                 mapBrick.setTransformedData(brickMapData);
                 callback(undefined, new BrickMap(mapBrick));
@@ -4962,10 +5887,10 @@ function FileBrickStorage(filePath) {
 
     function readBrick(brickOffsetStart, brickOffsetEnd, callback) {
         const readStream = fs.createReadStream(filePath, {start: brickOffsetStart, end: brickOffsetEnd - 1});
-        let brickData = Buffer.alloc(0);
+        const buffs = [];
 
         readStream.on("data", (chunk) => {
-            brickData = Buffer.concat([brickData, chunk]);
+            buffs.push(chunk);
         });
 
         readStream.on("error", (err) => {
@@ -4974,6 +5899,7 @@ function FileBrickStorage(filePath) {
 
         readStream.on("end", () => {
             const brick = new Brick();
+            const brickData = $$.Buffer.concat(buffs);
             brick.setTransformedData(brickData);
             callback(undefined, brick);
         });
@@ -4986,9 +5912,7 @@ module.exports = {
     }
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
+},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
 const BrickMap = require("./BrickMap");
 const Brick = require("./Brick");
 
@@ -5150,6 +6074,9 @@ function Manifest(archive, callback) {
     };
 
     manifestHandler.getArchiveForPath = function (path, callback) {
+        if (path[0] !== '/') {
+            path = `/${path}`;
+        }
         for (let mountingPoint in manifest.mounts) {
             if (mountingPoint === path) {
                 return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
@@ -5157,12 +6084,12 @@ function Manifest(archive, callback) {
                         return callback(err);
                     }
 
-                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive});
+                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive, identifier: manifest.mounts[mountingPoint]});
                 });
             }
 
             if (pskPath.isSubpath(path, mountingPoint)) {
-                return getArchive(manifest.mounts[mountingPoint], true, (err, archive) => {
+                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
                     if (err) {
                         return callback(err);
                     }
@@ -5182,6 +6109,10 @@ function Manifest(archive, callback) {
 
         callback(undefined, {prefixPath: "/", relativePath: path, archive: archive});
     };
+
+    manifestHandler.getMountPoints = function () {
+        return Object.keys(manifest.mounts);
+    }
 
     manifestHandler.getMountedDossiers = function (path, callback) {
         let mountedDossiers = [];
@@ -5206,16 +6137,8 @@ function Manifest(archive, callback) {
         callback(undefined, mountedDossiers);
     };
 
-    function getArchive(seed, asDossier, callback) {
-        if (typeof asDossier === "function") {
-            callback = asDossier;
-            asDossier = false;
-        }
+    function getArchive(seed, callback) {
         const resolver = require("opendsu").loadApi("resolver");
-        let dsuRepresentation = "Bar";
-        if (asDossier) {
-            dsuRepresentation = "RawDossier";
-        }
 
         resolver.loadDSU(seed, (err, dossier) => {
             if (err) {
@@ -5267,7 +6190,6 @@ module.exports = {
     }
 }
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const Brick = require("../Brick");
 const util = require("../../utils/utilities");
 const pathModule = "path";
@@ -5358,7 +6280,7 @@ function FileBrickMap(header) {
 
         const addTransformData = {};
         if (brickObj.key) {
-            addTransformData.key = Buffer.from(brickObj.key);
+            addTransformData.key = $$.Buffer.from(brickObj.key);
         }
 
         return addTransformData;
@@ -5368,7 +6290,7 @@ function FileBrickMap(header) {
         this.load();
         const brick = new Brick(archiveConfig);
         brick.setTransformParameters({key: encryptionKey});
-        brick.setRawData(Buffer.from(JSON.stringify(header)));
+        brick.setRawData($$.Buffer.from(JSON.stringify(header)));
         return brick;
     };
 
@@ -5402,9 +6324,7 @@ function FileBrickMap(header) {
 
 module.exports = FileBrickMap;
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
 function BrickTransform(transformGenerator) {
     let directTransform;
     let inverseTransform;
@@ -5567,16 +6487,15 @@ module.exports = CompressionGenerator;
 },{"zlib":false}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
-const keyssi = openDSU.loadApi("keyssi");
+const keyssiSpace = openDSU.loadApi("keyssi");
 
 function EncryptionGenerator(keySSI) {
-    let key;
     this.setKeySSI = (newConfig) => {
         keySSI = newConfig;
     };
 
     this.createDirectTransform = (transformParameters, callback) => {
-        getEncryption(transformParameters, callback);
+        createBrickEncryptionTransformation(transformParameters, callback);
     };
 
     this.createInverseTransform = (transformParameters, callback) => {
@@ -5584,43 +6503,37 @@ function EncryptionGenerator(keySSI) {
     };
 
     //--------------------------------------- internal methods ------------------------------------------------------
-    function getEncryption(transformParameters, callback) {
-        const _createResult = (key) => {
+    function createBrickEncryptionTransformation(transformParameters, callback) {
+        const _createResult = (_keySSI) => {
             //const _keySSI = keyssi.buildTemplateKeySSI(keySSI.getName(), keySSI.getDLDomain(), key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-            const _keySSI = keySSI.clone();
-            _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+            // _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
             return {
                 transform(data, callback) {
                     crypto.encrypt(_keySSI, data, callback);
                 },
                 transformParameters: {
-                    key
+                    key: _keySSI.getIdentifier()
                 }
             }
         }
-
+        let seKeySSI;
         if (transformParameters && transformParameters.key) {
-            key = transformParameters.key;
-            callback(undefined, _createResult(key));
+            seKeySSI = keyssiSpace.parse(transformParameters.key);
         } else {
-            crypto.generateEncryptionKey(keySSI, (err, encryptionKey) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                key = encryptionKey;
-                callback(undefined, _createResult(key));
-            });
+            seKeySSI = keyssiSpace.buildSymmetricalEncryptionSSI(keySSI.getDLDomain(), undefined, '', keySSI.getVn());
         }
+
+        callback(undefined, _createResult(seKeySSI));
     }
 
 
     function getDecryption(transformParameters, callback) {
         const ret = {
-            transform(data, callback){
+            transform(data, callback) {
                 //const _keySSI = keyssi.buildTemplateKeySSI(keySSI.getName(), keySSI.getDLDomain(), transformParameters.key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-                const _keySSI = keySSI.clone();
-                _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), transformParameters.key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+                // const _keySSI = keySSI.clone();
+                // _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), transformParameters.key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+                const _keySSI = keyssiSpace.parse(transformParameters.key);
                 crypto.decrypt(_keySSI, data, callback);
             }
         }
@@ -5681,209 +6594,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":false}],"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/BDNS.js":[function(require,module,exports){
-function BDNS() {
-    let hosts;
-
-    const initialize = () => {
-        if (typeof hosts !== "undefined") {
-            return;
-        }
-
-        let initializeFn = require("./configStrategies").init;
-        hosts = initializeFn();
-    };
-
-    this.getRawInfo = (dlDomain, callback) => {
-        const rawInfo = hosts[dlDomain];
-        if (typeof rawInfo === "undefined") {
-            //TODO: send swarm to parent's BDNS
-
-            callback(`[BDNS] - Unknown configuration for ${dlDomain}.`);
-        } else {
-            callback(undefined, rawInfo);
-        }
-    };
-
-    this.getNotificationEndpoints = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.notifications === "undefined") {
-                return callback(err ? err : "Notification endpoints not available");
-            }
-            callback(undefined, rawInfo.notifications);
-        });
-    }
-
-    this.getMQEndpoints = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.mq === "undefined") {
-                return callback(err ? err : "Message Queue endpoints not available");
-            }
-            callback(undefined, rawInfo.mq);
-        });
-    }
-
-    this.getBrickStorages = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.brickStorages === "undefined") {
-                return callback(err ? err : "Brick Storages not available");
-            }
-            callback(undefined, rawInfo.brickStorages);
-        });
-    };
-
-    this.getAnchoringServices = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.anchoringServices === "undefined") {
-                return callback(err ? err : "Anchoring Services not available");
-            }
-            callback(undefined, rawInfo.anchoringServices);
-        });
-    };
-
-    this.getReplicas = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.replicas === "undefined") {
-                return callback(err ? err : "Domain replicas not available");
-            }
-            callback(undefined, rawInfo.replicas);
-        });
-    };
-
-    this.addRawInfo = (dlDomain, rawInfo) => {
-        hosts[dlDomain] = rawInfo;
-    };
-
-    this.addAnchoringServices = (dlDomain, anchoringServices) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].anchoringServices = [];
-        }
-
-        if (typeof anchoringServices === "string") {
-            anchoringServices = [anchoringServices];
-        }
-
-        if (!Array.isArray(anchoringServices)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof anchoringServices}`)
-        }
-
-        hosts[dlDomain].anchoringServices = hosts[dlDomain].anchoringServices.concat(anchoringServices);
-    };
-
-    this.addBrickStorages = (dlDomain, brickStorages) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].brickStorages = [];
-        }
-
-        if (typeof brickStorages === "string") {
-            brickStorages = [brickStorages];
-        }
-
-        if (!Array.isArray(brickStorages)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof brickStorages}`)
-        }
-
-        hosts[dlDomain].brickStorages = hosts[dlDomain].brickStorages.concat(brickStorages);
-    };
-
-    this.addReplicas = (dlDomain, replicas) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].replicas = [];
-        }
-
-        if (typeof replicas === "string") {
-            replicas = [replicas];
-        }
-
-        if (!Array.isArray(replicas)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof replicas}`)
-        }
-
-        hosts[dlDomain].replicas = hosts[dlDomain].replicas.concat(replicas);
-    };
-
-    initialize();
-}
-
-module.exports = BDNS;
-},{"./configStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js":[function(require,module,exports){
-let or = require("overwrite-require");
-const domain = "default";
-const defaultURL = "http://localhost:8080";
-
-function buildConfig(domainName, url) {
-	let config = {};
-	config[domainName] = {
-		"replicas": [],
-		"brickStorages": [url],
-		"anchoringServices": [url]
-	};
-	return config;
-}
-
-function defaultConfigInit() {
-	let hosts = buildConfig(domain, "http://localhost:8080");
-	return hosts;
-}
-
-function browserConfigInit() {
-	const protocol = window.location.protocol;
-	const host = window.location.hostname;
-	const port = window.location.port;
-
-	let url = `${protocol}//${host}:${port}`;
-	return buildConfig(domain, url);
-}
-
-function swConfigInit() {
-	let scope = self.registration.scope;
-
-	let parts = scope.split("/");
-	let url  = parts[0] + "//" + parts[2];
-
-	return buildConfig(domain, url);
-}
-
-function nodeConfigInit() {
-	let hosts;
-	try {
-		const path = require("swarmutils").path;
-		const FILE_PATH = path.join(process.env.PSK_CONFIG_LOCATION, "BDNS.hosts.json");
-		hosts = require(FILE_PATH);
-	} catch (e) {
-		console.log("BDNS config file not found. Using defaults.");
-		hosts = buildConfig(domain, defaultURL);
-	}
-	return hosts;
-}
-
-let result = {};
-switch ($$.environmentType) {
-	case or.constants.BROWSER_ENVIRONMENT_TYPE:
-		result.init = browserConfigInit;
-		break;
-	case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
-		result.init = swConfigInit;
-		break;
-	case or.constants.NODEJS_ENVIRONMENT_TYPE:
-		result.init = nodeConfigInit;
-		break;
-	default:
-		result.init = defaultConfigInit;
-}
-
-module.exports = result;
-},{"overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/dossier/lib/RawDossier.js":[function(require,module,exports){
-function RawDossier(bar) {
-    Object.assign(this, bar);
-}
-
-module.exports = RawDossier;
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
+},{"fs":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
 'use strict';
 
 function RequestsChain() {
@@ -5969,7 +6680,6 @@ function BootstrapingService(options) {
         'brickStorage': openDSU.loadApi("bricking"),
         'anchorService': openDSU.loadApi("anchoring")
     }
-    const bdns = openDSU.loadApi("bdns");
 
     ////////////////////////////////////////////////////////////
     // Private methods
@@ -6028,7 +6738,6 @@ module.exports = BootstrapingService;
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -6038,7 +6747,6 @@ function ConstDSUFactory(options) {
 
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -6092,8 +6800,7 @@ module.exports = ConstDSUFactory;
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
- * @param {DIDFactory} options.keySSIFactory
+ * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 const cache = require('psk-cache').factory();
@@ -6101,19 +6808,36 @@ function DSUFactory(options) {
     const barModule = require('bar');
     const fsAdapter = require('bar-fs-adapter');
 
-    const DEFAULT_BRICK_MAP_STRATEGY = "Diff";
+    const DEFAULT_BRICK_MAP_STRATEGY = "LatestVersion";
 
     options = options || {};
     this.bootstrapingService = options.bootstrapingService;
     this.keySSIFactory = options.keySSIFactory;
     this.brickMapStrategyFactory = options.brickMapStrategyFactory;
 
+
+    function castSSI(ssi){
+        if(typeof ssi !== "undefined"){
+            if(typeof ssi === "string"){
+                let keyssi = require("opendsu").loadApi("keyssi");
+                ssi = keyssi.parse(ssi);
+            } else {
+                 if(ssi.getTypeName === undefined || ssi.getIdentifier === undefined){
+                     throw Error("Please provide a proper SSI instance ");
+                 }
+            }
+        } else {
+            throw Error("SSI should not be undefined");
+        }
+        return ssi;
+    }
+
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
 
     /**
-     * @param {BaseDID} keySSI
+     * @param {SeedSSI} keySSI
      * @param {object} options
      * @return {Archive}
      */
@@ -6177,8 +6901,8 @@ function DSUFactory(options) {
             return callback(Error("A template keySSI should be provided when creating a new DSU."));
         }
         const KeySSIFactory = require("../KeySSIs/KeySSIFactory");
-        const keySSI = KeySSIFactory.createType(templateKeySSI.getName());
-        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, undefined, callback);
+        const keySSI = KeySSIFactory.createType(templateKeySSI.getTypeName());
+        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, templateKeySSI.getHint(), callback);
     }
 
     ////////////////////////////////////////////////////////////
@@ -6187,7 +6911,6 @@ function DSUFactory(options) {
 
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -6201,9 +6924,19 @@ function DSUFactory(options) {
      * @param {callback} callback
      */
     this.create = (keySSI, options, callback) => {
+        keySSI = castSSI(keySSI);
+        if(typeof options === "function"){
+            callback = options;
+            options = undefined;
+        }
         options = options || {};
         if (options.useSSIAsIdentifier) {
-            const bar = createInstance(keySSI, options);
+            let bar;
+            try {
+                bar = createInstance(keySSI, options);
+            } catch (err) {
+                return callback(err);
+            }
             return bar.init(err => callback(err, bar));
         }
 
@@ -6212,7 +6945,12 @@ function DSUFactory(options) {
                 return callback(err);
             }
 
-            const bar = createInstance(_keySSI, options);
+            let bar;
+            try {
+                bar = createInstance(_keySSI, options);
+            } catch (err) {
+                return callback(err);
+            }
             bar.init(err => callback(err, bar));
         });
     }
@@ -6233,29 +6971,37 @@ function DSUFactory(options) {
      * @param {callback} callback
      */
     this.load = (keySSI, options, callback) => {
+        keySSI = castSSI(keySSI);
+        if(typeof options === "function"){
+            callback = options;
+            options = undefined;
+        }
         options = options || {};
-        const bar = createInstance(keySSI, options);
+        let bar;
+        try {
+            bar = createInstance(keySSI, options);
+        } catch (err) {
+            return callback(err);
+        }
         bar.load(err => callback(err, bar));
     }
 }
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 function WalletFactory(options) {
     options = options || {};
-    this.barFactory = options.barFactory;
-
+    this.dsuFactory = options.barFactory;
+    const WALLET_MOUNT_POINT = "/writableDSU";
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -6270,35 +7016,69 @@ function WalletFactory(options) {
      */
     this.create = (keySSI, options, callback) => {
         const defaultOpts = {overwrite: false};
+
         if (typeof options === 'function') {
             callback = options;
             options = {};
         }
+        let writableWallet;
+        let constDSUWallet;
+
         Object.assign(defaultOpts, options);
         options = defaultOpts;
-        this.barFactory.create(keySSI, options, (err, wallet) => {
-            if (err) {
-                return callback(err);
-            }
 
-            wallet.mount("/code", options.dsuTypeSSI, (err => {
+        let createWritableDSU = () => {
+            let templateSSI = require("opendsu").loadApi("keyssi").buildSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
+            this.dsuFactory.create(templateSSI, (err, writableDSU) => {
+                if (err) {
+                    return callback(err);
+                }
+                writableWallet = writableDSU;
+                mountDSUType();
+            })
+        }
+
+        let mountDSUType = () =>{
+            writableWallet.mount("/code", options.dsuTypeSSI, (err => {
+                if (err) {
+                    return callback(err);
+                }
+                createConstDSU();
+            }));
+        }
+
+
+
+        let createConstDSU = () => {
+            this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
                     return callback(err);
                 }
 
-                return callback(undefined, wallet);
+                constDSUWallet = constWallet;
+                constDSUWallet.getWritableDSU = function(){
+                    return writableWallet;
+                }
+                mountWritableWallet();
+            })
+        }
 
-                /*wallet.getKeySSI((err, _keySSI) => {
+
+        let mountWritableWallet = () => {
+            writableWallet.getKeySSI((err,seedSSI) =>{
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to get seedSSI",err));
+                }
+                constDSUWallet.mount(WALLET_MOUNT_POINT, seedSSI, (err => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet",err));
                     }
+                    callback(undefined, constDSUWallet);
+                }));
+            });
+        }
 
-                    callback(undefined, wallet);
-                });*/
-
-            }));
-        })
-
+        createWritableDSU();
     };
 
     /**
@@ -6324,26 +7104,58 @@ function WalletFactory(options) {
         }
         Object.assign(defaultOpts, options);
         options = defaultOpts;
+        let constDSU;
+        let writableDSU;
+        let writableSSI;
 
-        this.barFactory.load(keySSI, options, (err, dossier) => {
-            if (err) {
-                return callback(err);
-            }
+        let loadConstDSU = () =>{
+            this.dsuFactory.load(keySSI, options, (err, dsu) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to load ConstDSU",err));
+                }
+                constDSU = dsu;
+                getSSIFromMountPoint();
+            });
+        }
 
-            return callback(undefined, dossier);
-        });
+
+        let  getSSIFromMountPoint = () => {
+            constDSU.getSSIForMount(WALLET_MOUNT_POINT, (err, ssi) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU",err));
+                }
+                writableSSI = require("opendsu").loadApi("keyssi").parse(ssi);
+                loadWritableDSU();
+            });
+        }
+
+        let loadWritableDSU = () => {
+            this.dsuFactory.load(writableSSI, options, (err, dsu) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet", err));
+                }
+                writableDSU = dsu;
+                constDSU.getWritableDSU = function(){
+                    return writableDSU;
+                }
+                return callback(undefined, constDSU);
+            });
+        }
+
+
+        loadConstDSU();
+
     };
 }
 
 module.exports = WalletFactory;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
-
+const SSITypes = require("../KeySSIs/SSITypes");
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -6378,14 +7190,15 @@ function Registry(options) {
             brickMapStrategyFactory
         });
 
-        this.registerDSUType("seed", barFactory);
+        this.registerDSUType(SSITypes.SEED_SSI, barFactory);
+        this.registerDSUType(SSITypes.SREAD_SSI, barFactory);
         const WalletFactory = require("./WalletFactory");
         const walletFactory = new WalletFactory({barFactory});
-        this.registerDSUType("wallet", walletFactory);
+        this.registerDSUType(SSITypes.WALLET_SSI, walletFactory);
         const ConstDSUFactory = require("./ConstDSUFactory");
         const constDSUFactory = new ConstDSUFactory({barFactory});
-        this.registerDSUType("const", constDSUFactory);
-        this.registerDSUType("array", constDSUFactory);
+        this.registerDSUType(SSITypes.CONST_SSI, constDSUFactory);
+        this.registerDSUType(SSITypes.ARRAY_SSI, constDSUFactory);
     }
 
     ////////////////////////////////////////////////////////////
@@ -6397,14 +7210,17 @@ function Registry(options) {
      * @return {boolean}
      */
     this.isValidKeySSI = (keySSI) => {
-        return typeof factories[keySSI.getName()] !== 'undefined';
+        try{
+            return typeof factories[keySSI.getTypeName()] !== 'undefined';
+        } catch(err){
+            return false;
+        }
     };
 
 
     /**
      * @param {object} keySSI
      * @param {object} dsuConfiguration
-     * @param {string} dsuConfiguration.favouriteEndpoint
      * @param {string} dsuConfiguration.brickMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -6418,7 +7234,7 @@ function Registry(options) {
      * @param {callback} callback
      */
     this.create = (keySSI, dsuConfiguration, callback) => {
-        let type = keySSI.getName();
+        let type = keySSI.getTypeName();
         if (keySSI.options && keySSI.options.dsuFactoryType) {
             type = keySSI.options.dsuFactoryType;
         }
@@ -6443,7 +7259,7 @@ function Registry(options) {
      * @param {callback} callback
      */
     this.load = (keySSI, dsuConfiguration, callback) => {
-        let type = keySSI.getName();
+        let type = keySSI.getTypeName();
         if (keySSI.options && keySSI.options.dsuFactoryType) {
             type = keySSI.options.dsuFactoryType;
         }
@@ -6467,7 +7283,8 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 }
 
 module.exports = Registry;
-},{"./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+
+},{"../KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
@@ -6482,7 +7299,7 @@ module.exports = function(archive){
 			}
 
 			try{
-				//before eval we need to convert from Buffer/ArrayBuffer to String
+				//before eval we need to convert from $$.Buffer/ArrayBuffer to String
 				const or = require("overwrite-require");
 				switch($$.environmentType){
 					case or.constants.BROWSER_ENVIRONMENT_TYPE:
@@ -6503,11 +7320,10 @@ module.exports = function(archive){
 	}
 	return archive;
 }
+
 },{"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
-const constants = require('./constants');
 const defaultBootStrapingService = require("./BootstrapingService");
 /**
- * @param {string} options.dlDomain
  * @param {BoostrapingService} options.bootstrapingService
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  * @param {DSUFactory} options.dsuFactory
@@ -6516,7 +7332,6 @@ function KeySSIResolver(options) {
     options = options || {};
 
     const bootstrapingService = options.bootstrapingService || defaultBootStrapingService;
-    const dlDomain = options.dlDomain || constants.DEFAULT_DOMAIN;
 
     if (!bootstrapingService) {
         throw new Error('BootstrapingService is required');
@@ -6532,9 +7347,8 @@ function KeySSIResolver(options) {
     ////////////////////////////////////////////////////////////
 
     /**
-     * @param {string} dsuRepresentation
+     * @param {SeedSSI} dsuRepresentation
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
@@ -6543,7 +7357,7 @@ function KeySSIResolver(options) {
      *                                                              The default strategy is to reload the BrickMap and then apply the new changes
      * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules 
+     * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
      * @param {callback} callback
      */
@@ -6558,7 +7372,6 @@ function KeySSIResolver(options) {
 
     /**
      * @param {string} keySSI
-     * @param {string} dsuRepresentation
      * @param {object} options
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
@@ -6568,7 +7381,7 @@ function KeySSIResolver(options) {
      *                                                              The default strategy is to reload the BrickMap and then apply the new changes
      * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules 
+     * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
      * @param {callback} callback
      */
@@ -6577,11 +7390,15 @@ function KeySSIResolver(options) {
             callback = options;
             options = {};
         }
-
         if (!dsuFactory.isValidKeySSI(keySSI)) {
-            return callback(new Error(`Invalid KeySSI: ${keySSI.getName()}`));
+            let helpString;
+            if(typeof keySSI === "string"){
+                helpString = keySSI;
+            } else {
+                helpString = keySSI.getIdentifier(true);
+            }
+            return callback(new Error(`Invalid KeySSI: ${helpString}`));
         }
-
         dsuFactory.load(keySSI, options, callback);
     };
 
@@ -6609,36 +7426,36 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
 function ArraySSI(identifier) {
     const SSITypes = require("../SSITypes");
     const KeySSIMixin = require("../KeySSIMixin");
     const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.getName = () => {
-        return SSITypes.ARRAY_SSI;
+     self.initialize = (dlDomain, arr, vn, hint) => {
+        if (typeof vn === "undefined") {
+            vn = 'v0';
+        }
+        const key = cryptoRegistry.getKeyDerivationFunction(self)(arr.join(''), 1000);
+        self.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getEncodingFunction(self)(key), "", vn, hint);
     };
 
-    this.initialize = (dlDomain, arr,   vn, hint) => {
-        this.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getKeyDerivationFunction(this)(arr.join(''), 1000), "", vn, hint);
-    };
-
-    this.derive = () => {
+    self.derive = () => {
         const ConstSSI = require("./ConstSSI");
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), getEncryptionKey(), this.getControl(), this.getVn(), this.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControl(), self.getVn(), self.getHint());
         return constSSI;
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
-    this.getEncryptionKey = () => {
-        return this.derive().getEncryptionKey();
+    self.getEncryptionKey = () => {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -6655,16 +7472,16 @@ const SSITypes = require("../SSITypes");
 
 function CZaSSI(identifier) {
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hpk, vn, hint) => {
-        this.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
+    self.initialize = (dlDomain, hpk, vn, hint) => {
+        self.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -6684,19 +7501,23 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function ConstSSI(identifier){
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
-        this.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
+    self.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
+        self.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, vn, hint);
     };
 
-    this.derive = () => {
+    self.getEncryptionKey = () => {
+        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+    };
+
+    self.derive = () => {
         const cZaSSI = CZaSSI.createCZaSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
-        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        const subtypeKey = cryptoRegistry.getHashFunction(self)(self.getEncryptionKey());
+        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControl(), self.getVn(), self.getHint());
         return cZaSSI;
     };
 }
@@ -6716,24 +7537,25 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function PasswordSSI(identifier){
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, context, password, kdfOptions, vn, hint) => {
-        const subtypeSpecificString = cryptoRegistry.getKeyDerivationFunction(this)(context + password, kdfOptions);
-        this.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
+    self.initialize = (dlDomain, context, password, kdfOptions, vn, hint) => {
+        const subtypeSpecificString = cryptoRegistry.getKeyDerivationFunction(self)(context + password, kdfOptions);
+        self.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), this.getSubtypeSpecificString(), this.getControl(), this.getVn(), this.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSubtypeSpecificString(), self.getControl(), self.getVn(), self.getHint());
         return constSSI;
     };
 
-    this.getEncryptionKey = () => {
-        return this.derive().getEncryptionKey();
+    self.getEncryptionKey = () => {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -6745,13 +7567,12 @@ module.exports = {
     createPasswordSSI
 };
 },{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const crypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
 const algorithms = {};
 const defaultAlgorithms = {
     hash: (data) => {
-        return crypto.hash('sha256', data, 'hex');
+        return defaultAlgorithms.encoding(crypto.hash('sha256', data));
     },
     keyDerivation: (password, iterations) => {
         return crypto.deriveKey('aes-256-gcm', password, iterations);
@@ -6767,10 +7588,10 @@ const defaultAlgorithms = {
     decryption: (encryptedData, decryptionKey, authTagLength, options) => {
         const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
         const utils = require("swarmutils");
-        if (!Buffer.isBuffer(decryptionKey)) {
+        if (!$$.Buffer.isBuffer(decryptionKey) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
             decryptionKey = utils.convertToBuffer(decryptionKey);
         }
-        if (!Buffer.isBuffer(encryptedData)) {
+        if (!$$.Buffer.isBuffer(encryptedData) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
             encryptedData = utils.convertToBuffer(encryptedData);
         }
         return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
@@ -6783,48 +7604,39 @@ const defaultAlgorithms = {
     },
     keyPairGenerator: () => {
         return crypto.createKeyPairGenerator();
-    },
-    sign: (data, privateKey) => {
-        const keyGenerator = crypto.createKeyPairGenerator();
-        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        return crypto.sign('sha256', data, keyGenerator.convertKeys(privateKey, rawPublicKey).privateKey);
-    },
-    verify: (data, privateKey, signature) => {
-        const keyGenerator = crypto.createKeyPairGenerator();
-        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        const publicKey = keyGenerator.convertKeys(privateKey, rawPublicKey).publicKey;
-        return crypto.verify('sha256', data, publicKey, signature);
     }
+
 };
 
 function CryptoAlgorithmsRegistry() {
 }
 
+
 const registerCryptoFunction = (keySSIType, vn, algorithmType, cryptoFunction) => {
     if (typeof algorithms[keySSIType] !== "undefined" && typeof algorithms[vn] !== "undefined" && typeof algorithms[vn][algorithmType] !== "undefined") {
         throw Error(`A ${algorithmType} is already registered for version ${vn}`);
     }
+
     if (typeof algorithms[keySSIType] === "undefined") {
         algorithms[keySSIType] = {};
     }
 
     if (typeof algorithms[keySSIType][vn] === "undefined") {
-        algorithms[keySSIType][vn] = {};
+        algorithms[keySSIType][vn] = defaultAlgorithms;
     }
-
     algorithms[keySSIType][vn][algorithmType] = cryptoFunction;
 };
 
 const getCryptoFunction = (keySSI, algorithmType) => {
     let cryptoFunction;
     try {
-        cryptoFunction = algorithms[keySSI.getName()][keySSI.getVn()][algorithmType];
+        cryptoFunction = algorithms[keySSI.getTypeName()][keySSI.getVn()][algorithmType];
     } catch (e) {
         cryptoFunction = defaultAlgorithms[algorithmType];
     }
 
     if (typeof cryptoFunction === "undefined") {
-        throw Error(`Algorithm type <${algorithmType}> not recognized`);
+        throw Error(`Algorithm type <${algorithmType}> not recognized for <${keySSI.getIdentifier(true)}>`);
     }
     return cryptoFunction;
 };
@@ -6898,6 +7710,7 @@ CryptoAlgorithmsRegistry.prototype.registerSignFunction = (keySSIType, vn, signF
     registerCryptoFunction(keySSIType, vn, 'sign', signFunction);
 };
 
+
 CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
     return getCryptoFunction(keySSI, 'sign');
 };
@@ -6910,10 +7723,56 @@ CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
     return getCryptoFunction(keySSI, 'verify');
 };
 
-module.exports = new CryptoAlgorithmsRegistry();
-}).call(this)}).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
+CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction = (keySSIType, vn, deriveFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'derivePublicKey', deriveFunction);
+};
 
-},{"../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+CryptoAlgorithmsRegistry.prototype.getDerivePublicKeyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'derivePublicKey');
+};
+
+module.exports = new CryptoAlgorithmsRegistry();
+
+
+
+/* Initialisation */
+
+
+let defaultKeySSISign = (data, privateKey) => {
+    const keyGenerator = crypto.createKeyPairGenerator();
+    const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+    return crypto.sign('sha256', data, keyGenerator.getPemKeys(privateKey, rawPublicKey).privateKey);
+}
+
+let defaultKeySSIVerify = (data, publicKey, signature) => {
+    return crypto.verify('sha256', data, publicKey, signature);
+}
+
+let defaultKeySSIDerivePublicKey =  (privateKey, format) => {
+    if (typeof format === "undefined") {
+        format = "pem";
+    }
+    const keyGenerator = crypto.createKeyPairGenerator();
+    let publicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+    switch(format){
+        case "raw":
+            return publicKey;
+        case "pem":
+            return keyGenerator.getPemKeys(privateKey, publicKey).publicKey;
+        default:
+            throw Error("Invalid format name");
+    }
+}
+
+
+CryptoAlgorithmsRegistry.prototype.registerSignFunction(SSITypes.SEED_SSI, "v0", defaultKeySSISign);
+CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIVerify);
+CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIDerivePublicKey);
+
+CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SREAD_SSI, "v0", defaultKeySSIVerify);
+
+
+},{"./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
@@ -6934,6 +7793,7 @@ const createArraySSI = require("./ConstSSIs/ArraySSI").createArraySSI;
 const createConstSSI = require("./ConstSSIs/ConstSSI").createConstSSI;
 const createCZaSSI = require("./ConstSSIs/CZaSSI").createCZaSSI;
 const createHashLinkSSI = require("./OtherKeySSIs/HashLinkSSI").createHashLinkSSI;
+const createSymmetricalEncryptionSSI = require("./OtherKeySSIs/SymmetricalEncryptionSSI").createSymmetricalEncryptionSSI;
 
 const SSITypes = require("./SSITypes");
 
@@ -6965,7 +7825,7 @@ KeySSIFactory.prototype.create = (identifier, options) => {
     KeySSIMixin(keySSI);
     keySSI.autoLoad(identifier);
 
-    const typeName = keySSI.getName();
+    const typeName = keySSI.getTypeName();
 
     keySSI = registry[typeName].functionFactory(identifier);
     keySSI.options = options;
@@ -6977,7 +7837,7 @@ KeySSIFactory.prototype.createType = (typeName)=>{
 }
 
 KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
-    if (keySSI.getName() === otherType) {
+    if (keySSI.getTypeName() === otherType) {
         return keySSI;
     }
     let currentEntry = registry[otherType];
@@ -6986,7 +7846,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     }
 
     while (typeof currentEntry.derivedType !== "undefined") {
-        if (currentEntry.derivedType === keySSI.getName()) {
+        if (currentEntry.derivedType === keySSI.getTypeName()) {
             return $$.securityContext.getRelatedSSI(keySSI, otherType, callback);
         }
         currentEntry = registry[currentEntry.derivedType];
@@ -7004,7 +7864,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
 KeySSIFactory.prototype.getAnchorType = (keySSI) => {
     let localKeySSI = keySSI;
-    while (typeof registry[localKeySSI.getName()].derivedType !== "undefined") {
+    while (typeof registry[localKeySSI.getTypeName()].derivedType !== "undefined") {
         localKeySSI = localKeySSI.derive();
     }
     return localKeySSI;
@@ -7012,7 +7872,7 @@ KeySSIFactory.prototype.getAnchorType = (keySSI) => {
 
 const getDerivedType = (keySSI, derivedTypeName) => {
     let localKeySSI = keySSI;
-    let currentEntry = registry[localKeySSI.getName()];
+    let currentEntry = registry[localKeySSI.getTypeName()];
     while (typeof currentEntry.derivedType !== "undefined") {
         if (currentEntry.derivedType === derivedTypeName) {
             return localKeySSI.derive();
@@ -7038,9 +7898,10 @@ KeySSIFactory.prototype.registerFactory(SSITypes.ARRAY_SSI, 'v0', SSITypes.CONST
 KeySSIFactory.prototype.registerFactory(SSITypes.CONST_SSI, 'v0', SSITypes.CONSTANT_ZERO_ACCESS_SSI, createConstSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.CONSTANT_ZERO_ACCESS_SSI, 'v0', undefined, createCZaSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.HASH_LINK_SSI, 'v0', undefined, createHashLinkSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, 'v0', undefined, createSymmetricalEncryptionSSI);
 
 module.exports = new KeySSIFactory();
-},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("./CryptoAlgorithmsRegistry");
 const pskCrypto = require("pskcrypto");
 
@@ -7084,10 +7945,13 @@ function keySSIMixin(target){
         if (segments.length > 0) {
             _hint = segments.join(":");
         }
-        _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
+        // _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
     }
 
     target.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
+        if ($$.Buffer.isBuffer(subtypeSpecificString)) {
+            throw Error("Invalid subtypeSpecificString");
+        }
         _subtype = subtype;
         _dlDomain = dlDomain;
         _subtypeSpecificString = subtypeSpecificString;
@@ -7111,15 +7975,16 @@ function keySSIMixin(target){
         return keySSIFactory.getAnchorType(target).getIdentifier();
     }
 
-    target.getEncryptionKey = function () {
-        return _subtypeSpecificString;
-    }
-
     target.getSpecificString = function () {
         return _subtypeSpecificString;
     }
 
     target.getName = function () {
+        console.trace("Obsolete function. Replace with getTypeName");
+        return _subtype;
+    }
+
+    target.getTypeName = function () {
         return _subtype;
     }
 
@@ -7145,8 +8010,8 @@ function keySSIMixin(target){
     }
 
     target.getIdentifier = function (plain) {
-        const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
-        let id = `${_prefix}:${target.getName()}:${_dlDomain}:${key}:${_control}:${_vn}`;
+        // const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
+        let id = `${_prefix}:${target.getTypeName()}:${_dlDomain}:${_subtypeSpecificString}:${_control}:${_vn}`;
 
         if (typeof _hint !== "undefined") {
             id += ":" + _hint;
@@ -7166,6 +8031,10 @@ function keySSIMixin(target){
         keySSIMixin(clone);
         return clone;
     }
+
+    target.cast = function(newType) {
+        target.load(newType, _dlDomain, _subtypeSpecificString, _control, _vn, _hint);
+    }
 }
 
 module.exports = keySSIMixin;
@@ -7175,20 +8044,25 @@ const SSITypes = require("../SSITypes");
 
 function HashLinkSSI(identifier) {
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hash, vn) => {
-        this.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
+    self.initialize = (dlDomain, hash, vn) => {
+        self.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
     };
 
-    this.getHash = () => {
-        return this.getEncryptionKey();
+    self.getHash = () => {
+        const specificString = self.getSpecificString();
+        if (typeof specificString !== "string") {
+            console.trace("Specific string is not string", specificString.toString());
+        }
+        return specificString;
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -7200,70 +8074,66 @@ function createHashLinkSSI(identifier) {
 module.exports = {
     createHashLinkSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function SymmetricalEncryptionSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = () => {
+        return SSITypes.SYMMETRICAL_ENCRYPTION_SSI;
+    };
+
+    let load = self.load;
+    self.load = function (subtype, dlDomain, encryptionKey, control, vn, hint){
+        if (typeof encryptionKey === "undefined") {
+            encryptionKey = cryptoRegistry.getEncryptionKeyGenerationFunction(self)();
+        }
+
+        if ($$.Buffer.isBuffer(encryptionKey)) {
+            encryptionKey = cryptoRegistry.getEncodingFunction(self)(encryptionKey);
+        }
+
+        load(subtype, dlDomain, encryptionKey, '', vn, hint);
+    }
+
+    self.getEncryptionKey = function() {
+        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+    };
+
+    self.derive = function (){
+        throw Error("Not implemented");
+    }
+}
+
+function createSymmetricalEncryptionSSI(identifier) {
+    return new SymmetricalEncryptionSSI(identifier);
+}
+
+module.exports = {
+    createSymmetricalEncryptionSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
+const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
 
 function WalletSSI(identifier) {
-    const seedSSI = SeedSSI.createSeedSSI(identifier);
+    const self = this;
+    const arraySSI = ArraySSI.createArraySSI(identifier);
 
-    seedSSI.getName = () => {
+    arraySSI.getTypeName = () => {
         return SSITypes.WALLET_SSI;
     };
 
-    Object.assign(this, seedSSI);
+    Object.assign(self, arraySSI);
 
-    this.initialize = (dlDomain, privateKey, publicKey, vn, hint, callback) => {
-
-        let oldLoad = seedSSI.load;
-        seedSSI.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
-            oldLoad(SSITypes.WALLET_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
-        }
-
-        seedSSI.initialize(dlDomain, privateKey, publicKey, vn, hint, callback);
-    }
-
-    this.store = (options, callback) => {
-        let ssiCage = require("./../../ssiCage");
-        if(typeof options !== "undefined" && typeof options.ssiCage !== "undefined"){
-            ssiCage = options.ssiCage;
-        }
-
-        ssiCage.putSSI(this.getIdentifier(), options.password, options.overwrite, (err) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(undefined, this);
-        });
-    }
-
-    //options.ssiCage - custom implementation of a SSI Cage
-    this.getSeedSSI = (secret, options, callback) => {
-        if(typeof options === "function"){
-            callback = options;
-            options = {};
-        }
-
-        let ssiCage = require("../../ssiCage");
-        if(typeof options.ssiCage !== "undefined"){
-            ssiCage = options.ssiCage;
-        }
-        ssiCage.getSSI(secret, (err, ssiSerialization)=>{
-            if(err){
-                return callback(err);
-            }
-
-            //SeedSSI or WalletSSI ???????????
-            let keySSI = SeedSSI.createSeedSSI(ssiSerialization);
-            keySSI.options = options;
-            callback(undefined, keySSI);
-        });
-    }
-
-    this.checkForSSICage = (callback) => {
-        let ssiCage = require("../../ssiCage");
-        ssiCage.check(callback);
-    }
 }
 
 function createWalletSSI(identifier) {
@@ -7274,7 +8144,7 @@ module.exports = {
     createWalletSSI
 }
 
-},{"../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -7290,7 +8160,8 @@ module.exports = {
     CONSTANT_ZERO_ACCESS_SSI: "cza",
     ARRAY_SSI: "array",
     HASH_LINK_SSI: "hl",
-    WALLET_SSI: "wallet"
+    WALLET_SSI: "wallet",
+    SYMMETRICAL_ENCRYPTION_SSI: "se"
 };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
@@ -7425,7 +8296,6 @@ module.exports = {
     createZaSSI
 };
 },{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -7433,27 +8303,26 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function SReadSSI(identifier) {
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, vn, hint) => {
-        this.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
+    self.initialize = (dlDomain, vn, hint) => {
+        self.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         const sZaSSI = SZaSSI.createSZaSSI();
         const subtypeKey = '';
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(this.getControl());
-        sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        const subtypeControl = self.getControl();
+        sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, subtypeControl, self.getVn(), self.getHint());
         return sZaSSI;
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
-
-    this.getEncryptionKey = () => {
-        return Buffer.from(getEncryptionKey(), 'hex');
+    self.getEncryptionKey = () => {
+        return cryptoRegistry.getDecodingFunction(self)(self.getControl());
     };
 }
 
@@ -7464,24 +8333,23 @@ function createSReadSSI(identifier) {
 module.exports = {
     createSReadSSI
 };
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
 function SZaSSI(identifier) {
-    KeySSIMixin(this);
+    const self = this;
+    KeySSIMixin(self);
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hpk, vn, hint) => {
-        this.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
+    self.initialize = (dlDomain, hpk, vn, hint) => {
+        self.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -7501,54 +8369,76 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function SeedSSI(identifier) {
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.getName = () => {
-        return SSITypes.SEED_SSI;
-    };
+    self.initialize = function (dlDomain, privateKey, control, vn, hint, callback) {
+        if (typeof privateKey === "function") {
+            callback = privateKey;
+            privateKey = undefined;
+        }
+        if (typeof control === "function") {
+            callback = control;
+            control = undefined;
+        }
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = 'v0';
+        }
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
 
-    this.initialize = function (dlDomain, privateKey, publicKey, vn, hint, callback){
-        let subtypeSpecificString = privateKey;
-
-        if (typeof subtypeSpecificString === "undefined") {
-            return cryptoRegistry.getKeyPairGenerator(this)().generateKeyPair((err, publicKey, privateKey) => {
+        if (typeof privateKey === "undefined") {
+            cryptoRegistry.getKeyPairGenerator(self)().generateKeyPair((err, publicKey, privateKey) => {
                 if (err) {
                     return callback(err);
                 }
-                subtypeSpecificString = privateKey;
-                this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
-                callback(undefined, this);
+                privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+                self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
+                callback(undefined, self);
             });
+        } else {
+            self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
+            callback(undefined, self);
         }
-        this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
-        callback(undefined, this);
+        self.initialize = function (){
+            throw Error("KeySSI already initialized");
+        }
     };
 
-    this.derive = function() {
+    self.derive = function () {
         const sReadSSI = SReadSSI.createSReadSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getSpecificString());
-        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.getSpecificString());
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
-        sReadSSI.load(SSITypes.SREAD_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        const privateKey = self.getPrivateKey();
+        const sreadSpecificString = cryptoRegistry.getHashFunction(self)(privateKey);
+        const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
+        const subtypeControl = cryptoRegistry.getHashFunction(self)(publicKey);
+        sReadSSI.load(SSITypes.SREAD_SSI, self.getDLDomain(), sreadSpecificString, subtypeControl, self.getVn(), self.getHint());
         return sReadSSI;
-
-        /*
-        const sReadSSI = SReadSSI.createSReadSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.subtypeSpecificString);
-        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.subtypeSpecificString);
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
-        sReadSSI.load(SSITypes.SREAD_SSI, this.dlDomain, subtypeKey, subtypeControl, this.vn, this.hint);
-        return sReadSSI;
-        * */
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
+    self.getPrivateKey = function (format) {
+        let validSpecificString = self.getSpecificString();
+        if(validSpecificString === undefined){
+            throw Error("Operation requested on an invalid SeedSSI. Initialise first")
+        }
+        let privateKey = cryptoRegistry.getDecodingFunction(self)(validSpecificString);
+        if (format === "pem") {
+            const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
+            privateKey = pemKeys.privateKey;
+        }
+        return privateKey;
+    }
 
-    this.getEncryptionKey = function() {
-        return this.derive().getEncryptionKey();
+    self.getPublicKey = function (format) {
+        return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
+    }
+
+    self.getEncryptionKey = function () {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -7559,221 +8449,81 @@ function createSeedSSI(identifier) {
 module.exports = {
     createSeedSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js":[function(require,module,exports){
-'use strict';
-
-module.exports = {
-    DEFAULT_DOMAIN: 'localDomain',
-    DID_VERSION: '1',
-    DEFAULT_BAR_MAP_STRATEGY: 'Diff',
-}
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const pskcrypto = "pskcrypto";
-const crypto = require(pskcrypto);
-
-const storageLocation = "SSICage";
-const algorithm = "aes-256-cfb";
-
-/**
- * local storage can't handle properly binary data
- *  https://stackoverflow.com/questions/52419694/how-to-store-uint8array-in-the-browser-with-localstorage-using-javascript
- * @param secret
- * @param callback
- * @returns {*}
- */
-function getSSI(secret, callback) {
-    let encryptedSSI;
-    let keySSI;
-    try {
-        encryptedSSI = localStorage.getItem(storageLocation);
-        if (encryptedSSI === null || typeof encryptedSSI !== "string" || encryptedSSI.length === 0) {
-            return callback(new Error("SSI Cage is empty or data was altered"));
-        }
-
-        const retrievedEncryptedArr = JSON.parse(encryptedSSI);
-        encryptedSSI = new Uint8Array(retrievedEncryptedArr);
-        const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, secret);
-        keySSI = pskEncryption.decrypt(encryptedSSI, encKey).toString();
-    } catch (e) {
-        return callback(e);
-    }
-    callback(undefined, keySSI);
-}
-
-function putSSI(keySSI, secret, overwrite = false, callback) {
-    let encryptedSSI;
-
-    if (typeof overwrite === "function") {
-        callback(Error("TODO: api signature updated!"));
-    }
-    try {
-        if (typeof keySSI === "string") {
-            keySSI = Buffer.from(keySSI);
-        }
-        if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
-            keySSI = Buffer.from(keySSI);
-        }
-
-        const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, secret);
-        encryptedSSI = pskEncryption.encrypt(keySSI, encKey);
-        const encryptedArray =  Array.from(encryptedSSI);
-        const encryptedSeed = JSON.stringify(encryptedArray);
-
-        localStorage.setItem(storageLocation, encryptedSeed);
-    } catch (e) {
-        return callback(e);
-    }
-    callback(undefined);
-}
-
-function check(callback) {
-    let item;
-    try {
-        item = localStorage.getItem(storageLocation);
-    } catch (e) {
-        return callback(e);
-    }
-    if (item) {
-        return callback();
-    }
-    callback(new Error("SSI Cage does not exists"));
-}
-
-module.exports = {
-    check,
-    putSSI,
-    getSSI
-};
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const pth = "path";
-const path = require(pth);
-
-const fileSystem = "fs";
-const fs = require(fileSystem);
-
-const pskcrypto = "pskcrypto";
-const crypto = require(pskcrypto);
-const algorithm = "aes-256-cfb";
-
-const os = "os";
-const storageLocation = process.env.SEED_CAGE_LOCATION || require(os).homedir();
-const storageFileName = ".SSICage";
-const ssiCagePath = path.join(storageLocation, storageFileName);
-
-function getSSI(secret, callback) {
-    fs.readFile(ssiCagePath, (err, encryptedSeed) => {
-        if (err) {
-            return callback(err);
-        }
-
-        let keySSI;
-        try {
-            const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, secret);
-            keySSI = pskEncryption.decrypt(encryptedSeed, encKey).toString();
-        } catch (e) {
-            return callback(e);
-        }
-
-        callback(undefined, keySSI);
-    });
-}
-
-function putSSI(keySSI, secret, overwrite = false, callback) {
-    fs.mkdir(storageLocation, {recursive: true}, (err) => {
-        if (err) {
-            return callback(err);
-        }
-
-        fs.stat(ssiCagePath, (err, stats) => {
-            if (!err && stats.size > 0) {
-                if (overwrite) {
-                    __encryptSSI();
-                } else {
-                    return callback(Error("Attempted to overwrite existing SEED."));
-                }
-            } else {
-                __encryptSSI();
-            }
-
-            function __encryptSSI() {
-                let encSeed;
-                try {
-                    if (typeof keySSI === "string") {
-                        keySSI = Buffer.from(keySSI);
-                    }
-
-                    if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
-                        keySSI = Buffer.from(keySSI);
-                    }
-
-                    const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, secret);
-                    encSeed = pskEncryption.encrypt(keySSI, encKey);
-                } catch (e) {
-                    return callback(e);
-                }
-
-                fs.writeFile(ssiCagePath, encSeed, callback);
-            }
-        });
-    });
-}
-
-function check(callback) {
-    fs.access(ssiCagePath, callback);
-}
-
-module.exports = {
-    check,
-    putSSI,
-    getSSI
-};
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js":[function(require,module,exports){
-const or = require("overwrite-require");
-switch ($$.environmentType) {
-    case or.constants.THREAD_ENVIRONMENT_TYPE:
-    case or.constants.NODEJS_ENVIRONMENT_TYPE:
-        module.exports = require("./NodeSSICage");
-        break;
-    case or.constants.BROWSER_ENVIRONMENT_TYPE:
-        module.exports = require("./BrowserSSICage");
-        break;
-    case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
-    case or.constants.ISOLATE_ENVIRONMENT_TYPE:
-    default:
-        throw new Error("No implementation of SSI Cage for this env type.");
-}
-},{"./BrowserSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js","./NodeSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
-const bdns = openDSU.loadApi("bdns");
-const keyssi = openDSU.loadApi("keyssi");
-const { fetch, doPut } = openDSU.loadApi("http");
+const keySSISpace = openDSU.loadApi("keyssi");
+const cachedStores = require("../cache/cachedStores");
+const storeName = "anchors";
 
+function addVersion(anchorId, newHashLinkId, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(anchorId, (err, hashLinkIds) => {
+        if (err) {
+            return callback(err);
+        }
+
+        if (typeof hashLinkIds === "undefined") {
+            hashLinkIds = [];
+        }
+
+        hashLinkIds.push(newHashLinkId);
+        cache.put(anchorId, hashLinkIds, callback);
+    });
+}
+
+function versions(anchorId, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(anchorId, (err, hashLinkIds) => {
+        if (err) {
+            return callback(err);
+        }
+
+        if (typeof hashLinkIds === "undefined") {
+            hashLinkIds = [];
+        }
+        const hashLinkSSIs = hashLinkIds.map(hashLinkId => keySSISpace.parse(hashLinkId));
+        return callback(undefined, hashLinkSSIs);
+    });
+}
+
+module.exports = {
+    addVersion,
+    versions
+}
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+const bdns = require("../bdns");
+const keyssi = require("../keyssi");
+const crypto = require("../crypto");
+const {fetch, doPut} = require("../http");
+const constants = require("../moduleConstants");
+const promiseRunner = require("../utils/promise-runner");
+const cachedAnchoring = require("./cachedAnchoring");
+const config = require("../config");
+
+const isValidVaultCache = () => {
+    return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
+}
 /**
  * Get versions
- * @param {keySSI} keySSI 
- * @param {string} authToken 
- * @param {function} callback 
+ * @param {keySSI} powerfulKeySSI
+ * @param {string} authToken
+ * @param {function} callback
  */
-const versions = (keySSI, authToken, callback) => {
+const versions = (powerfulKeySSI, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
+    
+    const dlDomain = powerfulKeySSI.getDLDomain();
+    const anchorId = powerfulKeySSI.getAnchorId();
 
-    bdns.getAnchoringServices(keySSI.getDLDomain(), (err, anchoringServicesArray) => {
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+         return cachedAnchoring.versions(anchorId, callback);
+     }
+
+
+    bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
             return callback(err);
         }
@@ -7782,33 +8532,35 @@ const versions = (keySSI, authToken, callback) => {
             return callback('No anchoring service provided');
         }
 
-        const queries = anchoringServicesArray.map((service) => fetch(`${service}/anchor/versions/${keySSI.getAnchorId()}`));
         //TODO: security issue (which response we trust)
-        Promise.allSettled(queries).then((responses) => {
-            const response = responses.find((response) => response.status === 'fulfilled');
+        const fetchAnchor = (service) => {
+            return fetch(`${service}/anchor/${dlDomain}/versions/${anchorId}`)
+                .then((response) => {
+                    return response.json().then((hlStrings) => {
+                        const hashLinks = hlStrings.map((hlString) => {
+                            return keyssi.parse(hlString);
+                        });
 
-            response.value.json().then((hlStrings) => {
-
-                const hashLinks = hlStrings.map(hlString => {
-                    return keyssi.parse(hlString)
+                        // cache.put(anchorId, hlStrings);
+                        return hashLinks;
+                    });
                 });
+        };
 
-                return callback(null, hashLinks)
-            })
-        }).catch((err) => callback(err));
+        promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback);
     });
 };
 
 /**
  * Add new version
- * @param {keySSI} keySSI 
- * @param {hashLinkSSI} newHashLinkSSI 
- * @param {hashLinkSSI} lastHashLinkSSI 
- * @param {string} zkpValue 
- * @param {string} digitalProof 
- * @param {function} callback 
+ * @param {keySSI} powerfulKeySSI
+ * @param {hashLinkSSI} newHashLinkSSI
+ * @param {hashLinkSSI} lastHashLinkSSI
+ * @param {string} zkpValue
+ * @param {string} digitalProof
+ * @param {function} callback
  */
-const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalProof, callback) => {
+const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, callback) => {
     if (typeof lastHashLinkSSI === "function") {
         callback = lastHashLinkSSI;
         lastHashLinkSSI = undefined;
@@ -7816,10 +8568,17 @@ const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalPr
 
     if (typeof zkpValue === "function") {
         callback = zkpValue;
-        zkpValue = undefined;
+        zkpValue = '';
     }
 
-    bdns.getAnchoringServices(keySSI.getDLDomain(), (err, anchoringServicesArray) => {
+    const dlDomain = powerfulKeySSI.getDLDomain();
+    const anchorId = powerfulKeySSI.getAnchorId();
+
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedAnchoring.addVersion(anchorId, newHashLinkSSI.getIdentifier(), callback);
+    }
+
+    bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
             return callback(err);
         }
@@ -7828,43 +8587,77 @@ const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalPr
             return callback('No anchoring service provided');
         }
 
-        const body = {
-            hash: {
-                last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
-                new: newHashLinkSSI.getIdentifier()
-            },
-            zkpValue,
-            digitalProof
+        const hash = {
+            last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
+            new: newHashLinkSSI.getIdentifier()
         };
-
-        const queries = anchoringServicesArray.map((service) => {
-            return new Promise((resolve, reject) => {
-                doPut(`${service}/anchor/add/${keySSI.getAnchorId()}`, JSON.stringify(body), (err, data) => {
-                    if (err) {
-                        return reject({
-                            statusCode: err.statusCode,
-                            message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
-                        });
-                    }
-
-                    return resolve(data);
-                });
-            })
-        });
-
-        Promise.allSettled(queries).then((responses) => {
-            const response = responses.find((response) => response.status === 'fulfilled');
-
-            if (!response) {
-                const rejected = responses.find((response) => response.status === 'rejected');
-                return callback(rejected.reason)
+        createDigitalProof(powerfulKeySSI, hash.new, hash.last, zkpValue, (err, digitalProof) => {
+            if (err) {
+                return callback(err);
             }
+            const body = {
+                hash,
+                digitalProof,
+                zkp: zkpValue
+            };
 
-            callback(null, response.value);
+            const addAnchor = (service) => {
+                return new Promise((resolve, reject) => {
+                    const putResult = doPut(`${service}/anchor/${dlDomain}/add/${anchorId}`, JSON.stringify(body), (err, data) => {
+                        if (err) {
+                            return reject({
+                                statusCode: err.statusCode,
+                                message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
+                            });
+                        }
+
+                        require("opendsu").loadApi("resolver").invalidateDSUCache(powerfulKeySSI);
+                        return resolve(data);
+                    });
+                    if (putResult) {
+                        putResult.then(resolve).catch(reject);
+                    }
+                })
+            };
+
+            promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback);
         });
     });
-
 };
+
+function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkIdentifier, zkp, callback) {
+    let anchorId = powerfulKeySSI.getAnchorId();
+    let dataToSign = anchorId + newHashLinkIdentifier + zkp;
+    if (lastHashLinkIdentifier) {
+        dataToSign += lastHashLinkIdentifier;
+    }
+
+    let ssiType = powerfulKeySSI.getTypeName();
+    switch(ssiType){
+        case constants.KEY_SSIS.SEED_SSI:
+            crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
+                if (err) {
+                    return callback(err);
+                }
+                const digitalProof = {
+                    signature: crypto.encodeBase58(signature),
+                    publicKey: crypto.encodeBase58(powerfulKeySSI.getPublicKey("raw"))
+                };
+                return callback(undefined, digitalProof);
+            });
+            break;
+
+        case constants.KEY_SSIS.CONST_SSI:
+        case constants.KEY_SSIS.ARRAY_SSI:
+        case constants.KEY_SSIS.WALLET_SSI:
+
+            return callback(undefined, {signature:"",publicKey:""})
+            break;
+        default:
+            console.log("Unknown digital proof for " + ssiType + " Defaulting to ConstSSI")
+            return callback(undefined, {signature:"",publicKey:""})
+    }
+}
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
     // TODO: to be implemented
@@ -7874,58 +8667,153 @@ module.exports = {
     addVersion,
     versions
 }
-},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
-if (typeof bdns === "undefined") {
-    bdns = require("bdns").create();
+},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedAnchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
+const PendingCallMixin = require("../utils/PendingCallMixin");
+const getBaseURL = require("../utils/getBaseURL");
+function BDNS() {
+    PendingCallMixin(this);
+    let bdnsCache;
+    const http = require("opendsu").loadApi("http");
+    let isInitialized = false;
+    let retrieveHosts = () => {
+        const url = `${getBaseURL()}/bdns#x-blockchain-domain-request`;
+        http.fetch(url)
+            .then((response) => {
+                return response.json()
+            }).then((bdnsHosts) => {
+            bdnsHosts = JSON.stringify(bdnsHosts);
+            let baseURL =  require("../utils/getBaseURL")
+
+            bdnsHosts = bdnsHosts.replace(/\$ORIGIN/g, baseURL);
+            bdnsCache = JSON.parse(bdnsHosts);
+            isInitialized = true;
+            this.executePendingCalls();
+        }).catch((err) => console.log("Failed to retrieve BDNS hosts", err));
+    };
+
+    retrieveHosts();
+
+    this.getRawInfo = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain]);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain]);
+    };
+
+    this.getBrickStorages = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].brickStorages);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].brickStorages);
+    };
+
+    this.getAnchoringServices = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].anchoringServices);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].anchoringServices);
+    };
+
+    this.getReplicas = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].replicas);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].replicas);
+    };
+
+    this.addRawInfo = (dlDomain, rawInfo) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addAnchoringServices = (dlDomain, anchoringServices) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addBrickStorages = (dlDomain, brickStorages) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addReplicas = (dlDomain, replicas) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.setBDNSHosts = (bdnsHosts) => {
+        bdnsCache = bdnsHosts;
+    }
 }
-const getRawInfo = (dlDomain, callback) => {
-    bdns.getRawInfo(dlDomain, callback);
-};
 
-const getBrickStorages = (dlDomain, callback) => {
-    bdns.getBrickStorages(dlDomain, callback);
-};
 
-const getAnchoringServices = (dlDomain, callback) => {
-    bdns.getAnchoringServices(dlDomain, callback);
-};
+module.exports = new BDNS();
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+const openDSU = require("opendsu");
+const crypto = openDSU.loadApi("crypto");
+const keySSISpace = openDSU.loadApi("keyssi");
+const cachedStores = require("../cache/cachedStores");
+const storeName = "bricks";
 
-const getReplicas = (dlDomain, callback) => {
-    bdns.getReplicas(dlDomain, callback);
-};
+function putBrick(brick, callback) {
+    const cache = cachedStores.getCache(storeName);
+    crypto.hash(keySSISpace.buildSeedSSI("vault"), brick, (err, brickHash) => {
+        if (err) {
+            return callback(err);
+        }
 
-const addRawInfo = (dlDomain, rawInfo) => {
-    bdns.addRawInfo(dlDomain, rawInfo);
-};
+        cache.put(brickHash, brick, (err, hash) => {
+            if (err) {
+                return callback(err);
+            }
 
-const addAnchoringServices = (dlDomain, anchoringServices) => {
-    bdns.addAnchoringServices(dlDomain, anchoringServices);
-};
+            callback(undefined, hash);
+        });
+    });
+}
 
-const addBrickStorages = (dlDomain, brickStorages) => {
-    bdns.addBrickStorages(dlDomain, brickStorages);
-};
+function getBrick(brickHash, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(brickHash, (err, brickData) => {
+        if (err) {
+            return callback(err);
+        }
 
-const addReplicas = (dlDomain, replicas) => {
-    bdns.addReplicas(dlDomain, replicas);
-};
+        callback(undefined, brickData);
+    });
+}
+
+function getMultipleBricks(brickHashes, callback) {
+    brickHashes.forEach(brickHash => {
+        getBrick(brickHash, callback);
+    });
+
+}
 
 module.exports = {
-    getRawInfo,
-    getBrickStorages,
-    getAnchoringServices,
-    getReplicas,
-    addRawInfo,
-    addAnchoringServices,
-    addBrickStorages,
-    addReplicas
+    putBrick,
+    getBrick,
+    getMultipleBricks
 }
-},{"bdns":"bdns"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
-const or = require("overwrite-require");
+const constants = require("../moduleConstants");
+const cache = require("../cache/cachedStores").getCache(constants.CACHE.ENCRYPTED_BRICKS_CACHE);
+const cachedBricking = require("./cachedBricking");
+const promiseRunner = require("../utils/promise-runner");
+const config = require("../config");
+
+const isValidVaultCache = () => {
+    return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
+}
+
 /**
  * Get brick
  * @param {hashLinkSSI} hashLinkSSI
@@ -7934,28 +8822,54 @@ const or = require("overwrite-require");
  * @returns {any}
  */
 const getBrick = (hashLinkSSI, authToken, callback) => {
+    const dlDomain = hashLinkSSI.getDLDomain();
+    const brickHash = hashLinkSSI.getHash();
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
 
-    bdns.getBrickStorages(hashLinkSSI.getDLDomain(), (err, brickStorageArray) => {
-        if (err) {
-            return callback(err);
-        }
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getBrick(brickHash, callback);
+    }
 
-        const brickHash = hashLinkSSI.getHash();
+    if (typeof cache === "undefined") {
+        __getBrickFromEndpoint();
+    } else {
+        cache.get(brickHash, (err, brick) => {
+            if (err || typeof brick === "undefined") {
+                __getBrickFromEndpoint();
+            } else {
+                callback(undefined, brick);
+            }
+        });
+    }
 
-        if (!brickStorageArray.length) {
-            return callback('No storage provided');
-        }
+    function __getBrickFromEndpoint() {
+        bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
+            if (err) {
+                return callback(err);
+            }
 
-        const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricks/get-brick/${brickHash}`));
+            if (!brickStorageArray.length) {
+                return callback('No storage provided');
+            }
 
-        Promise.all(queries).then((responses) => {
-            responses[0].arrayBuffer().then((data) => callback(null, data));
-        }).catch((err) => callback(err));
-    });
+            const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricking/${dlDomain}/get-brick/${brickHash}/${dlDomain}`));
+
+            Promise.all(queries).then((responses) => {
+                responses[0].arrayBuffer().then((data) => {
+                    if (typeof cache !== "undefined") {
+                        cache.put(brickHash, data);
+                    }
+                    callback(null, data)
+                });
+            }).catch((err) => {
+                callback(err);
+            });
+        });
+    }
+
 };
 
 /**
@@ -7964,78 +8878,22 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
  * @param {string} authToken
  * @param {function} callback
  */
+
 const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
 
-    bdns.getBrickStorages(hashLinkSSIList[0].getDLDomain(), (err, brickStorageArray) => {
-        const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
-        if (!brickStorageArray.length) {
-            return callback('No storage provided');
-        }
+    const dlDomain = hashLinkSSIList[0].getDLDomain();
+    const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
 
-        let index = 0;
-        const size = 50;
-        const queries = [];
-
-        while (index < bricksHashes.length) {
-            const hashQuery = `${bricksHashes.slice(index, size + index).join('&hashes=')}`;
-            index += size;
-            queries.push(Promise.allSettled(brickStorageArray.map((storage) => {
-                return fetch(`${storage}/bricks/downloadMultipleBricks/?hashes=${hashQuery}`)
-            })));
-        }
-
-        Promise.all(queries).then((responses) => {
-            Promise.all(responses.reduce((acc, response) => {
-                const batch = response.find((item) => item.status === 'fulfilled');
-
-                acc.push(batch.value.arrayBuffer());
-                return acc;
-            }, [])).
-            then(
-                (dataArray) => {
-                    if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE ||
-                            $$.environmentType === or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE) {
-                        let len = 0;
-                        dataArray.forEach(arr => len += arr.byteLength);
-                        const newBuffer = new Buffer(len);
-                        let currentPos = 0;
-                        while (dataArray.length > 0) {
-                            const arrBuf = dataArray.shift();
-                            const partialDataView = new DataView(arrBuf);
-                            for (let i = 0; i < arrBuf.byteLength; i++) {
-                                newBuffer.writeUInt8(partialDataView.getUint8(i), currentPos);
-                                currentPos += 1;
-                            }
-                        }
-                        return parseResponse(newBuffer, callback);
-                    }
-                    return parseResponse(Buffer.concat(dataArray), callback)});
-        }).catch((err) => {
-            callback(err);
-        });
-
-        function parseResponse(response, callback) {
-            const BRICK_MAX_SIZE_IN_BYTES = 4;
-
-            if (response.length > 0) {
-                const brickSizeBuffer = response.slice(0, BRICK_MAX_SIZE_IN_BYTES);
-
-                const brickSize = brickSizeBuffer.readUInt32BE();
-                const brickData = response.slice(BRICK_MAX_SIZE_IN_BYTES, brickSize + BRICK_MAX_SIZE_IN_BYTES);
-
-                callback(null, brickData);
-
-                response = response.slice(brickSize + BRICK_MAX_SIZE_IN_BYTES);
-
-                return parseResponse(response, callback);
-            }
-        }
-    });
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getMultipleBricks(bricksHashes, callback);
+    }
+    hashLinkSSIList.forEach(hashLinkSSI => getBrick(hashLinkSSI, authToken, callback));
 };
+
 
 /**
  * Put brick
@@ -8050,56 +8908,377 @@ const putBrick = (keySSI, brick, authToken, callback) => {
         callback = authToken;
         authToken = undefined;
     }
+    const dlDomain = keySSI.getDLDomain();
 
-    bdns.getBrickStorages(keySSI.getDLDomain(), (err, brickStorageArray) => {
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.putBrick(brick, callback);
+    }
+
+    bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
         if (err) {
             return callback(err);
         }
-
-        const queries = brickStorageArray.map((storage) => {
+        const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
-                doPut(`${storage}/bricks/put-brick`, brick, (err, data) => {
+                const putResult = doPut(`${storage}/bricking/${dlDomain}/put-brick/${dlDomain}`, brick, (err, data) => {
                     if (err) {
                         return reject(err);
                     }
 
                     return resolve(data);
                 });
+                if (putResult) {
+                    putResult.then(resolve).catch(reject);
+                }
             })
-        });
+        };
 
-        Promise.allSettled(queries).then((responses) => {
-            const foundBrick = responses.find((response) => response.status === 'fulfilled');
-
-            if (!foundBrick) {
-                return callback({message: 'Brick not created'});
+        promiseRunner.runAll(brickStorageArray, setBrick, null, (err, results) => {
+            if (err || !results.length) {
+                if (!err) {
+                    err = new Error('Failed to create bricks in:' + brickStorageArray);
+                }
+                return callback(err);
             }
 
-            return callback(null, JSON.parse(foundBrick.value).message)
+            const foundBrick = results[0];
+            const brickHash = JSON.parse(foundBrick).message;
+            if (typeof cache === "undefined") {
+                return callback(undefined, brickHash)
+            }
+
+            cache
+                .put(brickHash, brick, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(err, brickHash);
+                })
+                .catch((err) => {
+                    callback(err);
+                });
         });
     });
 };
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-}).call(this)}).call(this,require("buffer").Buffer)
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js":[function(require,module,exports){
+let stores = {};
+const config = require("opendsu").loadApi("config");
+const CacheMixin = require("../utils/PendingCallMixin");
+const constants = require("../moduleConstants");
 
-},{"buffer":false,"opendsu":"opendsu","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const cryptoRegistry = require("key-ssi-resolver").CryptoAlgorithmsRegistry;
+function IndexedDBCache(storeName, lifetime) {
+    const self = this;
+    CacheMixin(self);
+
+    let db;
+    let openRequest = indexedDB.open(storeName);
+    openRequest.onsuccess = () => {
+        db = openRequest.result;
+        self.executePendingCalls();
+        self.executeSerialPendingCalls();
+    };
+
+    openRequest.onupgradeneeded = () => {
+        db = openRequest.result;
+        db.createObjectStore(storeName);
+    };
+
+    self.get = (key, callback) => {
+        if (typeof db === "undefined") {
+            self.addPendingCall(() => {
+                self.get(key, callback);
+            });
+        } else {
+            let transaction = db.transaction(storeName, "readonly");
+            const store = transaction.objectStore(storeName);
+            let req = store.get(key);
+            transaction.oncomplete = () => {
+                if (typeof lifetime !== "undefined") {
+                    const currentTime = Date.now();
+                    const timestampedData = req.result;
+                    if (typeof timestampedData === "undefined") {
+                        return callback();
+                    }
+                    if (currentTime - timestampedData.timestamp > lifetime) {
+                        self.delete(key);
+                        return callback();
+                    }
+                    callback(undefined, timestampedData.value)
+                } else {
+                    callback(undefined, req.result);
+                }
+            }
+        }
+    };
+
+    self.put = (key, value, callback) => {
+        self.addSerialPendingCall((next) => {
+            let transaction;
+            let store
+            try {
+                transaction = db.transaction(storeName, "readwrite");
+                store = transaction.objectStore(storeName);
+            }catch (e) {
+                callback(e);
+                return next();
+            }
+            let data;
+            if (typeof lifetime !== "undefined") {
+                data = {
+                    value: value,
+                    timestamp: Date.now()
+                }
+            } else {
+                data = value;
+            }
+            let req = store.put(data, key);
+            transaction.oncomplete = () => {
+                if (typeof callback === "function") {
+                    callback(undefined, key);
+                }
+                next();
+            }
+            transaction.onabort = function() {
+                console.log("Error", transaction.error);
+            };
+            req.onerror = function (event){
+                next();
+            }
+        });
+    };
+
+    self.delete = (key, callback) => {
+            self.addSerialPendingCall((next) => {
+                let transaction;
+                let store
+                try {
+                    transaction = db.transaction(storeName, "readwrite");
+                    store = transaction.objectStore(storeName);
+                }catch (e) {
+                    callback(e);
+                    next();
+                    return;
+                }
+                let req = store.delete(key);
+                transaction.oncomplete = () => {
+                    if (typeof callback === "function") {
+                        callback(undefined, key);
+                    }
+                    next();
+                }
+                transaction.onabort = function() {
+                    console.log("Error", transaction.error);
+                };
+                req.onerror = function (event){
+                    next();
+                }
+            });
+    }
+}
+
+function FSCache(folderName) {
+    const self = this;
+    CacheMixin(self);
+    const fsName = "fs";
+    const fs = require(fsName);
+    let baseFolder = config.get(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY);
+    if (typeof baseFolder === "undefined") {
+        baseFolder = process.cwd();
+    }
+    const path = require("swarmutils").path;
+    const folderPath = path.join(baseFolder, folderName);
+    let storageFolderIsCreated = false;
+    fs.mkdir(folderPath, {recursive: true}, (err) => {
+        if (err) {
+            throw err;
+        }
+
+        storageFolderIsCreated = true;
+    });
+
+    self.get = function (key, callback) {
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.get(key, callback);
+            })
+        } else {
+            fs.readFile(path.join(folderPath, key), (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let content = data;
+                try {
+                    content = JSON.parse(content.toString())
+                } catch (e) {
+                    return callback(data);
+                }
+                callback(undefined, content);
+            });
+        }
+    };
+
+    self.put = function (key, value, callback) {
+        if (Array.isArray(value)) {
+            value = JSON.stringify(value);
+        }
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.put(key, value, callback);
+            });
+        } else {
+            if (!callback) {
+                callback = () => {
+                };
+            }
+            fs.writeFile(path.join(folderPath, key), value, callback);
+        }
+    }
+}
+
+function getCache(storeName, lifetime) {
+    if (typeof stores[storeName] === "undefined") {
+        switch (config.get(constants.CACHE.VAULT_TYPE)) {
+            case constants.CACHE.INDEXED_DB:
+                stores[storeName] = new IndexedDBCache(storeName, lifetime);
+                break;
+            case constants.CACHE.FS:
+                stores[storeName] = new FSCache(storeName);
+                break;
+            case constants.CACHE.NO_CACHE:
+                break;
+            default:
+                throw Error("Invalid cache type");
+        }
+    }
+
+    return stores[storeName];
+}
+
+
+module.exports = {
+    getCache
+}
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
+(function (global){(function (){
+const config = require("./index");
+const constants = require("../moduleConstants");
+const system = require("../system");
+const getBaseURL = require("../utils/getBaseURL");
+const createErrorWrapper = require("../error").createErrorWrapper;
+
+system.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS, `${getBaseURL()}/bdns#x-blockchain-domain-request`);
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.INDEXED_DB);
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.INDEXED_DB);
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+        break;
+
+    default:
+}
+
+config.set(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY, constants.CACHE.BASE_FOLDER);
+
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        if (typeof self !== "undefined") {
+            self.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        if (typeof window !== "undefined") {
+            window.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+    default:
+        if (typeof global !== "undefined") {
+            global.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+}
+
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"../error":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+
+module.exports = function(environment){
+        const config = require("./index.js");
+        const constants = require("../moduleConstants");
+        //const systemEnvirnoment = require("../system");
+
+        if(environment[constants.LOADER_ENVIRONMENT_JSON.VAULT] === constants.LOADER_ENVIRONMENT_JSON.SERVER){
+            config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+        }
+
+        if(environment[constants.LOADER_ENVIRONMENT_JSON.AGENT] === constants.LOADER_ENVIRONMENT_JSON.MOBILE){
+            config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+            //systemEnvirnoment.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS,
+        }
+        console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
+}
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+const config = {};
+function set(key, value) {
+    config[key] = value;
+}
+
+function get(key) {
+    return config[key];
+}
+
+
+
+const autoconfigFromEnvironment = require("./autoConfigFromEnvironment");
+
+function disableLocalVault(){
+    const constants = require("../moduleConstants");
+    set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+}
+
+module.exports = {
+    set,
+    get,
+    autoconfigFromEnvironment,
+    disableLocalVault
+};
+
+
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+const keySSIResolver = require("key-ssi-resolver");
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+const keySSIFactory = keySSIResolver.KeySSIFactory;
+const SSITypes = keySSIResolver.SSITypes;
+const jwtUtils = require("./jwt");
+
+const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
+templateSeedSSI.load(SSITypes.SEED_SSI, "default");
+
+const { JWT_ERRORS } = jwtUtils;
 
 const hash = (keySSI, data, callback) => {
-    if (typeof data === "object" && !Buffer.isBuffer(data)) {
+    callback(undefined, hashSync(keySSI, data));
+};
+
+const hashSync = (keySSI, data)=>{
+    if (typeof data === "object" && !$$.Buffer.isBuffer(data)) {
         data = JSON.stringify(data);
     }
     const hash = cryptoRegistry.getHashFunction(keySSI);
-    callback(undefined, hash(data));
-};
+    return hash(data);
+}
 
 const encrypt = (keySSI, buffer, callback) => {
     const encrypt = cryptoRegistry.getEncryptionFunction(keySSI);
     callback(undefined, encrypt(buffer, keySSI.getEncryptionKey()));
-
 };
 
 const decrypt = (keySSI, encryptedBuffer, callback) => {
@@ -8111,17 +9290,33 @@ const decrypt = (keySSI, encryptedBuffer, callback) => {
         return callback(e);
     }
     callback(undefined, decryptedBuffer);
+};
+
+const convertDerSignatureToASN1 = (derSignature) => {
+    return require('pskcrypto').decodeDerToASN1ETH(derSignature);
 
 };
 
-const sign = (keySSI, hash, callback) => {
+const convertASN1SignatureToDer = (ans1Signature) => {
+
+};
+
+const sign = (keySSI, data, callback) => {
     const sign = cryptoRegistry.getSignFunction(keySSI);
-    callback(undefined, sign(hash, keySSI.getEncryptionKey()));
+    if(typeof sign !== "function"){
+        throw Error("Signing not available for " + keySSI.getIdentifier(true));
+    } else {
+        callback(undefined, sign(data, keySSI.getPrivateKey()));
+    }
 };
 
-const verifySignature = (keySSI, hash, signature, callback) => {
+const verifySignature = (keySSI, data, signature, publicKey, callback) => {
+    if (typeof publicKey === "function") {
+        callback = publicKey;
+        publicKey = keySSI.getPublicKey();
+    }
     const verify = cryptoRegistry.getVerifyFunction(keySSI);
-    callback(undefined, verify(hash, keySSI.getEncryptionKey(), signature));
+    callback(undefined, verify(data, publicKey, signature));
 };
 
 const generateEncryptionKey = (keySSI, callback) => {
@@ -8139,30 +9334,358 @@ const decode = (keySSI, data) => {
     return decode(data);
 };
 
+const sha256 = (dataObj) => {
+    const pskcrypto = require("pskcrypto");
+    const hashBuffer = pskcrypto.objectHash("sha256", dataObj);
+    return pskcrypto.pskBase58Encode(hashBuffer);
+};
+
+const generateRandom = (length) => {
+    const pskcrypto = require("pskcrypto");
+    const randomBuffer = pskcrypto.randomBytes(length);
+    return pskcrypto.pskBase58Encode(randomBuffer);
+}
+
+const encodeBase58 = (data) => {
+    return encode(templateSeedSSI, data);
+};
+const decodeBase58 = (data) => {
+    return decode(templateSeedSSI, data);
+};
+
+const createJWT = (seedSSI, scope, credentials, options, callback) => {
+    jwtUtils.createJWT(
+        {
+            seedSSI,
+            scope,
+            credentials,
+            options,
+            hash,
+            encode: encodeBase58,
+            sign,
+        },
+        callback
+    );
+};
+
+const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
+    jwtUtils.verifyJWT(
+        {
+            jwt,
+            rootOfTrustVerificationStrategy,
+            decode: decodeBase58,
+            hash,
+            verifySignature,
+        },
+        callback
+    );
+};
+
+const createCredential = (issuerSeedSSI, credentialSubjectSReadSSI, callback) => {
+    createJWT(issuerSeedSSI, "", null, { subject: credentialSubjectSReadSSI }, callback);
+};
+
+const createAuthToken = (holderSeedSSI, scope, credential, callback) => {
+    createJWT(seedSSI, scope, credential, null, callback);
+};
+
+const createPresentationToken = (holderSeedSSI, scope, credential, callback) => {
+    createJWT(holderSeedSSI, scope, credential, null, callback);
+};
+
+const verifyAuthToken = (jwt, listOfIssuers, callback) => {
+    if (!listOfIssuers || !listOfIssuers.length) return callback(JWT_ERRORS.EMPTY_LIST_OF_ISSUERS_PROVIDED);
+
+    // checks every credentials from the JWT's body to see if it has at least one JWT issues by one of listOfIssuers for the current subject
+    const rootOfTrustVerificationStrategy = ({ body }, verificationCallback) => {
+        const { sub: subject, credentials } = body;
+        // the JWT doesn't have credentials specified so we cannot check for valid authorizarion
+        if (!credentials) return verificationCallback(null, false);
+
+        const credentialVerifiers = credentials.map((credential) => {
+            return new Promise((resolve) => {
+                verifyJWT(
+                    credential,
+                    ({ body }, credentialVerificationCallback) => {
+                        // check if credential was issued for the JWT that we are verifying the authorization for
+                        const isCredentialIssuedForSubject = body.sub === subject;
+                        if (!isCredentialIssuedForSubject) return credentialVerificationCallback(null, false);
+
+                        const isValidIssuer = listOfIssuers.some((issuer) => issuer === body.iss);
+                        credentialVerificationCallback(null, isValidIssuer);
+                    },
+                    (credentialVerifyError, isCredentialValid) => {
+                        if (credentialVerifyError) return resolve(false);
+                        resolve(isCredentialValid);
+                    }
+                );
+            }).catch(() => {
+                // is something went wrong, we deny the JWT
+                return false;
+            });
+        });
+
+        Promise.all(credentialVerifiers)
+            .then((credentialVerifierResults) => {
+                const hasAtLeastOneValidIssuer = credentialVerifierResults.some((result) => result);
+                if (!hasAtLeastOneValidIssuer) return verificationCallback(null, false);
+                verificationCallback(null, true);
+            })
+            .catch(() => {
+                // is something went wrong, we deny the JWT
+                verificationCallback(null, false);
+            });
+    };
+
+    verifyJWT(jwt, rootOfTrustVerificationStrategy, callback);
+};
+
+
+
+function createBloomFilter(options){
+    const BloomFilter = require("psk-dbf");
+    return new BloomFilter(options);
+}
+
+
 module.exports = {
     hash,
+    hashSync,
+    generateRandom,
     encrypt,
     decrypt,
     sign,
+    convertDerSignatureToASN1,
     verifySignature,
     generateEncryptionKey,
     encode,
-    decode
+    decode,
+    encodeBase58,
+    decodeBase58,
+    sha256,
+    createJWT,
+    verifyJWT,
+    createCredential,
+    createAuthToken,
+    verifyAuthToken,
+    createPresentationToken,
+    createBloomFilter,
+    JWT_ERRORS,
 };
 
-}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+},{"./jwt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+const keySSIResolver = require("key-ssi-resolver");
+const keySSIFactory = keySSIResolver.KeySSIFactory;
 
-},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+const HEADER_TYPE = "SeedSSIJWT";
+const JWT_VALABILITY_SECONDS = 5 * 365 * 24 * 60 * 60; // 5 years default
+
+const JWT_ERRORS = {
+    EMPTY_JWT_PROVIDED: "EMPTY_JWT_PROVIDED",
+    INVALID_JWT_FORMAT: "INVALID_JWT_FORMAT",
+    INVALID_JWT_PRESENTATION: "INVALID_JWT_PRESENTATION",
+    INVALID_JWT_HEADER: "INVALID_JWT_HEADER",
+    INVALID_JWT_BODY: "INVALID_JWT_BODY",
+    INVALID_JWT_HEADER_TYPE: "INVALID_JWT_HEADER_TYPE",
+    INVALID_JWT_ISSUER: "INVALID_JWT_ISSUER",
+    INVALID_CREDENTIALS_FORMAT: "INVALID_CREDENTIALS_FORMAT",
+    JWT_TOKEN_EXPIRED: "JWT_TOKEN_EXPIRED",
+    JWT_TOKEN_NOT_ACTIVE: "JWT_TOKEN_NOT_ACTIVE",
+    INVALID_JWT_SIGNATURE: "INVALID_JWT_SIGNATURE",
+    ROOT_OF_TRUST_VERIFICATION_FAILED: "ROOT_OF_TRUST_VERIFICATION_FAILED",
+    EMPTY_LIST_OF_ISSUERS_PROVIDED: "EMPTY_LIST_OF_ISSUERS_PROVIDED",
+};
+
+function nowEpochSeconds() {
+    return Math.floor(new Date().getTime() / 1000);
+}
+
+function createJWT({ seedSSI, scope, credentials, options, hash, encode, sign }, callback) {
+    if(typeof seedSSI === "string"){
+        const keyssiSpace = require('opendsu').loadApi("keyssi");
+        try{
+            seedSSI = keyssiSpace.parse(seedSSI);
+        }catch(e){
+            return callback(e);
+        }
+    }
+    const sReadSSI = seedSSI.derive();
+
+    let { subject, valability, ...optionsRest } = options || {};
+    valability = valability || JWT_VALABILITY_SECONDS;
+
+    if (credentials) {
+        credentials = Array.isArray(credentials) ? credentials : [credentials];
+    }
+
+    const header = {
+        typ: HEADER_TYPE,
+    };
+
+    const now = nowEpochSeconds();
+    const body = {
+        sub: subject || sReadSSI.getIdentifier(),
+        // aud: encode(scope),
+        scope,
+        iss: sReadSSI.getIdentifier(),
+        publicKey: seedSSI.getPublicKey(),
+        iat: now,
+        nbf: now,
+        exp: now + valability,
+        credentials,
+        options: optionsRest,
+    };
+
+    const segments = [encode(JSON.stringify(header)), encode(JSON.stringify(body))];
+
+    const jwtToSign = segments.join(".");
+
+    hash(seedSSI, jwtToSign, (hashError, hashResult) => {
+        if (hashError) return callback(hashError);
+
+        sign(seedSSI, hashResult, (signError, signResult) => {
+            if (signError) return callback(signError);
+            const encodedSignResult = encode(signResult);
+
+            const jwt = `${jwtToSign}.${encodedSignResult}`;
+            callback(null, jwt);
+        });
+    });
+}
+
+function safeParseEncodedJson(decode, data) {
+    try {
+        const result = JSON.parse(decode(data));
+        return result;
+    } catch (e) {
+        return e;
+    }
+}
+
+function parseJWTSegments(jwt, decode, callback) {
+    if (!jwt) return callback(JWT_ERRORS.EMPTY_JWT_PROVIDED);
+    if (typeof jwt !== "string") return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+    const segments = jwt.split(".");
+    if (segments.length !== 3) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+    const header = safeParseEncodedJson(decode, segments[0]);
+    if (header instanceof Error || !header) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
+
+    const body = safeParseEncodedJson(decode, segments[1]);
+    if (body instanceof Error || !body) return callback(JWT_ERRORS.INVALID_JWT_BODY);
+
+    const signatureInput = `${segments[0]}.${segments[1]}`;
+    const signature = decode(segments[2]);
+    if (!signature) {
+        // the signature couldn't be decoded due to an invalid signature
+        return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+    }
+
+    return callback(null, { header, body, signature, signatureInput });
+}
+
+function isJwtExpired(body) {
+    return new Date(body.exp * 1000) < new Date();
+}
+
+function isJwtNotActive(body) {
+    return new Date(body.nbf * 1000) >= new Date();
+}
+
+function verifyJWTContent(jwtContent, callback) {
+    const { header, body } = jwtContent;
+
+    if (header.typ !== HEADER_TYPE) return callback(JWT_ERRORS.INVALID_JWT_HEADER_TYPE);
+    if (!body.iss) return callback(JWT_ERRORS.INVALID_JWT_ISSUER);
+    if (isJwtExpired(body)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
+    if (isJwtNotActive(body)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+
+    if (body.credentials && !Array.isArray(body.credentials)) return callback(JWT_ERRORS.INVALID_CREDENTIALS_FORMAT);
+
+    callback(null);
+}
+
+const verifyJWT = ({ jwt, rootOfTrustVerificationStrategy, decode, verifySignature, hash }, callback) => {
+    parseJWTSegments(jwt, decode, (parseError, jwtContent) => {
+        if (parseError) return callback(parseError);
+
+        verifyJWTContent(jwtContent, (verifyError) => {
+            if (verifyError) return callback(verifyError);
+
+            const { header, body, signatureInput, signature } = jwtContent;
+            const { iss: sReadSSIString, publicKey } = body;
+
+            const sReadSSI = keySSIFactory.create(sReadSSIString);
+
+            hash(sReadSSI, signatureInput, (error, hash) => {
+                if (error) return callback(error);
+                verifySignature(sReadSSI, hash, signature, publicKey, (verifyError, verifyResult) => {
+                    if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+
+                    if (typeof rootOfTrustVerificationStrategy === "function") {
+                        rootOfTrustVerificationStrategy({ header, body }, (verificationError, verificationResult) => {
+                            if (verificationError || !verificationResult) {
+                                return callback(JWT_ERRORS.ROOT_OF_TRUST_VERIFICATION_FAILED);
+                            }
+                            callback(null, true);
+                        });
+                        return;
+                    }
+
+                    callback(null, true);
+                });
+            });
+        });
+    });
+};
+
+module.exports = {
+    createJWT,
+    verifyJWT,
+    JWT_ERRORS,
+};
+
+},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js"][0].apply(exports,arguments)
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+function ErrorWrapper(message, err){
+    this.previousError = err;
+    this.message = message;
+    try{
+        throw Error(message);
+    }catch (e) {
+        this.currentStack = e.stack.toString();
+    }
+}
+
+function createErrorWrapper(message, err){
+    return new ErrorWrapper(message, err);
+}
+
+module.exports = {
+    createErrorWrapper
+}
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
+	return function (url, data, options, callback) {
+		if(typeof options === "function"){
+			callback = options;
+			options = {};
+		}
+
 		const xhr = new XMLHttpRequest();
+
+		if(typeof options.headers !== "undefined"){
+			for(let name in options.headers){
+				xhr.setRequestHeader(name, options.headers[name]);
+			}
+		}
 
 		xhr.onload = function () {
 			if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
@@ -8191,7 +9714,7 @@ function generateMethodForRequestWithData(httpMethod) {
 				buffers.push(data);
 			});
 			data.on("end", function() {
-				const actualContents = Buffer.concat(buffers);
+				const actualContents = $$.Buffer.concat(buffers);
 				xhr.send(actualContents);
 			});
 		}
@@ -8216,9 +9739,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -8235,6 +9756,9 @@ switch ($$.environmentType) {
 		module.exports = require("./node");
 }
 
+//enable support for http interceptors.
+require("./utils/interceptors").enable(module.exports);
+
 const PollRequestManager = require("./utils/PollRequestManager");
 const rm = new PollRequestManager(module.exports.fetch);
 
@@ -8247,8 +9771,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -8363,7 +9886,7 @@ function Response(httpRequest, httpResponse) {
 		httpResponse.on('end', () => {
 			try {
 				if (Array.isArray(rawData)) {
-					rawData = Buffer.from(rawData);
+					rawData = $$.Buffer.from(rawData);
 				}
 				callback(undefined, rawData);
 			} catch (err) {
@@ -8435,12 +9958,12 @@ function Response(httpRequest, httpResponse) {
 				let jsonContent;
 				try {
 					//do we really need this if ?!
-					if (Buffer.isBuffer(responseBody)) {
+					if ($$.Buffer.isBuffer(responseBody)) {
 						responseBody = responseBody.toString();
 					}
 					jsonContent = JSON.parse(responseBody);
-				} catch (err) {
-					return reject(err);
+				} catch (e) {
+					return reject(e);
 				}
 				resolve(jsonContent);
 			});
@@ -8454,10 +9977,7 @@ function Response(httpRequest, httpResponse) {
 module.exports = {
 	fetch
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -8477,7 +9997,11 @@ function getNetworkForOptions(options) {
 }
 
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
+	return function (url, data, reqOptions, callback) {
+		if(typeof reqOptions === "function"){
+			callback = reqOptions;
+			reqOptions = {};
+		}
 		const innerUrl = URL.parse(url);
 
 		const options = {
@@ -8491,11 +10015,15 @@ function generateMethodForRequestWithData(httpMethod) {
 			method: httpMethod
 		};
 
+		for(let name in reqOptions.headers){
+			options.headers[name] = reqOptions.headers[name];
+		}
+
 		const network = getNetworkForOptions(innerUrl);
 
-		if (ArrayBuffer.isView(data) || Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
-			if (!Buffer.isBuffer(data)) {
-				data = Buffer.from(data);
+		if (ArrayBuffer.isView(data) || $$.Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+			if (!$$.Buffer.isBuffer(data)) {
+				data = $$.Buffer.from(data);
 			}
 
 			options.headers['Content-Type'] = 'application/octet-stream';
@@ -8543,7 +10071,7 @@ function generateMethodForRequestWithData(httpMethod) {
 			return;
 		}
 
-		if (typeof data !== 'string' && !Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
+		if (typeof data !== 'string' && !$$.Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
 			data = JSON.stringify(data);
 		}
 
@@ -8557,12 +10085,14 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
-		const headers = {}
+	return function (url, data, options, callback) {
+		if(typeof options === "function"){
+			callback = options;
+			options = {};
+		}
+		const headers = options.headers || {};
 		if(ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
 			headers['Content-Type'] = 'application/octet-stream';
 
@@ -8720,6 +10250,108 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 }
 
 module.exports = PollRequestManager;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+let interceptors = [];
+
+function registerInterceptor(interceptor){
+    if(typeof interceptor !== "function"){
+        throw new Error('interceptor argument should be a function');
+    }
+    interceptors.push(interceptor);
+}
+
+function unregisterInterceptor(interceptor){
+    let index = interceptors.indexOf(interceptor);
+    if(index !== -1){
+        interceptors.splice(index, 1);
+    }
+}
+
+function callInterceptors(target, callback){
+    let index = -1;
+    function executeInterceptor(result){
+        index++;
+        if(index >= interceptors.length){
+            return callback(undefined, result);
+        }
+        let interceptor = interceptors[index];
+        interceptor(target, (err, result)=>{
+            if(err){
+                return callback(err);
+            }
+            return executeInterceptor(result);
+        });
+    }
+    executeInterceptor(target);
+}
+
+function setupInterceptors(handler){
+    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}];
+    interceptMethods.forEach(function(target){
+        let method = handler[target.name];
+        handler[target.name] = function(...args){
+            let headers = {};
+            let optionsAvailable = false;
+            if(args.length > target.position+1 && ["function", "undefined"].indexOf(typeof args[target.position]) === -1){
+                headers = args[target.position]["headers"];
+                optionsAvailable = true;
+            }
+
+            let data = {url: args[0], headers};
+            callInterceptors(data, function(err, result){
+                if(optionsAvailable){
+                    args[target.position]["headers"] = result.headers;
+                }else{
+                    args.splice(target.position, 0, {headers: result.headers});
+                }
+
+                return method(...args);
+            });
+        }
+    });
+
+    const promisedBasedInterceptors = [{name: "fetch", position: 1}];
+    promisedBasedInterceptors.forEach(function(target){
+        let method = handler[target.name];
+        handler[target.name] = function(...args){
+            return new Promise((resolve, reject) => {
+                if (args.length === 1) {
+                    args.push({headers: {}});
+                }
+
+                if(typeof args[1].headers === "undefined"){
+                    args[1].headers = {};
+                }
+                let headers = args[1].headers;
+
+                let data = {url: args[0], headers};
+                callInterceptors(data, function(err, result) {
+
+                    let options = args[target.position];
+                    options.headers = result.headers;
+
+                    method(...args)
+                        .then((...args) => {
+                            resolve(...args);
+                        })
+                        .catch((...args) => {
+                            reject(...args);
+                        });
+                });
+            });
+        };
+    });
+}
+
+function enable(handler){
+    //exposing working methods
+    handler.registerInterceptor = registerInterceptor;
+    handler.unregisterInterceptor = unregisterInterceptor;
+    //setting up the interception mechanism
+    setupInterceptors(handler);
+}
+
+module.exports = {enable};
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
@@ -8729,36 +10361,67 @@ const parse = (ssiString, options) => {
     return keySSIFactory.create(ssiString, options);
 };
 
-const buildSeedSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint);
+const buildSeedSSI = (domain, specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildWalletSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.WALLET_SSI, domain, specificString, control, vn, hint);
+const buildSReadSSI = (domain,  specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SREAD_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildSReadSSI = (domain,  specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SREAD_SSI, domain, specificString, control, vn, hint);
+const buildSZeroAccessSSI = (domain,  specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SZERO_ACCESS_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildSZeroAccessSSI = (domain,  specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SZERO_ACCESS_SSI, domain, specificString, control, vn, hint);
+const buildHashLinkSSI = (domain, specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.HASH_LINK_SSI, domain,  specificString, control, vn, hint, callback);
 };
 
-const buildHashLinkSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.HASH_LINK_SSI, domain,  specificString, control, vn, hint);
-};
-
-const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint) => {
+const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint, callback) => {
+    //only ssiType and domain are mandatory arguments
+    if (typeof specificString === "function") {
+        callback = specificString;
+        specificString = undefined;
+    }
+    if (typeof control === "function") {
+        callback = control;
+        control = undefined;
+    }
+    if (typeof vn === "function") {
+        callback = vn;
+        specificString = undefined;
+    }
+    if (typeof hint === "function") {
+        callback = hint;
+        hint = undefined;
+    }
     const keySSI = keySSIFactory.createType(ssiType);
     keySSI.load(ssiType, domain, specificString, control, vn, hint);
+    if (typeof callback === "function") {
+        callback(undefined, keySSI);
+    }
     return keySSI;
 };
 
-const buildArraySSI = (domain, arr, vn, hint) => {
+
+const buildWalletSSI = (domain, arrayWIthCredentials, hint) => {
+    try{
+        let ssi  = buildArraySSI(domain, arrayWIthCredentials,undefined,hint);
+        ssi.cast(SSITypes.WALLET_SSI);
+        return parse(ssi.getIdentifier());
+    } catch(err){
+        console.log("Failing to build WalletSSI");
+    }
+};
+
+const buildArraySSI = (domain, arr, vn, hint, callback) => {
     const arraySSI = keySSIFactory.createType(SSITypes.ARRAY_SSI);
     arraySSI.initialize(domain, arr, vn, hint);
     return arraySSI;
+};
+
+const buildSymmetricalEncryptionSSI = (domain, encryptionKey, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
 };
 
 module.exports = {
@@ -8769,10 +10432,17 @@ module.exports = {
     buildSZeroAccessSSI,
     buildHashLinkSSI,
     buildTemplateKeySSI,
-    buildArraySSI
+    buildArraySSI,
+    buildSymmetricalEncryptionSSI
 };
 },{"key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
+
+let cachedKeySSIResolver = undefined;
+
+
 module.exports = {
+	ENVIRONMENT_TYPES,
 	CODE_FOLDER: "/code",
 	CONSTITUTION_FOLDER: '/code/constitution',
 	BLOCKCHAIN_FOLDER: '/blockchain',
@@ -8782,9 +10452,43 @@ module.exports = {
 	TRANSACTIONS_FOLDER: "/transactions",
 	APPS_FOLDER: "/apps",
 	DATA_FOLDER: "/data",
-	MANIFEST_FILE: "/manifest"
+	MANIFEST_FILE: "/manifest",
+	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
+	CACHE: {
+		FS: "fs",
+		INDEXED_DB: "cache.indexedDB",
+		VAULT_TYPE: "cache.vaultType",
+		BASE_FOLDER: "internal-volume/cache",
+		BASE_FOLDER_CONFIG_PROPERTY: "fsCache.baseFolder",
+		ENCRYPTED_BRICKS_CACHE: "encrypted-bricks-cache",
+		ANCHORING_CACHE: "anchoring-cache",
+		NO_CACHE: "no-cache"
+	},
+	DOMAINS: {
+		VAULT: "vault"
+	},
+	VAULT:{
+		BRICKS_STORE: "bricks",
+		ANCHORS_STORE: "anchors"
+	},
+	LOADER_ENVIRONMENT_JSON:{
+		AGENT: "agent",
+		SERVER: "server",
+		VAULT: "vault",
+		MOBILE: "mobile",
+	},
+	 get KEY_SSIS(){
+		if(cachedKeySSIResolver === undefined){
+			cachedKeySSIResolver = require("key-ssi-resolver");
+		}
+		 return cachedKeySSIResolver.SSITypes;
+	 }
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+
+
+
+
+},{"../overwrite-require/moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -8925,7 +10629,7 @@ module.exports = {
 },{"../index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
-
+const dsuInstances = {};
 const initializeResolver = (options) => {
     options = options || {};
     return KeySSIResolver.initialize(options);
@@ -8958,61 +10662,46 @@ const loadDSU = (keySSI, options, callback) => {
         options = undefined;
     }
 
-    const keySSIResolver = initializeResolver(options);
-    keySSIResolver.loadDSU(keySSI, options, callback);
-};
-
-const createWallet = (templateKeySSI, dsuTypeSSI, options, callback) => {
-    let keySSI = keySSISpace.parse(templateKeySSI);
-    if(typeof options === "function"){
-        callback = options;
-        options = {};
+    const ssiId = keySSI.getIdentifier();
+    if (dsuInstances[ssiId]) {
+        return callback(undefined, dsuInstances[ssiId]);
     }
-
-    options.dsuTypeSSI = dsuTypeSSI;
-
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.createDSU(keySSI, options, callback);
-}
-
-const loadWallet = (secret, options, callback) => {
-    let tmpKeySSI = keySSISpace.buildWalletSSI();
-    if(typeof options === "function"){
-        callback = options;
-        options = {};
-    }
-
-    tmpKeySSI.getSeedSSI(secret, options, (err, seedSSI)=>{
-        if(err){
+    keySSIResolver.loadDSU(keySSI, options, (err, newDSU) => {
+        if (err) {
             return callback(err);
         }
 
-        loadDSU(seedSSI, (err, wallet) =>{
-            if(err){
-                return callback(err);
-            }
-            callback(undefined, wallet);
-        });
+        if (typeof dsuInstances[ssiId] === "undefined") {
+            dsuInstances[ssiId] = newDSU;
+        }
+
+        callback(undefined, newDSU);
     });
-}
-
-const createCustomDSU = () => {
-
 };
+
+
+
 
 const getHandler = () => {
-
+    throw Error("Not available yet");
 };
+
+
+function invalidateDSUCache(dsuKeySSI) {
+    // console.log("Invalidating cache ...................");
+    const ssiId = dsuKeySSI.getIdentifier();
+    delete dsuInstances[ssiId]
+}
 
 module.exports = {
     createDSU,
     loadDSU,
-    createWallet,
-    loadWallet,
-    createCustomDSU,
     getHandler,
-    registerDSUFactory
+    registerDSUFactory,
+    invalidateDSUCache
 }
+
 },{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 const getMainDSU = () => {
     if (typeof rawDossier === "undefined") {
@@ -9025,7 +10714,127 @@ const getMainDSU = () => {
 module.exports = {
     getMainDSU
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+const envVariables = {};
+function getEnvironmentVariable(name){
+    if (typeof envVariables[name] === "undefined") {
+        return envVariables[name];
+    }
+    return process.env[name];
+}
+function setEnvironmentVariable(name, value){
+    envVariables[name] = value;
+}
+
+function getFS(){
+    const fsName = "fs";
+    return require(fsName);
+}
+
+function getPath(){
+    const pathName = "path";
+    return require(pathName);
+}
+
+module.exports = {
+    getEnvironmentVariable,
+    setEnvironmentVariable,
+    getFS,
+    getPath
+}
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+function PendingCallMixin(target) {
+    let pendingCalls = [];
+    let serialPendingCalls = [];
+    let isSerialExecutionReady = false;
+    let isExecutionReady = false;
+    target.addPendingCall = (pendingFn) => {
+        if (isExecutionReady) {
+            pendingFn();
+        } else {
+            pendingCalls.push(pendingFn);
+        }
+    };
+
+    target.executePendingCalls = () => {
+        isExecutionReady = true;
+        pendingCalls.forEach(fn => fn());
+        pendingCalls = [];
+    };
+
+    target.addSerialPendingCall = (pendingFn) => {
+        serialPendingCalls.push(pendingFn);
+        if (isSerialExecutionReady) {
+            next();
+        }
+    };
+
+    function next() {
+        const fn = serialPendingCalls.shift();
+        if (typeof fn !== "undefined") {
+            try {
+                fn(function (arg) {
+                    setTimeout(() => {
+                        next();
+                    }, 0);
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
+    target.executeSerialPendingCalls = () => {
+        isSerialExecutionReady = true;
+        next();
+    };
+}
+
+module.exports = PendingCallMixin;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+module.exports.shuffle = shuffle;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
+const system = require("../system");
+function getBaseURL(){
+    switch ($$.environmentType) {
+        case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+            let scope = self.registration.scope;
+
+            let parts = scope.split("/");
+            return `${parts[0]}//${parts[2]}`;
+
+        case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+            const protocol = window.location.protocol;
+            const host = window.location.hostname;
+            const port = window.location.port;
+
+            return `${protocol}//${host}:${port}`;
+
+        case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            let baseUrl = system.getEnvironmentVariable(constants.BDNS_ROOT_HOSTS);
+            if (typeof baseUrl === "undefined") {
+                baseUrl = "http://localhost:8080";
+            }
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.slice(0, -1);
+            }
+            return baseUrl;
+
+        default:
+    }
+}
+
+module.exports = getBaseURL;
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 function Observable(){
 	let handlers = {};
 
@@ -9068,9 +10877,155 @@ function Observable(){
 module.exports.createObservable = function(){
 	return new Observable();
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+const arrayUtils = require("./array");
+
+function validateMajorityRunAllWithSuccess(successResults, errorResults, totalCount) {
+  const successCount = successResults.length;
+  const errorCount = errorResults.length;
+
+  if (totalCount == null) {
+    // totalCount was not provided, so we consider to be the sum of the other results
+    totalCount = successCount + errorCount;
+  }
+
+  const isMajorityWithSuccess = successCount >= Math.ceil(totalCount / 2);
+  return isMajorityWithSuccess;
+}
+
+function runSinglePromise(executePromise, promiseInput) {
+  return executePromise(promiseInput)
+    .then((result) => {
+      return {
+        success: true,
+        result,
+      };
+    })
+    .catch((error) => {
+      return {
+        error,
+      };
+    });
+}
+
+function runAll(listEntries, executeEntry, validateResults, callback) {
+  if (typeof validateResults !== "function") {
+    validateResults = validateMajorityRunAllWithSuccess;
+  }
+
+  const allInitialExecutions = listEntries.map((entry) => {
+    return runSinglePromise(executeEntry, entry);
+  });
+  Promise.all(allInitialExecutions)
+    .then((results) => {
+      const successExecutions = results.filter((run) => run.success);
+      const errorExecutions = results.filter((run) => !run.success);
+
+      const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions);
+      if (isConsideredSuccessfulRun) {
+        const successExecutionResults = successExecutions.map((run) => run.result);
+        return callback(null, successExecutionResults);
+      }
+
+      return callback("FAILED");
+    })
+    .catch((error) => callback(error));
+}
+
+function runOneSuccessful(listEntries, executeEntry, callback) {
+  if (!listEntries.length) {
+    return callback("EMPTY_LIST");
+  }
+
+  availableListEntries = [...listEntries];
+  arrayUtils.shuffle(availableListEntries);
+
+  const entry = availableListEntries.shift();
+
+  const executeForSingleEntry = (entry) => {
+    return executeEntry(entry)
+      .then((result) => {
+        return callback(null, result);
+      })
+      .catch((err) => {
+        if (!availableListEntries.length) {
+          return callback(err);
+        }
+
+        const nextEntry = availableListEntries.shift();
+        executeForSingleEntry(nextEntry);
+      });
+  };
+
+  executeForSingleEntry(entry);
+}
+
+function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback) {
+  const totalCount = listEntries.length;
+
+  if (!initialRunCount || typeof initialRunCount !== "number") {
+    // no initiaRunCount was specified, so we execute half of them initially
+    initialRunCount = Math.ceil(totalCount / 2);
+  }
+  initialRunCount = Math.min(initialRunCount, totalCount);
+
+  if (typeof validateResults !== "function") {
+    validateResults = validateMajorityRunAllWithSuccess;
+  }
+
+  let allExecutedRunResults = [];
+  const initialEntries = listEntries.slice(0, initialRunCount);
+  const remainingEntries = listEntries.slice(initialRunCount);
+
+  const checkAllExecutedRunResults = () => {
+    const successExecutions = allExecutedRunResults.filter((run) => run.success);
+    const errorExecutions = allExecutedRunResults.filter((run) => !run.success);
+
+    const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions, totalCount);
+    if (isConsideredSuccessfulRun) {
+      const successExecutionResults = successExecutions.map((run) => run.result);
+      return callback(null, successExecutionResults);
+    }
+
+    if (!remainingEntries.length) {
+      // the results weren't validated, but we don't have any other entry to run
+      return callback("FAILED");
+    }
+
+    const nextEntry = remainingEntries.shift();
+    runSinglePromise(executeEntry, nextEntry)
+      .then((nextEntryResult) => {
+        allExecutedRunResults.push(nextEntryResult);
+        checkAllExecutedRunResults();
+      })
+      .catch(() => {
+        // runSinglePromise already makes sure no catch is thrown
+        // put to ignore nodejs unhandled execution warning
+      });
+  };
+
+  const allInitialExecutions = initialEntries.map((entry) => {
+    return runSinglePromise(executeEntry, entry);
+  });
+
+  Promise.all(allInitialExecutions)
+    .then((results) => {
+      allExecutedRunResults = results;
+      checkAllExecutedRunResults();
+    })
+    .catch((error) => callback(error));
+}
+
+module.exports = {
+  runAll,
+  runOneSuccessful,
+  runEnoughForMajority,
+};
+
+},{"./array":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
+  MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
   ISOLATE_ENVIRONMENT_TYPE: 'isolate',
   THREAD_ENVIRONMENT_TYPE: 'thread',
@@ -9080,6 +11035,15 @@ module.exports = {
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
+
+if(typeof $$.Buffer === "undefined"){
+    $$.Buffer = require("buffer").Buffer;
+}
+
+if (typeof global.$$.uidGenerator == "undefined") {
+    $$.uidGenerator = {};
+    $$.uidGenerator.safe_uuid = require("swarmutils").safe_uuid;
+}
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
@@ -9391,7 +11355,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -9511,10 +11475,9 @@ function Cache(options) {
 module.exports = Cache;
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
-const crypto = require('crypto');
-const KeyEncoder = require('./keyEncoder');
-
 function ECKeyGenerator() {
+    const crypto = require('crypto');
+    const KeyEncoder = require('./keyEncoder');
 
     this.generateKeyPair = (namedCurve, callback) => {
         if (typeof namedCurve === "function") {
@@ -9527,7 +11490,7 @@ function ECKeyGenerator() {
         callback(undefined, publicKey, privateKey);
     };
 
-    this.convertKeys = (privateKey, publicKey, options) => {
+    this.getPemKeys = (privateKey, publicKey, options) => {
         const defaultOpts = {format: 'pem', namedCurve: 'secp256k1'};
         Object.assign(defaultOpts, options);
         options = defaultOpts;
@@ -9558,10 +11521,10 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 },{"./keyEncoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
+    const derAsn1Decoder = require("./utils/DerASN1Decoder");
     const PskEncryption = require("./PskEncryption");
     const or = require('overwrite-require');
 
@@ -9577,7 +11540,7 @@ function PskCrypto() {
 
     this.sign = (algorithm, data, privateKey) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         const sign = crypto.createSign(algorithm);
@@ -9588,7 +11551,7 @@ function PskCrypto() {
 
     this.verify = (algorithm, data, publicKey, signature) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
         const verify = crypto.createVerify(algorithm);
         verify.update(data);
@@ -9598,7 +11561,7 @@ function PskCrypto() {
 
     this.privateEncrypt = (privateKey, data) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         return crypto.privateEncrypt(privateKey, data);
@@ -9606,7 +11569,7 @@ function PskCrypto() {
 
     this.privateDecrypt = (privateKey, encryptedData) => {
         if (typeof encryptedData === "string") {
-            encryptedData = Buffer.from(encryptedData);
+            encryptedData = $$.Buffer.from(encryptedData);
         }
 
         return crypto.privateDecrypt(privateKey, encryptedData);
@@ -9614,7 +11577,7 @@ function PskCrypto() {
 
     this.publicEncrypt = (publicKey, data) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         return crypto.publicEncrypt(publicKey, data);
@@ -9622,14 +11585,14 @@ function PskCrypto() {
 
     this.publicDecrypt = (publicKey, encryptedData) => {
         if (typeof encryptedData === "string") {
-            encryptedData = Buffer.from(encryptedData);
+            encryptedData = $$.Buffer.from(encryptedData);
         }
 
         return crypto.publicDecrypt(publicKey, encryptedData);
     };
 
     this.pskHash = function (data, encoding) {
-        if (Buffer.isBuffer(data)) {
+        if ($$.Buffer.isBuffer(data)) {
             return utils.createPskHash(data, encoding);
         }
         if (data instanceof Object) {
@@ -9642,6 +11605,14 @@ function PskCrypto() {
         const hash = crypto.createHash(algorithm);
         hash.update(data);
         return hash.digest(encoding);
+    };
+
+    this.objectHash = (algorithm, data, encoding) => {
+        if(!$$.Buffer.isBuffer(data)){
+            const ssutils = require("../signsensusDS/ssutil");
+            data = ssutils.dumpObjectForHashing(data);
+        }
+        return this.hash(algorithm, data, encoding);
     };
 
     this.pskBase58Encode = function (data) {
@@ -9666,16 +11637,16 @@ function PskCrypto() {
     };
 
     this.generateSafeUid = function (password, additionalData) {
-        password = password || Buffer.alloc(0);
+        password = password || $$.Buffer.alloc(0);
         if (!additionalData) {
-            additionalData = Buffer.alloc(0);
+            additionalData = $$.Buffer.alloc(0);
         }
 
-        if (!Buffer.isBuffer(additionalData)) {
-            additionalData = Buffer.from(additionalData);
+        if (!$$.Buffer.isBuffer(additionalData)) {
+            additionalData = $$.Buffer.from(additionalData);
         }
 
-        return utils.encode(this.pskHash(Buffer.concat([password, additionalData])));
+        return utils.encode(this.pskHash($$.Buffer.concat([password, additionalData])));
     };
 
     this.deriveKey = function deriveKey(algorithm, password, iterations) {
@@ -9725,8 +11696,8 @@ function PskCrypto() {
         }
 
         function __xorTwoBuffers(a, b) {
-            if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-                throw Error("The argument type should be Buffer.");
+            if (!$$.Buffer.isBuffer(a) || !$$.Buffer.isBuffer(b)) {
+                throw Error("The argument type should be $$.Buffer.");
             }
 
             const length = Math.min(a.length, b.length);
@@ -9739,7 +11710,7 @@ function PskCrypto() {
 
         return args[args.length - 1];
     };
-
+    this.decodeDerToASN1ETH = (derSignatureBuffer) => derAsn1Decoder.decodeDERIntoASN1ETH(derSignatureBuffer);
     this.PskHash = utils.PskHash;
 }
 
@@ -9747,14 +11718,11 @@ module.exports = new PskCrypto();
 
 
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require("crypto");
-const utils = require("./utils/cryptoUtils");
-
+},{"../signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
+    const crypto = require("crypto");
+    const utils = require("./utils/cryptoUtils");
+
     if (!algorithm) {
         throw Error("No encryption algorithm was provided");
     }
@@ -9769,6 +11737,9 @@ function PskEncryption(algorithm) {
     let encryptionIsAuthenticated = utils.encryptionIsAuthenticated(algorithm);
 
     this.encrypt = (plainData, encryptionKey, options) => {
+        if (typeof encryptionKey === "string") {
+            encryptionKey = $$.Buffer.from(encryptionKey);
+        }
         iv = iv || crypto.randomBytes(16);
         const cipher = crypto.createCipheriv(algorithm, encryptionKey, iv, options);
         if (encryptionIsAuthenticated) {
@@ -9776,21 +11747,21 @@ function PskEncryption(algorithm) {
             cipher.setAAD(aad);
         }
 
-        let encData = Buffer.concat([cipher.update(plainData), cipher.final()]);
+        let encData = $$.Buffer.concat([cipher.update(plainData), cipher.final()]);
         if (encryptionIsAuthenticated) {
             tag = cipher.getAuthTag();
         }
 
         if (iv) {
-            encData = Buffer.concat([encData, iv]);
+            encData = $$.Buffer.concat([encData, iv]);
         }
 
         if (aad) {
-            encData = Buffer.concat([encData, aad]);
+            encData = $$.Buffer.concat([encData, aad]);
         }
 
         if (tag) {
-            encData = Buffer.concat([encData, tag]);
+            encData = $$.Buffer.concat([encData, tag]);
         }
         
         key = encryptionKey;
@@ -9798,6 +11769,9 @@ function PskEncryption(algorithm) {
     };
 
     this.decrypt = (encryptedData, decryptionKey, authTagLength = 0, options) => {
+        if (typeof decryptionKey === "string") {
+            decryptionKey = $$.Buffer.from(decryptionKey);
+        }
         if (!iv) {
             this.getDecryptionParameters(encryptedData, authTagLength);
         }
@@ -9807,7 +11781,7 @@ function PskEncryption(algorithm) {
             decipher.setAuthTag(tag);
         }
 
-        return Buffer.concat([decipher.update(data), decipher.final()]);
+        return $$.Buffer.concat([decipher.update(data), decipher.final()]);
     };
 
     this.getDecryptionParameters = (encryptedData, authTagLength = 0) => {
@@ -9836,9 +11810,7 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -9911,14 +11883,13 @@ asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
 },{"./api":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
 function DecoderBuffer(base, options) {
     Reporter.call(this, options);
-    if (!Buffer.isBuffer(base)) {
-        this.error('Input not Buffer');
+    if (!$$.Buffer.isBuffer(base)) {
+        this.error('Input not $$.Buffer');
         return;
     }
 
@@ -9992,8 +11963,8 @@ function EncoderBuffer(value, reporter) {
         this.length = 1;
     } else if (typeof value === 'string') {
         this.value = value;
-        this.length = Buffer.byteLength(value);
-    } else if (Buffer.isBuffer(value)) {
+        this.length = $$.Buffer.byteLength(value);
+    } else if ($$.Buffer.isBuffer(value)) {
         this.value = value;
         this.length = value.length;
     } else {
@@ -10005,7 +11976,7 @@ exports.EncoderBuffer = EncoderBuffer;
 
 EncoderBuffer.prototype.join = function join(out, offset) {
     if (!out)
-        out = Buffer.alloc(this.length);
+        out = $$.Buffer.alloc(this.length);
     if (!offset)
         offset = 0;
 
@@ -10022,7 +11993,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
             out[offset] = this.value;
         else if (typeof this.value === 'string')
             out.write(this.value, offset);
-        else if (Buffer.isBuffer(this.value))
+        else if ($$.Buffer.isBuffer(this.value))
             this.value.copy(out, offset);
         offset += this.length;
     }
@@ -10030,9 +12001,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -10833,6 +12802,129 @@ BN.prototype._init = function init(number, base, endian) {
 
   this._initArray(this.toArray(), base, endian);
 };
+
+  BN.prototype.toArrayLike = function toArrayLike (ArrayType, endian, length) {
+    this.strip();
+
+    var byteLength = this.byteLength();
+    var reqLength = length || Math.max(1, byteLength);
+    assert(byteLength <= reqLength, 'byte array longer than desired length');
+    assert(reqLength > 0, 'Requested array length <= 0');
+
+    var res = allocate(ArrayType, reqLength);
+    var postfix = endian === 'le' ? 'LE' : 'BE';
+    this['_toArrayLike' + postfix](res, byteLength);
+    return res;
+  };
+
+  var allocate = function allocate (ArrayType, size) {
+    if (ArrayType.allocUnsafe) {
+      return ArrayType.allocUnsafe(size);
+    }
+    return new ArrayType(size);
+  };
+
+  BN.prototype._toArrayLikeLE = function _toArrayLikeLE (res, byteLength) {
+    var position = 0;
+    var carry = 0;
+
+    for (var i = 0, shift = 0; i < this.length; i++) {
+      var word = (this.words[i] << shift) | carry;
+
+      res[position++] = word & 0xff;
+      if (position < res.length) {
+        res[position++] = (word >> 8) & 0xff;
+      }
+      if (position < res.length) {
+        res[position++] = (word >> 16) & 0xff;
+      }
+
+      if (shift === 6) {
+        if (position < res.length) {
+          res[position++] = (word >> 24) & 0xff;
+        }
+        carry = 0;
+        shift = 0;
+      } else {
+        carry = word >>> 24;
+        shift += 2;
+      }
+    }
+
+    if (position < res.length) {
+      res[position++] = carry;
+
+      while (position < res.length) {
+        res[position++] = 0;
+      }
+    }
+  };
+
+  BN.prototype._toArrayLikeBE = function _toArrayLikeBE (res, byteLength) {
+    var position = res.length - 1;
+    var carry = 0;
+
+    for (var i = 0, shift = 0; i < this.length; i++) {
+      var word = (this.words[i] << shift) | carry;
+
+      res[position--] = word & 0xff;
+      if (position >= 0) {
+        res[position--] = (word >> 8) & 0xff;
+      }
+      if (position >= 0) {
+        res[position--] = (word >> 16) & 0xff;
+      }
+
+      if (shift === 6) {
+        if (position >= 0) {
+          res[position--] = (word >> 24) & 0xff;
+        }
+        carry = 0;
+        shift = 0;
+      } else {
+        carry = word >>> 24;
+        shift += 2;
+      }
+    }
+
+    if (position >= 0) {
+      res[position--] = carry;
+
+      while (position >= 0) {
+        res[position--] = 0;
+      }
+    }
+  };
+
+  if (Math.clz32) {
+    BN.prototype._countBits = function _countBits (w) {
+      return 32 - Math.clz32(w);
+    };
+  } else {
+    BN.prototype._countBits = function _countBits (w) {
+      var t = w;
+      var r = 0;
+      if (t >= 0x1000) {
+        r += 13;
+        t >>>= 13;
+      }
+      if (t >= 0x40) {
+        r += 7;
+        t >>>= 7;
+      }
+      if (t >= 0x8) {
+        r += 4;
+        t >>>= 4;
+      }
+      if (t >= 0x02) {
+        r += 2;
+        t >>>= 2;
+      }
+      return r + t;
+    };
+  }
+
+
 
 BN.prototype._initNumber = function _initNumber(number, base, endian) {
   if (number < 0) {
@@ -13434,7 +15526,6 @@ decoders.pem = require('./pem');
 
 },{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
-const Buffer = require('buffer').Buffer;
 
 const asn1 = require('../asn1');
 const DERDecoder = require('./der');
@@ -13479,13 +15570,11 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     const base64 = lines.slice(start + 1, end).join('');
     // Remove excessive symbols
     base64.replace(/[^a-z0-9\+\/=]+/gi, '');
-
-    const input = Buffer.from(base64, 'base64');
+    const input = $$.Buffer.from(base64, 'base64');
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -13522,7 +15611,7 @@ DERNode.prototype._encodeComposite = function encodeComposite(tag, primitive, cl
 
     // Short form
     if (content.length < 0x80) {
-        const header = Buffer.alloc(2);
+        const header = $$.Buffer.alloc(2);
         header[0] = encodedTag;
         header[1] = content.length;
         return this._createEncoderBuffer([header, content]);
@@ -13534,7 +15623,7 @@ DERNode.prototype._encodeComposite = function encodeComposite(tag, primitive, cl
     for (let i = content.length; i >= 0x100; i >>= 8)
         lenOctets++;
 
-    const header = Buffer.alloc(1 + 1 + lenOctets);
+    const header = $$.Buffer.alloc(1 + 1 + lenOctets);
     header[0] = encodedTag;
     header[1] = 0x80 | lenOctets;
 
@@ -13589,7 +15678,7 @@ DERNode.prototype._encodeObjid = function encodeObjid(id, values, relative) {
             size++;
     }
 
-    const objid = Buffer.alloc(size);
+    const objid = $$.Buffer.alloc(size);
     let offset = objid.length - 1;
     for (let i = id.length - 1; i >= 0; i--) {
         let ident = id[i];
@@ -13655,20 +15744,20 @@ DERNode.prototype._encodeInt = function encodeInt(num, values) {
     }
 
     // Bignum, assume big endian
-    if (typeof num !== 'number' && !Buffer.isBuffer(num)) {
+    if (typeof num !== 'number' && !$$.Buffer.isBuffer(num)) {
         const numArray = num.toArray();
         if (num.sign === false && numArray[0] & 0x80) {
             numArray.unshift(0);
         }
-        num = Buffer.from(numArray);
+        num = $$.Buffer.from(numArray);
     }
 
-    if (Buffer.isBuffer(num)) {
+    if ($$.Buffer.isBuffer(num)) {
         let size = num.length;
         if (num.length === 0)
             size++;
 
-        const out = Buffer.alloc(size);
+        const out = $$.Buffer.alloc(size);
         num.copy(out);
         if (num.length === 0)
             out[0] = 0
@@ -13694,7 +15783,7 @@ DERNode.prototype._encodeInt = function encodeInt(num, values) {
         out.unshift(0);
     }
 
-    return this._createEncoderBuffer(Buffer.from(out));
+    return this._createEncoderBuffer($$.Buffer.from(out));
 };
 
 DERNode.prototype._encodeBool = function encodeBool(value) {
@@ -13755,9 +15844,7 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
@@ -13765,7 +15852,6 @@ encoders.pem = require('./pem');
 
 },{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
-var Buffer = require('buffer').Buffer;
 
 var asn1 = require('../asn1');
 var DEREncoder = require('./der');
@@ -13788,8 +15874,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -13843,7 +15928,7 @@ KeyEncoder.SubjectPublicKeyInfoASN = SubjectPublicKeyInfoASN;
 KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
     const privateKeyObject = {
         version: new BN(1),
-        privateKey: Buffer.from(rawPrivateKey, 'hex'),
+        privateKey: $$.Buffer.from(rawPrivateKey, 'hex'),
         parameters: this.options.curveParameters,
         pemOptions: {label: "EC PRIVATE KEY"}
     };
@@ -13851,7 +15936,7 @@ KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
     if (rawPublicKey) {
         privateKeyObject.publicKey = {
             unused: 0,
-            data: Buffer.from(rawPublicKey, 'hex')
+            data: $$.Buffer.from(rawPublicKey, 'hex')
         }
     }
 
@@ -13866,7 +15951,7 @@ KeyEncoder.prototype.publicKeyObject = function (rawPublicKey) {
         },
         pub: {
             unused: 0,
-            data: Buffer.from(rawPublicKey, 'hex')
+            data: $$.Buffer.from(rawPublicKey, 'hex')
         },
         pemOptions: {label: "PUBLIC KEY"}
     }
@@ -13887,7 +15972,7 @@ KeyEncoder.prototype.encodePrivate = function (privateKey, originalFormat, desti
         if (typeof privateKey === 'buffer') {
             // do nothing
         } else if (typeof privateKey === 'string') {
-            privateKey = Buffer.from(privateKey, 'hex')
+            privateKey = $$.Buffer.from(privateKey, 'hex')
         } else {
             throw 'private key must be a buffer or a string'
         }
@@ -13926,7 +16011,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
         if (typeof publicKey === 'buffer') {
             // do nothing
         } else if (typeof publicKey === 'string') {
-            publicKey = Buffer.from(publicKey, 'hex')
+            publicKey = $$.Buffer.from(publicKey, 'hex')
         } else {
             throw 'public key must be a buffer or a string'
         }
@@ -13953,9 +16038,96 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 }
 
 module.exports = KeyEncoder;
-}).call(this)}).call(this,require("buffer").Buffer)
+},{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+const asn1 = require('../asn1/asn1');
+const BN = require('../asn1/bignum/bn');
 
-},{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+const EcdsaDerSig = asn1.define('ECPrivateKey', function() {
+    return this.seq().obj(
+        this.key('r').int(),
+        this.key('s').int()
+    );
+});
+
+/// helper functions for ethereum signature encoding
+function bnToBuffer(bn) {
+    return stripZeros($$.Buffer.from(padToEven(bn.toString(16)), 'hex'));
+}
+
+function padToEven(str) {
+    return str.length % 2 ? '0' + str : str;
+}
+
+function stripZeros(buffer) {
+    var i = 0; // eslint-disable-line
+    for (i = 0; i < buffer.length; i++) {
+        if (buffer[i] !== 0) {
+            break;
+        }
+    }
+    return i > 0 ? buffer.slice(i) : buffer;
+}
+///
+
+function decodeDERIntoASN1ETH(derSignatureBuffer){
+    const rsSig = EcdsaDerSig.decode(derSignatureBuffer, 'der');
+    const signArray = [bnToBuffer(rsSig.r),bnToBuffer(rsSig.s)];
+    //build signature
+    return '0x'+$$.Buffer.concat(signArray).toString('hex');
+}
+
+function asn1SigSigToConcatSig(asn1SigBuffer) {
+    const rsSig = EcdsaDerSig.decode(asn1SigBuffer, 'der');
+    return $$.Buffer.concat([
+        rsSig.r.toArrayLike($$.Buffer, 'be', 32),
+        rsSig.s.toArrayLike($$.Buffer, 'be', 32)
+    ]);
+}
+
+function concatSigToAsn1SigSig(concatSigBuffer) {
+    const r = new BN(concatSigBuffer.slice(0, 32).toString('hex'), 16, 'be');
+    const s = new BN(concatSigBuffer.slice(32).toString('hex'), 16, 'be');
+    return EcdsaDerSig.encode({r, s}, 'der');
+}
+
+function ecdsaSign(data, key) {
+    if (typeof data === "string") {
+        data = $$.Buffer.from(data);
+    }
+    const crypto = require('crypto');
+    const sign = crypto.createSign('sha256');
+    sign.update(data);
+    const asn1SigBuffer = sign.sign(key, 'buffer');
+    return asn1SigSigToConcatSig(asn1SigBuffer);
+}
+
+/**
+ * @return {string}
+ */
+function EthRSSign(data, key) {
+    if (typeof data === "string") {
+        data = $$.Buffer.from(data);
+    }
+    //by default it will create DER encoded signature
+    const crypto = require('crypto');
+    const sign = crypto.createSign('sha256');
+    sign.update(data);
+    const derSignatureBuffer = sign.sign(key, 'buffer');
+    return decodeDERIntoASN1ETH(derSignatureBuffer);
+}
+
+function ecdsaVerify(data, signature, key) {
+    const crypto = require('crypto');
+    const verify = crypto.createVerify('SHA256');
+    verify.update(data);
+    const asn1sig = concatSigToAsn1SigSig(signature);
+    return verify.verify(key, new $$.Buffer(asn1sig, 'hex'));
+}
+
+module.exports = {
+    decodeDERIntoASN1ETH
+};
+},{"../asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -13981,14 +16153,13 @@ DuplexStream.prototype._read = function (n) {
 
 module.exports = DuplexStream;
 },{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
 const FACTOR = Math.log(BASE) / Math.log(256); // log(BASE) / log(256), rounded up
 const iFACTOR = Math.log(256) / Math.log(BASE); // log(256) / log(BASE), rounded up
 
-const BASE_MAP = Buffer.alloc(256);
+const BASE_MAP = $$.Buffer.alloc(256);
 for (let j = 0; j < BASE_MAP.length; j++) {
     BASE_MAP[j] = 255
 }
@@ -14003,10 +16174,10 @@ for (let i = 0; i < ALPHABET.length; i++) {
 
 function encode(source) {
     if (Array.isArray(source) || source instanceof Uint8Array || typeof source === "string") {
-        source = Buffer.from(source);
+        source = $$.Buffer.from(source);
     }
-    if (!Buffer.isBuffer(source)) {
-        throw new TypeError('Expected Buffer');
+    if (!$$.Buffer.isBuffer(source)) {
+        throw new TypeError('Expected $$.Buffer');
     }
     if (source.length === 0) {
         return '';
@@ -14022,7 +16193,7 @@ function encode(source) {
     }
     // Allocate enough space in big-endian base58 representation.
     const size = ((pend - pbegin) * iFACTOR + 1) >>> 0;
-    const b58 = Buffer.alloc(size);
+    const b58 = $$.Buffer.alloc(size);
     // Process the bytes.
     while (pbegin !== pend) {
         let carry = source[pbegin];
@@ -14057,7 +16228,7 @@ function decode(source) {
         throw new TypeError('Expected String');
     }
     if (source.length === 0) {
-        return Buffer.alloc(0);
+        return $$.Buffer.alloc(0);
     }
     let psz = 0;
     // Skip leading spaces.
@@ -14073,7 +16244,7 @@ function decode(source) {
     }
     // Allocate enough space in big-endian base256 representation.
     const size = (((source.length - psz) * FACTOR) + 1) >>> 0; // log(58) / log(256), rounded up.
-    const b256 = Buffer.alloc(size);
+    const b256 = $$.Buffer.alloc(size);
     // Process the characters.
     while (source[psz]) {
         // Decode character
@@ -14103,7 +16274,7 @@ function decode(source) {
     while (it4 !== size && b256[it4] === 0) {
         it4++;
     }
-    const vch = Buffer.alloc(zeroes + (size - it4));
+    const vch = $$.Buffer.alloc(zeroes + (size - it4));
     vch.fill(0x00, 0, zeroes);
     let j = zeroes;
     while (it4 !== size) {
@@ -14116,11 +16287,7 @@ module.exports = {
     encode,
     decode
 };
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require('crypto');
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -14140,6 +16307,8 @@ function createPskHash(data, encoding) {
 }
 
 function PskHash() {
+	const crypto = require('crypto');
+
 	const sha512 = crypto.createHash('sha512');
 	const sha256 = crypto.createHash('sha256');
 
@@ -14160,9 +16329,10 @@ function PskHash() {
 
 
 function generateSalt(inputData, saltLen) {
+	const crypto = require('crypto');
 	const hash = crypto.createHash('sha512');
 	hash.update(inputData);
-	const digest = Buffer.from(hash.digest('hex'), 'binary');
+	const digest = $$.Buffer.from(hash.digest('hex'), 'binary');
 
 	return digest.slice(0, saltLen);
 }
@@ -14207,9 +16377,7 @@ module.exports = {
 };
 
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -14241,8 +16409,6 @@ module.exports.isDuplex   = isDuplex;
 /*
  SignSens helper functions
  */
-const crypto = require('crypto');
-
 exports.wipeOutsidePayload = function wipeOutsidePayload(hashStringHexa, pos, size){
     var result;
     var sz = hashStringHexa.length;
@@ -14305,7 +16471,7 @@ exports.generatePosHashXTimes = function generatePosHashXTimes(buffer, pos, size
 
     /*if(pos != -1 )
         result[pos] = 0; */
-
+    const crypto = require('crypto');
     for(var i = 0; i < count; i++){
         var hash = crypto.createHash('sha256');
         result = exports.wipeOutsidePayload(result, pos, size);
@@ -14316,7 +16482,7 @@ exports.generatePosHashXTimes = function generatePosHashXTimes(buffer, pos, size
 }
 
 exports.hashStringArray = function (counter, arr, payloadSize){
-
+    const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     var result = counter.toString(16);
 
@@ -15265,7 +17431,6 @@ function stampWithTime(buf, salt, msalt){
 
 var generateUid = null;
 
-
 exports.init = function(externalGenerator){
     generateUid = externalGenerator.generateUid;
     return module.exports;
@@ -15296,12 +17461,10 @@ exports.short_uuid = function(callback) {
     });
 };
 },{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require('crypto');
-const Queue = require("./Queue");
-var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : Buffer;
-
 function UidGenerator(minBuffers, buffersSize) {
+    const Queue = require("./Queue");
+    var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
+
     var buffers = new Queue();
     var lowLimit = .2;
 
@@ -15323,10 +17486,10 @@ function UidGenerator(minBuffers, buffersSize) {
         }
         const sz = buffersSize - b.length;
         /*crypto.randomBytes(sz, function (err, res) {
-            buffers.push(Buffer.concat([res, b]));
+            buffers.push($$.Buffer.concat([res, b]));
             notifyObserver();
         });*/
-        buffers.push(PSKBuffer.concat([crypto.randomBytes(sz), b]));
+        buffers.push(PSKBuffer.concat([require('crypto').randomBytes(sz), b]));
         notifyObserver();
     }
 
@@ -15352,7 +17515,7 @@ function UidGenerator(minBuffers, buffersSize) {
 
         //setTimeout(fillBuffers, 1);
 
-        return Buffer.concat(ret);
+        return $$.Buffer.concat(ret);
     }
 
     var fillInProgress = false;
@@ -15369,7 +17532,7 @@ function UidGenerator(minBuffers, buffersSize) {
                     fillInProgress = false;
                 }, 1);
             }
-            return crypto.randomBytes(n);
+            return require('crypto').randomBytes(n);
         }
     };
 
@@ -15399,45 +17562,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}],"adler32":[function(require,module,exports){
-
-"use strict";
-
-var algorithm = require('./lib/algorithm');
-var Hash = require('./lib/Hash');
-var register = require('./lib/register');
-
-exports.sum = algorithm.sum.bind(algorithm);
-exports.roll = algorithm.roll.bind(algorithm);
-exports.Hash = Hash;
-exports.register = register;
-
-},{"./lib/Hash":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/Hash.js","./lib/algorithm":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/algorithm.js","./lib/register":"/home/travis/build/PrivateSky/privatesky/modules/adler32/lib/register.js"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
@@ -15482,83 +17607,16 @@ module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapS
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js"}],"bdns":[function(require,module,exports){
-module.exports.create = () => {
-    const BDNS = require("./lib/BDNS");
-    return new BDNS()
-};
-
-},{"./lib/BDNS":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/BDNS.js"}],"dossier":[function(require,module,exports){
-function envSetup(powerCord, seed, identity, callback){
-    let cord_identity;
-    try{
-        const crypto = require("pskcrypto");
-        cord_identity = crypto.pskHash(seed, "hex");
-        $$.swarmEngine.plug(cord_identity, powerCord);
-    }catch(err){
-        return callback(err);
-    }
-    $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, "TooShortBlockChainWorkaroundDeleteThis", "add").onReturn(err => {
-        if (err) {
-            return callback(err);
-        }
-
-        const handler = {
-            attachTo : $$.interactions.attachTo,
-            startTransaction : function (transactionTypeName, methodName, ...args) {
-                //todo: get identity from context somehow
-                return $$.interactions.startSwarmAs(cord_identity, "transactionHandler", "start", identity, transactionTypeName, methodName, ...args);
-            }
-        };
-        //todo implement a way to know when thread/worker/isolate is ready
-        setTimeout(()=>{
-            callback(undefined, handler);
-        }, 100);
-    });
-}
-
-module.exports.load = function(seed, identity, callback){
-    const se = require("swarm-engine");
-    if(typeof $$ === "undefined" || typeof $$.swarmEngine === "undefined"){
-        se.initialise();
-    }
-
-    const envTypes = require("overwrite-require").constants;
-    switch($$.environmentType){
-        case envTypes.BROWSER_ENVIRONMENT_TYPE:
-            const pc = new se.OuterWebWorkerPowerCord("path_to_boot_script", seed);
-            return envSetup(pc, seed, identity, callback);
-            break;
-        case envTypes.NODEJS_ENVIRONMENT_TYPE:
-            const pathName = "path";
-            const path = require(pathName);
-            const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
-            return envSetup(powerCord, seed, identity, callback);
-            break;
-        case envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE:
-        case envTypes.ISOLATE_ENVIRONMENT_TYPE:
-        case envTypes.THREAD_ENVIRONMENT_TYPE:
-        default:
-            return callback(new Error(`Dossier can not be loaded in <${$$.environmentType}> environment type for now!`));
-    }
-}
-
-module.exports.RawDossier = require("./lib/RawDossier");
-},{"./lib/RawDossier":"/home/travis/build/PrivateSky/privatesky/modules/dossier/lib/RawDossier.js","overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine":false}],"key-ssi-resolver":[function(require,module,exports){
+},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js"}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
-const constants = require('./lib/constants');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 const BootStrapingService = require("./lib/BootstrapingService");
 
 /**
- * Create a new KeyDIDResolver instance and append it to
+ * Create a new KeySSIResolver instance and append it to
  * global object $$
  *
  * @param {object} options
- * @param {object} options.endpointsConfiguration
- * @param {Array<object>} options.endpointsConfiguration.brick
- * @param {Array<object>} options.endpointsConfiguration.alias
- * @param {string} options.dlDomain
  */
 function initialize(options) {
     options = options || {};
@@ -15582,38 +17640,78 @@ function initialize(options) {
 
 module.exports = {
     initialize,
-    constants,
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
     CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+(function (global){(function (){
 /*
 html API space
 */
 
-module.exports.loadApi = function(apiSpaceName){
-    switch (apiSpaceName) {
-        case "http":return require("./http"); break;
-        case "crypto":return require("./crypto"); break;
-        case "anchoring":return require("./anchoring"); break;
-        case "bricking":return require("./bricking"); break;
-        case "bdns":return require("./bdns"); break;
-        case "dc":return require("./dc"); break;
-        case "dt":return require("./dt"); break;
-        case "keyssi":return require("./keyssi"); break;
-        case "mq":return require("./mq"); break;
-        case "notifications":return require("./notifications"); break;
-        case "resolver":return require("./resolver"); break;
-        case "sc":return require("./sc"); break;
-        default: throw new Error("Unknown API space " + apiSpaceName);
-    }
+let constants = require("./moduleConstants.js");
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        if (typeof self !== "undefined") {
+            if(!self.PREVENT_DOUBLE_LOADING_OF_OPENDSU) {
+                self.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        if (typeof window !== "undefined") {
+            if(!window.PREVENT_DOUBLE_LOADING_OF_OPENDSU){
+                window.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+    default:
+        if (typeof global !== "undefined") {
+            if(!global.PREVENT_DOUBLE_LOADING_OF_OPENDSU){
+                global.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
 }
 
-module.exports.constants = require("./moduleConstants.js");
-},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js"}],"overwrite-require":[function(require,module,exports){
+if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED = true;
+
+    let loadApi = function(apiSpaceName){
+        switch (apiSpaceName) {
+            case "http":return require("./http"); break;
+            case "crypto":return require("./crypto"); break;
+            case "anchoring":return require("./anchoring"); break;
+            case "bricking":return require("./bricking"); break;
+            case "bdns":return require("./bdns"); break;
+            case "dc":return require("./dc"); break;
+            case "dt":return require("./dt"); break;
+            case "keyssi":return require("./keyssi"); break;
+            case "mq":return require("./mq"); break;
+            case "notifications":return require("./notifications"); break;
+            case "resolver":return require("./resolver"); break;
+            case "sc":return require("./sc"); break;
+            case "cache":return require("./cache/cachedStores"); break;
+            case "config":return require("./config"); break;
+            case "system":return require("./system"); break;
+            default: throw new Error("Unknown API space " + apiSpaceName);
+        }
+    }
+
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadApi = loadApi;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadAPI = loadApi;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.constants = constants;
+    require("./config/autoConfig");
+
+}
+
+module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -15639,6 +17737,8 @@ function enableForEnvironment(envType){
         case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
             global = self;
             break;
+        default:
+            Error.stackTraceLimit = Infinity;
     }
 
     if (typeof(global.$$) == "undefined") {
@@ -15653,6 +17753,9 @@ function enableForEnvironment(envType){
         $$.__global = {};
     }
 
+    if (typeof global.wprint === "undefined") {
+        global.wprint = console.warn;
+    }
     Object.defineProperty($$, "environmentType", {
         get: function(){
             return envType;
@@ -15773,6 +17876,15 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
+                    if(typeof err == "SyntaxError"){
+                        console.error(err);
+                    } else{
+                        if(request === 'zeromq'){
+                            console.error("Failed to load module ", request," with error:", err.message);
+                        }else{
+                            console.error("Failed to load module ", request," with error:", err);
+                        }
+                    }
                     //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
@@ -16004,49 +18116,52 @@ module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
 },{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarmutils":[function(require,module,exports){
-(function (global,Buffer){(function (){
+
+let cachedUIDGenerator = undefined;
+let cachedSafeUid = undefined;
+
+function initCache(){
+    if(cachedUIDGenerator === undefined){
+        cachedUIDGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
+        let  sfuid = require("./lib/safe-uuid");
+        sfuid.init(cachedUIDGenerator);
+        cachedSafeUid = sfuid.safe_uuid;
+    }
+}
+
+module.exports = {
+    get generateUid(){
+        initCache();
+        return cachedUIDGenerator.generateUid;
+    },
+     safe_uuid: function(){
+         initCache();
+         return cachedSafeUid();
+    }
+};
+
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
-
-const uidGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
-
-module.exports.safe_uuid = require("./lib/safe-uuid").init(uidGenerator);
-
 module.exports.Queue = require("./lib/Queue");
 module.exports.combos = require("./lib/Combos");
-
-module.exports.uidGenerator = uidGenerator;
-module.exports.generateUid = uidGenerator.generateUid;
 module.exports.TaskCounter = require("./lib/TaskCounter");
 module.exports.SwarmPacker = require("./lib/SwarmPacker");
 module.exports.path = require("./lib/path");
 module.exports.createPskConsole = function () {
-  return require('./lib/pskconsole');
+    return require('./lib/pskconsole');
 };
 
 module.exports.pingPongFork = require('./lib/pingpongFork');
 
 
-if(typeof global.$$ == "undefined"){
-  global.$$ = {};
-}
-
-if(typeof global.$$.uidGenerator == "undefined"){
-    $$.uidGenerator = module.exports.safe_uuid;
-}
-
-module.exports.convertToBuffer = function(uint8array){
-    const newBuffer = new Buffer(uint8array.byteLength);
-    let currentPos = 0;
-    const arrBuf = uint8array;
-    const partialDataView = new DataView(arrBuf);
-    for (let i = 0; i < arrBuf.byteLength; i++) {
-        newBuffer.writeUInt8(partialDataView.getUint8(i), currentPos);
-        currentPos += 1;
+module.exports.convertToBuffer = function (uint8array) {
+    let buffer;
+    if (ArrayBuffer.isView(uint8array)) {
+        buffer = $$.Buffer.from(uint8array.buffer)
+    } else {
+        buffer = $$.Buffer.from(uint8array);
     }
-    return newBuffer;
+    return buffer;
 }
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-
-},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js","buffer":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU_intermediar.js"])
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/openDSU.js"])

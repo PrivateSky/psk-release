@@ -7,7 +7,7 @@ const argumentsParser = require(path.join(__dirname, './argumentsParserUtil'));
 
 const config = {
     externalTarget: undefined,
-    prod: false,
+    prod: true,
     quick: false,
     only:undefined,
     projectMap: undefined,
@@ -91,12 +91,11 @@ const targets = {};
 const depsNameProp = "deps";
 
 //TODO: maybe we should put here all the neccessary modules and the xtras on build,json ?!
-const defaultMap = {
-    webshims: "",
-    pskruntime: "",
-    psknode: "",
-    pskclient: ""
-};
+const defaultMap = {};
+
+const defaultMapWithoutSourceMap = {
+
+}
 
 const sharedDefaultMapForDebugMode = 'source-map-support, source-map, buffer-from';
 
@@ -108,7 +107,7 @@ function getDefaultMapForTarget(targetName) {
         mapForTarget = defaultMap[targetName];
     }
 
-    if(!config.isProduction) {
+    if(!config.isProduction && config.projectMap[targetName].sourceMap) {
         if(!cachedExternalValues.includes(targetName)) {
             mapForTarget = concatDependencyMaps(sharedDefaultMapForDebugMode, mapForTarget);
         }

@@ -51,10 +51,6 @@ global.testsRuntimeLoadModules = function(){
 		$$.__runtimeModules["swarm-engine"] = require("swarm-engine");
 	}
 
-	if(typeof $$.__runtimeModules["bdns"] === "undefined"){
-		$$.__runtimeModules["bdns"] = require("bdns");
-	}
-
 	if(typeof $$.__runtimeModules["key-ssi-resolver"] === "undefined"){
 		$$.__runtimeModules["key-ssi-resolver"] = require("key-ssi-resolver");
 	}
@@ -73,202 +69,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"bdns":"bdns","blockchain":"blockchain","buffer-crc32":"buffer-crc32","dossier":"dossier","double-check":"double-check","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/BDNS.js":[function(require,module,exports){
-function BDNS() {
-    let hosts;
-
-    const initialize = () => {
-        if (typeof hosts !== "undefined") {
-            return;
-        }
-
-        let initializeFn = require("./configStrategies").init;
-        hosts = initializeFn();
-    };
-
-    this.getRawInfo = (dlDomain, callback) => {
-        const rawInfo = hosts[dlDomain];
-        if (typeof rawInfo === "undefined") {
-            //TODO: send swarm to parent's BDNS
-
-            callback(`[BDNS] - Unknown configuration for ${dlDomain}.`);
-        } else {
-            callback(undefined, rawInfo);
-        }
-    };
-
-    this.getNotificationEndpoints = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.notifications === "undefined") {
-                return callback(err ? err : "Notification endpoints not available");
-            }
-            callback(undefined, rawInfo.notifications);
-        });
-    }
-
-    this.getMQEndpoints = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.mq === "undefined") {
-                return callback(err ? err : "Message Queue endpoints not available");
-            }
-            callback(undefined, rawInfo.mq);
-        });
-    }
-
-    this.getBrickStorages = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.brickStorages === "undefined") {
-                return callback(err ? err : "Brick Storages not available");
-            }
-            callback(undefined, rawInfo.brickStorages);
-        });
-    };
-
-    this.getAnchoringServices = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.anchoringServices === "undefined") {
-                return callback(err ? err : "Anchoring Services not available");
-            }
-            callback(undefined, rawInfo.anchoringServices);
-        });
-    };
-
-    this.getReplicas = (dlDomain, callback) => {
-        this.getRawInfo(dlDomain, (err, rawInfo) => {
-            if (err || typeof rawInfo.replicas === "undefined") {
-                return callback(err ? err : "Domain replicas not available");
-            }
-            callback(undefined, rawInfo.replicas);
-        });
-    };
-
-    this.addRawInfo = (dlDomain, rawInfo) => {
-        hosts[dlDomain] = rawInfo;
-    };
-
-    this.addAnchoringServices = (dlDomain, anchoringServices) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].anchoringServices = [];
-        }
-
-        if (typeof anchoringServices === "string") {
-            anchoringServices = [anchoringServices];
-        }
-
-        if (!Array.isArray(anchoringServices)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof anchoringServices}`)
-        }
-
-        hosts[dlDomain].anchoringServices = hosts[dlDomain].anchoringServices.concat(anchoringServices);
-    };
-
-    this.addBrickStorages = (dlDomain, brickStorages) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].brickStorages = [];
-        }
-
-        if (typeof brickStorages === "string") {
-            brickStorages = [brickStorages];
-        }
-
-        if (!Array.isArray(brickStorages)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof brickStorages}`)
-        }
-
-        hosts[dlDomain].brickStorages = hosts[dlDomain].brickStorages.concat(brickStorages);
-    };
-
-    this.addReplicas = (dlDomain, replicas) => {
-        if (typeof hosts[dlDomain] === "undefined") {
-            hosts[dlDomain] = {};
-            hosts[dlDomain].replicas = [];
-        }
-
-        if (typeof replicas === "string") {
-            replicas = [replicas];
-        }
-
-        if (!Array.isArray(replicas)) {
-            throw Error(`Invalid brick storages format. Expected string or array. Received ${typeof replicas}`)
-        }
-
-        hosts[dlDomain].replicas = hosts[dlDomain].replicas.concat(replicas);
-    };
-
-    initialize();
-}
-
-module.exports = BDNS;
-},{"./configStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/configStrategies/index.js":[function(require,module,exports){
-let or = require("overwrite-require");
-const domain = "default";
-const defaultURL = "http://localhost:8080";
-
-function buildConfig(domainName, url) {
-	let config = {};
-	config[domainName] = {
-		"replicas": [],
-		"brickStorages": [url],
-		"anchoringServices": [url]
-	};
-	return config;
-}
-
-function defaultConfigInit() {
-	let hosts = buildConfig(domain, "http://localhost:8080");
-	return hosts;
-}
-
-function browserConfigInit() {
-	const protocol = window.location.protocol;
-	const host = window.location.hostname;
-	const port = window.location.port;
-
-	let url = `${protocol}//${host}:${port}`;
-	return buildConfig(domain, url);
-}
-
-function swConfigInit() {
-	let scope = self.registration.scope;
-
-	let parts = scope.split("/");
-	let url  = parts[0] + "//" + parts[2];
-
-	return buildConfig(domain, url);
-}
-
-function nodeConfigInit() {
-	let hosts;
-	try {
-		const path = require("swarmutils").path;
-		const FILE_PATH = path.join(process.env.PSK_CONFIG_LOCATION, "BDNS.hosts.json");
-		hosts = require(FILE_PATH);
-	} catch (e) {
-		console.log("BDNS config file not found. Using defaults.");
-		hosts = buildConfig(domain, defaultURL);
-	}
-	return hosts;
-}
-
-let result = {};
-switch ($$.environmentType) {
-	case or.constants.BROWSER_ENVIRONMENT_TYPE:
-		result.init = browserConfigInit;
-		break;
-	case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
-		result.init = swConfigInit;
-		break;
-	case or.constants.NODEJS_ENVIRONMENT_TYPE:
-		result.init = nodeConfigInit;
-		break;
-	default:
-		result.init = defaultConfigInit;
-}
-
-module.exports = result;
-},{"overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
+},{"blockchain":"blockchain","buffer-crc32":"buffer-crc32","dossier":"dossier","double-check":"double-check","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -1196,7 +997,6 @@ module.exports = {
 }
 },{"./pskdb":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
 const bm = require('../moduleExports');
-const beesHealer = require("swarmutils").beesHealer;
 var CNST = require("../moduleConstants");
 
 function AliasIndex(assetType, pdsHandler, worldStateCache) {
@@ -1371,7 +1171,7 @@ function Transaction(blockchain, pdsHandler, transactionSwarm, worldStateCache, 
         }
 
 
-        const serializedSwarm = beesHealer.asJSON(asset, null, null);
+        const serializedSwarm = require("swarmutils").beesHealer.asJSON(asset, null, null);
         pdsHandler.writeKey(swarmTypeName + '/' + swarmId, J(serializedSwarm));
     };
 
@@ -2863,7 +2663,7 @@ function RawDossier(bar) {
 module.exports = RawDossier;
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/runner.js":[function(require,module,exports){
-(function (Buffer,__dirname){(function (){
+(function (__dirname){(function (){
 const fs = require("fs");
 const path = require("path");
 const forker = require('child_process');
@@ -3182,7 +2982,7 @@ function TestRunner(){
         // IMPORTANT: The 'exit' event may or may not fire after an error has occurred!
         function onErrorEventHandlerWrapper(test) {
             return function (error) {
-                if(Buffer.isBuffer(error)){
+                if($$.Buffer.isBuffer(error)){
                     error = error.toString();
                 }
                 debug(`Worker ${worker.pid} - error event.`, test.data.name);
@@ -3199,7 +2999,7 @@ function TestRunner(){
 
         function messageCaughtOnStdErr(test) {
             return function (error) {
-                if(Buffer.isBuffer(error)){
+                if($$.Buffer.isBuffer(error)){
                     error = error.toString();
                 }
                 //debug(`Worker ${worker.pid} - error event.`, test.data.name);
@@ -3389,9 +3189,9 @@ exports.init = function(sf) {
     sf.testRunner = new TestRunner();
 }
 
-}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")},"/modules/double-check/lib")
+}).call(this)}).call(this,"/modules/double-check/lib")
 
-},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./utils/glob-to-regexp":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/utils/glob-to-regexp.js","child_process":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardAsserts.js":[function(require,module,exports){
+},{"./utils/glob-to-regexp":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/utils/glob-to-regexp.js","child_process":false,"fs":false,"path":false}],"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardAsserts.js":[function(require,module,exports){
 (function (global){(function (){
 module.exports.init = function (sf, logger) {
     /**
@@ -4558,7 +4358,6 @@ function BootstrapingService(options) {
         'brickStorage': openDSU.loadApi("bricking"),
         'anchorService': openDSU.loadApi("anchoring")
     }
-    const bdns = openDSU.loadApi("bdns");
 
     ////////////////////////////////////////////////////////////
     // Private methods
@@ -4617,7 +4416,6 @@ module.exports = BootstrapingService;
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -4627,7 +4425,6 @@ function ConstDSUFactory(options) {
 
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -4681,8 +4478,7 @@ module.exports = ConstDSUFactory;
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
- * @param {DIDFactory} options.keySSIFactory
+ * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 const cache = require('psk-cache').factory();
@@ -4690,19 +4486,36 @@ function DSUFactory(options) {
     const barModule = require('bar');
     const fsAdapter = require('bar-fs-adapter');
 
-    const DEFAULT_BRICK_MAP_STRATEGY = "Diff";
+    const DEFAULT_BRICK_MAP_STRATEGY = "LatestVersion";
 
     options = options || {};
     this.bootstrapingService = options.bootstrapingService;
     this.keySSIFactory = options.keySSIFactory;
     this.brickMapStrategyFactory = options.brickMapStrategyFactory;
 
+
+    function castSSI(ssi){
+        if(typeof ssi !== "undefined"){
+            if(typeof ssi === "string"){
+                let keyssi = require("opendsu").loadApi("keyssi");
+                ssi = keyssi.parse(ssi);
+            } else {
+                 if(ssi.getTypeName === undefined || ssi.getIdentifier === undefined){
+                     throw Error("Please provide a proper SSI instance ");
+                 }
+            }
+        } else {
+            throw Error("SSI should not be undefined");
+        }
+        return ssi;
+    }
+
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
 
     /**
-     * @param {BaseDID} keySSI
+     * @param {SeedSSI} keySSI
      * @param {object} options
      * @return {Archive}
      */
@@ -4766,8 +4579,8 @@ function DSUFactory(options) {
             return callback(Error("A template keySSI should be provided when creating a new DSU."));
         }
         const KeySSIFactory = require("../KeySSIs/KeySSIFactory");
-        const keySSI = KeySSIFactory.createType(templateKeySSI.getName());
-        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, undefined, callback);
+        const keySSI = KeySSIFactory.createType(templateKeySSI.getTypeName());
+        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, templateKeySSI.getHint(), callback);
     }
 
     ////////////////////////////////////////////////////////////
@@ -4776,7 +4589,6 @@ function DSUFactory(options) {
 
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -4790,9 +4602,19 @@ function DSUFactory(options) {
      * @param {callback} callback
      */
     this.create = (keySSI, options, callback) => {
+        keySSI = castSSI(keySSI);
+        if(typeof options === "function"){
+            callback = options;
+            options = undefined;
+        }
         options = options || {};
         if (options.useSSIAsIdentifier) {
-            const bar = createInstance(keySSI, options);
+            let bar;
+            try {
+                bar = createInstance(keySSI, options);
+            } catch (err) {
+                return callback(err);
+            }
             return bar.init(err => callback(err, bar));
         }
 
@@ -4801,7 +4623,12 @@ function DSUFactory(options) {
                 return callback(err);
             }
 
-            const bar = createInstance(_keySSI, options);
+            let bar;
+            try {
+                bar = createInstance(_keySSI, options);
+            } catch (err) {
+                return callback(err);
+            }
             bar.init(err => callback(err, bar));
         });
     }
@@ -4822,29 +4649,37 @@ function DSUFactory(options) {
      * @param {callback} callback
      */
     this.load = (keySSI, options, callback) => {
+        keySSI = castSSI(keySSI);
+        if(typeof options === "function"){
+            callback = options;
+            options = undefined;
+        }
         options = options || {};
-        const bar = createInstance(keySSI, options);
+        let bar;
+        try {
+            bar = createInstance(keySSI, options);
+        } catch (err) {
+            return callback(err);
+        }
         bar.load(err => callback(err, bar));
     }
 }
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":false,"bar-fs-adapter":false,"overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":false,"bar-fs-adapter":false,"opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
 function WalletFactory(options) {
     options = options || {};
-    this.barFactory = options.barFactory;
-
+    this.dsuFactory = options.barFactory;
+    const WALLET_MOUNT_POINT = "/writableDSU";
     /**
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -4859,35 +4694,69 @@ function WalletFactory(options) {
      */
     this.create = (keySSI, options, callback) => {
         const defaultOpts = {overwrite: false};
+
         if (typeof options === 'function') {
             callback = options;
             options = {};
         }
+        let writableWallet;
+        let constDSUWallet;
+
         Object.assign(defaultOpts, options);
         options = defaultOpts;
-        this.barFactory.create(keySSI, options, (err, wallet) => {
-            if (err) {
-                return callback(err);
-            }
 
-            wallet.mount("/code", options.dsuTypeSSI, (err => {
+        let createWritableDSU = () => {
+            let templateSSI = require("opendsu").loadApi("keyssi").buildSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
+            this.dsuFactory.create(templateSSI, (err, writableDSU) => {
+                if (err) {
+                    return callback(err);
+                }
+                writableWallet = writableDSU;
+                mountDSUType();
+            })
+        }
+
+        let mountDSUType = () =>{
+            writableWallet.mount("/code", options.dsuTypeSSI, (err => {
+                if (err) {
+                    return callback(err);
+                }
+                createConstDSU();
+            }));
+        }
+
+
+
+        let createConstDSU = () => {
+            this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
                     return callback(err);
                 }
 
-                return callback(undefined, wallet);
+                constDSUWallet = constWallet;
+                constDSUWallet.getWritableDSU = function(){
+                    return writableWallet;
+                }
+                mountWritableWallet();
+            })
+        }
 
-                /*wallet.getKeySSI((err, _keySSI) => {
+
+        let mountWritableWallet = () => {
+            writableWallet.getKeySSI((err,seedSSI) =>{
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to get seedSSI",err));
+                }
+                constDSUWallet.mount(WALLET_MOUNT_POINT, seedSSI, (err => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet",err));
                     }
+                    callback(undefined, constDSUWallet);
+                }));
+            });
+        }
 
-                    callback(undefined, wallet);
-                });*/
-
-            }));
-        })
-
+        createWritableDSU();
     };
 
     /**
@@ -4913,26 +4782,58 @@ function WalletFactory(options) {
         }
         Object.assign(defaultOpts, options);
         options = defaultOpts;
+        let constDSU;
+        let writableDSU;
+        let writableSSI;
 
-        this.barFactory.load(keySSI, options, (err, dossier) => {
-            if (err) {
-                return callback(err);
-            }
+        let loadConstDSU = () =>{
+            this.dsuFactory.load(keySSI, options, (err, dsu) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to load ConstDSU",err));
+                }
+                constDSU = dsu;
+                getSSIFromMountPoint();
+            });
+        }
 
-            return callback(undefined, dossier);
-        });
+
+        let  getSSIFromMountPoint = () => {
+            constDSU.getSSIForMount(WALLET_MOUNT_POINT, (err, ssi) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU",err));
+                }
+                writableSSI = require("opendsu").loadApi("keyssi").parse(ssi);
+                loadWritableDSU();
+            });
+        }
+
+        let loadWritableDSU = () => {
+            this.dsuFactory.load(writableSSI, options, (err, dsu) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet", err));
+                }
+                writableDSU = dsu;
+                constDSU.getWritableDSU = function(){
+                    return writableDSU;
+                }
+                return callback(undefined, constDSU);
+            });
+        }
+
+
+        loadConstDSU();
+
     };
 }
 
 module.exports = WalletFactory;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
-
+const SSITypes = require("../KeySSIs/SSITypes");
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
- * @param {string} options.dlDomain
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -4967,14 +4868,15 @@ function Registry(options) {
             brickMapStrategyFactory
         });
 
-        this.registerDSUType("seed", barFactory);
+        this.registerDSUType(SSITypes.SEED_SSI, barFactory);
+        this.registerDSUType(SSITypes.SREAD_SSI, barFactory);
         const WalletFactory = require("./WalletFactory");
         const walletFactory = new WalletFactory({barFactory});
-        this.registerDSUType("wallet", walletFactory);
+        this.registerDSUType(SSITypes.WALLET_SSI, walletFactory);
         const ConstDSUFactory = require("./ConstDSUFactory");
         const constDSUFactory = new ConstDSUFactory({barFactory});
-        this.registerDSUType("const", constDSUFactory);
-        this.registerDSUType("array", constDSUFactory);
+        this.registerDSUType(SSITypes.CONST_SSI, constDSUFactory);
+        this.registerDSUType(SSITypes.ARRAY_SSI, constDSUFactory);
     }
 
     ////////////////////////////////////////////////////////////
@@ -4986,14 +4888,17 @@ function Registry(options) {
      * @return {boolean}
      */
     this.isValidKeySSI = (keySSI) => {
-        return typeof factories[keySSI.getName()] !== 'undefined';
+        try{
+            return typeof factories[keySSI.getTypeName()] !== 'undefined';
+        } catch(err){
+            return false;
+        }
     };
 
 
     /**
      * @param {object} keySSI
      * @param {object} dsuConfiguration
-     * @param {string} dsuConfiguration.favouriteEndpoint
      * @param {string} dsuConfiguration.brickMapStrategyFactory 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} dsuConfiguration.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} dsuConfiguration.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
@@ -5007,7 +4912,7 @@ function Registry(options) {
      * @param {callback} callback
      */
     this.create = (keySSI, dsuConfiguration, callback) => {
-        let type = keySSI.getName();
+        let type = keySSI.getTypeName();
         if (keySSI.options && keySSI.options.dsuFactoryType) {
             type = keySSI.options.dsuFactoryType;
         }
@@ -5032,7 +4937,7 @@ function Registry(options) {
      * @param {callback} callback
      */
     this.load = (keySSI, dsuConfiguration, callback) => {
-        let type = keySSI.getName();
+        let type = keySSI.getTypeName();
         if (keySSI.options && keySSI.options.dsuFactoryType) {
             type = keySSI.options.dsuFactoryType;
         }
@@ -5056,7 +4961,8 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 }
 
 module.exports = Registry;
-},{"./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+
+},{"../KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
@@ -5071,7 +4977,7 @@ module.exports = function(archive){
 			}
 
 			try{
-				//before eval we need to convert from Buffer/ArrayBuffer to String
+				//before eval we need to convert from $$.Buffer/ArrayBuffer to String
 				const or = require("overwrite-require");
 				switch($$.environmentType){
 					case or.constants.BROWSER_ENVIRONMENT_TYPE:
@@ -5092,11 +4998,10 @@ module.exports = function(archive){
 	}
 	return archive;
 }
+
 },{"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
-const constants = require('./constants');
 const defaultBootStrapingService = require("./BootstrapingService");
 /**
- * @param {string} options.dlDomain
  * @param {BoostrapingService} options.bootstrapingService
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  * @param {DSUFactory} options.dsuFactory
@@ -5105,7 +5010,6 @@ function KeySSIResolver(options) {
     options = options || {};
 
     const bootstrapingService = options.bootstrapingService || defaultBootStrapingService;
-    const dlDomain = options.dlDomain || constants.DEFAULT_DOMAIN;
 
     if (!bootstrapingService) {
         throw new Error('BootstrapingService is required');
@@ -5121,9 +5025,8 @@ function KeySSIResolver(options) {
     ////////////////////////////////////////////////////////////
 
     /**
-     * @param {string} dsuRepresentation
+     * @param {SeedSSI} dsuRepresentation
      * @param {object} options
-     * @param {string} options.favouriteEndpoint
      * @param {string} options.brickMapStrategy 'Diff' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
      * @param {callback} options.anchoringOptions.decisionFn A function which will decide when to effectively anchor changes
@@ -5132,7 +5035,7 @@ function KeySSIResolver(options) {
      *                                                              The default strategy is to reload the BrickMap and then apply the new changes
      * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules 
+     * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
      * @param {callback} callback
      */
@@ -5147,7 +5050,6 @@ function KeySSIResolver(options) {
 
     /**
      * @param {string} keySSI
-     * @param {string} dsuRepresentation
      * @param {object} options
      * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
      * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
@@ -5157,7 +5059,7 @@ function KeySSIResolver(options) {
      *                                                              The default strategy is to reload the BrickMap and then apply the new changes
      * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
-     * @param {object} options.validationRules 
+     * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
      * @param {callback} callback
      */
@@ -5166,11 +5068,15 @@ function KeySSIResolver(options) {
             callback = options;
             options = {};
         }
-
         if (!dsuFactory.isValidKeySSI(keySSI)) {
-            return callback(new Error(`Invalid KeySSI: ${keySSI.getName()}`));
+            let helpString;
+            if(typeof keySSI === "string"){
+                helpString = keySSI;
+            } else {
+                helpString = keySSI.getIdentifier(true);
+            }
+            return callback(new Error(`Invalid KeySSI: ${helpString}`));
         }
-
         dsuFactory.load(keySSI, options, callback);
     };
 
@@ -5198,36 +5104,36 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
 function ArraySSI(identifier) {
     const SSITypes = require("../SSITypes");
     const KeySSIMixin = require("../KeySSIMixin");
     const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.getName = () => {
-        return SSITypes.ARRAY_SSI;
+     self.initialize = (dlDomain, arr, vn, hint) => {
+        if (typeof vn === "undefined") {
+            vn = 'v0';
+        }
+        const key = cryptoRegistry.getKeyDerivationFunction(self)(arr.join(''), 1000);
+        self.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getEncodingFunction(self)(key), "", vn, hint);
     };
 
-    this.initialize = (dlDomain, arr,   vn, hint) => {
-        this.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getKeyDerivationFunction(this)(arr.join(''), 1000), "", vn, hint);
-    };
-
-    this.derive = () => {
+    self.derive = () => {
         const ConstSSI = require("./ConstSSI");
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), getEncryptionKey(), this.getControl(), this.getVn(), this.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControl(), self.getVn(), self.getHint());
         return constSSI;
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
-    this.getEncryptionKey = () => {
-        return this.derive().getEncryptionKey();
+    self.getEncryptionKey = () => {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -5244,16 +5150,16 @@ const SSITypes = require("../SSITypes");
 
 function CZaSSI(identifier) {
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hpk, vn, hint) => {
-        this.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
+    self.initialize = (dlDomain, hpk, vn, hint) => {
+        self.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -5273,19 +5179,23 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function ConstSSI(identifier){
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
-        this.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
+    self.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
+        self.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, vn, hint);
     };
 
-    this.derive = () => {
+    self.getEncryptionKey = () => {
+        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+    };
+
+    self.derive = () => {
         const cZaSSI = CZaSSI.createCZaSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
-        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        const subtypeKey = cryptoRegistry.getHashFunction(self)(self.getEncryptionKey());
+        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControl(), self.getVn(), self.getHint());
         return cZaSSI;
     };
 }
@@ -5305,24 +5215,25 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function PasswordSSI(identifier){
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, context, password, kdfOptions, vn, hint) => {
-        const subtypeSpecificString = cryptoRegistry.getKeyDerivationFunction(this)(context + password, kdfOptions);
-        this.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
+    self.initialize = (dlDomain, context, password, kdfOptions, vn, hint) => {
+        const subtypeSpecificString = cryptoRegistry.getKeyDerivationFunction(self)(context + password, kdfOptions);
+        self.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, this.getDLDomain(), this.getSubtypeSpecificString(), this.getControl(), this.getVn(), this.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSubtypeSpecificString(), self.getControl(), self.getVn(), self.getHint());
         return constSSI;
     };
 
-    this.getEncryptionKey = () => {
-        return this.derive().getEncryptionKey();
+    self.getEncryptionKey = () => {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -5334,13 +5245,12 @@ module.exports = {
     createPasswordSSI
 };
 },{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const crypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
 const algorithms = {};
 const defaultAlgorithms = {
     hash: (data) => {
-        return crypto.hash('sha256', data, 'hex');
+        return defaultAlgorithms.encoding(crypto.hash('sha256', data));
     },
     keyDerivation: (password, iterations) => {
         return crypto.deriveKey('aes-256-gcm', password, iterations);
@@ -5356,10 +5266,10 @@ const defaultAlgorithms = {
     decryption: (encryptedData, decryptionKey, authTagLength, options) => {
         const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
         const utils = require("swarmutils");
-        if (!Buffer.isBuffer(decryptionKey)) {
+        if (!$$.Buffer.isBuffer(decryptionKey) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
             decryptionKey = utils.convertToBuffer(decryptionKey);
         }
-        if (!Buffer.isBuffer(encryptedData)) {
+        if (!$$.Buffer.isBuffer(encryptedData) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
             encryptedData = utils.convertToBuffer(encryptedData);
         }
         return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
@@ -5372,48 +5282,39 @@ const defaultAlgorithms = {
     },
     keyPairGenerator: () => {
         return crypto.createKeyPairGenerator();
-    },
-    sign: (data, privateKey) => {
-        const keyGenerator = crypto.createKeyPairGenerator();
-        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        return crypto.sign('sha256', data, keyGenerator.convertKeys(privateKey, rawPublicKey).privateKey);
-    },
-    verify: (data, privateKey, signature) => {
-        const keyGenerator = crypto.createKeyPairGenerator();
-        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        const publicKey = keyGenerator.convertKeys(privateKey, rawPublicKey).publicKey;
-        return crypto.verify('sha256', data, publicKey, signature);
     }
+
 };
 
 function CryptoAlgorithmsRegistry() {
 }
 
+
 const registerCryptoFunction = (keySSIType, vn, algorithmType, cryptoFunction) => {
     if (typeof algorithms[keySSIType] !== "undefined" && typeof algorithms[vn] !== "undefined" && typeof algorithms[vn][algorithmType] !== "undefined") {
         throw Error(`A ${algorithmType} is already registered for version ${vn}`);
     }
+
     if (typeof algorithms[keySSIType] === "undefined") {
         algorithms[keySSIType] = {};
     }
 
     if (typeof algorithms[keySSIType][vn] === "undefined") {
-        algorithms[keySSIType][vn] = {};
+        algorithms[keySSIType][vn] = defaultAlgorithms;
     }
-
     algorithms[keySSIType][vn][algorithmType] = cryptoFunction;
 };
 
 const getCryptoFunction = (keySSI, algorithmType) => {
     let cryptoFunction;
     try {
-        cryptoFunction = algorithms[keySSI.getName()][keySSI.getVn()][algorithmType];
+        cryptoFunction = algorithms[keySSI.getTypeName()][keySSI.getVn()][algorithmType];
     } catch (e) {
         cryptoFunction = defaultAlgorithms[algorithmType];
     }
 
     if (typeof cryptoFunction === "undefined") {
-        throw Error(`Algorithm type <${algorithmType}> not recognized`);
+        throw Error(`Algorithm type <${algorithmType}> not recognized for <${keySSI.getIdentifier(true)}>`);
     }
     return cryptoFunction;
 };
@@ -5487,6 +5388,7 @@ CryptoAlgorithmsRegistry.prototype.registerSignFunction = (keySSIType, vn, signF
     registerCryptoFunction(keySSIType, vn, 'sign', signFunction);
 };
 
+
 CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
     return getCryptoFunction(keySSI, 'sign');
 };
@@ -5499,10 +5401,56 @@ CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
     return getCryptoFunction(keySSI, 'verify');
 };
 
-module.exports = new CryptoAlgorithmsRegistry();
-}).call(this)}).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
+CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction = (keySSIType, vn, deriveFunction) => {
+    registerCryptoFunction(keySSIType, vn, 'derivePublicKey', deriveFunction);
+};
 
-},{"../../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+CryptoAlgorithmsRegistry.prototype.getDerivePublicKeyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, 'derivePublicKey');
+};
+
+module.exports = new CryptoAlgorithmsRegistry();
+
+
+
+/* Initialisation */
+
+
+let defaultKeySSISign = (data, privateKey) => {
+    const keyGenerator = crypto.createKeyPairGenerator();
+    const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+    return crypto.sign('sha256', data, keyGenerator.getPemKeys(privateKey, rawPublicKey).privateKey);
+}
+
+let defaultKeySSIVerify = (data, publicKey, signature) => {
+    return crypto.verify('sha256', data, publicKey, signature);
+}
+
+let defaultKeySSIDerivePublicKey =  (privateKey, format) => {
+    if (typeof format === "undefined") {
+        format = "pem";
+    }
+    const keyGenerator = crypto.createKeyPairGenerator();
+    let publicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+    switch(format){
+        case "raw":
+            return publicKey;
+        case "pem":
+            return keyGenerator.getPemKeys(privateKey, publicKey).publicKey;
+        default:
+            throw Error("Invalid format name");
+    }
+}
+
+
+CryptoAlgorithmsRegistry.prototype.registerSignFunction(SSITypes.SEED_SSI, "v0", defaultKeySSISign);
+CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIVerify);
+CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIDerivePublicKey);
+
+CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SREAD_SSI, "v0", defaultKeySSIVerify);
+
+
+},{"./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
@@ -5523,6 +5471,7 @@ const createArraySSI = require("./ConstSSIs/ArraySSI").createArraySSI;
 const createConstSSI = require("./ConstSSIs/ConstSSI").createConstSSI;
 const createCZaSSI = require("./ConstSSIs/CZaSSI").createCZaSSI;
 const createHashLinkSSI = require("./OtherKeySSIs/HashLinkSSI").createHashLinkSSI;
+const createSymmetricalEncryptionSSI = require("./OtherKeySSIs/SymmetricalEncryptionSSI").createSymmetricalEncryptionSSI;
 
 const SSITypes = require("./SSITypes");
 
@@ -5554,7 +5503,7 @@ KeySSIFactory.prototype.create = (identifier, options) => {
     KeySSIMixin(keySSI);
     keySSI.autoLoad(identifier);
 
-    const typeName = keySSI.getName();
+    const typeName = keySSI.getTypeName();
 
     keySSI = registry[typeName].functionFactory(identifier);
     keySSI.options = options;
@@ -5566,7 +5515,7 @@ KeySSIFactory.prototype.createType = (typeName)=>{
 }
 
 KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
-    if (keySSI.getName() === otherType) {
+    if (keySSI.getTypeName() === otherType) {
         return keySSI;
     }
     let currentEntry = registry[otherType];
@@ -5575,7 +5524,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     }
 
     while (typeof currentEntry.derivedType !== "undefined") {
-        if (currentEntry.derivedType === keySSI.getName()) {
+        if (currentEntry.derivedType === keySSI.getTypeName()) {
             return $$.securityContext.getRelatedSSI(keySSI, otherType, callback);
         }
         currentEntry = registry[currentEntry.derivedType];
@@ -5593,7 +5542,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
 KeySSIFactory.prototype.getAnchorType = (keySSI) => {
     let localKeySSI = keySSI;
-    while (typeof registry[localKeySSI.getName()].derivedType !== "undefined") {
+    while (typeof registry[localKeySSI.getTypeName()].derivedType !== "undefined") {
         localKeySSI = localKeySSI.derive();
     }
     return localKeySSI;
@@ -5601,7 +5550,7 @@ KeySSIFactory.prototype.getAnchorType = (keySSI) => {
 
 const getDerivedType = (keySSI, derivedTypeName) => {
     let localKeySSI = keySSI;
-    let currentEntry = registry[localKeySSI.getName()];
+    let currentEntry = registry[localKeySSI.getTypeName()];
     while (typeof currentEntry.derivedType !== "undefined") {
         if (currentEntry.derivedType === derivedTypeName) {
             return localKeySSI.derive();
@@ -5627,9 +5576,10 @@ KeySSIFactory.prototype.registerFactory(SSITypes.ARRAY_SSI, 'v0', SSITypes.CONST
 KeySSIFactory.prototype.registerFactory(SSITypes.CONST_SSI, 'v0', SSITypes.CONSTANT_ZERO_ACCESS_SSI, createConstSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.CONSTANT_ZERO_ACCESS_SSI, 'v0', undefined, createCZaSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.HASH_LINK_SSI, 'v0', undefined, createHashLinkSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, 'v0', undefined, createSymmetricalEncryptionSSI);
 
 module.exports = new KeySSIFactory();
-},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("./CryptoAlgorithmsRegistry");
 const pskCrypto = require("pskcrypto");
 
@@ -5673,10 +5623,13 @@ function keySSIMixin(target){
         if (segments.length > 0) {
             _hint = segments.join(":");
         }
-        _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
+        // _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
     }
 
     target.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
+        if ($$.Buffer.isBuffer(subtypeSpecificString)) {
+            throw Error("Invalid subtypeSpecificString");
+        }
         _subtype = subtype;
         _dlDomain = dlDomain;
         _subtypeSpecificString = subtypeSpecificString;
@@ -5700,15 +5653,16 @@ function keySSIMixin(target){
         return keySSIFactory.getAnchorType(target).getIdentifier();
     }
 
-    target.getEncryptionKey = function () {
-        return _subtypeSpecificString;
-    }
-
     target.getSpecificString = function () {
         return _subtypeSpecificString;
     }
 
     target.getName = function () {
+        console.trace("Obsolete function. Replace with getTypeName");
+        return _subtype;
+    }
+
+    target.getTypeName = function () {
         return _subtype;
     }
 
@@ -5734,8 +5688,8 @@ function keySSIMixin(target){
     }
 
     target.getIdentifier = function (plain) {
-        const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
-        let id = `${_prefix}:${target.getName()}:${_dlDomain}:${key}:${_control}:${_vn}`;
+        // const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
+        let id = `${_prefix}:${target.getTypeName()}:${_dlDomain}:${_subtypeSpecificString}:${_control}:${_vn}`;
 
         if (typeof _hint !== "undefined") {
             id += ":" + _hint;
@@ -5755,6 +5709,10 @@ function keySSIMixin(target){
         keySSIMixin(clone);
         return clone;
     }
+
+    target.cast = function(newType) {
+        target.load(newType, _dlDomain, _subtypeSpecificString, _control, _vn, _hint);
+    }
 }
 
 module.exports = keySSIMixin;
@@ -5764,20 +5722,25 @@ const SSITypes = require("../SSITypes");
 
 function HashLinkSSI(identifier) {
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hash, vn) => {
-        this.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
+    self.initialize = (dlDomain, hash, vn) => {
+        self.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
     };
 
-    this.getHash = () => {
-        return this.getEncryptionKey();
+    self.getHash = () => {
+        const specificString = self.getSpecificString();
+        if (typeof specificString !== "string") {
+            console.trace("Specific string is not string", specificString.toString());
+        }
+        return specificString;
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -5789,70 +5752,66 @@ function createHashLinkSSI(identifier) {
 module.exports = {
     createHashLinkSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+
+function SymmetricalEncryptionSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = () => {
+        return SSITypes.SYMMETRICAL_ENCRYPTION_SSI;
+    };
+
+    let load = self.load;
+    self.load = function (subtype, dlDomain, encryptionKey, control, vn, hint){
+        if (typeof encryptionKey === "undefined") {
+            encryptionKey = cryptoRegistry.getEncryptionKeyGenerationFunction(self)();
+        }
+
+        if ($$.Buffer.isBuffer(encryptionKey)) {
+            encryptionKey = cryptoRegistry.getEncodingFunction(self)(encryptionKey);
+        }
+
+        load(subtype, dlDomain, encryptionKey, '', vn, hint);
+    }
+
+    self.getEncryptionKey = function() {
+        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+    };
+
+    self.derive = function (){
+        throw Error("Not implemented");
+    }
+}
+
+function createSymmetricalEncryptionSSI(identifier) {
+    return new SymmetricalEncryptionSSI(identifier);
+}
+
+module.exports = {
+    createSymmetricalEncryptionSSI
+};
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
+const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
 
 function WalletSSI(identifier) {
-    const seedSSI = SeedSSI.createSeedSSI(identifier);
+    const self = this;
+    const arraySSI = ArraySSI.createArraySSI(identifier);
 
-    seedSSI.getName = () => {
+    arraySSI.getTypeName = () => {
         return SSITypes.WALLET_SSI;
     };
 
-    Object.assign(this, seedSSI);
+    Object.assign(self, arraySSI);
 
-    this.initialize = (dlDomain, privateKey, publicKey, vn, hint, callback) => {
-
-        let oldLoad = seedSSI.load;
-        seedSSI.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
-            oldLoad(SSITypes.WALLET_SSI, dlDomain, subtypeSpecificString, control, vn, hint);
-        }
-
-        seedSSI.initialize(dlDomain, privateKey, publicKey, vn, hint, callback);
-    }
-
-    this.store = (options, callback) => {
-        let ssiCage = require("./../../ssiCage");
-        if(typeof options !== "undefined" && typeof options.ssiCage !== "undefined"){
-            ssiCage = options.ssiCage;
-        }
-
-        ssiCage.putSSI(this.getIdentifier(), options.password, options.overwrite, (err) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(undefined, this);
-        });
-    }
-
-    //options.ssiCage - custom implementation of a SSI Cage
-    this.getSeedSSI = (secret, options, callback) => {
-        if(typeof options === "function"){
-            callback = options;
-            options = {};
-        }
-
-        let ssiCage = require("../../ssiCage");
-        if(typeof options.ssiCage !== "undefined"){
-            ssiCage = options.ssiCage;
-        }
-        ssiCage.getSSI(secret, (err, ssiSerialization)=>{
-            if(err){
-                return callback(err);
-            }
-
-            //SeedSSI or WalletSSI ???????????
-            let keySSI = SeedSSI.createSeedSSI(ssiSerialization);
-            keySSI.options = options;
-            callback(undefined, keySSI);
-        });
-    }
-
-    this.checkForSSICage = (callback) => {
-        let ssiCage = require("../../ssiCage");
-        ssiCage.check(callback);
-    }
 }
 
 function createWalletSSI(identifier) {
@@ -5863,7 +5822,7 @@ module.exports = {
     createWalletSSI
 }
 
-},{"../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../../ssiCage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -5879,7 +5838,8 @@ module.exports = {
     CONSTANT_ZERO_ACCESS_SSI: "cza",
     ARRAY_SSI: "array",
     HASH_LINK_SSI: "hl",
-    WALLET_SSI: "wallet"
+    WALLET_SSI: "wallet",
+    SYMMETRICAL_ENCRYPTION_SSI: "se"
 };
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
@@ -6014,7 +5974,6 @@ module.exports = {
     createZaSSI
 };
 },{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -6022,27 +5981,26 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function SReadSSI(identifier) {
     KeySSIMixin(this);
+    const self = this;
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, vn, hint) => {
-        this.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
+    self.initialize = (dlDomain, vn, hint) => {
+        self.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         const sZaSSI = SZaSSI.createSZaSSI();
         const subtypeKey = '';
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(this.getControl());
-        sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        const subtypeControl = self.getControl();
+        sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, subtypeControl, self.getVn(), self.getHint());
         return sZaSSI;
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
-
-    this.getEncryptionKey = () => {
-        return Buffer.from(getEncryptionKey(), 'hex');
+    self.getEncryptionKey = () => {
+        return cryptoRegistry.getDecodingFunction(self)(self.getControl());
     };
 }
 
@@ -6053,24 +6011,23 @@ function createSReadSSI(identifier) {
 module.exports = {
     createSReadSSI
 };
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
 function SZaSSI(identifier) {
-    KeySSIMixin(this);
+    const self = this;
+    KeySSIMixin(self);
 
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.initialize = (dlDomain, hpk, vn, hint) => {
-        this.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
+    self.initialize = (dlDomain, hpk, vn, hint) => {
+        self.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
     };
 
-    this.derive = () => {
+    self.derive = () => {
         throw Error("Not implemented");
     };
 }
@@ -6090,54 +6047,76 @@ const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
 
 function SeedSSI(identifier) {
     KeySSIMixin(this);
-
+    const self = this;
     if (typeof identifier !== "undefined") {
-        this.autoLoad(identifier);
+        self.autoLoad(identifier);
     }
 
-    this.getName = () => {
-        return SSITypes.SEED_SSI;
-    };
+    self.initialize = function (dlDomain, privateKey, control, vn, hint, callback) {
+        if (typeof privateKey === "function") {
+            callback = privateKey;
+            privateKey = undefined;
+        }
+        if (typeof control === "function") {
+            callback = control;
+            control = undefined;
+        }
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = 'v0';
+        }
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
 
-    this.initialize = function (dlDomain, privateKey, publicKey, vn, hint, callback){
-        let subtypeSpecificString = privateKey;
-
-        if (typeof subtypeSpecificString === "undefined") {
-            return cryptoRegistry.getKeyPairGenerator(this)().generateKeyPair((err, publicKey, privateKey) => {
+        if (typeof privateKey === "undefined") {
+            cryptoRegistry.getKeyPairGenerator(self)().generateKeyPair((err, publicKey, privateKey) => {
                 if (err) {
                     return callback(err);
                 }
-                subtypeSpecificString = privateKey;
-                this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
-                callback(undefined, this);
+                privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+                self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
+                callback(undefined, self);
             });
+        } else {
+            self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
+            callback(undefined, self);
         }
-        this.load(SSITypes.SEED_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
-        callback(undefined, this);
+        self.initialize = function (){
+            throw Error("KeySSI already initialized");
+        }
     };
 
-    this.derive = function() {
+    self.derive = function () {
         const sReadSSI = SReadSSI.createSReadSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getSpecificString());
-        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.getSpecificString());
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
-        sReadSSI.load(SSITypes.SREAD_SSI, this.getDLDomain(), subtypeKey, subtypeControl, this.getVn(), this.getHint());
+        const privateKey = self.getPrivateKey();
+        const sreadSpecificString = cryptoRegistry.getHashFunction(self)(privateKey);
+        const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
+        const subtypeControl = cryptoRegistry.getHashFunction(self)(publicKey);
+        sReadSSI.load(SSITypes.SREAD_SSI, self.getDLDomain(), sreadSpecificString, subtypeControl, self.getVn(), self.getHint());
         return sReadSSI;
-
-        /*
-        const sReadSSI = SReadSSI.createSReadSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.subtypeSpecificString);
-        const publicKey = cryptoRegistry.getKeyPairGenerator(this)().getPublicKey(this.subtypeSpecificString);
-        const subtypeControl = cryptoRegistry.getHashFunction(this)(publicKey);
-        sReadSSI.load(SSITypes.SREAD_SSI, this.dlDomain, subtypeKey, subtypeControl, this.vn, this.hint);
-        return sReadSSI;
-        * */
     };
 
-    let getEncryptionKey = this.getEncryptionKey;
+    self.getPrivateKey = function (format) {
+        let validSpecificString = self.getSpecificString();
+        if(validSpecificString === undefined){
+            throw Error("Operation requested on an invalid SeedSSI. Initialise first")
+        }
+        let privateKey = cryptoRegistry.getDecodingFunction(self)(validSpecificString);
+        if (format === "pem") {
+            const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
+            privateKey = pemKeys.privateKey;
+        }
+        return privateKey;
+    }
 
-    this.getEncryptionKey = function() {
-        return this.derive().getEncryptionKey();
+    self.getPublicKey = function (format) {
+        return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
+    }
+
+    self.getEncryptionKey = function () {
+        return self.derive().getEncryptionKey();
     };
 }
 
@@ -6148,221 +6127,81 @@ function createSeedSSI(identifier) {
 module.exports = {
     createSeedSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js":[function(require,module,exports){
-'use strict';
-
-module.exports = {
-    DEFAULT_DOMAIN: 'localDomain',
-    DID_VERSION: '1',
-    DEFAULT_BAR_MAP_STRATEGY: 'Diff',
-}
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const pskcrypto = "pskcrypto";
-const crypto = require(pskcrypto);
-
-const storageLocation = "SSICage";
-const algorithm = "aes-256-cfb";
-
-/**
- * local storage can't handle properly binary data
- *  https://stackoverflow.com/questions/52419694/how-to-store-uint8array-in-the-browser-with-localstorage-using-javascript
- * @param secret
- * @param callback
- * @returns {*}
- */
-function getSSI(secret, callback) {
-    let encryptedSSI;
-    let keySSI;
-    try {
-        encryptedSSI = localStorage.getItem(storageLocation);
-        if (encryptedSSI === null || typeof encryptedSSI !== "string" || encryptedSSI.length === 0) {
-            return callback(new Error("SSI Cage is empty or data was altered"));
-        }
-
-        const retrievedEncryptedArr = JSON.parse(encryptedSSI);
-        encryptedSSI = new Uint8Array(retrievedEncryptedArr);
-        const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, secret);
-        keySSI = pskEncryption.decrypt(encryptedSSI, encKey).toString();
-    } catch (e) {
-        return callback(e);
-    }
-    callback(undefined, keySSI);
-}
-
-function putSSI(keySSI, secret, overwrite = false, callback) {
-    let encryptedSSI;
-
-    if (typeof overwrite === "function") {
-        callback(Error("TODO: api signature updated!"));
-    }
-    try {
-        if (typeof keySSI === "string") {
-            keySSI = Buffer.from(keySSI);
-        }
-        if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
-            keySSI = Buffer.from(keySSI);
-        }
-
-        const pskEncryption = crypto.createPskEncryption(algorithm);
-        const encKey = crypto.deriveKey(algorithm, secret);
-        encryptedSSI = pskEncryption.encrypt(keySSI, encKey);
-        const encryptedArray =  Array.from(encryptedSSI);
-        const encryptedSeed = JSON.stringify(encryptedArray);
-
-        localStorage.setItem(storageLocation, encryptedSeed);
-    } catch (e) {
-        return callback(e);
-    }
-    callback(undefined);
-}
-
-function check(callback) {
-    let item;
-    try {
-        item = localStorage.getItem(storageLocation);
-    } catch (e) {
-        return callback(e);
-    }
-    if (item) {
-        return callback();
-    }
-    callback(new Error("SSI Cage does not exists"));
-}
-
-module.exports = {
-    check,
-    putSSI,
-    getSSI
-};
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const pth = "path";
-const path = require(pth);
-
-const fileSystem = "fs";
-const fs = require(fileSystem);
-
-const pskcrypto = "pskcrypto";
-const crypto = require(pskcrypto);
-const algorithm = "aes-256-cfb";
-
-const os = "os";
-const storageLocation = process.env.SEED_CAGE_LOCATION || require(os).homedir();
-const storageFileName = ".SSICage";
-const ssiCagePath = path.join(storageLocation, storageFileName);
-
-function getSSI(secret, callback) {
-    fs.readFile(ssiCagePath, (err, encryptedSeed) => {
-        if (err) {
-            return callback(err);
-        }
-
-        let keySSI;
-        try {
-            const pskEncryption = crypto.createPskEncryption(algorithm);
-            const encKey = crypto.deriveKey(algorithm, secret);
-            keySSI = pskEncryption.decrypt(encryptedSeed, encKey).toString();
-        } catch (e) {
-            return callback(e);
-        }
-
-        callback(undefined, keySSI);
-    });
-}
-
-function putSSI(keySSI, secret, overwrite = false, callback) {
-    fs.mkdir(storageLocation, {recursive: true}, (err) => {
-        if (err) {
-            return callback(err);
-        }
-
-        fs.stat(ssiCagePath, (err, stats) => {
-            if (!err && stats.size > 0) {
-                if (overwrite) {
-                    __encryptSSI();
-                } else {
-                    return callback(Error("Attempted to overwrite existing SEED."));
-                }
-            } else {
-                __encryptSSI();
-            }
-
-            function __encryptSSI() {
-                let encSeed;
-                try {
-                    if (typeof keySSI === "string") {
-                        keySSI = Buffer.from(keySSI);
-                    }
-
-                    if (typeof keySSI === "object" && !Buffer.isBuffer(keySSI)) {
-                        keySSI = Buffer.from(keySSI);
-                    }
-
-                    const pskEncryption = crypto.createPskEncryption(algorithm);
-                    const encKey = crypto.deriveKey(algorithm, secret);
-                    encSeed = pskEncryption.encrypt(keySSI, encKey);
-                } catch (e) {
-                    return callback(e);
-                }
-
-                fs.writeFile(ssiCagePath, encSeed, callback);
-            }
-        });
-    });
-}
-
-function check(callback) {
-    fs.access(ssiCagePath, callback);
-}
-
-module.exports = {
-    check,
-    putSSI,
-    getSSI
-};
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/index.js":[function(require,module,exports){
-const or = require("overwrite-require");
-switch ($$.environmentType) {
-    case or.constants.THREAD_ENVIRONMENT_TYPE:
-    case or.constants.NODEJS_ENVIRONMENT_TYPE:
-        module.exports = require("./NodeSSICage");
-        break;
-    case or.constants.BROWSER_ENVIRONMENT_TYPE:
-        module.exports = require("./BrowserSSICage");
-        break;
-    case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
-    case or.constants.ISOLATE_ENVIRONMENT_TYPE:
-    default:
-        throw new Error("No implementation of SSI Cage for this env type.");
-}
-},{"./BrowserSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/BrowserSSICage.js","./NodeSSICage":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/ssiCage/NodeSSICage.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
-const bdns = openDSU.loadApi("bdns");
-const keyssi = openDSU.loadApi("keyssi");
-const { fetch, doPut } = openDSU.loadApi("http");
+const keySSISpace = openDSU.loadApi("keyssi");
+const cachedStores = require("../cache/cachedStores");
+const storeName = "anchors";
 
+function addVersion(anchorId, newHashLinkId, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(anchorId, (err, hashLinkIds) => {
+        if (err) {
+            return callback(err);
+        }
+
+        if (typeof hashLinkIds === "undefined") {
+            hashLinkIds = [];
+        }
+
+        hashLinkIds.push(newHashLinkId);
+        cache.put(anchorId, hashLinkIds, callback);
+    });
+}
+
+function versions(anchorId, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(anchorId, (err, hashLinkIds) => {
+        if (err) {
+            return callback(err);
+        }
+
+        if (typeof hashLinkIds === "undefined") {
+            hashLinkIds = [];
+        }
+        const hashLinkSSIs = hashLinkIds.map(hashLinkId => keySSISpace.parse(hashLinkId));
+        return callback(undefined, hashLinkSSIs);
+    });
+}
+
+module.exports = {
+    addVersion,
+    versions
+}
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+const bdns = require("../bdns");
+const keyssi = require("../keyssi");
+const crypto = require("../crypto");
+const {fetch, doPut} = require("../http");
+const constants = require("../moduleConstants");
+const promiseRunner = require("../utils/promise-runner");
+const cachedAnchoring = require("./cachedAnchoring");
+const config = require("../config");
+
+const isValidVaultCache = () => {
+    return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
+}
 /**
  * Get versions
- * @param {keySSI} keySSI 
- * @param {string} authToken 
- * @param {function} callback 
+ * @param {keySSI} powerfulKeySSI
+ * @param {string} authToken
+ * @param {function} callback
  */
-const versions = (keySSI, authToken, callback) => {
+const versions = (powerfulKeySSI, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
+    
+    const dlDomain = powerfulKeySSI.getDLDomain();
+    const anchorId = powerfulKeySSI.getAnchorId();
 
-    bdns.getAnchoringServices(keySSI.getDLDomain(), (err, anchoringServicesArray) => {
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+         return cachedAnchoring.versions(anchorId, callback);
+     }
+
+
+    bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
             return callback(err);
         }
@@ -6371,33 +6210,35 @@ const versions = (keySSI, authToken, callback) => {
             return callback('No anchoring service provided');
         }
 
-        const queries = anchoringServicesArray.map((service) => fetch(`${service}/anchor/versions/${keySSI.getAnchorId()}`));
         //TODO: security issue (which response we trust)
-        Promise.allSettled(queries).then((responses) => {
-            const response = responses.find((response) => response.status === 'fulfilled');
+        const fetchAnchor = (service) => {
+            return fetch(`${service}/anchor/${dlDomain}/versions/${anchorId}`)
+                .then((response) => {
+                    return response.json().then((hlStrings) => {
+                        const hashLinks = hlStrings.map((hlString) => {
+                            return keyssi.parse(hlString);
+                        });
 
-            response.value.json().then((hlStrings) => {
-
-                const hashLinks = hlStrings.map(hlString => {
-                    return keyssi.parse(hlString)
+                        // cache.put(anchorId, hlStrings);
+                        return hashLinks;
+                    });
                 });
+        };
 
-                return callback(null, hashLinks)
-            })
-        }).catch((err) => callback(err));
+        promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback);
     });
 };
 
 /**
  * Add new version
- * @param {keySSI} keySSI 
- * @param {hashLinkSSI} newHashLinkSSI 
- * @param {hashLinkSSI} lastHashLinkSSI 
- * @param {string} zkpValue 
- * @param {string} digitalProof 
- * @param {function} callback 
+ * @param {keySSI} powerfulKeySSI
+ * @param {hashLinkSSI} newHashLinkSSI
+ * @param {hashLinkSSI} lastHashLinkSSI
+ * @param {string} zkpValue
+ * @param {string} digitalProof
+ * @param {function} callback
  */
-const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalProof, callback) => {
+const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, callback) => {
     if (typeof lastHashLinkSSI === "function") {
         callback = lastHashLinkSSI;
         lastHashLinkSSI = undefined;
@@ -6405,10 +6246,17 @@ const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalPr
 
     if (typeof zkpValue === "function") {
         callback = zkpValue;
-        zkpValue = undefined;
+        zkpValue = '';
     }
 
-    bdns.getAnchoringServices(keySSI.getDLDomain(), (err, anchoringServicesArray) => {
+    const dlDomain = powerfulKeySSI.getDLDomain();
+    const anchorId = powerfulKeySSI.getAnchorId();
+
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedAnchoring.addVersion(anchorId, newHashLinkSSI.getIdentifier(), callback);
+    }
+
+    bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
             return callback(err);
         }
@@ -6417,43 +6265,77 @@ const addVersion = (keySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, digitalPr
             return callback('No anchoring service provided');
         }
 
-        const body = {
-            hash: {
-                last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
-                new: newHashLinkSSI.getIdentifier()
-            },
-            zkpValue,
-            digitalProof
+        const hash = {
+            last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
+            new: newHashLinkSSI.getIdentifier()
         };
-
-        const queries = anchoringServicesArray.map((service) => {
-            return new Promise((resolve, reject) => {
-                doPut(`${service}/anchor/add/${keySSI.getAnchorId()}`, JSON.stringify(body), (err, data) => {
-                    if (err) {
-                        return reject({
-                            statusCode: err.statusCode,
-                            message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
-                        });
-                    }
-
-                    return resolve(data);
-                });
-            })
-        });
-
-        Promise.allSettled(queries).then((responses) => {
-            const response = responses.find((response) => response.status === 'fulfilled');
-
-            if (!response) {
-                const rejected = responses.find((response) => response.status === 'rejected');
-                return callback(rejected.reason)
+        createDigitalProof(powerfulKeySSI, hash.new, hash.last, zkpValue, (err, digitalProof) => {
+            if (err) {
+                return callback(err);
             }
+            const body = {
+                hash,
+                digitalProof,
+                zkp: zkpValue
+            };
 
-            callback(null, response.value);
+            const addAnchor = (service) => {
+                return new Promise((resolve, reject) => {
+                    const putResult = doPut(`${service}/anchor/${dlDomain}/add/${anchorId}`, JSON.stringify(body), (err, data) => {
+                        if (err) {
+                            return reject({
+                                statusCode: err.statusCode,
+                                message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
+                            });
+                        }
+
+                        require("opendsu").loadApi("resolver").invalidateDSUCache(powerfulKeySSI);
+                        return resolve(data);
+                    });
+                    if (putResult) {
+                        putResult.then(resolve).catch(reject);
+                    }
+                })
+            };
+
+            promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback);
         });
     });
-
 };
+
+function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkIdentifier, zkp, callback) {
+    let anchorId = powerfulKeySSI.getAnchorId();
+    let dataToSign = anchorId + newHashLinkIdentifier + zkp;
+    if (lastHashLinkIdentifier) {
+        dataToSign += lastHashLinkIdentifier;
+    }
+
+    let ssiType = powerfulKeySSI.getTypeName();
+    switch(ssiType){
+        case constants.KEY_SSIS.SEED_SSI:
+            crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
+                if (err) {
+                    return callback(err);
+                }
+                const digitalProof = {
+                    signature: crypto.encodeBase58(signature),
+                    publicKey: crypto.encodeBase58(powerfulKeySSI.getPublicKey("raw"))
+                };
+                return callback(undefined, digitalProof);
+            });
+            break;
+
+        case constants.KEY_SSIS.CONST_SSI:
+        case constants.KEY_SSIS.ARRAY_SSI:
+        case constants.KEY_SSIS.WALLET_SSI:
+
+            return callback(undefined, {signature:"",publicKey:""})
+            break;
+        default:
+            console.log("Unknown digital proof for " + ssiType + " Defaulting to ConstSSI")
+            return callback(undefined, {signature:"",publicKey:""})
+    }
+}
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
     // TODO: to be implemented
@@ -6463,58 +6345,153 @@ module.exports = {
     addVersion,
     versions
 }
-},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
-if (typeof bdns === "undefined") {
-    bdns = require("bdns").create();
+},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedAnchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
+const PendingCallMixin = require("../utils/PendingCallMixin");
+const getBaseURL = require("../utils/getBaseURL");
+function BDNS() {
+    PendingCallMixin(this);
+    let bdnsCache;
+    const http = require("opendsu").loadApi("http");
+    let isInitialized = false;
+    let retrieveHosts = () => {
+        const url = `${getBaseURL()}/bdns#x-blockchain-domain-request`;
+        http.fetch(url)
+            .then((response) => {
+                return response.json()
+            }).then((bdnsHosts) => {
+            bdnsHosts = JSON.stringify(bdnsHosts);
+            let baseURL =  require("../utils/getBaseURL")
+
+            bdnsHosts = bdnsHosts.replace(/\$ORIGIN/g, baseURL);
+            bdnsCache = JSON.parse(bdnsHosts);
+            isInitialized = true;
+            this.executePendingCalls();
+        }).catch((err) => console.log("Failed to retrieve BDNS hosts", err));
+    };
+
+    retrieveHosts();
+
+    this.getRawInfo = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain]);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain]);
+    };
+
+    this.getBrickStorages = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].brickStorages);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].brickStorages);
+    };
+
+    this.getAnchoringServices = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].anchoringServices);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].anchoringServices);
+    };
+
+    this.getReplicas = (dlDomain, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                callback(undefined, bdnsCache[dlDomain].replicas);
+            })
+        }
+        callback(undefined, bdnsCache[dlDomain].replicas);
+    };
+
+    this.addRawInfo = (dlDomain, rawInfo) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addAnchoringServices = (dlDomain, anchoringServices) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addBrickStorages = (dlDomain, brickStorages) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.addReplicas = (dlDomain, replicas) => {
+        console.warn("This function is obsolete. Doing nothing");
+    };
+
+    this.setBDNSHosts = (bdnsHosts) => {
+        bdnsCache = bdnsHosts;
+    }
 }
-const getRawInfo = (dlDomain, callback) => {
-    bdns.getRawInfo(dlDomain, callback);
-};
 
-const getBrickStorages = (dlDomain, callback) => {
-    bdns.getBrickStorages(dlDomain, callback);
-};
 
-const getAnchoringServices = (dlDomain, callback) => {
-    bdns.getAnchoringServices(dlDomain, callback);
-};
+module.exports = new BDNS();
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+const openDSU = require("opendsu");
+const crypto = openDSU.loadApi("crypto");
+const keySSISpace = openDSU.loadApi("keyssi");
+const cachedStores = require("../cache/cachedStores");
+const storeName = "bricks";
 
-const getReplicas = (dlDomain, callback) => {
-    bdns.getReplicas(dlDomain, callback);
-};
+function putBrick(brick, callback) {
+    const cache = cachedStores.getCache(storeName);
+    crypto.hash(keySSISpace.buildSeedSSI("vault"), brick, (err, brickHash) => {
+        if (err) {
+            return callback(err);
+        }
 
-const addRawInfo = (dlDomain, rawInfo) => {
-    bdns.addRawInfo(dlDomain, rawInfo);
-};
+        cache.put(brickHash, brick, (err, hash) => {
+            if (err) {
+                return callback(err);
+            }
 
-const addAnchoringServices = (dlDomain, anchoringServices) => {
-    bdns.addAnchoringServices(dlDomain, anchoringServices);
-};
+            callback(undefined, hash);
+        });
+    });
+}
 
-const addBrickStorages = (dlDomain, brickStorages) => {
-    bdns.addBrickStorages(dlDomain, brickStorages);
-};
+function getBrick(brickHash, callback) {
+    const cache = cachedStores.getCache(storeName);
+    cache.get(brickHash, (err, brickData) => {
+        if (err) {
+            return callback(err);
+        }
 
-const addReplicas = (dlDomain, replicas) => {
-    bdns.addReplicas(dlDomain, replicas);
-};
+        callback(undefined, brickData);
+    });
+}
+
+function getMultipleBricks(brickHashes, callback) {
+    brickHashes.forEach(brickHash => {
+        getBrick(brickHash, callback);
+    });
+
+}
 
 module.exports = {
-    getRawInfo,
-    getBrickStorages,
-    getAnchoringServices,
-    getReplicas,
-    addRawInfo,
-    addAnchoringServices,
-    addBrickStorages,
-    addReplicas
+    putBrick,
+    getBrick,
+    getMultipleBricks
 }
-},{"bdns":"bdns"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
-const or = require("overwrite-require");
+const constants = require("../moduleConstants");
+const cache = require("../cache/cachedStores").getCache(constants.CACHE.ENCRYPTED_BRICKS_CACHE);
+const cachedBricking = require("./cachedBricking");
+const promiseRunner = require("../utils/promise-runner");
+const config = require("../config");
+
+const isValidVaultCache = () => {
+    return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
+}
+
 /**
  * Get brick
  * @param {hashLinkSSI} hashLinkSSI
@@ -6523,28 +6500,54 @@ const or = require("overwrite-require");
  * @returns {any}
  */
 const getBrick = (hashLinkSSI, authToken, callback) => {
+    const dlDomain = hashLinkSSI.getDLDomain();
+    const brickHash = hashLinkSSI.getHash();
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
 
-    bdns.getBrickStorages(hashLinkSSI.getDLDomain(), (err, brickStorageArray) => {
-        if (err) {
-            return callback(err);
-        }
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getBrick(brickHash, callback);
+    }
 
-        const brickHash = hashLinkSSI.getHash();
+    if (typeof cache === "undefined") {
+        __getBrickFromEndpoint();
+    } else {
+        cache.get(brickHash, (err, brick) => {
+            if (err || typeof brick === "undefined") {
+                __getBrickFromEndpoint();
+            } else {
+                callback(undefined, brick);
+            }
+        });
+    }
 
-        if (!brickStorageArray.length) {
-            return callback('No storage provided');
-        }
+    function __getBrickFromEndpoint() {
+        bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
+            if (err) {
+                return callback(err);
+            }
 
-        const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricks/get-brick/${brickHash}`));
+            if (!brickStorageArray.length) {
+                return callback('No storage provided');
+            }
 
-        Promise.all(queries).then((responses) => {
-            responses[0].arrayBuffer().then((data) => callback(null, data));
-        }).catch((err) => callback(err));
-    });
+            const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricking/${dlDomain}/get-brick/${brickHash}/${dlDomain}`));
+
+            Promise.all(queries).then((responses) => {
+                responses[0].arrayBuffer().then((data) => {
+                    if (typeof cache !== "undefined") {
+                        cache.put(brickHash, data);
+                    }
+                    callback(null, data)
+                });
+            }).catch((err) => {
+                callback(err);
+            });
+        });
+    }
+
 };
 
 /**
@@ -6553,78 +6556,22 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
  * @param {string} authToken
  * @param {function} callback
  */
+
 const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
 
-    bdns.getBrickStorages(hashLinkSSIList[0].getDLDomain(), (err, brickStorageArray) => {
-        const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
-        if (!brickStorageArray.length) {
-            return callback('No storage provided');
-        }
+    const dlDomain = hashLinkSSIList[0].getDLDomain();
+    const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
 
-        let index = 0;
-        const size = 50;
-        const queries = [];
-
-        while (index < bricksHashes.length) {
-            const hashQuery = `${bricksHashes.slice(index, size + index).join('&hashes=')}`;
-            index += size;
-            queries.push(Promise.allSettled(brickStorageArray.map((storage) => {
-                return fetch(`${storage}/bricks/downloadMultipleBricks/?hashes=${hashQuery}`)
-            })));
-        }
-
-        Promise.all(queries).then((responses) => {
-            Promise.all(responses.reduce((acc, response) => {
-                const batch = response.find((item) => item.status === 'fulfilled');
-
-                acc.push(batch.value.arrayBuffer());
-                return acc;
-            }, [])).
-            then(
-                (dataArray) => {
-                    if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE ||
-                            $$.environmentType === or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE) {
-                        let len = 0;
-                        dataArray.forEach(arr => len += arr.byteLength);
-                        const newBuffer = new Buffer(len);
-                        let currentPos = 0;
-                        while (dataArray.length > 0) {
-                            const arrBuf = dataArray.shift();
-                            const partialDataView = new DataView(arrBuf);
-                            for (let i = 0; i < arrBuf.byteLength; i++) {
-                                newBuffer.writeUInt8(partialDataView.getUint8(i), currentPos);
-                                currentPos += 1;
-                            }
-                        }
-                        return parseResponse(newBuffer, callback);
-                    }
-                    return parseResponse(Buffer.concat(dataArray), callback)});
-        }).catch((err) => {
-            callback(err);
-        });
-
-        function parseResponse(response, callback) {
-            const BRICK_MAX_SIZE_IN_BYTES = 4;
-
-            if (response.length > 0) {
-                const brickSizeBuffer = response.slice(0, BRICK_MAX_SIZE_IN_BYTES);
-
-                const brickSize = brickSizeBuffer.readUInt32BE();
-                const brickData = response.slice(BRICK_MAX_SIZE_IN_BYTES, brickSize + BRICK_MAX_SIZE_IN_BYTES);
-
-                callback(null, brickData);
-
-                response = response.slice(brickSize + BRICK_MAX_SIZE_IN_BYTES);
-
-                return parseResponse(response, callback);
-            }
-        }
-    });
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getMultipleBricks(bricksHashes, callback);
+    }
+    hashLinkSSIList.forEach(hashLinkSSI => getBrick(hashLinkSSI, authToken, callback));
 };
+
 
 /**
  * Put brick
@@ -6639,56 +6586,377 @@ const putBrick = (keySSI, brick, authToken, callback) => {
         callback = authToken;
         authToken = undefined;
     }
+    const dlDomain = keySSI.getDLDomain();
 
-    bdns.getBrickStorages(keySSI.getDLDomain(), (err, brickStorageArray) => {
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.putBrick(brick, callback);
+    }
+
+    bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
         if (err) {
             return callback(err);
         }
-
-        const queries = brickStorageArray.map((storage) => {
+        const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
-                doPut(`${storage}/bricks/put-brick`, brick, (err, data) => {
+                const putResult = doPut(`${storage}/bricking/${dlDomain}/put-brick/${dlDomain}`, brick, (err, data) => {
                     if (err) {
                         return reject(err);
                     }
 
                     return resolve(data);
                 });
+                if (putResult) {
+                    putResult.then(resolve).catch(reject);
+                }
             })
-        });
+        };
 
-        Promise.allSettled(queries).then((responses) => {
-            const foundBrick = responses.find((response) => response.status === 'fulfilled');
-
-            if (!foundBrick) {
-                return callback({message: 'Brick not created'});
+        promiseRunner.runAll(brickStorageArray, setBrick, null, (err, results) => {
+            if (err || !results.length) {
+                if (!err) {
+                    err = new Error('Failed to create bricks in:' + brickStorageArray);
+                }
+                return callback(err);
             }
 
-            return callback(null, JSON.parse(foundBrick.value).message)
+            const foundBrick = results[0];
+            const brickHash = JSON.parse(foundBrick).message;
+            if (typeof cache === "undefined") {
+                return callback(undefined, brickHash)
+            }
+
+            cache
+                .put(brickHash, brick, (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(err, brickHash);
+                })
+                .catch((err) => {
+                    callback(err);
+                });
         });
     });
 };
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-}).call(this)}).call(this,require("buffer").Buffer)
+},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js":[function(require,module,exports){
+let stores = {};
+const config = require("opendsu").loadApi("config");
+const CacheMixin = require("../utils/PendingCallMixin");
+const constants = require("../moduleConstants");
 
-},{"buffer":false,"opendsu":"opendsu","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const cryptoRegistry = require("key-ssi-resolver").CryptoAlgorithmsRegistry;
+function IndexedDBCache(storeName, lifetime) {
+    const self = this;
+    CacheMixin(self);
+
+    let db;
+    let openRequest = indexedDB.open(storeName);
+    openRequest.onsuccess = () => {
+        db = openRequest.result;
+        self.executePendingCalls();
+        self.executeSerialPendingCalls();
+    };
+
+    openRequest.onupgradeneeded = () => {
+        db = openRequest.result;
+        db.createObjectStore(storeName);
+    };
+
+    self.get = (key, callback) => {
+        if (typeof db === "undefined") {
+            self.addPendingCall(() => {
+                self.get(key, callback);
+            });
+        } else {
+            let transaction = db.transaction(storeName, "readonly");
+            const store = transaction.objectStore(storeName);
+            let req = store.get(key);
+            transaction.oncomplete = () => {
+                if (typeof lifetime !== "undefined") {
+                    const currentTime = Date.now();
+                    const timestampedData = req.result;
+                    if (typeof timestampedData === "undefined") {
+                        return callback();
+                    }
+                    if (currentTime - timestampedData.timestamp > lifetime) {
+                        self.delete(key);
+                        return callback();
+                    }
+                    callback(undefined, timestampedData.value)
+                } else {
+                    callback(undefined, req.result);
+                }
+            }
+        }
+    };
+
+    self.put = (key, value, callback) => {
+        self.addSerialPendingCall((next) => {
+            let transaction;
+            let store
+            try {
+                transaction = db.transaction(storeName, "readwrite");
+                store = transaction.objectStore(storeName);
+            }catch (e) {
+                callback(e);
+                return next();
+            }
+            let data;
+            if (typeof lifetime !== "undefined") {
+                data = {
+                    value: value,
+                    timestamp: Date.now()
+                }
+            } else {
+                data = value;
+            }
+            let req = store.put(data, key);
+            transaction.oncomplete = () => {
+                if (typeof callback === "function") {
+                    callback(undefined, key);
+                }
+                next();
+            }
+            transaction.onabort = function() {
+                console.log("Error", transaction.error);
+            };
+            req.onerror = function (event){
+                next();
+            }
+        });
+    };
+
+    self.delete = (key, callback) => {
+            self.addSerialPendingCall((next) => {
+                let transaction;
+                let store
+                try {
+                    transaction = db.transaction(storeName, "readwrite");
+                    store = transaction.objectStore(storeName);
+                }catch (e) {
+                    callback(e);
+                    next();
+                    return;
+                }
+                let req = store.delete(key);
+                transaction.oncomplete = () => {
+                    if (typeof callback === "function") {
+                        callback(undefined, key);
+                    }
+                    next();
+                }
+                transaction.onabort = function() {
+                    console.log("Error", transaction.error);
+                };
+                req.onerror = function (event){
+                    next();
+                }
+            });
+    }
+}
+
+function FSCache(folderName) {
+    const self = this;
+    CacheMixin(self);
+    const fsName = "fs";
+    const fs = require(fsName);
+    let baseFolder = config.get(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY);
+    if (typeof baseFolder === "undefined") {
+        baseFolder = process.cwd();
+    }
+    const path = require("swarmutils").path;
+    const folderPath = path.join(baseFolder, folderName);
+    let storageFolderIsCreated = false;
+    fs.mkdir(folderPath, {recursive: true}, (err) => {
+        if (err) {
+            throw err;
+        }
+
+        storageFolderIsCreated = true;
+    });
+
+    self.get = function (key, callback) {
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.get(key, callback);
+            })
+        } else {
+            fs.readFile(path.join(folderPath, key), (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let content = data;
+                try {
+                    content = JSON.parse(content.toString())
+                } catch (e) {
+                    return callback(data);
+                }
+                callback(undefined, content);
+            });
+        }
+    };
+
+    self.put = function (key, value, callback) {
+        if (Array.isArray(value)) {
+            value = JSON.stringify(value);
+        }
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.put(key, value, callback);
+            });
+        } else {
+            if (!callback) {
+                callback = () => {
+                };
+            }
+            fs.writeFile(path.join(folderPath, key), value, callback);
+        }
+    }
+}
+
+function getCache(storeName, lifetime) {
+    if (typeof stores[storeName] === "undefined") {
+        switch (config.get(constants.CACHE.VAULT_TYPE)) {
+            case constants.CACHE.INDEXED_DB:
+                stores[storeName] = new IndexedDBCache(storeName, lifetime);
+                break;
+            case constants.CACHE.FS:
+                stores[storeName] = new FSCache(storeName);
+                break;
+            case constants.CACHE.NO_CACHE:
+                break;
+            default:
+                throw Error("Invalid cache type");
+        }
+    }
+
+    return stores[storeName];
+}
+
+
+module.exports = {
+    getCache
+}
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
+(function (global){(function (){
+const config = require("./index");
+const constants = require("../moduleConstants");
+const system = require("../system");
+const getBaseURL = require("../utils/getBaseURL");
+const createErrorWrapper = require("../error").createErrorWrapper;
+
+system.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS, `${getBaseURL()}/bdns#x-blockchain-domain-request`);
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.INDEXED_DB);
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.INDEXED_DB);
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+        config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+        break;
+
+    default:
+}
+
+config.set(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY, constants.CACHE.BASE_FOLDER);
+
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        if (typeof self !== "undefined") {
+            self.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        if (typeof window !== "undefined") {
+            window.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+    default:
+        if (typeof global !== "undefined") {
+            global.createOpenDSUErrorWrapper = createErrorWrapper;
+        }
+}
+
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"../error":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+
+module.exports = function(environment){
+        const config = require("./index.js");
+        const constants = require("../moduleConstants");
+        //const systemEnvirnoment = require("../system");
+
+        if(environment[constants.LOADER_ENVIRONMENT_JSON.VAULT] === constants.LOADER_ENVIRONMENT_JSON.SERVER){
+            config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+        }
+
+        if(environment[constants.LOADER_ENVIRONMENT_JSON.AGENT] === constants.LOADER_ENVIRONMENT_JSON.MOBILE){
+            config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+            //systemEnvirnoment.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS,
+        }
+        console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
+}
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+const config = {};
+function set(key, value) {
+    config[key] = value;
+}
+
+function get(key) {
+    return config[key];
+}
+
+
+
+const autoconfigFromEnvironment = require("./autoConfigFromEnvironment");
+
+function disableLocalVault(){
+    const constants = require("../moduleConstants");
+    set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
+}
+
+module.exports = {
+    set,
+    get,
+    autoconfigFromEnvironment,
+    disableLocalVault
+};
+
+
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+const keySSIResolver = require("key-ssi-resolver");
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+const keySSIFactory = keySSIResolver.KeySSIFactory;
+const SSITypes = keySSIResolver.SSITypes;
+const jwtUtils = require("./jwt");
+
+const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
+templateSeedSSI.load(SSITypes.SEED_SSI, "default");
+
+const { JWT_ERRORS } = jwtUtils;
 
 const hash = (keySSI, data, callback) => {
-    if (typeof data === "object" && !Buffer.isBuffer(data)) {
+    callback(undefined, hashSync(keySSI, data));
+};
+
+const hashSync = (keySSI, data)=>{
+    if (typeof data === "object" && !$$.Buffer.isBuffer(data)) {
         data = JSON.stringify(data);
     }
     const hash = cryptoRegistry.getHashFunction(keySSI);
-    callback(undefined, hash(data));
-};
+    return hash(data);
+}
 
 const encrypt = (keySSI, buffer, callback) => {
     const encrypt = cryptoRegistry.getEncryptionFunction(keySSI);
     callback(undefined, encrypt(buffer, keySSI.getEncryptionKey()));
-
 };
 
 const decrypt = (keySSI, encryptedBuffer, callback) => {
@@ -6700,17 +6968,33 @@ const decrypt = (keySSI, encryptedBuffer, callback) => {
         return callback(e);
     }
     callback(undefined, decryptedBuffer);
+};
+
+const convertDerSignatureToASN1 = (derSignature) => {
+    return require('pskcrypto').decodeDerToASN1ETH(derSignature);
 
 };
 
-const sign = (keySSI, hash, callback) => {
+const convertASN1SignatureToDer = (ans1Signature) => {
+
+};
+
+const sign = (keySSI, data, callback) => {
     const sign = cryptoRegistry.getSignFunction(keySSI);
-    callback(undefined, sign(hash, keySSI.getEncryptionKey()));
+    if(typeof sign !== "function"){
+        throw Error("Signing not available for " + keySSI.getIdentifier(true));
+    } else {
+        callback(undefined, sign(data, keySSI.getPrivateKey()));
+    }
 };
 
-const verifySignature = (keySSI, hash, signature, callback) => {
+const verifySignature = (keySSI, data, signature, publicKey, callback) => {
+    if (typeof publicKey === "function") {
+        callback = publicKey;
+        publicKey = keySSI.getPublicKey();
+    }
     const verify = cryptoRegistry.getVerifyFunction(keySSI);
-    callback(undefined, verify(hash, keySSI.getEncryptionKey(), signature));
+    callback(undefined, verify(data, publicKey, signature));
 };
 
 const generateEncryptionKey = (keySSI, callback) => {
@@ -6728,30 +7012,358 @@ const decode = (keySSI, data) => {
     return decode(data);
 };
 
+const sha256 = (dataObj) => {
+    const pskcrypto = require("pskcrypto");
+    const hashBuffer = pskcrypto.objectHash("sha256", dataObj);
+    return pskcrypto.pskBase58Encode(hashBuffer);
+};
+
+const generateRandom = (length) => {
+    const pskcrypto = require("pskcrypto");
+    const randomBuffer = pskcrypto.randomBytes(length);
+    return pskcrypto.pskBase58Encode(randomBuffer);
+}
+
+const encodeBase58 = (data) => {
+    return encode(templateSeedSSI, data);
+};
+const decodeBase58 = (data) => {
+    return decode(templateSeedSSI, data);
+};
+
+const createJWT = (seedSSI, scope, credentials, options, callback) => {
+    jwtUtils.createJWT(
+        {
+            seedSSI,
+            scope,
+            credentials,
+            options,
+            hash,
+            encode: encodeBase58,
+            sign,
+        },
+        callback
+    );
+};
+
+const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
+    jwtUtils.verifyJWT(
+        {
+            jwt,
+            rootOfTrustVerificationStrategy,
+            decode: decodeBase58,
+            hash,
+            verifySignature,
+        },
+        callback
+    );
+};
+
+const createCredential = (issuerSeedSSI, credentialSubjectSReadSSI, callback) => {
+    createJWT(issuerSeedSSI, "", null, { subject: credentialSubjectSReadSSI }, callback);
+};
+
+const createAuthToken = (holderSeedSSI, scope, credential, callback) => {
+    createJWT(seedSSI, scope, credential, null, callback);
+};
+
+const createPresentationToken = (holderSeedSSI, scope, credential, callback) => {
+    createJWT(holderSeedSSI, scope, credential, null, callback);
+};
+
+const verifyAuthToken = (jwt, listOfIssuers, callback) => {
+    if (!listOfIssuers || !listOfIssuers.length) return callback(JWT_ERRORS.EMPTY_LIST_OF_ISSUERS_PROVIDED);
+
+    // checks every credentials from the JWT's body to see if it has at least one JWT issues by one of listOfIssuers for the current subject
+    const rootOfTrustVerificationStrategy = ({ body }, verificationCallback) => {
+        const { sub: subject, credentials } = body;
+        // the JWT doesn't have credentials specified so we cannot check for valid authorizarion
+        if (!credentials) return verificationCallback(null, false);
+
+        const credentialVerifiers = credentials.map((credential) => {
+            return new Promise((resolve) => {
+                verifyJWT(
+                    credential,
+                    ({ body }, credentialVerificationCallback) => {
+                        // check if credential was issued for the JWT that we are verifying the authorization for
+                        const isCredentialIssuedForSubject = body.sub === subject;
+                        if (!isCredentialIssuedForSubject) return credentialVerificationCallback(null, false);
+
+                        const isValidIssuer = listOfIssuers.some((issuer) => issuer === body.iss);
+                        credentialVerificationCallback(null, isValidIssuer);
+                    },
+                    (credentialVerifyError, isCredentialValid) => {
+                        if (credentialVerifyError) return resolve(false);
+                        resolve(isCredentialValid);
+                    }
+                );
+            }).catch(() => {
+                // is something went wrong, we deny the JWT
+                return false;
+            });
+        });
+
+        Promise.all(credentialVerifiers)
+            .then((credentialVerifierResults) => {
+                const hasAtLeastOneValidIssuer = credentialVerifierResults.some((result) => result);
+                if (!hasAtLeastOneValidIssuer) return verificationCallback(null, false);
+                verificationCallback(null, true);
+            })
+            .catch(() => {
+                // is something went wrong, we deny the JWT
+                verificationCallback(null, false);
+            });
+    };
+
+    verifyJWT(jwt, rootOfTrustVerificationStrategy, callback);
+};
+
+
+
+function createBloomFilter(options){
+    const BloomFilter = require("psk-dbf");
+    return new BloomFilter(options);
+}
+
+
 module.exports = {
     hash,
+    hashSync,
+    generateRandom,
     encrypt,
     decrypt,
     sign,
+    convertDerSignatureToASN1,
     verifySignature,
     generateEncryptionKey,
     encode,
-    decode
+    decode,
+    encodeBase58,
+    decodeBase58,
+    sha256,
+    createJWT,
+    verifyJWT,
+    createCredential,
+    createAuthToken,
+    verifyAuthToken,
+    createPresentationToken,
+    createBloomFilter,
+    JWT_ERRORS,
 };
 
-}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+},{"./jwt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+const keySSIResolver = require("key-ssi-resolver");
+const keySSIFactory = keySSIResolver.KeySSIFactory;
 
-},{"../../../node_modules/is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+const HEADER_TYPE = "SeedSSIJWT";
+const JWT_VALABILITY_SECONDS = 5 * 365 * 24 * 60 * 60; // 5 years default
+
+const JWT_ERRORS = {
+    EMPTY_JWT_PROVIDED: "EMPTY_JWT_PROVIDED",
+    INVALID_JWT_FORMAT: "INVALID_JWT_FORMAT",
+    INVALID_JWT_PRESENTATION: "INVALID_JWT_PRESENTATION",
+    INVALID_JWT_HEADER: "INVALID_JWT_HEADER",
+    INVALID_JWT_BODY: "INVALID_JWT_BODY",
+    INVALID_JWT_HEADER_TYPE: "INVALID_JWT_HEADER_TYPE",
+    INVALID_JWT_ISSUER: "INVALID_JWT_ISSUER",
+    INVALID_CREDENTIALS_FORMAT: "INVALID_CREDENTIALS_FORMAT",
+    JWT_TOKEN_EXPIRED: "JWT_TOKEN_EXPIRED",
+    JWT_TOKEN_NOT_ACTIVE: "JWT_TOKEN_NOT_ACTIVE",
+    INVALID_JWT_SIGNATURE: "INVALID_JWT_SIGNATURE",
+    ROOT_OF_TRUST_VERIFICATION_FAILED: "ROOT_OF_TRUST_VERIFICATION_FAILED",
+    EMPTY_LIST_OF_ISSUERS_PROVIDED: "EMPTY_LIST_OF_ISSUERS_PROVIDED",
+};
+
+function nowEpochSeconds() {
+    return Math.floor(new Date().getTime() / 1000);
+}
+
+function createJWT({ seedSSI, scope, credentials, options, hash, encode, sign }, callback) {
+    if(typeof seedSSI === "string"){
+        const keyssiSpace = require('opendsu').loadApi("keyssi");
+        try{
+            seedSSI = keyssiSpace.parse(seedSSI);
+        }catch(e){
+            return callback(e);
+        }
+    }
+    const sReadSSI = seedSSI.derive();
+
+    let { subject, valability, ...optionsRest } = options || {};
+    valability = valability || JWT_VALABILITY_SECONDS;
+
+    if (credentials) {
+        credentials = Array.isArray(credentials) ? credentials : [credentials];
+    }
+
+    const header = {
+        typ: HEADER_TYPE,
+    };
+
+    const now = nowEpochSeconds();
+    const body = {
+        sub: subject || sReadSSI.getIdentifier(),
+        // aud: encode(scope),
+        scope,
+        iss: sReadSSI.getIdentifier(),
+        publicKey: seedSSI.getPublicKey(),
+        iat: now,
+        nbf: now,
+        exp: now + valability,
+        credentials,
+        options: optionsRest,
+    };
+
+    const segments = [encode(JSON.stringify(header)), encode(JSON.stringify(body))];
+
+    const jwtToSign = segments.join(".");
+
+    hash(seedSSI, jwtToSign, (hashError, hashResult) => {
+        if (hashError) return callback(hashError);
+
+        sign(seedSSI, hashResult, (signError, signResult) => {
+            if (signError) return callback(signError);
+            const encodedSignResult = encode(signResult);
+
+            const jwt = `${jwtToSign}.${encodedSignResult}`;
+            callback(null, jwt);
+        });
+    });
+}
+
+function safeParseEncodedJson(decode, data) {
+    try {
+        const result = JSON.parse(decode(data));
+        return result;
+    } catch (e) {
+        return e;
+    }
+}
+
+function parseJWTSegments(jwt, decode, callback) {
+    if (!jwt) return callback(JWT_ERRORS.EMPTY_JWT_PROVIDED);
+    if (typeof jwt !== "string") return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+    const segments = jwt.split(".");
+    if (segments.length !== 3) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+    const header = safeParseEncodedJson(decode, segments[0]);
+    if (header instanceof Error || !header) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
+
+    const body = safeParseEncodedJson(decode, segments[1]);
+    if (body instanceof Error || !body) return callback(JWT_ERRORS.INVALID_JWT_BODY);
+
+    const signatureInput = `${segments[0]}.${segments[1]}`;
+    const signature = decode(segments[2]);
+    if (!signature) {
+        // the signature couldn't be decoded due to an invalid signature
+        return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+    }
+
+    return callback(null, { header, body, signature, signatureInput });
+}
+
+function isJwtExpired(body) {
+    return new Date(body.exp * 1000) < new Date();
+}
+
+function isJwtNotActive(body) {
+    return new Date(body.nbf * 1000) >= new Date();
+}
+
+function verifyJWTContent(jwtContent, callback) {
+    const { header, body } = jwtContent;
+
+    if (header.typ !== HEADER_TYPE) return callback(JWT_ERRORS.INVALID_JWT_HEADER_TYPE);
+    if (!body.iss) return callback(JWT_ERRORS.INVALID_JWT_ISSUER);
+    if (isJwtExpired(body)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
+    if (isJwtNotActive(body)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+
+    if (body.credentials && !Array.isArray(body.credentials)) return callback(JWT_ERRORS.INVALID_CREDENTIALS_FORMAT);
+
+    callback(null);
+}
+
+const verifyJWT = ({ jwt, rootOfTrustVerificationStrategy, decode, verifySignature, hash }, callback) => {
+    parseJWTSegments(jwt, decode, (parseError, jwtContent) => {
+        if (parseError) return callback(parseError);
+
+        verifyJWTContent(jwtContent, (verifyError) => {
+            if (verifyError) return callback(verifyError);
+
+            const { header, body, signatureInput, signature } = jwtContent;
+            const { iss: sReadSSIString, publicKey } = body;
+
+            const sReadSSI = keySSIFactory.create(sReadSSIString);
+
+            hash(sReadSSI, signatureInput, (error, hash) => {
+                if (error) return callback(error);
+                verifySignature(sReadSSI, hash, signature, publicKey, (verifyError, verifyResult) => {
+                    if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+
+                    if (typeof rootOfTrustVerificationStrategy === "function") {
+                        rootOfTrustVerificationStrategy({ header, body }, (verificationError, verificationResult) => {
+                            if (verificationError || !verificationResult) {
+                                return callback(JWT_ERRORS.ROOT_OF_TRUST_VERIFICATION_FAILED);
+                            }
+                            callback(null, true);
+                        });
+                        return;
+                    }
+
+                    callback(null, true);
+                });
+            });
+        });
+    });
+};
+
+module.exports = {
+    createJWT,
+    verifyJWT,
+    JWT_ERRORS,
+};
+
+},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
 arguments[4]["/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js"][0].apply(exports,arguments)
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+function ErrorWrapper(message, err){
+    this.previousError = err;
+    this.message = message;
+    try{
+        throw Error(message);
+    }catch (e) {
+        this.currentStack = e.stack.toString();
+    }
+}
+
+function createErrorWrapper(message, err){
+    return new ErrorWrapper(message, err);
+}
+
+module.exports = {
+    createErrorWrapper
+}
+
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
+	return function (url, data, options, callback) {
+		if(typeof options === "function"){
+			callback = options;
+			options = {};
+		}
+
 		const xhr = new XMLHttpRequest();
+
+		if(typeof options.headers !== "undefined"){
+			for(let name in options.headers){
+				xhr.setRequestHeader(name, options.headers[name]);
+			}
+		}
 
 		xhr.onload = function () {
 			if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
@@ -6780,7 +7392,7 @@ function generateMethodForRequestWithData(httpMethod) {
 				buffers.push(data);
 			});
 			data.on("end", function() {
-				const actualContents = Buffer.concat(buffers);
+				const actualContents = $$.Buffer.concat(buffers);
 				xhr.send(actualContents);
 			});
 		}
@@ -6805,9 +7417,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -6824,6 +7434,9 @@ switch ($$.environmentType) {
 		module.exports = require("./node");
 }
 
+//enable support for http interceptors.
+require("./utils/interceptors").enable(module.exports);
+
 const PollRequestManager = require("./utils/PollRequestManager");
 const rm = new PollRequestManager(module.exports.fetch);
 
@@ -6836,8 +7449,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -6952,7 +7564,7 @@ function Response(httpRequest, httpResponse) {
 		httpResponse.on('end', () => {
 			try {
 				if (Array.isArray(rawData)) {
-					rawData = Buffer.from(rawData);
+					rawData = $$.Buffer.from(rawData);
 				}
 				callback(undefined, rawData);
 			} catch (err) {
@@ -7024,12 +7636,12 @@ function Response(httpRequest, httpResponse) {
 				let jsonContent;
 				try {
 					//do we really need this if ?!
-					if (Buffer.isBuffer(responseBody)) {
+					if ($$.Buffer.isBuffer(responseBody)) {
 						responseBody = responseBody.toString();
 					}
 					jsonContent = JSON.parse(responseBody);
-				} catch (err) {
-					return reject(err);
+				} catch (e) {
+					return reject(e);
 				}
 				resolve(jsonContent);
 			});
@@ -7043,10 +7655,7 @@ function Response(httpRequest, httpResponse) {
 module.exports = {
 	fetch
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -7066,7 +7675,11 @@ function getNetworkForOptions(options) {
 }
 
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
+	return function (url, data, reqOptions, callback) {
+		if(typeof reqOptions === "function"){
+			callback = reqOptions;
+			reqOptions = {};
+		}
 		const innerUrl = URL.parse(url);
 
 		const options = {
@@ -7080,11 +7693,15 @@ function generateMethodForRequestWithData(httpMethod) {
 			method: httpMethod
 		};
 
+		for(let name in reqOptions.headers){
+			options.headers[name] = reqOptions.headers[name];
+		}
+
 		const network = getNetworkForOptions(innerUrl);
 
-		if (ArrayBuffer.isView(data) || Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
-			if (!Buffer.isBuffer(data)) {
-				data = Buffer.from(data);
+		if (ArrayBuffer.isView(data) || $$.Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+			if (!$$.Buffer.isBuffer(data)) {
+				data = $$.Buffer.from(data);
 			}
 
 			options.headers['Content-Type'] = 'application/octet-stream';
@@ -7132,7 +7749,7 @@ function generateMethodForRequestWithData(httpMethod) {
 			return;
 		}
 
-		if (typeof data !== 'string' && !Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
+		if (typeof data !== 'string' && !$$.Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
 			data = JSON.stringify(data);
 		}
 
@@ -7146,12 +7763,14 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
-	return function (url, data, callback) {
-		const headers = {}
+	return function (url, data, options, callback) {
+		if(typeof options === "function"){
+			callback = options;
+			options = {};
+		}
+		const headers = options.headers || {};
 		if(ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
 			headers['Content-Type'] = 'application/octet-stream';
 
@@ -7309,6 +7928,108 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 }
 
 module.exports = PollRequestManager;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+let interceptors = [];
+
+function registerInterceptor(interceptor){
+    if(typeof interceptor !== "function"){
+        throw new Error('interceptor argument should be a function');
+    }
+    interceptors.push(interceptor);
+}
+
+function unregisterInterceptor(interceptor){
+    let index = interceptors.indexOf(interceptor);
+    if(index !== -1){
+        interceptors.splice(index, 1);
+    }
+}
+
+function callInterceptors(target, callback){
+    let index = -1;
+    function executeInterceptor(result){
+        index++;
+        if(index >= interceptors.length){
+            return callback(undefined, result);
+        }
+        let interceptor = interceptors[index];
+        interceptor(target, (err, result)=>{
+            if(err){
+                return callback(err);
+            }
+            return executeInterceptor(result);
+        });
+    }
+    executeInterceptor(target);
+}
+
+function setupInterceptors(handler){
+    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}];
+    interceptMethods.forEach(function(target){
+        let method = handler[target.name];
+        handler[target.name] = function(...args){
+            let headers = {};
+            let optionsAvailable = false;
+            if(args.length > target.position+1 && ["function", "undefined"].indexOf(typeof args[target.position]) === -1){
+                headers = args[target.position]["headers"];
+                optionsAvailable = true;
+            }
+
+            let data = {url: args[0], headers};
+            callInterceptors(data, function(err, result){
+                if(optionsAvailable){
+                    args[target.position]["headers"] = result.headers;
+                }else{
+                    args.splice(target.position, 0, {headers: result.headers});
+                }
+
+                return method(...args);
+            });
+        }
+    });
+
+    const promisedBasedInterceptors = [{name: "fetch", position: 1}];
+    promisedBasedInterceptors.forEach(function(target){
+        let method = handler[target.name];
+        handler[target.name] = function(...args){
+            return new Promise((resolve, reject) => {
+                if (args.length === 1) {
+                    args.push({headers: {}});
+                }
+
+                if(typeof args[1].headers === "undefined"){
+                    args[1].headers = {};
+                }
+                let headers = args[1].headers;
+
+                let data = {url: args[0], headers};
+                callInterceptors(data, function(err, result) {
+
+                    let options = args[target.position];
+                    options.headers = result.headers;
+
+                    method(...args)
+                        .then((...args) => {
+                            resolve(...args);
+                        })
+                        .catch((...args) => {
+                            reject(...args);
+                        });
+                });
+            });
+        };
+    });
+}
+
+function enable(handler){
+    //exposing working methods
+    handler.registerInterceptor = registerInterceptor;
+    handler.unregisterInterceptor = unregisterInterceptor;
+    //setting up the interception mechanism
+    setupInterceptors(handler);
+}
+
+module.exports = {enable};
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
@@ -7318,36 +8039,67 @@ const parse = (ssiString, options) => {
     return keySSIFactory.create(ssiString, options);
 };
 
-const buildSeedSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint);
+const buildSeedSSI = (domain, specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildWalletSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.WALLET_SSI, domain, specificString, control, vn, hint);
+const buildSReadSSI = (domain,  specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SREAD_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildSReadSSI = (domain,  specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SREAD_SSI, domain, specificString, control, vn, hint);
+const buildSZeroAccessSSI = (domain,  specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SZERO_ACCESS_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildSZeroAccessSSI = (domain,  specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.SZERO_ACCESS_SSI, domain, specificString, control, vn, hint);
+const buildHashLinkSSI = (domain, specificString, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.HASH_LINK_SSI, domain,  specificString, control, vn, hint, callback);
 };
 
-const buildHashLinkSSI = (domain, specificString, control, vn, hint) => {
-    return buildTemplateKeySSI(SSITypes.HASH_LINK_SSI, domain,  specificString, control, vn, hint);
-};
-
-const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint) => {
+const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint, callback) => {
+    //only ssiType and domain are mandatory arguments
+    if (typeof specificString === "function") {
+        callback = specificString;
+        specificString = undefined;
+    }
+    if (typeof control === "function") {
+        callback = control;
+        control = undefined;
+    }
+    if (typeof vn === "function") {
+        callback = vn;
+        specificString = undefined;
+    }
+    if (typeof hint === "function") {
+        callback = hint;
+        hint = undefined;
+    }
     const keySSI = keySSIFactory.createType(ssiType);
     keySSI.load(ssiType, domain, specificString, control, vn, hint);
+    if (typeof callback === "function") {
+        callback(undefined, keySSI);
+    }
     return keySSI;
 };
 
-const buildArraySSI = (domain, arr, vn, hint) => {
+
+const buildWalletSSI = (domain, arrayWIthCredentials, hint) => {
+    try{
+        let ssi  = buildArraySSI(domain, arrayWIthCredentials,undefined,hint);
+        ssi.cast(SSITypes.WALLET_SSI);
+        return parse(ssi.getIdentifier());
+    } catch(err){
+        console.log("Failing to build WalletSSI");
+    }
+};
+
+const buildArraySSI = (domain, arr, vn, hint, callback) => {
     const arraySSI = keySSIFactory.createType(SSITypes.ARRAY_SSI);
     arraySSI.initialize(domain, arr, vn, hint);
     return arraySSI;
+};
+
+const buildSymmetricalEncryptionSSI = (domain, encryptionKey, control, vn, hint, callback) => {
+    return buildTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
 };
 
 module.exports = {
@@ -7358,10 +8110,17 @@ module.exports = {
     buildSZeroAccessSSI,
     buildHashLinkSSI,
     buildTemplateKeySSI,
-    buildArraySSI
+    buildArraySSI,
+    buildSymmetricalEncryptionSSI
 };
 },{"key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
+
+let cachedKeySSIResolver = undefined;
+
+
 module.exports = {
+	ENVIRONMENT_TYPES,
 	CODE_FOLDER: "/code",
 	CONSTITUTION_FOLDER: '/code/constitution',
 	BLOCKCHAIN_FOLDER: '/blockchain',
@@ -7371,9 +8130,43 @@ module.exports = {
 	TRANSACTIONS_FOLDER: "/transactions",
 	APPS_FOLDER: "/apps",
 	DATA_FOLDER: "/data",
-	MANIFEST_FILE: "/manifest"
+	MANIFEST_FILE: "/manifest",
+	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
+	CACHE: {
+		FS: "fs",
+		INDEXED_DB: "cache.indexedDB",
+		VAULT_TYPE: "cache.vaultType",
+		BASE_FOLDER: "internal-volume/cache",
+		BASE_FOLDER_CONFIG_PROPERTY: "fsCache.baseFolder",
+		ENCRYPTED_BRICKS_CACHE: "encrypted-bricks-cache",
+		ANCHORING_CACHE: "anchoring-cache",
+		NO_CACHE: "no-cache"
+	},
+	DOMAINS: {
+		VAULT: "vault"
+	},
+	VAULT:{
+		BRICKS_STORE: "bricks",
+		ANCHORS_STORE: "anchors"
+	},
+	LOADER_ENVIRONMENT_JSON:{
+		AGENT: "agent",
+		SERVER: "server",
+		VAULT: "vault",
+		MOBILE: "mobile",
+	},
+	 get KEY_SSIS(){
+		if(cachedKeySSIResolver === undefined){
+			cachedKeySSIResolver = require("key-ssi-resolver");
+		}
+		 return cachedKeySSIResolver.SSITypes;
+	 }
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+
+
+
+
+},{"../overwrite-require/moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -7514,7 +8307,7 @@ module.exports = {
 },{"../index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
-
+const dsuInstances = {};
 const initializeResolver = (options) => {
     options = options || {};
     return KeySSIResolver.initialize(options);
@@ -7547,61 +8340,46 @@ const loadDSU = (keySSI, options, callback) => {
         options = undefined;
     }
 
-    const keySSIResolver = initializeResolver(options);
-    keySSIResolver.loadDSU(keySSI, options, callback);
-};
-
-const createWallet = (templateKeySSI, dsuTypeSSI, options, callback) => {
-    let keySSI = keySSISpace.parse(templateKeySSI);
-    if(typeof options === "function"){
-        callback = options;
-        options = {};
+    const ssiId = keySSI.getIdentifier();
+    if (dsuInstances[ssiId]) {
+        return callback(undefined, dsuInstances[ssiId]);
     }
-
-    options.dsuTypeSSI = dsuTypeSSI;
-
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.createDSU(keySSI, options, callback);
-}
-
-const loadWallet = (secret, options, callback) => {
-    let tmpKeySSI = keySSISpace.buildWalletSSI();
-    if(typeof options === "function"){
-        callback = options;
-        options = {};
-    }
-
-    tmpKeySSI.getSeedSSI(secret, options, (err, seedSSI)=>{
-        if(err){
+    keySSIResolver.loadDSU(keySSI, options, (err, newDSU) => {
+        if (err) {
             return callback(err);
         }
 
-        loadDSU(seedSSI, (err, wallet) =>{
-            if(err){
-                return callback(err);
-            }
-            callback(undefined, wallet);
-        });
+        if (typeof dsuInstances[ssiId] === "undefined") {
+            dsuInstances[ssiId] = newDSU;
+        }
+
+        callback(undefined, newDSU);
     });
-}
-
-const createCustomDSU = () => {
-
 };
+
+
+
 
 const getHandler = () => {
-
+    throw Error("Not available yet");
 };
+
+
+function invalidateDSUCache(dsuKeySSI) {
+    // console.log("Invalidating cache ...................");
+    const ssiId = dsuKeySSI.getIdentifier();
+    delete dsuInstances[ssiId]
+}
 
 module.exports = {
     createDSU,
     loadDSU,
-    createWallet,
-    loadWallet,
-    createCustomDSU,
     getHandler,
-    registerDSUFactory
+    registerDSUFactory,
+    invalidateDSUCache
 }
+
 },{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 const getMainDSU = () => {
     if (typeof rawDossier === "undefined") {
@@ -7614,7 +8392,127 @@ const getMainDSU = () => {
 module.exports = {
     getMainDSU
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+const envVariables = {};
+function getEnvironmentVariable(name){
+    if (typeof envVariables[name] === "undefined") {
+        return envVariables[name];
+    }
+    return process.env[name];
+}
+function setEnvironmentVariable(name, value){
+    envVariables[name] = value;
+}
+
+function getFS(){
+    const fsName = "fs";
+    return require(fsName);
+}
+
+function getPath(){
+    const pathName = "path";
+    return require(pathName);
+}
+
+module.exports = {
+    getEnvironmentVariable,
+    setEnvironmentVariable,
+    getFS,
+    getPath
+}
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+function PendingCallMixin(target) {
+    let pendingCalls = [];
+    let serialPendingCalls = [];
+    let isSerialExecutionReady = false;
+    let isExecutionReady = false;
+    target.addPendingCall = (pendingFn) => {
+        if (isExecutionReady) {
+            pendingFn();
+        } else {
+            pendingCalls.push(pendingFn);
+        }
+    };
+
+    target.executePendingCalls = () => {
+        isExecutionReady = true;
+        pendingCalls.forEach(fn => fn());
+        pendingCalls = [];
+    };
+
+    target.addSerialPendingCall = (pendingFn) => {
+        serialPendingCalls.push(pendingFn);
+        if (isSerialExecutionReady) {
+            next();
+        }
+    };
+
+    function next() {
+        const fn = serialPendingCalls.shift();
+        if (typeof fn !== "undefined") {
+            try {
+                fn(function (arg) {
+                    setTimeout(() => {
+                        next();
+                    }, 0);
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
+    target.executeSerialPendingCalls = () => {
+        isSerialExecutionReady = true;
+        next();
+    };
+}
+
+module.exports = PendingCallMixin;
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+module.exports.shuffle = shuffle;
+
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
+const system = require("../system");
+function getBaseURL(){
+    switch ($$.environmentType) {
+        case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+            let scope = self.registration.scope;
+
+            let parts = scope.split("/");
+            return `${parts[0]}//${parts[2]}`;
+
+        case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+            const protocol = window.location.protocol;
+            const host = window.location.hostname;
+            const port = window.location.port;
+
+            return `${protocol}//${host}:${port}`;
+
+        case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            let baseUrl = system.getEnvironmentVariable(constants.BDNS_ROOT_HOSTS);
+            if (typeof baseUrl === "undefined") {
+                baseUrl = "http://localhost:8080";
+            }
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.slice(0, -1);
+            }
+            return baseUrl;
+
+        default:
+    }
+}
+
+module.exports = getBaseURL;
+},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 function Observable(){
 	let handlers = {};
 
@@ -7657,9 +8555,155 @@ function Observable(){
 module.exports.createObservable = function(){
 	return new Observable();
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+const arrayUtils = require("./array");
+
+function validateMajorityRunAllWithSuccess(successResults, errorResults, totalCount) {
+  const successCount = successResults.length;
+  const errorCount = errorResults.length;
+
+  if (totalCount == null) {
+    // totalCount was not provided, so we consider to be the sum of the other results
+    totalCount = successCount + errorCount;
+  }
+
+  const isMajorityWithSuccess = successCount >= Math.ceil(totalCount / 2);
+  return isMajorityWithSuccess;
+}
+
+function runSinglePromise(executePromise, promiseInput) {
+  return executePromise(promiseInput)
+    .then((result) => {
+      return {
+        success: true,
+        result,
+      };
+    })
+    .catch((error) => {
+      return {
+        error,
+      };
+    });
+}
+
+function runAll(listEntries, executeEntry, validateResults, callback) {
+  if (typeof validateResults !== "function") {
+    validateResults = validateMajorityRunAllWithSuccess;
+  }
+
+  const allInitialExecutions = listEntries.map((entry) => {
+    return runSinglePromise(executeEntry, entry);
+  });
+  Promise.all(allInitialExecutions)
+    .then((results) => {
+      const successExecutions = results.filter((run) => run.success);
+      const errorExecutions = results.filter((run) => !run.success);
+
+      const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions);
+      if (isConsideredSuccessfulRun) {
+        const successExecutionResults = successExecutions.map((run) => run.result);
+        return callback(null, successExecutionResults);
+      }
+
+      return callback("FAILED");
+    })
+    .catch((error) => callback(error));
+}
+
+function runOneSuccessful(listEntries, executeEntry, callback) {
+  if (!listEntries.length) {
+    return callback("EMPTY_LIST");
+  }
+
+  availableListEntries = [...listEntries];
+  arrayUtils.shuffle(availableListEntries);
+
+  const entry = availableListEntries.shift();
+
+  const executeForSingleEntry = (entry) => {
+    return executeEntry(entry)
+      .then((result) => {
+        return callback(null, result);
+      })
+      .catch((err) => {
+        if (!availableListEntries.length) {
+          return callback(err);
+        }
+
+        const nextEntry = availableListEntries.shift();
+        executeForSingleEntry(nextEntry);
+      });
+  };
+
+  executeForSingleEntry(entry);
+}
+
+function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback) {
+  const totalCount = listEntries.length;
+
+  if (!initialRunCount || typeof initialRunCount !== "number") {
+    // no initiaRunCount was specified, so we execute half of them initially
+    initialRunCount = Math.ceil(totalCount / 2);
+  }
+  initialRunCount = Math.min(initialRunCount, totalCount);
+
+  if (typeof validateResults !== "function") {
+    validateResults = validateMajorityRunAllWithSuccess;
+  }
+
+  let allExecutedRunResults = [];
+  const initialEntries = listEntries.slice(0, initialRunCount);
+  const remainingEntries = listEntries.slice(initialRunCount);
+
+  const checkAllExecutedRunResults = () => {
+    const successExecutions = allExecutedRunResults.filter((run) => run.success);
+    const errorExecutions = allExecutedRunResults.filter((run) => !run.success);
+
+    const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions, totalCount);
+    if (isConsideredSuccessfulRun) {
+      const successExecutionResults = successExecutions.map((run) => run.result);
+      return callback(null, successExecutionResults);
+    }
+
+    if (!remainingEntries.length) {
+      // the results weren't validated, but we don't have any other entry to run
+      return callback("FAILED");
+    }
+
+    const nextEntry = remainingEntries.shift();
+    runSinglePromise(executeEntry, nextEntry)
+      .then((nextEntryResult) => {
+        allExecutedRunResults.push(nextEntryResult);
+        checkAllExecutedRunResults();
+      })
+      .catch(() => {
+        // runSinglePromise already makes sure no catch is thrown
+        // put to ignore nodejs unhandled execution warning
+      });
+  };
+
+  const allInitialExecutions = initialEntries.map((entry) => {
+    return runSinglePromise(executeEntry, entry);
+  });
+
+  Promise.all(allInitialExecutions)
+    .then((results) => {
+      allExecutedRunResults = results;
+      checkAllExecutedRunResults();
+    })
+    .catch((error) => callback(error));
+}
+
+module.exports = {
+  runAll,
+  runOneSuccessful,
+  runEnoughForMajority,
+};
+
+},{"./array":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
+  MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
   ISOLATE_ENVIRONMENT_TYPE: 'isolate',
   THREAD_ENVIRONMENT_TYPE: 'thread',
@@ -7669,6 +8713,15 @@ module.exports = {
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
+
+if(typeof $$.Buffer === "undefined"){
+    $$.Buffer = require("buffer").Buffer;
+}
+
+if (typeof global.$$.uidGenerator == "undefined") {
+    $$.uidGenerator = {};
+    $$.uidGenerator.safe_uuid = require("swarmutils").safe_uuid;
+}
 
 if (!global.process || process.env.NO_LOGS !== 'true') {
     try {
@@ -7980,7 +9033,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"psklogger":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -8586,7 +9639,6 @@ $$.apihub.createConnection = function(alias, url, ssi){
 }
 
 },{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
         const xhr = new XMLHttpRequest();
@@ -8618,7 +9670,7 @@ function generateMethodForRequestWithData(httpMethod) {
                 buffers.push(data);
             });
             data.on("end", function() {
-                const actualContents = Buffer.concat(buffers);
+                const actualContents = $$.Buffer.concat(buffers);
                 xhr.send(actualContents);
             });
         }
@@ -8668,7 +9720,7 @@ $$.remote.doHttpGet = function doHttpGet(url, callback) {
             if (contentType === "application/octet-stream") {
                 let responseBuffer = this.response;
 
-                let buffer = new Buffer(responseBuffer.byteLength);
+                let buffer = new $$.Buffer(responseBuffer.byteLength);
                 let view = new Uint8Array(responseBuffer);
                 for (let i = 0; i < buffer.length; ++i) {
                     buffer[i] = view[i];
@@ -8725,10 +9777,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return window.atob(encodedString);
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
 require("./psk-abstract-client");
 
 const http = require("http");
@@ -8768,9 +9817,9 @@ function generateMethodForRequestWithData(httpMethod) {
 
 		const network = getNetworkForOptions(innerUrl);
 
-		if (ArrayBuffer.isView(data) || Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
-			if (!Buffer.isBuffer(data)) {
-				data = Buffer.from(data);
+		if (ArrayBuffer.isView(data) || $$.Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+			if (!$$.Buffer.isBuffer(data)) {
+				data = $$.Buffer.from(data);
 			}
 
 			options.headers['Content-Type'] = 'application/octet-stream';
@@ -8818,7 +9867,7 @@ function generateMethodForRequestWithData(httpMethod) {
 			return;
 		}
 
-		if (typeof data !== 'string' && !Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
+		if (typeof data !== 'string' && !$$.Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
 			data = JSON.stringify(data);
 		}
 
@@ -8882,7 +9931,7 @@ $$.remote.doHttpGet = function doHttpGet(url, callback){
 		res.on('end', () => {
 			try {
 				if(Array.isArray(rawData)){
-					rawData = Buffer.from(rawData);
+					rawData = $$.Buffer.from(rawData);
 				}
 				callback(null, rawData, res.headers);
 			} catch (err) {
@@ -8906,20 +9955,17 @@ $$.remote.doHttpGet = function doHttpGet(url, callback){
 };
 
 $$.remote.base64Encode = function base64Encode(stringToEncode){
-    return Buffer.from(stringToEncode).toString('base64');
+    return $$.Buffer.from(stringToEncode).toString('base64');
 };
 
 $$.remote.base64Decode = function base64Decode(encodedString){
-    return Buffer.from(encodedString, 'base64').toString('ascii');
+    return $$.Buffer.from(encodedString, 'base64').toString('ascii');
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","buffer":false,"http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
-const crypto = require('crypto');
-const KeyEncoder = require('./keyEncoder');
-
+},{"./psk-abstract-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","http":false,"https":false,"url":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 function ECKeyGenerator() {
+    const crypto = require('crypto');
+    const KeyEncoder = require('./keyEncoder');
 
     this.generateKeyPair = (namedCurve, callback) => {
         if (typeof namedCurve === "function") {
@@ -8932,7 +9978,7 @@ function ECKeyGenerator() {
         callback(undefined, publicKey, privateKey);
     };
 
-    this.convertKeys = (privateKey, publicKey, options) => {
+    this.getPemKeys = (privateKey, publicKey, options) => {
         const defaultOpts = {format: 'pem', namedCurve: 'secp256k1'};
         Object.assign(defaultOpts, options);
         options = defaultOpts;
@@ -8963,10 +10009,10 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 },{"./keyEncoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
-(function (Buffer){(function (){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
+    const derAsn1Decoder = require("./utils/DerASN1Decoder");
     const PskEncryption = require("./PskEncryption");
     const or = require('overwrite-require');
 
@@ -8982,7 +10028,7 @@ function PskCrypto() {
 
     this.sign = (algorithm, data, privateKey) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         const sign = crypto.createSign(algorithm);
@@ -8993,7 +10039,7 @@ function PskCrypto() {
 
     this.verify = (algorithm, data, publicKey, signature) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
         const verify = crypto.createVerify(algorithm);
         verify.update(data);
@@ -9003,7 +10049,7 @@ function PskCrypto() {
 
     this.privateEncrypt = (privateKey, data) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         return crypto.privateEncrypt(privateKey, data);
@@ -9011,7 +10057,7 @@ function PskCrypto() {
 
     this.privateDecrypt = (privateKey, encryptedData) => {
         if (typeof encryptedData === "string") {
-            encryptedData = Buffer.from(encryptedData);
+            encryptedData = $$.Buffer.from(encryptedData);
         }
 
         return crypto.privateDecrypt(privateKey, encryptedData);
@@ -9019,7 +10065,7 @@ function PskCrypto() {
 
     this.publicEncrypt = (publicKey, data) => {
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = $$.Buffer.from(data);
         }
 
         return crypto.publicEncrypt(publicKey, data);
@@ -9027,14 +10073,14 @@ function PskCrypto() {
 
     this.publicDecrypt = (publicKey, encryptedData) => {
         if (typeof encryptedData === "string") {
-            encryptedData = Buffer.from(encryptedData);
+            encryptedData = $$.Buffer.from(encryptedData);
         }
 
         return crypto.publicDecrypt(publicKey, encryptedData);
     };
 
     this.pskHash = function (data, encoding) {
-        if (Buffer.isBuffer(data)) {
+        if ($$.Buffer.isBuffer(data)) {
             return utils.createPskHash(data, encoding);
         }
         if (data instanceof Object) {
@@ -9047,6 +10093,14 @@ function PskCrypto() {
         const hash = crypto.createHash(algorithm);
         hash.update(data);
         return hash.digest(encoding);
+    };
+
+    this.objectHash = (algorithm, data, encoding) => {
+        if(!$$.Buffer.isBuffer(data)){
+            const ssutils = require("../signsensusDS/ssutil");
+            data = ssutils.dumpObjectForHashing(data);
+        }
+        return this.hash(algorithm, data, encoding);
     };
 
     this.pskBase58Encode = function (data) {
@@ -9071,16 +10125,16 @@ function PskCrypto() {
     };
 
     this.generateSafeUid = function (password, additionalData) {
-        password = password || Buffer.alloc(0);
+        password = password || $$.Buffer.alloc(0);
         if (!additionalData) {
-            additionalData = Buffer.alloc(0);
+            additionalData = $$.Buffer.alloc(0);
         }
 
-        if (!Buffer.isBuffer(additionalData)) {
-            additionalData = Buffer.from(additionalData);
+        if (!$$.Buffer.isBuffer(additionalData)) {
+            additionalData = $$.Buffer.from(additionalData);
         }
 
-        return utils.encode(this.pskHash(Buffer.concat([password, additionalData])));
+        return utils.encode(this.pskHash($$.Buffer.concat([password, additionalData])));
     };
 
     this.deriveKey = function deriveKey(algorithm, password, iterations) {
@@ -9130,8 +10184,8 @@ function PskCrypto() {
         }
 
         function __xorTwoBuffers(a, b) {
-            if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-                throw Error("The argument type should be Buffer.");
+            if (!$$.Buffer.isBuffer(a) || !$$.Buffer.isBuffer(b)) {
+                throw Error("The argument type should be $$.Buffer.");
             }
 
             const length = Math.min(a.length, b.length);
@@ -9144,7 +10198,7 @@ function PskCrypto() {
 
         return args[args.length - 1];
     };
-
+    this.decodeDerToASN1ETH = (derSignatureBuffer) => derAsn1Decoder.decodeDERIntoASN1ETH(derSignatureBuffer);
     this.PskHash = utils.PskHash;
 }
 
@@ -9152,14 +10206,11 @@ module.exports = new PskCrypto();
 
 
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require("crypto");
-const utils = require("./utils/cryptoUtils");
-
+},{"../signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false,"overwrite-require":"overwrite-require"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
+    const crypto = require("crypto");
+    const utils = require("./utils/cryptoUtils");
+
     if (!algorithm) {
         throw Error("No encryption algorithm was provided");
     }
@@ -9174,6 +10225,9 @@ function PskEncryption(algorithm) {
     let encryptionIsAuthenticated = utils.encryptionIsAuthenticated(algorithm);
 
     this.encrypt = (plainData, encryptionKey, options) => {
+        if (typeof encryptionKey === "string") {
+            encryptionKey = $$.Buffer.from(encryptionKey);
+        }
         iv = iv || crypto.randomBytes(16);
         const cipher = crypto.createCipheriv(algorithm, encryptionKey, iv, options);
         if (encryptionIsAuthenticated) {
@@ -9181,21 +10235,21 @@ function PskEncryption(algorithm) {
             cipher.setAAD(aad);
         }
 
-        let encData = Buffer.concat([cipher.update(plainData), cipher.final()]);
+        let encData = $$.Buffer.concat([cipher.update(plainData), cipher.final()]);
         if (encryptionIsAuthenticated) {
             tag = cipher.getAuthTag();
         }
 
         if (iv) {
-            encData = Buffer.concat([encData, iv]);
+            encData = $$.Buffer.concat([encData, iv]);
         }
 
         if (aad) {
-            encData = Buffer.concat([encData, aad]);
+            encData = $$.Buffer.concat([encData, aad]);
         }
 
         if (tag) {
-            encData = Buffer.concat([encData, tag]);
+            encData = $$.Buffer.concat([encData, tag]);
         }
         
         key = encryptionKey;
@@ -9203,6 +10257,9 @@ function PskEncryption(algorithm) {
     };
 
     this.decrypt = (encryptedData, decryptionKey, authTagLength = 0, options) => {
+        if (typeof decryptionKey === "string") {
+            decryptionKey = $$.Buffer.from(decryptionKey);
+        }
         if (!iv) {
             this.getDecryptionParameters(encryptedData, authTagLength);
         }
@@ -9212,7 +10269,7 @@ function PskEncryption(algorithm) {
             decipher.setAuthTag(tag);
         }
 
-        return Buffer.concat([decipher.update(data), decipher.final()]);
+        return $$.Buffer.concat([decipher.update(data), decipher.final()]);
     };
 
     this.getDecryptionParameters = (encryptedData, authTagLength = 0) => {
@@ -9241,9 +10298,7 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -9316,14 +10371,13 @@ asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
 },{"./api":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
 function DecoderBuffer(base, options) {
     Reporter.call(this, options);
-    if (!Buffer.isBuffer(base)) {
-        this.error('Input not Buffer');
+    if (!$$.Buffer.isBuffer(base)) {
+        this.error('Input not $$.Buffer');
         return;
     }
 
@@ -9397,8 +10451,8 @@ function EncoderBuffer(value, reporter) {
         this.length = 1;
     } else if (typeof value === 'string') {
         this.value = value;
-        this.length = Buffer.byteLength(value);
-    } else if (Buffer.isBuffer(value)) {
+        this.length = $$.Buffer.byteLength(value);
+    } else if ($$.Buffer.isBuffer(value)) {
         this.value = value;
         this.length = value.length;
     } else {
@@ -9410,7 +10464,7 @@ exports.EncoderBuffer = EncoderBuffer;
 
 EncoderBuffer.prototype.join = function join(out, offset) {
     if (!out)
-        out = Buffer.alloc(this.length);
+        out = $$.Buffer.alloc(this.length);
     if (!offset)
         offset = 0;
 
@@ -9427,7 +10481,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
             out[offset] = this.value;
         else if (typeof this.value === 'string')
             out.write(this.value, offset);
-        else if (Buffer.isBuffer(this.value))
+        else if ($$.Buffer.isBuffer(this.value))
             this.value.copy(out, offset);
         offset += this.length;
     }
@@ -9435,9 +10489,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -10238,6 +11290,129 @@ BN.prototype._init = function init(number, base, endian) {
 
   this._initArray(this.toArray(), base, endian);
 };
+
+  BN.prototype.toArrayLike = function toArrayLike (ArrayType, endian, length) {
+    this.strip();
+
+    var byteLength = this.byteLength();
+    var reqLength = length || Math.max(1, byteLength);
+    assert(byteLength <= reqLength, 'byte array longer than desired length');
+    assert(reqLength > 0, 'Requested array length <= 0');
+
+    var res = allocate(ArrayType, reqLength);
+    var postfix = endian === 'le' ? 'LE' : 'BE';
+    this['_toArrayLike' + postfix](res, byteLength);
+    return res;
+  };
+
+  var allocate = function allocate (ArrayType, size) {
+    if (ArrayType.allocUnsafe) {
+      return ArrayType.allocUnsafe(size);
+    }
+    return new ArrayType(size);
+  };
+
+  BN.prototype._toArrayLikeLE = function _toArrayLikeLE (res, byteLength) {
+    var position = 0;
+    var carry = 0;
+
+    for (var i = 0, shift = 0; i < this.length; i++) {
+      var word = (this.words[i] << shift) | carry;
+
+      res[position++] = word & 0xff;
+      if (position < res.length) {
+        res[position++] = (word >> 8) & 0xff;
+      }
+      if (position < res.length) {
+        res[position++] = (word >> 16) & 0xff;
+      }
+
+      if (shift === 6) {
+        if (position < res.length) {
+          res[position++] = (word >> 24) & 0xff;
+        }
+        carry = 0;
+        shift = 0;
+      } else {
+        carry = word >>> 24;
+        shift += 2;
+      }
+    }
+
+    if (position < res.length) {
+      res[position++] = carry;
+
+      while (position < res.length) {
+        res[position++] = 0;
+      }
+    }
+  };
+
+  BN.prototype._toArrayLikeBE = function _toArrayLikeBE (res, byteLength) {
+    var position = res.length - 1;
+    var carry = 0;
+
+    for (var i = 0, shift = 0; i < this.length; i++) {
+      var word = (this.words[i] << shift) | carry;
+
+      res[position--] = word & 0xff;
+      if (position >= 0) {
+        res[position--] = (word >> 8) & 0xff;
+      }
+      if (position >= 0) {
+        res[position--] = (word >> 16) & 0xff;
+      }
+
+      if (shift === 6) {
+        if (position >= 0) {
+          res[position--] = (word >> 24) & 0xff;
+        }
+        carry = 0;
+        shift = 0;
+      } else {
+        carry = word >>> 24;
+        shift += 2;
+      }
+    }
+
+    if (position >= 0) {
+      res[position--] = carry;
+
+      while (position >= 0) {
+        res[position--] = 0;
+      }
+    }
+  };
+
+  if (Math.clz32) {
+    BN.prototype._countBits = function _countBits (w) {
+      return 32 - Math.clz32(w);
+    };
+  } else {
+    BN.prototype._countBits = function _countBits (w) {
+      var t = w;
+      var r = 0;
+      if (t >= 0x1000) {
+        r += 13;
+        t >>>= 13;
+      }
+      if (t >= 0x40) {
+        r += 7;
+        t >>>= 7;
+      }
+      if (t >= 0x8) {
+        r += 4;
+        t >>>= 4;
+      }
+      if (t >= 0x02) {
+        r += 2;
+        t >>>= 2;
+      }
+      return r + t;
+    };
+  }
+
+
 
 BN.prototype._initNumber = function _initNumber(number, base, endian) {
   if (number < 0) {
@@ -12839,7 +14014,6 @@ decoders.pem = require('./pem');
 
 },{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
-const Buffer = require('buffer').Buffer;
 
 const asn1 = require('../asn1');
 const DERDecoder = require('./der');
@@ -12884,13 +14058,11 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     const base64 = lines.slice(start + 1, end).join('');
     // Remove excessive symbols
     base64.replace(/[^a-z0-9\+\/=]+/gi, '');
-
-    const input = Buffer.from(base64, 'base64');
+    const input = $$.Buffer.from(base64, 'base64');
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -12927,7 +14099,7 @@ DERNode.prototype._encodeComposite = function encodeComposite(tag, primitive, cl
 
     // Short form
     if (content.length < 0x80) {
-        const header = Buffer.alloc(2);
+        const header = $$.Buffer.alloc(2);
         header[0] = encodedTag;
         header[1] = content.length;
         return this._createEncoderBuffer([header, content]);
@@ -12939,7 +14111,7 @@ DERNode.prototype._encodeComposite = function encodeComposite(tag, primitive, cl
     for (let i = content.length; i >= 0x100; i >>= 8)
         lenOctets++;
 
-    const header = Buffer.alloc(1 + 1 + lenOctets);
+    const header = $$.Buffer.alloc(1 + 1 + lenOctets);
     header[0] = encodedTag;
     header[1] = 0x80 | lenOctets;
 
@@ -12994,7 +14166,7 @@ DERNode.prototype._encodeObjid = function encodeObjid(id, values, relative) {
             size++;
     }
 
-    const objid = Buffer.alloc(size);
+    const objid = $$.Buffer.alloc(size);
     let offset = objid.length - 1;
     for (let i = id.length - 1; i >= 0; i--) {
         let ident = id[i];
@@ -13060,20 +14232,20 @@ DERNode.prototype._encodeInt = function encodeInt(num, values) {
     }
 
     // Bignum, assume big endian
-    if (typeof num !== 'number' && !Buffer.isBuffer(num)) {
+    if (typeof num !== 'number' && !$$.Buffer.isBuffer(num)) {
         const numArray = num.toArray();
         if (num.sign === false && numArray[0] & 0x80) {
             numArray.unshift(0);
         }
-        num = Buffer.from(numArray);
+        num = $$.Buffer.from(numArray);
     }
 
-    if (Buffer.isBuffer(num)) {
+    if ($$.Buffer.isBuffer(num)) {
         let size = num.length;
         if (num.length === 0)
             size++;
 
-        const out = Buffer.alloc(size);
+        const out = $$.Buffer.alloc(size);
         num.copy(out);
         if (num.length === 0)
             out[0] = 0
@@ -13099,7 +14271,7 @@ DERNode.prototype._encodeInt = function encodeInt(num, values) {
         out.unshift(0);
     }
 
-    return this._createEncoderBuffer(Buffer.from(out));
+    return this._createEncoderBuffer($$.Buffer.from(out));
 };
 
 DERNode.prototype._encodeBool = function encodeBool(value) {
@@ -13160,9 +14332,7 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
@@ -13170,7 +14340,6 @@ encoders.pem = require('./pem');
 
 },{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
-var Buffer = require('buffer').Buffer;
 
 var asn1 = require('../asn1');
 var DEREncoder = require('./der');
@@ -13193,8 +14362,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","buffer":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
-(function (Buffer){(function (){
+},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -13248,7 +14416,7 @@ KeyEncoder.SubjectPublicKeyInfoASN = SubjectPublicKeyInfoASN;
 KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
     const privateKeyObject = {
         version: new BN(1),
-        privateKey: Buffer.from(rawPrivateKey, 'hex'),
+        privateKey: $$.Buffer.from(rawPrivateKey, 'hex'),
         parameters: this.options.curveParameters,
         pemOptions: {label: "EC PRIVATE KEY"}
     };
@@ -13256,7 +14424,7 @@ KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
     if (rawPublicKey) {
         privateKeyObject.publicKey = {
             unused: 0,
-            data: Buffer.from(rawPublicKey, 'hex')
+            data: $$.Buffer.from(rawPublicKey, 'hex')
         }
     }
 
@@ -13271,7 +14439,7 @@ KeyEncoder.prototype.publicKeyObject = function (rawPublicKey) {
         },
         pub: {
             unused: 0,
-            data: Buffer.from(rawPublicKey, 'hex')
+            data: $$.Buffer.from(rawPublicKey, 'hex')
         },
         pemOptions: {label: "PUBLIC KEY"}
     }
@@ -13292,7 +14460,7 @@ KeyEncoder.prototype.encodePrivate = function (privateKey, originalFormat, desti
         if (typeof privateKey === 'buffer') {
             // do nothing
         } else if (typeof privateKey === 'string') {
-            privateKey = Buffer.from(privateKey, 'hex')
+            privateKey = $$.Buffer.from(privateKey, 'hex')
         } else {
             throw 'private key must be a buffer or a string'
         }
@@ -13331,7 +14499,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
         if (typeof publicKey === 'buffer') {
             // do nothing
         } else if (typeof publicKey === 'string') {
-            publicKey = Buffer.from(publicKey, 'hex')
+            publicKey = $$.Buffer.from(publicKey, 'hex')
         } else {
             throw 'public key must be a buffer or a string'
         }
@@ -13358,9 +14526,96 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 }
 
 module.exports = KeyEncoder;
-}).call(this)}).call(this,require("buffer").Buffer)
+},{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+const asn1 = require('../asn1/asn1');
+const BN = require('../asn1/bignum/bn');
 
-},{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+const EcdsaDerSig = asn1.define('ECPrivateKey', function() {
+    return this.seq().obj(
+        this.key('r').int(),
+        this.key('s').int()
+    );
+});
+
+/// helper functions for ethereum signature encoding
+function bnToBuffer(bn) {
+    return stripZeros($$.Buffer.from(padToEven(bn.toString(16)), 'hex'));
+}
+
+function padToEven(str) {
+    return str.length % 2 ? '0' + str : str;
+}
+
+function stripZeros(buffer) {
+    var i = 0; // eslint-disable-line
+    for (i = 0; i < buffer.length; i++) {
+        if (buffer[i] !== 0) {
+            break;
+        }
+    }
+    return i > 0 ? buffer.slice(i) : buffer;
+}
+///
+
+function decodeDERIntoASN1ETH(derSignatureBuffer){
+    const rsSig = EcdsaDerSig.decode(derSignatureBuffer, 'der');
+    const signArray = [bnToBuffer(rsSig.r),bnToBuffer(rsSig.s)];
+    //build signature
+    return '0x'+$$.Buffer.concat(signArray).toString('hex');
+}
+
+function asn1SigSigToConcatSig(asn1SigBuffer) {
+    const rsSig = EcdsaDerSig.decode(asn1SigBuffer, 'der');
+    return $$.Buffer.concat([
+        rsSig.r.toArrayLike($$.Buffer, 'be', 32),
+        rsSig.s.toArrayLike($$.Buffer, 'be', 32)
+    ]);
+}
+
+function concatSigToAsn1SigSig(concatSigBuffer) {
+    const r = new BN(concatSigBuffer.slice(0, 32).toString('hex'), 16, 'be');
+    const s = new BN(concatSigBuffer.slice(32).toString('hex'), 16, 'be');
+    return EcdsaDerSig.encode({r, s}, 'der');
+}
+
+function ecdsaSign(data, key) {
+    if (typeof data === "string") {
+        data = $$.Buffer.from(data);
+    }
+    const crypto = require('crypto');
+    const sign = crypto.createSign('sha256');
+    sign.update(data);
+    const asn1SigBuffer = sign.sign(key, 'buffer');
+    return asn1SigSigToConcatSig(asn1SigBuffer);
+}
+
+/**
+ * @return {string}
+ */
+function EthRSSign(data, key) {
+    if (typeof data === "string") {
+        data = $$.Buffer.from(data);
+    }
+    //by default it will create DER encoded signature
+    const crypto = require('crypto');
+    const sign = crypto.createSign('sha256');
+    sign.update(data);
+    const derSignatureBuffer = sign.sign(key, 'buffer');
+    return decodeDERIntoASN1ETH(derSignatureBuffer);
+}
+
+function ecdsaVerify(data, signature, key) {
+    const crypto = require('crypto');
+    const verify = crypto.createVerify('SHA256');
+    verify.update(data);
+    const asn1sig = concatSigToAsn1SigSig(signature);
+    return verify.verify(key, new $$.Buffer(asn1sig, 'hex'));
+}
+
+module.exports = {
+    decodeDERIntoASN1ETH
+};
+},{"../asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -13386,14 +14641,13 @@ DuplexStream.prototype._read = function (n) {
 
 module.exports = DuplexStream;
 },{"stream":false,"util":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
 const FACTOR = Math.log(BASE) / Math.log(256); // log(BASE) / log(256), rounded up
 const iFACTOR = Math.log(256) / Math.log(BASE); // log(256) / log(BASE), rounded up
 
-const BASE_MAP = Buffer.alloc(256);
+const BASE_MAP = $$.Buffer.alloc(256);
 for (let j = 0; j < BASE_MAP.length; j++) {
     BASE_MAP[j] = 255
 }
@@ -13408,10 +14662,10 @@ for (let i = 0; i < ALPHABET.length; i++) {
 
 function encode(source) {
     if (Array.isArray(source) || source instanceof Uint8Array || typeof source === "string") {
-        source = Buffer.from(source);
+        source = $$.Buffer.from(source);
     }
-    if (!Buffer.isBuffer(source)) {
-        throw new TypeError('Expected Buffer');
+    if (!$$.Buffer.isBuffer(source)) {
+        throw new TypeError('Expected $$.Buffer');
     }
     if (source.length === 0) {
         return '';
@@ -13427,7 +14681,7 @@ function encode(source) {
     }
     // Allocate enough space in big-endian base58 representation.
     const size = ((pend - pbegin) * iFACTOR + 1) >>> 0;
-    const b58 = Buffer.alloc(size);
+    const b58 = $$.Buffer.alloc(size);
     // Process the bytes.
     while (pbegin !== pend) {
         let carry = source[pbegin];
@@ -13462,7 +14716,7 @@ function decode(source) {
         throw new TypeError('Expected String');
     }
     if (source.length === 0) {
-        return Buffer.alloc(0);
+        return $$.Buffer.alloc(0);
     }
     let psz = 0;
     // Skip leading spaces.
@@ -13478,7 +14732,7 @@ function decode(source) {
     }
     // Allocate enough space in big-endian base256 representation.
     const size = (((source.length - psz) * FACTOR) + 1) >>> 0; // log(58) / log(256), rounded up.
-    const b256 = Buffer.alloc(size);
+    const b256 = $$.Buffer.alloc(size);
     // Process the characters.
     while (source[psz]) {
         // Decode character
@@ -13508,7 +14762,7 @@ function decode(source) {
     while (it4 !== size && b256[it4] === 0) {
         it4++;
     }
-    const vch = Buffer.alloc(zeroes + (size - it4));
+    const vch = $$.Buffer.alloc(zeroes + (size - it4));
     vch.fill(0x00, 0, zeroes);
     let j = zeroes;
     while (it4 !== size) {
@@ -13521,11 +14775,7 @@ module.exports = {
     encode,
     decode
 };
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require('crypto');
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -13545,6 +14795,8 @@ function createPskHash(data, encoding) {
 }
 
 function PskHash() {
+	const crypto = require('crypto');
+
 	const sha512 = crypto.createHash('sha512');
 	const sha256 = crypto.createHash('sha256');
 
@@ -13565,9 +14817,10 @@ function PskHash() {
 
 
 function generateSalt(inputData, saltLen) {
+	const crypto = require('crypto');
 	const hash = crypto.createHash('sha512');
 	hash.update(inputData);
-	const digest = Buffer.from(hash.digest('hex'), 'binary');
+	const digest = $$.Buffer.from(hash.digest('hex'), 'binary');
 
 	return digest.slice(0, saltLen);
 }
@@ -13612,9 +14865,7 @@ module.exports = {
 };
 
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -13646,8 +14897,6 @@ module.exports.isDuplex   = isDuplex;
 /*
  SignSens helper functions
  */
-const crypto = require('crypto');
-
 exports.wipeOutsidePayload = function wipeOutsidePayload(hashStringHexa, pos, size){
     var result;
     var sz = hashStringHexa.length;
@@ -13710,7 +14959,7 @@ exports.generatePosHashXTimes = function generatePosHashXTimes(buffer, pos, size
 
     /*if(pos != -1 )
         result[pos] = 0; */
-
+    const crypto = require('crypto');
     for(var i = 0; i < count; i++){
         var hash = crypto.createHash('sha256');
         result = exports.wipeOutsidePayload(result, pos, size);
@@ -13721,7 +14970,7 @@ exports.generatePosHashXTimes = function generatePosHashXTimes(buffer, pos, size
 }
 
 exports.hashStringArray = function (counter, arr, payloadSize){
-
+    const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     var result = counter.toString(16);
 
@@ -14492,6 +15741,7 @@ function makePluggable(powerCord) {
 module.exports = SwarmEngine;
 
 },{"./interactions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/interactions/index.js","./swarms":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/swarms/index.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+(function (global){(function (){
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
 	if (typeof getKeySSI !== "function") {
@@ -14536,7 +15786,11 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
 
 		for (let i = 0; i < fileList.length; i++) {
 			var fileContent = await readFile(fileList[i]);
-			eval(fileContent.toString());
+			try {
+				eval(fileContent.toString());
+			}catch(e){
+				console.log("Failed to eval file", fileList[i], e);
+			}
 		}
 	};
 
@@ -14546,6 +15800,7 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
             const loadRawDossier = promisify(resolver.loadDSU);
             try {
                 this.rawDossier = await loadRawDossier(keySSI);
+				global.rawDossier = this.rawDossier;
             } catch (err) {
                 console.log(err);
             }
@@ -14589,6 +15844,8 @@ function promisify(fn) {
 }
 
 module.exports = BootEngine;
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/IsolateBootScript.js":[function(require,module,exports){
 
@@ -15385,7 +16642,6 @@ function RemoteChannelPowerCord(receivingHost, receivingChannelName){
 
 module.exports = RemoteChannelPowerCord;
 },{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js":[function(require,module,exports){
-(function (Buffer){(function (){
 const inbound = "inbound";
 
 function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, zeroMQAddress) {
@@ -15434,7 +16690,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
         if (testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined")) {
             //let's connect to zmq
-            const reqFactory = require("psk-apihub").getVMQRequestFactory(receivingHost, zeroMQAddress);
+            const reqFactory = require("apihub").getVMQRequestFactory(receivingHost, zeroMQAddress);
             reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
                 console.log("zeromq connection established");
             }, (channelName, swarmSerialization) => {
@@ -15448,7 +16704,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
                     return;
                 }
 
-                if(Buffer && Buffer.isBuffer(swarmSerialization)){
+                if($$.Buffer && $$.Buffer.isBuffer(swarmSerialization)){
                     swarmSerialization = toArrayBuffer(swarmSerialization);
                 }
 
@@ -15586,9 +16842,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
 module.exports = SmartRemoteChannelPowerCord;
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","buffer":false,"psk-apihub":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js":[function(require,module,exports){
+},{"../../psk-http-client":"/home/travis/build/PrivateSky/privatesky/modules/psk-http-client/index.js","apihub":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js":[function(require,module,exports){
 /*
 	This type of PowerCord can be used from outer and inner SSApp in order to facilitate the SWARM communication
 	@param reference can be the parent (SSApp or wallet environment) or the iframe in which the SSApp gets loaded
@@ -16561,7 +17815,6 @@ function stampWithTime(buf, salt, msalt){
 
 var generateUid = null;
 
-
 exports.init = function(externalGenerator){
     generateUid = externalGenerator.generateUid;
     return module.exports;
@@ -16592,12 +17845,10 @@ exports.short_uuid = function(callback) {
     });
 };
 },{"crypto":false}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const crypto = require('crypto');
-const Queue = require("./Queue");
-var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : Buffer;
-
 function UidGenerator(minBuffers, buffersSize) {
+    const Queue = require("./Queue");
+    var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
+
     var buffers = new Queue();
     var lowLimit = .2;
 
@@ -16619,10 +17870,10 @@ function UidGenerator(minBuffers, buffersSize) {
         }
         const sz = buffersSize - b.length;
         /*crypto.randomBytes(sz, function (err, res) {
-            buffers.push(Buffer.concat([res, b]));
+            buffers.push($$.Buffer.concat([res, b]));
             notifyObserver();
         });*/
-        buffers.push(PSKBuffer.concat([crypto.randomBytes(sz), b]));
+        buffers.push(PSKBuffer.concat([require('crypto').randomBytes(sz), b]));
         notifyObserver();
     }
 
@@ -16648,7 +17899,7 @@ function UidGenerator(minBuffers, buffersSize) {
 
         //setTimeout(fillBuffers, 1);
 
-        return Buffer.concat(ret);
+        return $$.Buffer.concat(ret);
     }
 
     var fillInProgress = false;
@@ -16665,7 +17916,7 @@ function UidGenerator(minBuffers, buffersSize) {
                     fillInProgress = false;
                 }, 1);
             }
-            return crypto.randomBytes(n);
+            return require('crypto').randomBytes(n);
         }
     };
 
@@ -16695,38 +17946,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","buffer":false,"crypto":false}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}],"bdns":[function(require,module,exports){
-module.exports.create = () => {
-    const BDNS = require("./lib/BDNS");
-    return new BDNS()
-};
-
-},{"./lib/BDNS":"/home/travis/build/PrivateSky/privatesky/modules/bdns/lib/BDNS.js"}],"blockchain":[function(require,module,exports){
+},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"blockchain":[function(require,module,exports){
 ___DISABLE_OBSOLETE_ZIP_ARCHIVER_WAIT_FOR_BARS = true;
 //require("../../../psknode/bundles/pskruntime.js");
 var callflowModule = require("callflow");
@@ -16741,7 +17961,6 @@ module.exports = require('./moduleExports');
 
 
 },{"./blockchainSwarmTypes/asset_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","callflow":false}],"buffer-crc32":[function(require,module,exports){
-var Buffer = require('buffer').Buffer;
 
 var CRC_TABLE = [
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419,
@@ -16803,25 +18022,25 @@ if (typeof Int32Array !== 'undefined') {
 }
 
 function newEmptyBuffer(length) {
-  var buffer = new Buffer(length);
+  var buffer = new $$.Buffer(length);
   buffer.fill(0x00);
   return buffer;
 }
 
 function ensureBuffer(input) {
-  if (Buffer.isBuffer(input)) {
+  if ($$.Buffer.isBuffer(input)) {
     return input;
   }
 
   var hasNewBufferAPI =
-      typeof Buffer.alloc === "function" &&
-      typeof Buffer.from === "function";
+      typeof $$.Buffer.alloc === "function" &&
+      typeof $$.Buffer.from === "function";
 
   if (typeof input === "number") {
-    return hasNewBufferAPI ? Buffer.alloc(input) : newEmptyBuffer(input);
+    return hasNewBufferAPI ? $$.Buffer.alloc(input) : newEmptyBuffer(input);
   }
   else if (typeof input === "string") {
-    return hasNewBufferAPI ? Buffer.from(input) : new Buffer(input);
+    return hasNewBufferAPI ? $$.Buffer.from(input) : new $$.Buffer(input);
   }
   else {
     throw new Error("input must be buffer, number, or string, received " +
@@ -16837,7 +18056,7 @@ function bufferizeInt(num) {
 
 function _crc32(buf, previous) {
   buf = ensureBuffer(buf);
-  if (Buffer.isBuffer(previous)) {
+  if ($$.Buffer.isBuffer(previous)) {
     previous = previous.readUInt32BE(0);
   }
   var crc = ~~previous ^ -1;
@@ -16859,7 +18078,7 @@ crc32.unsigned = function () {
 
 module.exports = crc32;
 
-},{"buffer":false}],"dossier":[function(require,module,exports){
+},{}],"dossier":[function(require,module,exports){
 function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{
@@ -17225,19 +18444,14 @@ Object.assign(module.exports, {
 
 },{"../utils/AsyncDispatcher":"/home/travis/build/PrivateSky/privatesky/modules/double-check/utils/AsyncDispatcher.js","./runner.js":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/runner.js","./standardAsserts.js":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardAsserts.js","./standardChecks.js":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardChecks.js","./standardExceptions.js":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardExceptions.js","./standardLogs.js":"/home/travis/build/PrivateSky/privatesky/modules/double-check/lib/standardLogs.js","crypto":false,"fs":false,"os":false,"path":false}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
-const constants = require('./lib/constants');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 const BootStrapingService = require("./lib/BootstrapingService");
 
 /**
- * Create a new KeyDIDResolver instance and append it to
+ * Create a new KeySSIResolver instance and append it to
  * global object $$
  *
  * @param {object} options
- * @param {object} options.endpointsConfiguration
- * @param {Array<object>} options.endpointsConfiguration.brick
- * @param {Array<object>} options.endpointsConfiguration.alias
- * @param {string} options.dlDomain
  */
 function initialize(options) {
     options = options || {};
@@ -17261,38 +18475,78 @@ function initialize(options) {
 
 module.exports = {
     initialize,
-    constants,
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
     CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./lib/constants":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/constants.js","bar":false}],"opendsu":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":false}],"opendsu":[function(require,module,exports){
+(function (global){(function (){
 /*
 html API space
 */
 
-module.exports.loadApi = function(apiSpaceName){
-    switch (apiSpaceName) {
-        case "http":return require("./http"); break;
-        case "crypto":return require("./crypto"); break;
-        case "anchoring":return require("./anchoring"); break;
-        case "bricking":return require("./bricking"); break;
-        case "bdns":return require("./bdns"); break;
-        case "dc":return require("./dc"); break;
-        case "dt":return require("./dt"); break;
-        case "keyssi":return require("./keyssi"); break;
-        case "mq":return require("./mq"); break;
-        case "notifications":return require("./notifications"); break;
-        case "resolver":return require("./resolver"); break;
-        case "sc":return require("./sc"); break;
-        default: throw new Error("Unknown API space " + apiSpaceName);
-    }
+let constants = require("./moduleConstants.js");
+switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+        if (typeof self !== "undefined") {
+            if(!self.PREVENT_DOUBLE_LOADING_OF_OPENDSU) {
+                self.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        if (typeof window !== "undefined") {
+            if(!window.PREVENT_DOUBLE_LOADING_OF_OPENDSU){
+                window.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
+        break;
+    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+    default:
+        if (typeof global !== "undefined") {
+            if(!global.PREVENT_DOUBLE_LOADING_OF_OPENDSU){
+                global.PREVENT_DOUBLE_LOADING_OF_OPENDSU = {}
+            }
+        }
 }
 
-module.exports.constants = require("./moduleConstants.js");
-},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js"}],"overwrite-require":[function(require,module,exports){
+if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED = true;
+
+    let loadApi = function(apiSpaceName){
+        switch (apiSpaceName) {
+            case "http":return require("./http"); break;
+            case "crypto":return require("./crypto"); break;
+            case "anchoring":return require("./anchoring"); break;
+            case "bricking":return require("./bricking"); break;
+            case "bdns":return require("./bdns"); break;
+            case "dc":return require("./dc"); break;
+            case "dt":return require("./dt"); break;
+            case "keyssi":return require("./keyssi"); break;
+            case "mq":return require("./mq"); break;
+            case "notifications":return require("./notifications"); break;
+            case "resolver":return require("./resolver"); break;
+            case "sc":return require("./sc"); break;
+            case "cache":return require("./cache/cachedStores"); break;
+            case "config":return require("./config"); break;
+            case "system":return require("./system"); break;
+            default: throw new Error("Unknown API space " + apiSpaceName);
+        }
+    }
+
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadApi = loadApi;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadAPI = loadApi;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.constants = constants;
+    require("./config/autoConfig");
+
+}
+
+module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -17318,6 +18572,8 @@ function enableForEnvironment(envType){
         case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
             global = self;
             break;
+        default:
+            Error.stackTraceLimit = Infinity;
     }
 
     if (typeof(global.$$) == "undefined") {
@@ -17332,6 +18588,9 @@ function enableForEnvironment(envType){
         $$.__global = {};
     }
 
+    if (typeof global.wprint === "undefined") {
+        global.wprint = console.warn;
+    }
     Object.defineProperty($$, "environmentType", {
         get: function(){
             return envType;
@@ -17452,6 +18711,15 @@ function enableForEnvironment(envType){
 
             } catch (err) {
                 if (err.type !== "PSKIgnorableError") {
+                    if(typeof err == "SyntaxError"){
+                        console.error(err);
+                    } else{
+                        if(request === 'zeromq'){
+                            console.error("Failed to load module ", request," with error:", err.message);
+                        }else{
+                            console.error("Failed to load module ", request," with error:", err);
+                        }
+                    }
                     //$$.err("Require encountered an error while loading ", request, "\nCause:\n", err.stack);
                 }
             }
@@ -17772,65 +19040,65 @@ module.exports = {
     RemoteChannelPairPowerCord: require("./powerCords/RemoteChannelPairPowerCord"),
     RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord"),
     SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
-    BootScripts: require('./bootScripts')
+    BootScripts: require('./bootScripts'),
+    get SSAppPowerCord(){
+        const or = require("overwrite-require");
+        const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+        if (browserContexts.indexOf($$.environmentType) !== -1) {
+            return require("./powerCords/browser/SSAppPowerCord");
+        }
+
+    }
 };
 
-const or = require("overwrite-require");
-const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
-if (browserContexts.indexOf($$.environmentType) !== -1) {
-    module.exports.SSAppPowerCord = require("./powerCords/browser/SSAppPowerCord");
-    /*module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
-    module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
-    module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
-
-    module.exports.OuterWebWorkerPowerCord = require("./powerCords/browser/OuterWebWorkerPowerCord");
-    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");*/
-}
 
 },{"./SwarmEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
-(function (global,Buffer){(function (){
+
+let cachedUIDGenerator = undefined;
+let cachedSafeUid = undefined;
+
+function initCache(){
+    if(cachedUIDGenerator === undefined){
+        cachedUIDGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
+        let  sfuid = require("./lib/safe-uuid");
+        sfuid.init(cachedUIDGenerator);
+        cachedSafeUid = sfuid.safe_uuid;
+    }
+}
+
+module.exports = {
+    get generateUid(){
+        initCache();
+        return cachedUIDGenerator.generateUid;
+    },
+     safe_uuid: function(){
+         initCache();
+         return cachedSafeUid();
+    }
+};
+
 module.exports.OwM = require("./lib/OwM");
 module.exports.beesHealer = require("./lib/beesHealer");
-
-const uidGenerator = require("./lib/uidGenerator").createUidGenerator(200, 32);
-
-module.exports.safe_uuid = require("./lib/safe-uuid").init(uidGenerator);
-
 module.exports.Queue = require("./lib/Queue");
 module.exports.combos = require("./lib/Combos");
-
-module.exports.uidGenerator = uidGenerator;
-module.exports.generateUid = uidGenerator.generateUid;
 module.exports.TaskCounter = require("./lib/TaskCounter");
 module.exports.SwarmPacker = require("./lib/SwarmPacker");
 module.exports.path = require("./lib/path");
 module.exports.createPskConsole = function () {
-  return require('./lib/pskconsole');
+    return require('./lib/pskconsole');
 };
 
 module.exports.pingPongFork = require('./lib/pingpongFork');
 
 
-if(typeof global.$$ == "undefined"){
-  global.$$ = {};
-}
-
-if(typeof global.$$.uidGenerator == "undefined"){
-    $$.uidGenerator = module.exports.safe_uuid;
-}
-
-module.exports.convertToBuffer = function(uint8array){
-    const newBuffer = new Buffer(uint8array.byteLength);
-    let currentPos = 0;
-    const arrBuf = uint8array;
-    const partialDataView = new DataView(arrBuf);
-    for (let i = 0; i < arrBuf.byteLength; i++) {
-        newBuffer.writeUInt8(partialDataView.getUint8(i), currentPos);
-        currentPos += 1;
+module.exports.convertToBuffer = function (uint8array) {
+    let buffer;
+    if (ArrayBuffer.isView(uint8array)) {
+        buffer = $$.Buffer.from(uint8array.buffer)
+    } else {
+        buffer = $$.Buffer.from(uint8array);
     }
-    return newBuffer;
+    return buffer;
 }
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-
-},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js","buffer":false}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/testsRuntime.js"])
+},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/testsRuntime.js"])
