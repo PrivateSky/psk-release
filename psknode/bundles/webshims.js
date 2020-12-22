@@ -5490,6 +5490,7 @@ exports.dumpObjectForHashing = function(obj){
 
 
 exports.hashValues  = function (values){
+    const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     var result = exports.dumpObjectForHashing(values);
     hash.update(result);
@@ -38428,7 +38429,7 @@ function enableForEnvironment(envType){
                         console.error(err);
                     } else{
                         if(request === 'zeromq'){
-                            console.error("Failed to load module ", request," with error:", err.message);
+                            console.warn("Failed to load module ", request," with error:", err.message);
                         }else{
                             console.error("Failed to load module ", request," with error:", err);
                         }

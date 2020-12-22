@@ -4312,11 +4312,11 @@ function RequestsChain() {
         const next = (err, result) => {
             if (err) {
                 if (isFatalError(err)) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 if (!chain.length) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 return executeChain(callback);
@@ -4613,21 +4613,21 @@ function DSUFactory(options) {
             try {
                 bar = createInstance(keySSI, options);
             } catch (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             return bar.init(err => callback(err, bar));
         }
 
         initializeKeySSI(keySSI, (err, _keySSI) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to initialize keySSI <${keySSI.getIdentifier(true)}>`, err));
             }
 
             let bar;
             try {
                 bar = createInstance(_keySSI, options);
             } catch (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             bar.init(err => callback(err, bar));
         });
@@ -4659,7 +4659,7 @@ function DSUFactory(options) {
         try {
             bar = createInstance(keySSI, options);
         } catch (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
         }
         bar.load(err => callback(err, bar));
     }
@@ -4709,7 +4709,7 @@ function WalletFactory(options) {
             let templateSSI = require("opendsu").loadApi("keyssi").buildSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
             this.dsuFactory.create(templateSSI, (err, writableDSU) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
                 }
                 writableWallet = writableDSU;
                 mountDSUType();
@@ -4719,7 +4719,7 @@ function WalletFactory(options) {
         let mountDSUType = () =>{
             writableWallet.mount("/code", options.dsuTypeSSI, (err => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to mount constitution in writable DSU`, err));
                 }
                 createConstDSU();
             }));
@@ -4730,7 +4730,7 @@ function WalletFactory(options) {
         let createConstDSU = () => {
             this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
                 }
 
                 constDSUWallet = constWallet;
@@ -4973,7 +4973,7 @@ module.exports = function(archive){
 
 		archive.readFile("/code/api.js", function(err, apiCode){
 			if(err){
-				return callback(err);
+				return callback(createOpenDSUErrorWrapper(`Failed to create read file /code/api.js`, err));
 			}
 
 			try{
@@ -4992,7 +4992,7 @@ module.exports = function(archive){
 				apis[functionName].call(this, ...args, callback);
 
 			}catch(err){
-				return callback(err);
+				return callback(createOpenDSUErrorWrapper(`Failed to create eval code in file /code/api.js`, err));
 			}
 		});
 	}
@@ -5534,7 +5534,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     try {
         derivedKeySSI = getDerivedType(keySSI, otherType);
     } catch (err){
-        return callback(err);
+        return callback(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI <${keySSI.getIdentifier(true)}>`, err));
     }
 
     callback(undefined, derivedKeySSI);
@@ -6073,7 +6073,7 @@ function SeedSSI(identifier) {
         if (typeof privateKey === "undefined") {
             cryptoRegistry.getKeyPairGenerator(self)().generateKeyPair((err, publicKey, privateKey) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err));
                 }
                 privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
                 self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
@@ -6137,7 +6137,7 @@ function addVersion(anchorId, newHashLinkId, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -6153,7 +6153,7 @@ function versions(anchorId, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -6203,7 +6203,7 @@ const versions = (powerfulKeySSI, authToken, callback) => {
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
@@ -6258,7 +6258,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
@@ -6271,7 +6271,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
         };
         createDigitalProof(powerfulKeySSI, hash.new, hash.last, zkpValue, (err, digitalProof) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create digital proof`, err));
             }
             const body = {
                 hash,
@@ -6315,7 +6315,7 @@ function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkI
         case constants.KEY_SSIS.SEED_SSI:
             crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to sign data`, err));
                 }
                 const digitalProof = {
                     signature: crypto.encodeBase58(signature),
@@ -6442,12 +6442,12 @@ function putBrick(brick, callback) {
     const cache = cachedStores.getCache(storeName);
     crypto.hash(keySSISpace.buildSeedSSI("vault"), brick, (err, brickHash) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to create brick hash`, err));
         }
 
         cache.put(brickHash, brick, (err, hash) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
             }
 
             callback(undefined, hash);
@@ -6459,7 +6459,7 @@ function getBrick(brickHash, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(brickHash, (err, brickData) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get retrieve brick <${brickHash}> from cache`, err));
         }
 
         callback(undefined, brickData);
@@ -6526,7 +6526,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
     function __getBrickFromEndpoint() {
         bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
             }
 
             if (!brickStorageArray.length) {
@@ -6543,7 +6543,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
                     callback(null, data)
                 });
             }).catch((err) => {
-                callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick <${brickHash}> from brick storage`, err));
             });
         });
     }
@@ -6594,7 +6594,7 @@ const putBrick = (keySSI, brick, authToken, callback) => {
 
     bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
         }
         const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
@@ -6628,9 +6628,9 @@ const putBrick = (keySSI, brick, authToken, callback) => {
             cache
                 .put(brickHash, brick, (err) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to put brick <${brickHash}> in cache`, err));
                     }
-                    callback(err, brickHash);
+                    callback(undefined, brickHash);
                 })
                 .catch((err) => {
                     callback(err);
@@ -6783,9 +6783,10 @@ function FSCache(folderName) {
                 self.get(key, callback);
             })
         } else {
-            fs.readFile(path.join(folderPath, key), (err, data) => {
+            const filePath =path.join(folderPath, key)
+            fs.readFile(filePath, (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 let content = data;
@@ -7324,7 +7325,17 @@ module.exports = {
     JWT_ERRORS,
 };
 
-},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+
+
+function getSelfSovereignDB(mountingPoint, sharedSSI, mySeedSSI){
+    return new require("./SSDB")(mountingPoint, sharedSSI, mySeedSSI);
+}
+
+module.exports = {
+    getSelfSovereignDB
+}
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
@@ -7568,7 +7579,7 @@ function Response(httpRequest, httpResponse) {
 				}
 				callback(undefined, rawData);
 			} catch (err) {
-				callback(err);
+				callback(createOpenDSUErrorWrapper(`Failed to process raw data`, err));
 			} finally {
 				//trying to prevent getting ECONNRESET error after getting our response
 				httpRequest.abort();
@@ -7955,7 +7966,7 @@ function callInterceptors(target, callback){
         let interceptor = interceptors[index];
         interceptor(target, (err, result)=>{
             if(err){
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to execute interceptor`, err));
             }
             return executeInterceptor(result);
         });
@@ -8171,11 +8182,14 @@ module.exports = {
 Message Queues API space
 */
 
-let http = require("../index").loadApi("http");
-let bdns = require("../index").loadApi("bdns");
+let http = require("../http");
+let bdns = require("../bdns")
 
 function send(keySSI, message, callback){
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
+        if(err){
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+        }
         let url = endpoints[0]+`/mq/send-message/${keySSI}`;
         let options = {body: message};
 
@@ -8184,7 +8198,7 @@ function send(keySSI, message, callback){
         request.then((response)=>{
             callback(undefined, response);
         }).catch((err)=>{
-            callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to send message`, err));
         });
     });
 }
@@ -8240,7 +8254,7 @@ module.exports = {
     getHandler,
     unsubscribe
 }
-},{"../index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -8262,7 +8276,7 @@ function publish(keySSI, message, callback){
 		request.then((response)=>{
 			callback(undefined, response);
 		}).catch((err)=>{
-			callback(err);
+			return callback(createOpenDSUErrorWrapper(`Failed to publish message`, err));
 		});
 	});
 }
@@ -8272,7 +8286,7 @@ function getObservableHandler(keySSI, timeout){
 	let obs = require("../utils/observable").createObservable();
 	bdns.getNotificationEndpoints(keySSI, (err, endpoints) => {
 		if(err || endpoints.length === 0){
-			return callback(new Error("Not available!"));
+			throw (new Error("Not available!"));
 		}
 
 		function makeRequest(){
@@ -8317,9 +8331,24 @@ const registerDSUFactory = (type, factory) => {
     KeySSIResolver.DSUFactory.prototype.registerDSUType(type, factory);
 };
 
-const createDSU = (keySSI, options, callback) => {
-    if (typeof keySSI === "string") {
-        keySSI = keySSISpace.parse(keySSI);
+function addDSUInstanceInCache(dsuInstance, callback) {
+    dsuInstance.getKeySSI((err, keySSI) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
+        }
+
+        if(typeof dsuInstances[keySSI] === "undefined"){
+            dsuInstances[keySSI] = dsuInstance;
+        }
+
+        callback(undefined, dsuInstance);
+
+    });
+}
+
+const createDSU = (templateKeySSI, options, callback) => {
+    if (typeof templateKeySSI === "string") {
+        templateKeySSI = keySSISpace.parse(templateKeySSI);
     }
     if (typeof options === "function") {
         callback = options;
@@ -8327,7 +8356,12 @@ const createDSU = (keySSI, options, callback) => {
     }
 
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.createDSU(keySSI, options, callback);
+    keySSIResolver.createDSU(templateKeySSI, options, (err, dsuInstance) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+        }
+        addDSUInstanceInCache(dsuInstance, callback);
+    });
 };
 
 const loadDSU = (keySSI, options, callback) => {
@@ -8345,20 +8379,13 @@ const loadDSU = (keySSI, options, callback) => {
         return callback(undefined, dsuInstances[ssiId]);
     }
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.loadDSU(keySSI, options, (err, newDSU) => {
+    keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
         }
-
-        if (typeof dsuInstances[ssiId] === "undefined") {
-            dsuInstances[ssiId] = newDSU;
-        }
-
-        callback(undefined, newDSU);
+        addDSUInstanceInCache(dsuInstance, callback);
     });
 };
-
-
 
 
 const getHandler = () => {
@@ -8367,7 +8394,6 @@ const getHandler = () => {
 
 
 function invalidateDSUCache(dsuKeySSI) {
-    // console.log("Invalidating cache ...................");
     const ssiId = dsuKeySSI.getIdentifier();
     delete dsuInstances[ssiId]
 }
@@ -8381,6 +8407,11 @@ module.exports = {
 }
 
 },{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+/*
+    Security Context related functionalities
+
+ */
+
 const getMainDSU = () => {
     if (typeof rawDossier === "undefined") {
         throw Error("Main DSU does not exist in the current context.");
@@ -8627,7 +8658,7 @@ function runOneSuccessful(listEntries, executeEntry, callback) {
       })
       .catch((err) => {
         if (!availableListEntries.length) {
-          return callback(err);
+          return callback(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
         }
 
         const nextEntry = availableListEntries.shift();
@@ -15053,6 +15084,7 @@ exports.dumpObjectForHashing = function(obj){
 
 
 exports.hashValues  = function (values){
+    const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     var result = exports.dumpObjectForHashing(values);
     hash.update(result);
@@ -16068,12 +16100,12 @@ function initializeSwarmEngine(callback) {
     const resolver = openDSU.loadApi("resolver");
     resolver.loadDSU(self.keySSI, (err, bar) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to load DSU with keySSI <${self.keySSI}>`, err));
         }
 
         bar.readFile(openDSU.constants.DOMAIN_IDENTITY_FILE, (err, content) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to read file <${openDSU.constants.DOMAIN_IDENTITY_FILE}>`, err));
             }
             self.domainName = content.toString();
             $$.log(`Domain ${self.domainName} is booting...`);
@@ -18532,6 +18564,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "cache":return require("./cache/cachedStores"); break;
             case "config":return require("./config"); break;
             case "system":return require("./system"); break;
+            case "db":return require("./db"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
@@ -18546,7 +18579,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
 module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -18715,7 +18748,7 @@ function enableForEnvironment(envType){
                         console.error(err);
                     } else{
                         if(request === 'zeromq'){
-                            console.error("Failed to load module ", request," with error:", err.message);
+                            console.warn("Failed to load module ", request," with error:", err.message);
                         }else{
                             console.error("Failed to load module ", request," with error:", err);
                         }

@@ -464,7 +464,7 @@ function readMessageBufferFromHTTPStream(reqORres, callback) {
 
         streamToBuffer(reqORres, contentLength, (err, bodyAsBuffer) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to convert stream to buffer`, err));
             }
             callback(undefined, bodyAsBuffer);
         });
@@ -521,7 +521,7 @@ function FsAdapter() {
     this.getFileSize = function (filePath, callback) {
         fs.stat(filePath, (err, stats) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to get file size", err));
             }
 
             callback(undefined, stats.size);
@@ -541,7 +541,7 @@ function FsAdapter() {
         });
 
         readStream.on("error", (err) => {
-            callback(err);
+            return callback(createOpenDSUErrorWrapper("Failed to read data from file " + filePath, err));
         });
 
         readStream.on("end", () => {
@@ -558,7 +558,7 @@ function FsAdapter() {
             if (err) {
                 fs.mkdir(path.dirname(filePath), {recursive: true}, (err) => {
                     if (err && err.code !== "EEXIST") {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper("Failed to append block to file "+ filePath, err));
                     }
 
                     fs.appendFile(filePath, data, callback);
@@ -590,7 +590,7 @@ function PathAsyncIterator(inputPath) {
         if (isFirstCall === true) {
             isDir(inputPath, (err, status) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to check if <${inputPath}> is directory`, err));
                 }
 
                 isFirstCall = false;
@@ -633,7 +633,7 @@ function PathAsyncIterator(inputPath) {
 
         fs.readdir(folderPath, (err, files) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to read dir  <${folderPath}>`, err));
             }
 
             if (files.length === 0 && folderList.length === 0) {
@@ -649,7 +649,7 @@ function PathAsyncIterator(inputPath) {
                 let filePath = path.join(folderPath, file);
                 isDir(filePath, (err, status) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to check if <${filePath}> is directory`, err));
                     }
 
                     if (status) {
@@ -667,7 +667,7 @@ function PathAsyncIterator(inputPath) {
     function isDir(filePath, callback) {
         fs.stat(filePath, (err, stats) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get stats for file <${filePath}>`, err));
             }
 
             return callback(undefined, stats.isDirectory());
@@ -684,10 +684,10 @@ function PathAsyncIterator(inputPath) {
             return callback(undefined, fileName, inputPath);
         }
 
-
-        walkFolder(folderList.shift(), (err, file) => {
+        const folder = folderList.shift();
+        walkFolder(folder, (err, file) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to walk folder  <${folder}>`, err));
             }
 
             callback(undefined, file, inputPath);
@@ -772,7 +772,7 @@ function Archive(archiveConfigurator) {
     const initialize = (callback) => {
         archiveConfigurator.getKeySSI((err, keySSI) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
             }
 
             let storageProvider = archiveConfigurator.getBootstrapingService();
@@ -848,7 +848,7 @@ function Archive(archiveConfigurator) {
 
             dossierContext.archive.cancelBatch((err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper("Failed to cancel batch operation", err));
                 }
 
                 cancelBatch(mountedArchivesForBatchOperations.pop());
@@ -868,7 +868,7 @@ function Archive(archiveConfigurator) {
 
             dossierContext.archive.commitBatch((err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper("Failed to commit batch", err));
                 }
 
                 results.push(result);
@@ -882,7 +882,7 @@ function Archive(archiveConfigurator) {
     const getArchiveForBatchOperations = (manifestHandler, path, callback) => {
         manifestHandler.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (result.archive === this) {
@@ -891,7 +891,7 @@ function Archive(archiveConfigurator) {
 
             result.archive.getKeySSI((err, keySSI) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
                 }
 
                 const cachedArchive = mountedArchivesForBatchOperations.find((archive) => {
@@ -920,7 +920,7 @@ function Archive(archiveConfigurator) {
     this.init = (callback) => {
         initialize((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to initialize DSU", err));
             }
 
             brickMapController.init(callback);
@@ -933,7 +933,7 @@ function Archive(archiveConfigurator) {
     this.load = (callback) => {
         initialize((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to load DSU", err));
             }
             brickMapController.load(callback);
         });
@@ -981,7 +981,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService.ingestData(data, options, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to ingest data into brick storage service", err));
             }
 
             brickMapController.addFile(barPath, result, callback);
@@ -1000,12 +1000,12 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path "+ barPath, err));
         }
 
         brickStorageService.createBufferFromBricks(bricksMeta, (err, buffer) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to create buffer from bricks", err));
             }
 
             callback(undefined, buffer);
@@ -1023,12 +1023,12 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path " + barPath, err));
         }
 
         brickStorageService.createStreamFromBricks(bricksMeta, (err, stream) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to create stream from bricks", err));
             }
 
             callback(undefined, stream);
@@ -1053,7 +1053,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService.ingestFile(fsFilePath, options, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to ingest data into bricks storage", err));
             }
 
             brickMapController.addFile(barPath, result, callback);
@@ -1083,7 +1083,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService[ingestionMethod](filesArray, options, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper("Failed to add files at path " + barPath, err));
             }
 
             brickMapController.addFiles(barPath, result, callback);
@@ -1105,7 +1105,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1130,7 +1130,7 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path " + barPath, err));
         }
 
 
@@ -1156,7 +1156,7 @@ function Archive(archiveConfigurator) {
             barPath = pskPth.normalize(barPath);
             brickStorageService.ingestData(data, options, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper("Failed to append data to file "+ barPath, err));
                 }
 
                 brickMapController.appendToFile(barPath, result, callback);
@@ -1164,7 +1164,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -1196,7 +1196,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService[ingestionMethod](fsFolderPath, options, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to add folder ${fsFolderPath} to  ${barPath}`, err));
             }
 
             brickMapController.addFiles(barPath, result, callback);
@@ -1233,7 +1233,7 @@ function Archive(archiveConfigurator) {
 
             this.extractFile(actualPath, filePath, (err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to extract file ${actualPath} to ${filePath}`, err));
                 }
 
                 taskCounter.decrement();
@@ -1307,7 +1307,7 @@ function Archive(archiveConfigurator) {
             ignoreMounts: false
         }, (err, files) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${mountPoint}`, err));
             }
 
             result.push(files.map((file) => {
@@ -1356,7 +1356,7 @@ function Archive(archiveConfigurator) {
             ignoreMounts: false
         }, (err, folders) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to list mounted folders at path ${mountPoint}`, err));
             }
 
             result.push((folders.map((folder) => {
@@ -1389,7 +1389,7 @@ function Archive(archiveConfigurator) {
     const _clone = (targetStorage, preserveKeys = true, callback) => {
         targetStorage.getBrickMap((err, targetBrickMap) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick map`, err));
             }
 
 
@@ -1416,7 +1416,7 @@ function Archive(archiveConfigurator) {
                 }
             }, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
                 }
 
                 for (const filepath in result) {
@@ -1479,7 +1479,7 @@ function Archive(archiveConfigurator) {
         if (typeof manifestHandler === "undefined") {
             Manifest.getManifest(this, (err, handler) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
                 }
 
                 manifestHandler = handler;
@@ -1515,7 +1515,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1539,7 +1539,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1562,7 +1562,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(fileBarPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
                 }
 
                 options.ignoreMounts = true
@@ -1585,7 +1585,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(fileBarPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1608,7 +1608,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1632,7 +1632,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1656,7 +1656,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(path, (err, dossierContext) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -1683,7 +1683,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, dossierContext) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (dossierContext.readonly === true) {
@@ -1711,7 +1711,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(srcPath, (err, dossierContext) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${srcPath}`, err));
             }
             if (dossierContext.readonly === true) {
                 return callback(Error("Tried to rename in a readonly mounted RawDossier"));
@@ -1719,7 +1719,7 @@ function Archive(archiveConfigurator) {
 
             this.getArchiveForPath(dstPath, (err, dstDossierContext) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${dstPath}`, err));
                 }
 
                 if (dstDossierContext.prefixPath !== dossierContext.prefixPath) {
@@ -1745,12 +1745,12 @@ function Archive(archiveConfigurator) {
 
             return _listFiles(path, options, (err, files) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${path}`, err));
                 }
 
                 getManifest((err, manifest) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
                     }
 
                     const mountPoints = manifest.getMountPoints();
@@ -1760,7 +1760,7 @@ function Archive(archiveConfigurator) {
 
                     _listMountedFiles(mountPoints, (err, mountedFiles) => {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to list mounted files at mountPoints ${mountPoints}`, err));
                         }
 
                         files = files.concat(...mountedFiles);
@@ -1772,7 +1772,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             options.ignoreMounts = true;
@@ -1793,12 +1793,12 @@ function Archive(archiveConfigurator) {
 
             return _listFolders(path, options, (err, folders) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to list folders at path ${path}`, err));
                 }
 
                 getManifest((err, manifest) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
                     }
 
                     const mountPoints = manifest.getMountPoints();
@@ -1808,7 +1808,7 @@ function Archive(archiveConfigurator) {
 
                     _listMountedFolders(mountPoints, (err, mountedFolders) => {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to list mounted folders at mountPoints ${mountPoints}`, err));
                         }
 
                         folders = folders.concat(...mountedFolders);
@@ -1820,7 +1820,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             options.ignoreMounts = true;
@@ -1843,7 +1843,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -1866,12 +1866,12 @@ function Archive(archiveConfigurator) {
         const entries = {};
         this.getArchiveForPath(folderPath, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${folderPath}`, err));
             }
 
             result.archive.listFiles(result.relativePath, {recursive: false, ignoreMounts: true}, (err, files) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${result.relativePath}`, err));
                 }
 
                 entries.files = files;
@@ -1881,7 +1881,7 @@ function Archive(archiveConfigurator) {
                     ignoreMounts: true
                 }, (err, folders) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to list folders at path ${result.relativePath}`, err));
                     }
 
                     if (options.withFileTypes) {
@@ -1897,12 +1897,12 @@ function Archive(archiveConfigurator) {
 
                     function listMounts(err, handler) {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
                         }
 
                         handler.getMountedDossiers(result.relativePath, (err, mounts) => {
                             if (err) {
-                                return callback(err);
+                                return callback(createOpenDSUErrorWrapper(`Failed to get mounted DSUs at path ${result.relativePath}`, err));
                             }
                             let mountPaths = mounts.map(mount => mount.path);
                             let folders = mountPaths.filter(mountPath => mountPath.split('/').length >= 2);
@@ -1937,7 +1937,7 @@ function Archive(archiveConfigurator) {
             }
             getManifest((err, manifestHandler) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
                 }
 
                 manifestHandler.mount(path, archiveIdentifier, options, callback);
@@ -1948,7 +1948,7 @@ function Archive(archiveConfigurator) {
     this.unmount = (path, callback) => {
         getManifest((err, manifestHandler) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
             }
 
             manifestHandler.unmount(path, callback);
@@ -1958,7 +1958,7 @@ function Archive(archiveConfigurator) {
     this.listMountedDossiers = (path, callback) => {
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (result.archive === this) {
@@ -1969,7 +1969,7 @@ function Archive(archiveConfigurator) {
 
             function listMounts(err, handler) {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
                 }
 
                 handler.getMountedDossiers(result.relativePath, callback);
@@ -1987,7 +1987,7 @@ function Archive(archiveConfigurator) {
     this.getArchiveForPath = (path, callback) => {
         getManifest((err, handler) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
             }
 
             if (this.batchInProgress()) {
@@ -2041,7 +2041,7 @@ function Archive(archiveConfigurator) {
                 this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
 
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to anchor`, err));
                 }
 
                 callback(undefined, result);
@@ -2059,14 +2059,14 @@ function Archive(archiveConfigurator) {
 
         cancelBatchesInMountedArchives((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to cancel batches in mounted archive`, err));
             }
 
             batchOperationsInProgress = false;
             this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
             this.load((err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
                 }
                 callback();
             })
@@ -2084,7 +2084,7 @@ function Archive(archiveConfigurator) {
         this.beginBatch();
         batch((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to execute batch operations`, err));
             }
 
             this.commitBatch(callback);
@@ -2346,12 +2346,12 @@ function Brick(keySSI) {
 
         this.getTransformedData((err, _transformedData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
             crypto.hash(keySSI, _transformedData, (err, _hash) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create hash`, err));
                 }
 
                 hashLink = keyssi.buildHashLinkSSI(keySSI.getDLDomain(), _hash, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
@@ -2363,7 +2363,7 @@ function Brick(keySSI) {
     this.getAdler32 = (callback) => {
         this.getTransformedData((err, _transformedData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
             callback(undefined, adler32.sum(_transformedData));
@@ -2388,7 +2388,7 @@ function Brick(keySSI) {
             transform = transformFactory.createBrickTransform(keySSI);
             return transform.applyInverseTransform(transformedData, transformParameters, (err, _rawData) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to apply inverse transform`, err));
                 }
 
                 rawData = _rawData;
@@ -2415,7 +2415,7 @@ function Brick(keySSI) {
 
         transformData((err, _transformedData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to transform data`, err));
             }
 
             if (typeof transformedData === "undefined") {
@@ -2434,7 +2434,7 @@ function Brick(keySSI) {
         if (!transformedData) {
             transformData((err, _transformedData) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to transform data`, err));
                 }
 
                 callback(undefined, transformParameters);
@@ -2476,7 +2476,7 @@ function Brick(keySSI) {
 
         this.getTransformParameters((err, _transformParameters) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get transform parameters`, err));
             }
 
             if (transformParameters) {
@@ -2495,7 +2495,7 @@ function Brick(keySSI) {
             //     summary.checkSum = adler32;
                 this.getHashLink((err, _hashLink) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get hash link`, err));
                     }
 
                     summary.hashLink = _hashLink.getIdentifier();
@@ -2511,7 +2511,7 @@ function Brick(keySSI) {
         if (rawData) {
             transform.applyDirectTransform(rawData, transformParameters, (err, _transformedData) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to apply direct transform`, err));
                 }
 
                 if (typeof _transformedData === "undefined") {
@@ -2737,14 +2737,14 @@ function BrickMapController(options) {
             brickMapDiff = new BrickMapDiff();
             return brickMapDiff.initialize((err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to initialize brickMapDiff`, err));
                 }
 
 
                 brickMapDiff.setPrevDiffHashLink(lastDiffHash);
                 this.configureBrickMap(brickMapDiff, (err) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
                     }
 
                     currentDiffBrickMap = brickMapDiff;
@@ -2773,7 +2773,7 @@ function BrickMapController(options) {
         const diff = newDiffs.shift();
         diff.getHashLink((err, _lastDiffHashLink) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get hashLink`, err));
             }
 
             lastDiffHash = _lastDiffHashLink;
@@ -2834,13 +2834,13 @@ function BrickMapController(options) {
     this.init = (callback) => {
         this.createNewBrickMap((err, _brickMap) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create new brickMap`, err));
             }
 
             validBrickMap = _brickMap;
             validBrickMap.clone((err, _dirtyBrickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to clone valid brickMap`, err));
                 }
 
                 dirtyBrickMap = _dirtyBrickMap;
@@ -2855,18 +2855,18 @@ function BrickMapController(options) {
     this.load = (callback) => {
         config.getKeySSI((err, keySSI) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
             }
 
             strategy.load(keySSI, (err, brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
                 }
 
                 validBrickMap = brickMap;
                 brickMap.clone((err, _dirtyBrickMap) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to clone brickMap`, err));
                     }
 
                     dirtyBrickMap = _dirtyBrickMap;
@@ -2888,12 +2888,12 @@ function BrickMapController(options) {
             bricksData
         }, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate addFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 this.addFileEntry(path, bricksData);
@@ -2912,17 +2912,17 @@ function BrickMapController(options) {
             dstPath
         }, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate rename operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
                 try {
                     this.copy(srcPath, dstPath);
                 } catch (e) {
-                    return callback(e);
+                    return callback(createOpenDSUErrorWrapper(`Failed to copy`, e));
                 }
 
                 this.delete(srcPath);
@@ -2941,12 +2941,12 @@ function BrickMapController(options) {
             bricksData
         }, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate appendToFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 this.appendBricksToFile(path, bricksData);
@@ -2965,12 +2965,12 @@ function BrickMapController(options) {
             filesBricksData
         }, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate addFiles operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 for (const filePath in filesBricksData) {
@@ -2989,18 +2989,18 @@ function BrickMapController(options) {
     this.deleteFile = (path, callback) => {
         validator.validate('preWrite', dirtyBrickMap, 'deleteFile', path, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate deleteFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 try {
                     this.delete(path);
                 } catch (e) {
-                    return callback(e);
+                    return callback(createOpenDSUErrorWrapper(`Failed to delete`, e));
                 }
                 this.attemptAnchoring(callback);
             })
@@ -3014,18 +3014,18 @@ function BrickMapController(options) {
     this.createDirectory = (path, callback) => {
         validator.validate('preWrite', dirtyBrickMap, 'createFolder', path, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to validate createFolder operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 try {
                     this.createFolder(path);
                 } catch (e) {
-                    return callback(e);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create folder ${path}`, e));
                 }
                 this.attemptAnchoring(callback);
             })
@@ -3143,7 +3143,7 @@ function BrickMapController(options) {
         brickMapBrick.setTransformParameters(brickMap.getTransformParameters());
         brickMapBrick.getTransformedData((err, brickData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brickMap brick's transformed data`, err));
             }
 
             brickStorageService.putBrick(keySSI, brickData, callback);
@@ -3212,11 +3212,11 @@ function BrickMapController(options) {
     this.attemptAnchoring = (callback) => {
         strategy.ifChangesShouldBeAnchored(dirtyBrickMap, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to determine if changes should be anchored`, err));
             }
 
             if (!result) {
-                return callback(err);
+                return callback();
             }
 
             // In order to preserve backwards compatibility
@@ -3257,7 +3257,7 @@ function BrickMapController(options) {
             // diff object. Once this happens the "pendingAnchoringDiff" list is emptied
             strategy.compactDiffs(pendingAnchoringDiffs, (err, brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to compact diffs`, err));
                 }
 
                 this.saveBrickMap(keySSI, brickMap, (err, hash) => {
@@ -3387,7 +3387,7 @@ function BrickMapDiff(header) {
         BrickMapMixin.initialize.call(this, header);
         this.load((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load BrickMapDiff`, err));
             }
 
             if (!this.header.metadata.log) {
@@ -4055,7 +4055,7 @@ const BrickMapMixin = {
             this.header.setTransformParameters({key: this.keySSI.getIdentifier()});
             this.header.getRawData((err, rawData) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to get raw data`, err));
                 }
 
                 this.header = JSON.parse(rawData.toString(), reviver);
@@ -4096,7 +4096,7 @@ const BrickMapMixin = {
         brickMap.setKeySSI(this.keySSI);
         brickMap.load((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
             }
 
             callback(undefined, brickMap);
@@ -4443,7 +4443,7 @@ function DiffStrategy(options) {
     const createBrickMapFromDiffs = (brickMapDiffs, callback) => {
         this.brickMapController.createNewBrickMap((err, brickMap) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
             }
 
             try {
@@ -4451,7 +4451,7 @@ function DiffStrategy(options) {
                     brickMap.applyDiff(brickMapDiff);
                 }
             } catch (e) {
-                return callback(e);
+                return callback(createOpenDSUErrorWrapper(`Failed to apply diffs on brickMap`, e));
             }
 
             callback(undefined, brickMap);
@@ -4482,7 +4482,7 @@ function DiffStrategy(options) {
             const brick = _bricks.shift();
             this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
                 }
 
                 diffs.push(brickMap);
@@ -4512,7 +4512,7 @@ function DiffStrategy(options) {
         const taskCounter = new TaskCounter(() => {
             createDiffsFromBricks(bricks, (err, brickMapDiffs) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create diffs from bricks`, err));
                 }
 
                 this.storeInCache(cacheKey, brickMapDiffs);
@@ -4522,7 +4522,7 @@ function DiffStrategy(options) {
         taskCounter.increment(hashes.length);
         this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
 
             bricks.push(createBrick(brickData));
@@ -4547,12 +4547,12 @@ function DiffStrategy(options) {
         this.lastHashLink = hashes[hashes.length - 1];
         getBrickMapDiffs(hashes, (err, brickMapDiffs) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to retrieve brickMap diffs`, err));
             }
 
             this.validator.validate('brickMapHistory', brickMapDiffs, (err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to validate brickMapDiffs`, err));
                 }
 
                 createBrickMapFromDiffs(brickMapDiffs, callback);
@@ -4568,7 +4568,7 @@ function DiffStrategy(options) {
     this.load = (keySSI, callback) => {
         this.brickMapController.versions(keySSI, (err, versionHashes) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${keySSI.getAnchorId()}`, err));
             }
 
             if (!versionHashes.length) {
@@ -4655,7 +4655,7 @@ function DiffStrategy(options) {
         // Try and apply the changes on a brickMap copy
         brickMap.clone((err, brickMapCopy) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
             }
 
             try {
@@ -4731,7 +4731,7 @@ function LatestVersionStrategy(options) {
             const brick = _bricks.shift();
             this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
                 }
 
                 brickMaps.push(brickMap);
@@ -4763,7 +4763,7 @@ function LatestVersionStrategy(options) {
         const taskCounter = new TaskCounter(() => {
             createMapsFromBricks(bricks, (err, brickMaps) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create maps from bricks`, err));
                 }
 
                 this.storeInCache(cacheKey, brickMaps);
@@ -4773,7 +4773,7 @@ function LatestVersionStrategy(options) {
         taskCounter.increment(hashes.length);
         this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
 
             bricks.push(createBrick(brickData));
@@ -4798,12 +4798,12 @@ function LatestVersionStrategy(options) {
         this.lastHashLink = hashes[hashes.length - 1];
         createBrickMapsFromHistory([this.lastHashLink], (err, brickMaps) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create BrickMaps from history`, err));
             }
 
             this.validator.validate('brickMapHistory', brickMaps, (err) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to validate BrickMaps`, err));
                 }
 
                 const latestBrickMap = brickMaps[brickMaps.length - 1];
@@ -4820,7 +4820,7 @@ function LatestVersionStrategy(options) {
     this.load = (keySSI, callback) => {
         this.brickMapController.versions(keySSI, (err, versionHashes) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
             }
 
             if (!versionHashes.length) {
@@ -4849,7 +4849,7 @@ function LatestVersionStrategy(options) {
 
         this.brickMapController.getValidBrickMap().clone((err, validBrickMapClone) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to clone valid BrickMap`, err));
             }
             const brickMap = this.mergeDiffs(validBrickMapClone, diffsList);
             callback(undefined, brickMap);
@@ -4914,7 +4914,7 @@ function LatestVersionStrategy(options) {
         // Try and apply the changes on a brickMap copy
         brickMap.clone((err, brickMapCopy) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
             }
 
             try {
@@ -5174,17 +5174,17 @@ function Service(options) {
 
                     brick.getTransformedData((err, brickData) => {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                         }
 
                         self.putBrick(self.keySSI, brickData, (err, digest) => {
                             if (err) {
-                                return callback(err);
+                                return callback(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                             }
 
                             brick.getSummary((err, brickSummary) => {
                                 if (err) {
-                                    return callback(err);
+                                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
                                 }
 
 
@@ -5281,7 +5281,7 @@ function Service(options) {
     const getEmbeddedBrickAsBuffer = (hlSSI, brickMeta, callback) => {
         const hlSSIHint = hlSSI.getHint();
         const hintSegments = hlSSIHint.split('/').pop();
-        let [ offset, size, embeddedHlSSI ] = hintSegments.split(',');
+        let [offset, size, embeddedHlSSI] = hintSegments.split(',');
 
         offset = parseInt(offset, 10);
         size = parseInt(size, 10);
@@ -5306,13 +5306,13 @@ function Service(options) {
         // Get the container Brick data
         getBrickAsBuffer(containerBrickMeta, (err, data) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
             }
 
             const brickData = data.slice(offset, offset + size);
             return this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
                 }
 
                 storeInCache(cacheKey, data);
@@ -5343,12 +5343,12 @@ function Service(options) {
 
         this.getBrick(hlSSI, (err, brickData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick data`, err));
             }
 
             this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
                 }
 
                 if (!$$.Buffer.isBuffer(data) && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
@@ -5370,7 +5370,7 @@ function Service(options) {
     const getFileBlocksCount = (filePath, callback) => {
         this.fsAdapter.getFileSize(filePath, (err, size) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
             }
 
             let blocksCount = Math.floor(size / this.bufferSize);
@@ -5399,17 +5399,17 @@ function Service(options) {
         brick.setRawData(data);
         brick.getTransformedData((err, brickData) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
             this.putBrick(this.keySSI, brickData, (err, digest) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                 }
 
                 brick.getSummary((err, brickSummary) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
                     }
 
 
@@ -5443,7 +5443,7 @@ function Service(options) {
 
         convertDataBlockToBrick(blockData, encrypt, (err, result) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
             }
 
             resultContainer.push(result);
@@ -5486,12 +5486,12 @@ function Service(options) {
         const blockEndOffset = (blockIndex + 1) * this.bufferSize - 1;
         this.fsAdapter.readBlockFromFile(filePath, blockOffset, blockEndOffset, (err, data) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to read block from file <${filePath}>`, err));
             }
 
             convertDataBlockToBrick(data, options.encrypt, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
                 }
 
                 resultContainer.push(result);
@@ -5528,7 +5528,7 @@ function Service(options) {
     const storeCompactedFiles = (buffer, filesList, callback) => {
         return convertDataBlockToBrick(buffer, false, (err, brickMeta) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
             }
             const files = {};
             const brickHLSSI = SSIKeys.parse(brickMeta.hashLink);
@@ -5575,7 +5575,7 @@ function Service(options) {
 
         convertBufferToBricks(bricksSummary, buffer, 0, options, (err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to convert buffer to bricks`, err));
             }
 
             callback(undefined, bricksSummary);
@@ -5626,7 +5626,7 @@ function Service(options) {
             }
         });
         stream.on('error', (err) => {
-            callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to ingest stream`, err));
         });
         stream.on('end', () => {
             const buffer = $$.Buffer.concat(receivedData);
@@ -5636,7 +5636,7 @@ function Service(options) {
             };
             this.ingestBuffer(buffer, ingestBufferOptions, (err, summary) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to ingest buffer`, err));
                 }
 
                 bricksSummary = bricksSummary.concat(summary);
@@ -5691,14 +5691,14 @@ function Service(options) {
 
         getFileBlocksCount(filePath, (err, blocksCount) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed get blocks for file <${filePath}>`, err));
             }
 
             const conversionOptions = Object.assign({}, options);
             conversionOptions.blocksCount = blocksCount;
             convertFileToBricks(bricksSummary, filePath, conversionOptions, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to convert file <${filePath}> to bricks`, err));
                 }
 
                 callback(undefined, bricksSummary);
@@ -5734,7 +5734,7 @@ function Service(options) {
 
             this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                 }
 
                 bricksSummary[filename] = result;
@@ -5769,7 +5769,7 @@ function Service(options) {
 
         const iteratorHandler = (err, filename, dirname) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create brick from folder <${folderPath}>`, err));
             }
 
             if (typeof filename === 'undefined') {
@@ -5780,19 +5780,19 @@ function Service(options) {
             const filePath = require("path").join(dirname, filename);
             this.readFile(filePath, (err, fileBuffer) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 const fileBrick = this.brickFactoryFunction(options.encrypt);
                 fileBrick.setRawData(fileBuffer);
                 fileBrick.getTransformedData((err, brickData) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                     }
 
                     fileBrick.getSummary((err, brickSummary) => {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to get brick summary`, err));
                         }
 
                         const size = brickData.length;
@@ -5848,19 +5848,19 @@ function Service(options) {
 
             this.readFile(filePath, (err, fileBuffer) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 const fileBrick = this.brickFactoryFunction(options.encrypt);
                 fileBrick.setRawData(fileBuffer);
                 fileBrick.getTransformedData((err, brickData) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                     }
 
                     fileBrick.getSummary((err, brickSummary) => {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                         }
 
                         const size = brickData.length;
@@ -5904,7 +5904,7 @@ function Service(options) {
 
         const iteratorHandler = (err, filename, dirname) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to ingest folder <${folderPath}>`, err));
             }
 
             if (typeof filename === 'undefined') {
@@ -5914,7 +5914,7 @@ function Service(options) {
             const filePath = require("path").join(dirname, filename);
             this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                 }
 
                 bricksSummary[filename] = result;
@@ -5940,7 +5940,7 @@ function Service(options) {
 
             getBrickAsBuffer(brickMeta, (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
                 }
 
                 buffers.push(data);
@@ -6015,12 +6015,12 @@ function Service(options) {
 
             getBrickAsBuffer(brickMeta, (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
                 }
 
                 this.fsAdapter.appendBlockToFile(filePath, data, (err) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to append block to file <${filePath}>`, err));
                     }
 
                     ++index;
@@ -6063,7 +6063,7 @@ function Service(options) {
             const dstStream = createBricksWritableStream(options.dstStorage, options.beforeCopyCallback);
 
             srcStream.on('error', (err) => {
-                callback(err);
+                callback(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
                 dstStream.destroy(err);
             });
 
@@ -6078,7 +6078,8 @@ function Service(options) {
 
         copyBricksRecursive((err) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to copy bricks recursive`, err));
+
             }
 
             callback(undefined, newBricksSetKeys);
@@ -6092,7 +6093,7 @@ function Service(options) {
     this.readFile = (filePath, callback) => {
         this.fsAdapter.getFileSize(filePath, (err, size) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
             }
 
             if (!size) {
@@ -6542,7 +6543,7 @@ function Manifest(archive, callback) {
             if (mountingPoint === path) {
                 return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
                     }
 
                     return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive, identifier: manifest.mounts[mountingPoint]});
@@ -6552,14 +6553,14 @@ function Manifest(archive, callback) {
             if (pskPath.isSubpath(path, mountingPoint)) {
                 return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
                     }
 
                     let remaining = path.substring(mountingPoint.length);
                     remaining = pskPath.ensureIsAbsolute(remaining);
                     return archive.getArchiveForPath(remaining, function (err, result) {
                         if (err) {
-                            return callback(err);
+                            return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at path ${remaining}`, err));
                         }
                         result.prefixPath = pskPath.join(mountingPoint, result.prefixPath);
                         callback(undefined, result);
@@ -6603,7 +6604,7 @@ function Manifest(archive, callback) {
 
         resolver.loadDSU(seed, (err, dossier) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to load DSU from keySSI ${seed}`, err));
             }
             callback(undefined, dossier);
         })
@@ -6798,7 +6799,7 @@ function BrickTransform(transformGenerator) {
         if (!directTransform) {
             transformGenerator.createDirectTransform(transformParameters, (err, _directTransform) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create direct transform`, err));
                 }
 
                 if (typeof _directTransform === "undefined") {
@@ -6817,7 +6818,7 @@ function BrickTransform(transformGenerator) {
         if (!inverseTransform) {
             return transformGenerator.createInverseTransform(transformParameters, (err, _inverseTransform) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create inverse transform`, err));
                 }
 
                 inverseTransform = _inverseTransform;
@@ -8133,11 +8134,11 @@ function RequestsChain() {
         const next = (err, result) => {
             if (err) {
                 if (isFatalError(err)) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 if (!chain.length) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 return executeChain(callback);
@@ -8434,21 +8435,21 @@ function DSUFactory(options) {
             try {
                 bar = createInstance(keySSI, options);
             } catch (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             return bar.init(err => callback(err, bar));
         }
 
         initializeKeySSI(keySSI, (err, _keySSI) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to initialize keySSI <${keySSI.getIdentifier(true)}>`, err));
             }
 
             let bar;
             try {
                 bar = createInstance(_keySSI, options);
             } catch (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             bar.init(err => callback(err, bar));
         });
@@ -8480,7 +8481,7 @@ function DSUFactory(options) {
         try {
             bar = createInstance(keySSI, options);
         } catch (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
         }
         bar.load(err => callback(err, bar));
     }
@@ -8530,7 +8531,7 @@ function WalletFactory(options) {
             let templateSSI = require("opendsu").loadApi("keyssi").buildSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
             this.dsuFactory.create(templateSSI, (err, writableDSU) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
                 }
                 writableWallet = writableDSU;
                 mountDSUType();
@@ -8540,7 +8541,7 @@ function WalletFactory(options) {
         let mountDSUType = () =>{
             writableWallet.mount("/code", options.dsuTypeSSI, (err => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to mount constitution in writable DSU`, err));
                 }
                 createConstDSU();
             }));
@@ -8551,7 +8552,7 @@ function WalletFactory(options) {
         let createConstDSU = () => {
             this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
                 }
 
                 constDSUWallet = constWallet;
@@ -8794,7 +8795,7 @@ module.exports = function(archive){
 
 		archive.readFile("/code/api.js", function(err, apiCode){
 			if(err){
-				return callback(err);
+				return callback(createOpenDSUErrorWrapper(`Failed to create read file /code/api.js`, err));
 			}
 
 			try{
@@ -8813,7 +8814,7 @@ module.exports = function(archive){
 				apis[functionName].call(this, ...args, callback);
 
 			}catch(err){
-				return callback(err);
+				return callback(createOpenDSUErrorWrapper(`Failed to create eval code in file /code/api.js`, err));
 			}
 		});
 	}
@@ -9355,7 +9356,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     try {
         derivedKeySSI = getDerivedType(keySSI, otherType);
     } catch (err){
-        return callback(err);
+        return callback(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI <${keySSI.getIdentifier(true)}>`, err));
     }
 
     callback(undefined, derivedKeySSI);
@@ -9894,7 +9895,7 @@ function SeedSSI(identifier) {
         if (typeof privateKey === "undefined") {
             cryptoRegistry.getKeyPairGenerator(self)().generateKeyPair((err, publicKey, privateKey) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err));
                 }
                 privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
                 self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
@@ -9958,7 +9959,7 @@ function addVersion(anchorId, newHashLinkId, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -9974,7 +9975,7 @@ function versions(anchorId, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -10024,7 +10025,7 @@ const versions = (powerfulKeySSI, authToken, callback) => {
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
@@ -10079,7 +10080,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
@@ -10092,7 +10093,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
         };
         createDigitalProof(powerfulKeySSI, hash.new, hash.last, zkpValue, (err, digitalProof) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to create digital proof`, err));
             }
             const body = {
                 hash,
@@ -10136,7 +10137,7 @@ function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkI
         case constants.KEY_SSIS.SEED_SSI:
             crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to sign data`, err));
                 }
                 const digitalProof = {
                     signature: crypto.encodeBase58(signature),
@@ -10263,12 +10264,12 @@ function putBrick(brick, callback) {
     const cache = cachedStores.getCache(storeName);
     crypto.hash(keySSISpace.buildSeedSSI("vault"), brick, (err, brickHash) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to create brick hash`, err));
         }
 
         cache.put(brickHash, brick, (err, hash) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
             }
 
             callback(undefined, hash);
@@ -10280,7 +10281,7 @@ function getBrick(brickHash, callback) {
     const cache = cachedStores.getCache(storeName);
     cache.get(brickHash, (err, brickData) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get retrieve brick <${brickHash}> from cache`, err));
         }
 
         callback(undefined, brickData);
@@ -10347,7 +10348,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
     function __getBrickFromEndpoint() {
         bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
             if (err) {
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
             }
 
             if (!brickStorageArray.length) {
@@ -10364,7 +10365,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
                     callback(null, data)
                 });
             }).catch((err) => {
-                callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get brick <${brickHash}> from brick storage`, err));
             });
         });
     }
@@ -10415,7 +10416,7 @@ const putBrick = (keySSI, brick, authToken, callback) => {
 
     bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
         }
         const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
@@ -10449,9 +10450,9 @@ const putBrick = (keySSI, brick, authToken, callback) => {
             cache
                 .put(brickHash, brick, (err) => {
                     if (err) {
-                        return callback(err);
+                        return callback(createOpenDSUErrorWrapper(`Failed to put brick <${brickHash}> in cache`, err));
                     }
-                    callback(err, brickHash);
+                    callback(undefined, brickHash);
                 })
                 .catch((err) => {
                     callback(err);
@@ -10604,9 +10605,10 @@ function FSCache(folderName) {
                 self.get(key, callback);
             })
         } else {
-            fs.readFile(path.join(folderPath, key), (err, data) => {
+            const filePath =path.join(folderPath, key)
+            fs.readFile(filePath, (err, data) => {
                 if (err) {
-                    return callback(err);
+                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 let content = data;
@@ -11145,7 +11147,17 @@ module.exports = {
     JWT_ERRORS,
 };
 
-},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+
+
+function getSelfSovereignDB(mountingPoint, sharedSSI, mySeedSSI){
+    return new require("./SSDB")(mountingPoint, sharedSSI, mySeedSSI);
+}
+
+module.exports = {
+    getSelfSovereignDB
+}
+},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
@@ -11389,7 +11401,7 @@ function Response(httpRequest, httpResponse) {
 				}
 				callback(undefined, rawData);
 			} catch (err) {
-				callback(err);
+				callback(createOpenDSUErrorWrapper(`Failed to process raw data`, err));
 			} finally {
 				//trying to prevent getting ECONNRESET error after getting our response
 				httpRequest.abort();
@@ -11776,7 +11788,7 @@ function callInterceptors(target, callback){
         let interceptor = interceptors[index];
         interceptor(target, (err, result)=>{
             if(err){
-                return callback(err);
+                return callback(createOpenDSUErrorWrapper(`Failed to execute interceptor`, err));
             }
             return executeInterceptor(result);
         });
@@ -11992,11 +12004,14 @@ module.exports = {
 Message Queues API space
 */
 
-let http = require("../index").loadApi("http");
-let bdns = require("../index").loadApi("bdns");
+let http = require("../http");
+let bdns = require("../bdns")
 
 function send(keySSI, message, callback){
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
+        if(err){
+            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+        }
         let url = endpoints[0]+`/mq/send-message/${keySSI}`;
         let options = {body: message};
 
@@ -12005,7 +12020,7 @@ function send(keySSI, message, callback){
         request.then((response)=>{
             callback(undefined, response);
         }).catch((err)=>{
-            callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to send message`, err));
         });
     });
 }
@@ -12061,7 +12076,7 @@ module.exports = {
     getHandler,
     unsubscribe
 }
-},{"../index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -12083,7 +12098,7 @@ function publish(keySSI, message, callback){
 		request.then((response)=>{
 			callback(undefined, response);
 		}).catch((err)=>{
-			callback(err);
+			return callback(createOpenDSUErrorWrapper(`Failed to publish message`, err));
 		});
 	});
 }
@@ -12093,7 +12108,7 @@ function getObservableHandler(keySSI, timeout){
 	let obs = require("../utils/observable").createObservable();
 	bdns.getNotificationEndpoints(keySSI, (err, endpoints) => {
 		if(err || endpoints.length === 0){
-			return callback(new Error("Not available!"));
+			throw (new Error("Not available!"));
 		}
 
 		function makeRequest(){
@@ -12138,9 +12153,24 @@ const registerDSUFactory = (type, factory) => {
     KeySSIResolver.DSUFactory.prototype.registerDSUType(type, factory);
 };
 
-const createDSU = (keySSI, options, callback) => {
-    if (typeof keySSI === "string") {
-        keySSI = keySSISpace.parse(keySSI);
+function addDSUInstanceInCache(dsuInstance, callback) {
+    dsuInstance.getKeySSI((err, keySSI) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
+        }
+
+        if(typeof dsuInstances[keySSI] === "undefined"){
+            dsuInstances[keySSI] = dsuInstance;
+        }
+
+        callback(undefined, dsuInstance);
+
+    });
+}
+
+const createDSU = (templateKeySSI, options, callback) => {
+    if (typeof templateKeySSI === "string") {
+        templateKeySSI = keySSISpace.parse(templateKeySSI);
     }
     if (typeof options === "function") {
         callback = options;
@@ -12148,7 +12178,12 @@ const createDSU = (keySSI, options, callback) => {
     }
 
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.createDSU(keySSI, options, callback);
+    keySSIResolver.createDSU(templateKeySSI, options, (err, dsuInstance) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+        }
+        addDSUInstanceInCache(dsuInstance, callback);
+    });
 };
 
 const loadDSU = (keySSI, options, callback) => {
@@ -12166,20 +12201,13 @@ const loadDSU = (keySSI, options, callback) => {
         return callback(undefined, dsuInstances[ssiId]);
     }
     const keySSIResolver = initializeResolver(options);
-    keySSIResolver.loadDSU(keySSI, options, (err, newDSU) => {
+    keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
         if (err) {
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
         }
-
-        if (typeof dsuInstances[ssiId] === "undefined") {
-            dsuInstances[ssiId] = newDSU;
-        }
-
-        callback(undefined, newDSU);
+        addDSUInstanceInCache(dsuInstance, callback);
     });
 };
-
-
 
 
 const getHandler = () => {
@@ -12188,7 +12216,6 @@ const getHandler = () => {
 
 
 function invalidateDSUCache(dsuKeySSI) {
-    // console.log("Invalidating cache ...................");
     const ssiId = dsuKeySSI.getIdentifier();
     delete dsuInstances[ssiId]
 }
@@ -12202,6 +12229,11 @@ module.exports = {
 }
 
 },{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+/*
+    Security Context related functionalities
+
+ */
+
 const getMainDSU = () => {
     if (typeof rawDossier === "undefined") {
         throw Error("Main DSU does not exist in the current context.");
@@ -12448,7 +12480,7 @@ function runOneSuccessful(listEntries, executeEntry, callback) {
       })
       .catch((err) => {
         if (!availableListEntries.length) {
-          return callback(err);
+          return callback(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
         }
 
         const nextEntry = availableListEntries.shift();
@@ -19026,6 +19058,7 @@ exports.dumpObjectForHashing = function(obj){
 
 
 exports.hashValues  = function (values){
+    const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     var result = exports.dumpObjectForHashing(values);
     hash.update(result);
@@ -20894,6 +20927,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "cache":return require("./cache/cachedStores"); break;
             case "config":return require("./config"); break;
             case "system":return require("./system"); break;
+            case "db":return require("./db"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
@@ -20908,7 +20942,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
 module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -21077,7 +21111,7 @@ function enableForEnvironment(envType){
                         console.error(err);
                     } else{
                         if(request === 'zeromq'){
-                            console.error("Failed to load module ", request," with error:", err.message);
+                            console.warn("Failed to load module ", request," with error:", err.message);
                         }else{
                             console.error("Failed to load module ", request," with error:", err);
                         }
