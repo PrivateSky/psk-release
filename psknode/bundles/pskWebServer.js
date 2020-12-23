@@ -2699,7 +2699,12 @@ function getTokenIssuers(callback) {
                 console.error(`Cannot load ${filePath}`, err);
                 return;
             }
-            tokenIssuers = data.split(/\s+/g).filter((issuer) => issuer);
+
+            const openDSU = require("opendsu");
+            const crypto = openDSU.loadApi("crypto");
+
+            tokenIssuers = data.split(/\s+/g).filter((issuer) => issuer).map(issuer => crypto.getReadableSSI(issuer));
+
             callback(null, tokenIssuers);
         });
     });
@@ -2707,7 +2712,7 @@ function getTokenIssuers(callback) {
 
 module.exports = {getConfig, getTokenIssuers}
 
-},{"./default":"/home/travis/build/PrivateSky/privatesky/modules/apihub/config/default.js","fs":false,"swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
+},{"./default":"/home/travis/build/PrivateSky/privatesky/modules/apihub/config/default.js","fs":false,"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/travis/build/PrivateSky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
 const stateStorageFileName = 'queues.json';
 
 function NotificationsManager(workingFolderPath, storageFolderPath) {
@@ -3730,12 +3735,12 @@ function Authorisation(server) {
     let jwt = req.headers['authorization'];
 
     const canSkipAuthorisation = urlsToSkip.some((urlToSkip) => url.indexOf(urlToSkip) === 0);
-    if (canSkipAuthorisation) {
+    if (url === "/" || canSkipAuthorisation) {
       next();
       return;
     }
 
-    if(!config.getConfig("enableLocalhostAuthorization") && req.headers.host.indexOf("localhost") === 0){
+    if (!config.getConfig("enableLocalhostAuthorization") && req.headers.host.indexOf("localhost") === 0) {
       next();
       return;
     }
@@ -16225,6 +16230,11 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
 
                         const credentialIssuer = jwtUtils.getReadableSSI(body.iss);
 
+                        // console.log(`Checking for credentialIssuer ${credentialIssuer} inside `, listOfIssuers);
+                        // listOfIssuers.forEach(issuer => {
+                        //     console.log(`Valid issuer ${issuer}: ${jwtUtils.getReadableSSI(issuer)}`);
+                        // })
+
                         const isValidIssuer = listOfIssuers.some((issuer) => !!credentialIssuer
                             && jwtUtils.getReadableSSI(issuer) === credentialIssuer);
                         credentialVerificationCallback(null, isValidIssuer);
@@ -16284,6 +16294,7 @@ module.exports = {
     createAuthToken,
     verifyAuthToken,
     createPresentationToken,
+    getReadableSSI: jwtUtils.getReadableSSI,
     parseJWTSegments: jwtUtils.parseJWTSegments,
     createBloomFilter,
     JWT_ERRORS,

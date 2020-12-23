@@ -7093,6 +7093,11 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
 
                         const credentialIssuer = jwtUtils.getReadableSSI(body.iss);
 
+                        // console.log(`Checking for credentialIssuer ${credentialIssuer} inside `, listOfIssuers);
+                        // listOfIssuers.forEach(issuer => {
+                        //     console.log(`Valid issuer ${issuer}: ${jwtUtils.getReadableSSI(issuer)}`);
+                        // })
+
                         const isValidIssuer = listOfIssuers.some((issuer) => !!credentialIssuer
                             && jwtUtils.getReadableSSI(issuer) === credentialIssuer);
                         credentialVerificationCallback(null, isValidIssuer);
@@ -7152,6 +7157,7 @@ module.exports = {
     createAuthToken,
     verifyAuthToken,
     createPresentationToken,
+    getReadableSSI: jwtUtils.getReadableSSI,
     parseJWTSegments: jwtUtils.parseJWTSegments,
     createBloomFilter,
     JWT_ERRORS,

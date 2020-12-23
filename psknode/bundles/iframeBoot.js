@@ -2644,7 +2644,12 @@ function getTokenIssuers(callback) {
                 console.error(`Cannot load ${filePath}`, err);
                 return;
             }
-            tokenIssuers = data.split(/\s+/g).filter((issuer) => issuer);
+
+            const openDSU = require("opendsu");
+            const crypto = openDSU.loadApi("crypto");
+
+            tokenIssuers = data.split(/\s+/g).filter((issuer) => issuer).map(issuer => crypto.getReadableSSI(issuer));
+
             callback(null, tokenIssuers);
         });
     });
@@ -2654,7 +2659,7 @@ module.exports = {getConfig, getTokenIssuers}
 
 }).call(this)}).call(this,require('_process'))
 
-},{"./default":"/home/travis/build/PrivateSky/privatesky/modules/apihub/config/default.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/apihub/index.js":[function(require,module,exports){
+},{"./default":"/home/travis/build/PrivateSky/privatesky/modules/apihub/config/default.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/apihub/index.js":[function(require,module,exports){
 (function (process){(function (){
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
@@ -3902,12 +3907,12 @@ function Authorisation(server) {
     let jwt = req.headers['authorization'];
 
     const canSkipAuthorisation = urlsToSkip.some((urlToSkip) => url.indexOf(urlToSkip) === 0);
-    if (canSkipAuthorisation) {
+    if (url === "/" || canSkipAuthorisation) {
       next();
       return;
     }
 
-    if(!config.getConfig("enableLocalhostAuthorization") && req.headers.host.indexOf("localhost") === 0){
+    if (!config.getConfig("enableLocalhostAuthorization") && req.headers.host.indexOf("localhost") === 0) {
       next();
       return;
     }
@@ -18149,6 +18154,11 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
 
                         const credentialIssuer = jwtUtils.getReadableSSI(body.iss);
 
+                        // console.log(`Checking for credentialIssuer ${credentialIssuer} inside `, listOfIssuers);
+                        // listOfIssuers.forEach(issuer => {
+                        //     console.log(`Valid issuer ${issuer}: ${jwtUtils.getReadableSSI(issuer)}`);
+                        // })
+
                         const isValidIssuer = listOfIssuers.some((issuer) => !!credentialIssuer
                             && jwtUtils.getReadableSSI(issuer) === credentialIssuer);
                         credentialVerificationCallback(null, isValidIssuer);
@@ -18208,6 +18218,7 @@ module.exports = {
     createAuthToken,
     verifyAuthToken,
     createPresentationToken,
+    getReadableSSI: jwtUtils.getReadableSSI,
     parseJWTSegments: jwtUtils.parseJWTSegments,
     createBloomFilter,
     JWT_ERRORS,
