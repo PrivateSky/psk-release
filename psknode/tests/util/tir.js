@@ -271,7 +271,7 @@ const Tir = function () {
                             throw err;
                         }
 
-                        launcherBar.getKeySSI((err, launcherKeySSI) => {
+                        launcherBar.getKeySSIAsString((err, launcherKeySSI) => {
                             if (err) {
                                 throw err;
                             }
@@ -420,7 +420,44 @@ const Tir = function () {
 
     }
 
+    this.updateBDNS = function(rootFolderOfApiHub, updateSyncFnc, callback){
+        const fsName = "fs";
+        const fs = require(fsName);
+
+        const pathName = "path";
+        const path = require(pathName);
+
+        let bdnsLocation = path.join(rootFolderOfApiHub, "external-volume/config/bdns.hosts");
+        fs.readFile(bdnsLocation, (err, bdns)=>{
+            if(err){
+                return callback(err);
+            }
+
+            try{
+                bdns = JSON.parse(bdns);
+            }catch(err){
+                return callback(err);
+            }
+
+            bdns = updateSyncFnc(bdns);
+
+            fs.writeFile(bdnsLocation, JSON.stringify(bdns), (err)=>{
+                return callback(err, bdns);
+            });
+        });
+    }
+
+    this.addDomainsInBDNS = function(rootFolderOfApiHub, domainsAsArray, callback){
+        this.updateBDNS(rootFolderOfApiHub, (bdns)=>{
+            for(let i=0; i<domainsAsArray.length; i++){
+                bdns[domainsAsArray[i]] = bdns["default"];
+            }
+            return bdns;
+        }, callback);
+    }
+
     this.launchVirtualMQNode = launchVirtualMQNode;
+    this.launchApiHubTestNode = launchVirtualMQNode;
 
     function launchLocalMonitor(maxTries, onBootMessage) {
         if (typeof maxTries === 'function') {
@@ -562,7 +599,7 @@ const Tir = function () {
                     if (err) {
                         return callback(err);
                     }
-                    archive.getKeySSI((err, keySSI) => {
+                    archive.getKeySSIAsString((err, keySSI) => {
                         callback(err, keySSI);
                     });
                 });

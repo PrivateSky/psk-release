@@ -1,9 +1,9 @@
-swBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js":[function(require,module,exports){
+swBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/privatesky/builds/tmp/swBoot.js":[function(require,module,exports){
 const or = require('overwrite-require');
 or.enableForEnvironment(or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE);
 
 require("./swBoot_intermediar");
-},{"./swBoot_intermediar":"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot_intermediar.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot_intermediar.js":[function(require,module,exports){
+},{"./swBoot_intermediar":"/opt/privatesky/builds/tmp/swBoot_intermediar.js","overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js"}],"/opt/privatesky/builds/tmp/swBoot_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.swBootLoadModules = function(){ 
 
@@ -25,12 +25,12 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarm-engine/bootScripts/browser/sw":"swarm-engine/bootScripts/browser/sw"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarm-engine/bootScripts/browser/sw":"swarm-engine/bootScripts/browser/sw"}],"/opt/privatesky/modules/bar-fs-adapter/index.js":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
 };
-},{"./lib/FsAdapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
+},{"./lib/FsAdapter":"/opt/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"/opt/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -41,7 +41,7 @@ function FsAdapter() {
     this.getFileSize = function (filePath, callback) {
         fs.stat(filePath, (err, stats) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to get file size", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get file size", err));
             }
 
             callback(undefined, stats.size);
@@ -61,7 +61,7 @@ function FsAdapter() {
         });
 
         readStream.on("error", (err) => {
-            return callback(createOpenDSUErrorWrapper("Failed to read data from file " + filePath, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to read data from file " + filePath, err));
         });
 
         readStream.on("end", () => {
@@ -78,7 +78,7 @@ function FsAdapter() {
             if (err) {
                 fs.mkdir(path.dirname(filePath), {recursive: true}, (err) => {
                     if (err && err.code !== "EEXIST") {
-                        return callback(createOpenDSUErrorWrapper("Failed to append block to file "+ filePath, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to append block to file "+ filePath, err));
                     }
 
                     fs.appendFile(filePath, data, callback);
@@ -91,7 +91,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-},{"./PathAsyncIterator":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/opt/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/opt/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -110,7 +110,7 @@ function PathAsyncIterator(inputPath) {
         if (isFirstCall === true) {
             isDir(inputPath, (err, status) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to check if <${inputPath}> is directory`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to check if <${inputPath}> is directory`, err));
                 }
 
                 isFirstCall = false;
@@ -153,7 +153,7 @@ function PathAsyncIterator(inputPath) {
 
         fs.readdir(folderPath, (err, files) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read dir  <${folderPath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read dir  <${folderPath}>`, err));
             }
 
             if (files.length === 0 && folderList.length === 0) {
@@ -169,7 +169,7 @@ function PathAsyncIterator(inputPath) {
                 let filePath = path.join(folderPath, file);
                 isDir(filePath, (err, status) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to check if <${filePath}> is directory`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to check if <${filePath}> is directory`, err));
                     }
 
                     if (status) {
@@ -187,7 +187,7 @@ function PathAsyncIterator(inputPath) {
     function isDir(filePath, callback) {
         fs.stat(filePath, (err, stats) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get stats for file <${filePath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get stats for file <${filePath}>`, err));
             }
 
             return callback(undefined, stats.isDirectory());
@@ -207,7 +207,7 @@ function PathAsyncIterator(inputPath) {
         const folder = folderList.shift();
         walkFolder(folder, (err, file) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to walk folder  <${folder}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to walk folder  <${folder}>`, err));
             }
 
             callback(undefined, file, inputPath);
@@ -216,11 +216,11 @@ function PathAsyncIterator(inputPath) {
 }
 
 module.exports = PathAsyncIterator;
-},{"swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js":[function(require,module,exports){
+},{"swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/index.js":[function(require,module,exports){
 
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
-const createFolderBrickStorage = require("./lib/FolderBrickStorage").createFolderBrickStorage;
-const createFileBrickStorage = require("./lib/FileBrickStorage").createFileBrickStorage;
+const createFolderBrickStorage = require("./lib/obsolete/FolderBrickStorage").createFolderBrickStorage;
+const createFileBrickStorage = require("./lib/obsolete/FileBrickStorage").createFileBrickStorage;
 
 ArchiveConfigurator.prototype.registerStorageProvider("FolderBrickStorage", createFolderBrickStorage);
 ArchiveConfigurator.prototype.registerStorageProvider("FileBrickStorage", createFileBrickStorage);
@@ -249,14 +249,13 @@ module.exports.isArchive = (archive) => {
     return archive instanceof Archive;
 }
 
-/*module.exports.Seed = require('./lib/Seed');*/
 module.exports.BrickMapDiff = require('./lib/BrickMapDiff');
 module.exports.BrickMapStrategyFactory = require('./lib/BrickMapStrategy');
 module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapStrategyMixin');
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/FileBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js","./lib/FolderBrickStorage":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
+},{"./lib/Archive":"/opt/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/opt/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/opt/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/opt/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"/opt/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
 'use strict'
 
 /**
@@ -303,7 +302,7 @@ function AnchorValidator(options) {
 }
 
 module.exports = AnchorValidator;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 const Brick = require('./Brick');
 const stream = require('stream');
 const BrickStorageService = require('./BrickStorageService').Service;
@@ -332,7 +331,7 @@ function Archive(archiveConfigurator) {
     const initialize = (callback) => {
         archiveConfigurator.getKeySSI((err, keySSI) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
             }
 
             let storageProvider = archiveConfigurator.getBootstrapingService();
@@ -362,21 +361,14 @@ function Archive(archiveConfigurator) {
 
             brickFactoryFunction: (encrypt) => {
                 encrypt = (typeof encrypt === 'undefined') ? true : !!encrypt;
-                if (encrypt) {
-                    return new Brick(keySSI);
-                }
-
                 // Strip the encryption key from the SeedSSI
-                const SSIKeys = require("opendsu").loadApi("keyssi");
-                let key = SSIKeys.buildSeedSSI(keySSI.getDLDomain(), undefined, keySSI.getControl(), keySSI.getVn());
-                return new Brick(key);
+                return new Brick({templateKeySSI: keySSI, encrypt});
             },
 
             brickDataExtractorCallback: (brickMeta, brick, callback) => {
-                brick.setKeySSI(keySSI);
-                const transformParameters = brickMapController.getTransformParameters(brickMeta)
-
-                brick.setTransformParameters(transformParameters);
+                brick.setTemplateKeySSI(keySSI);
+                const brickEncryptionKeySSI = brickMapController.getBrickEncryptionKeySSI(brickMeta);
+                brick.setKeySSI(brickEncryptionKeySSI);
                 brick.getRawData(callback);
             },
 
@@ -408,7 +400,7 @@ function Archive(archiveConfigurator) {
 
             dossierContext.archive.cancelBatch((err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to cancel batch operation", err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to cancel batch operation", err));
                 }
 
                 cancelBatch(mountedArchivesForBatchOperations.pop());
@@ -428,7 +420,7 @@ function Archive(archiveConfigurator) {
 
             dossierContext.archive.commitBatch((err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to commit batch", err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to commit batch", err));
                 }
 
                 results.push(result);
@@ -442,16 +434,16 @@ function Archive(archiveConfigurator) {
     const getArchiveForBatchOperations = (manifestHandler, path, callback) => {
         manifestHandler.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (result.archive === this) {
                 return callback(undefined, result);
             }
 
-            result.archive.getKeySSI((err, keySSI) => {
+            result.archive.getKeySSIAsString((err, keySSI) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
                 }
 
                 const cachedArchive = mountedArchivesForBatchOperations.find((archive) => {
@@ -480,7 +472,7 @@ function Archive(archiveConfigurator) {
     this.init = (callback) => {
         initialize((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to initialize DSU", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to initialize DSU", err));
             }
 
             brickMapController.init(callback);
@@ -493,23 +485,60 @@ function Archive(archiveConfigurator) {
     this.load = (callback) => {
         initialize((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to load DSU", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load DSU", err));
             }
             brickMapController.load(callback);
         });
     };
 
     /**
-     * @return {string}
+     * @param {callback} function
+     *
+     * @return {HashLinkSSI}
      */
-    this.getMapDigest = () => {
-        return archiveConfigurator.getBrickMapId();
+    this.getLastHashLinkSSI = (callback) => {
+        archiveConfigurator.getKeySSI((err, keySSI) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get KeySSI", err));
+            }
+            brickStorageService.versions(keySSI, (err, hashlinksArray) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get the list of hashlinks", err));
+                }
+
+                return callback(undefined, hashlinksArray[hashlinksArray.length -1])
+            })
+        })
+
     };
 
     /**
      * @return {string}
      */
     this.getKeySSI = (keySSIType, callback) => {
+        console.trace("Obsolete function: use getKeySSIAsString or getKeySSIAsObject Instead");
+        if (typeof keySSIType === "function") {
+            callback = keySSIType;
+            keySSIType = undefined;
+        }
+        archiveConfigurator.getKeySSI(keySSIType, ((err, keySSI) => callback(err, keySSI.getIdentifier())));
+    }
+
+    /**
+     * @return {string}
+     */
+    this.getKeySSIAsObject = (keySSIType, callback) => {
+        if (typeof keySSIType === "function") {
+            callback = keySSIType;
+            keySSIType = undefined;
+        }
+        archiveConfigurator.getKeySSI(keySSIType, callback);
+    }
+
+    /**
+     * @return {string}
+     */
+    this.getKeySSIAsString = (keySSIType, callback) => {
         if (typeof keySSIType === "function") {
             callback = keySSIType;
             keySSIType = undefined;
@@ -541,7 +570,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService.ingestData(data, options, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to ingest data into brick storage service", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to ingest data into brick storage service", err));
             }
 
             brickMapController.addFile(barPath, result, callback);
@@ -560,12 +589,12 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path "+ barPath, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path "+ barPath +" in brickmap", err));
         }
 
         brickStorageService.createBufferFromBricks(bricksMeta, (err, buffer) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to create buffer from bricks", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create buffer from bricks", err));
             }
 
             callback(undefined, buffer);
@@ -583,12 +612,12 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path " + barPath, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath, err));
         }
 
         brickStorageService.createStreamFromBricks(bricksMeta, (err, stream) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to create stream from bricks", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create stream from bricks", err));
             }
 
             callback(undefined, stream);
@@ -613,7 +642,7 @@ function Archive(archiveConfigurator) {
 
         brickStorageService.ingestFile(fsFilePath, options, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to ingest data into bricks storage", err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to ingest data into bricks storage", err));
             }
 
             brickMapController.addFile(barPath, result, callback);
@@ -631,7 +660,7 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {
                 encrypt: true,
-                batch: false
+                embedded: false
             };
         }
 
@@ -639,11 +668,11 @@ function Archive(archiveConfigurator) {
 
         const filesArray = files.slice();
 
-        const ingestionMethod = (!options.batch) ? 'ingestFiles' :'createBrickFromFiles';
+        const ingestionMethod = (!options.embedded) ? 'ingestFiles' :'createBrickFromFiles';
 
         brickStorageService[ingestionMethod](filesArray, options, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to add files at path " + barPath, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to add files at path " + barPath, err));
             }
 
             brickMapController.addFiles(barPath, result, callback);
@@ -656,7 +685,7 @@ function Archive(archiveConfigurator) {
             options = {
                 encrypt: true,
                 ignoreMounts: false,
-                batch: false
+                embedded: false
             };
         }
 
@@ -665,7 +694,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -690,7 +719,7 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return callback(createOpenDSUErrorWrapper("Failed to retrieve bricks meta for path " + barPath, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to any information for path " + barPath, err));
         }
 
 
@@ -716,7 +745,7 @@ function Archive(archiveConfigurator) {
             barPath = pskPth.normalize(barPath);
             brickStorageService.ingestData(data, options, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to append data to file "+ barPath, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to append data to file "+ barPath, err));
                 }
 
                 brickMapController.appendToFile(barPath, result, callback);
@@ -724,7 +753,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -736,6 +765,10 @@ function Archive(archiveConfigurator) {
         }
     };
 
+
+    this.dsuLog = (message, callback) =>{
+        this.appendToFile("/dsu-metadata-log", message+"\n", {ignoreMissing:true}, callback);
+    }
     /**
      * @param {string} fsFolderPath
      * @param {string} barPath
@@ -747,16 +780,16 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {
                 encrypt: true,
-                batch: false
+                embedded: false
             };
         }
         barPath = pskPth.normalize(barPath);
 
-        const ingestionMethod = (!options.batch) ? 'ingestFolder' :'createBrickFromFolder';
+        const ingestionMethod = (!options.embedded) ? 'ingestFolder' :'createBrickFromFolder';
 
         brickStorageService[ingestionMethod](fsFolderPath, options, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to add folder ${fsFolderPath} to  ${barPath}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to add folder ${fsFolderPath} to  ${barPath}`, err));
             }
 
             brickMapController.addFiles(barPath, result, callback);
@@ -793,7 +826,7 @@ function Archive(archiveConfigurator) {
 
             this.extractFile(actualPath, filePath, (err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to extract file ${actualPath} to ${filePath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to extract file ${actualPath} to ${filePath}`, err));
                 }
 
                 taskCounter.decrement();
@@ -807,6 +840,8 @@ function Archive(archiveConfigurator) {
      */
     const _delete = (barPath, callback) => {
         brickMapController.deleteFile(barPath, callback);
+        //this resets the state in case a folder gets removed and under the same path are other dsu mounted.
+        manifestHandler = undefined;
     };
 
     /**
@@ -867,7 +902,7 @@ function Archive(archiveConfigurator) {
             ignoreMounts: false
         }, (err, files) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${mountPoint}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list files at path ${mountPoint}`, err));
             }
 
             result.push(files.map((file) => {
@@ -916,7 +951,7 @@ function Archive(archiveConfigurator) {
             ignoreMounts: false
         }, (err, folders) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to list mounted folders at path ${mountPoint}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list mounted folders at path ${mountPoint}`, err));
             }
 
             result.push((folders.map((folder) => {
@@ -949,7 +984,7 @@ function Archive(archiveConfigurator) {
     const _clone = (targetStorage, preserveKeys = true, callback) => {
         targetStorage.getBrickMap((err, targetBrickMap) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get brick map`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick map`, err));
             }
 
 
@@ -976,7 +1011,7 @@ function Archive(archiveConfigurator) {
                 }
             }, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
                 }
 
                 for (const filepath in result) {
@@ -1039,7 +1074,7 @@ function Archive(archiveConfigurator) {
         if (typeof manifestHandler === "undefined") {
             Manifest.getManifest(this, (err, handler) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
                 }
 
                 manifestHandler = handler;
@@ -1053,14 +1088,14 @@ function Archive(archiveConfigurator) {
     this.getSSIForMount = (mountPoint, callback) => {
         getManifest(  (err, manifestHandler) => {
             if(err){
-                return callback(createOpenDSUErrorWrapper("Failed to load manifest for " + mountPoint, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load manifest for " + mountPoint, err));
             }
             manifestHandler.getArchiveIdentifier(mountPoint, callback);
         });
     }
 
     this.addFolder = (fsFolderPath, barPath, options, callback) => {
-        const defaultOpts = {encrypt: true, ignoreMounts: false, batch: false};
+        const defaultOpts = {encrypt: true, ignoreMounts: false, embedded: false};
         if (typeof options === "function") {
             callback = options;
             options = {};
@@ -1075,7 +1110,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1099,7 +1134,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1122,7 +1157,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(fileBarPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
                 }
 
                 options.ignoreMounts = true
@@ -1145,7 +1180,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(fileBarPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1168,7 +1203,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1192,7 +1227,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
 
                 options.ignoreMounts = true;
@@ -1216,7 +1251,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(path, (err, dossierContext) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -1227,6 +1262,8 @@ function Archive(archiveConfigurator) {
             });
         }
     };
+
+
 
     this.delete = (path, options, callback) => {
         const defaultOpts = {ignoreMounts: false};
@@ -1243,7 +1280,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, dossierContext) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (dossierContext.readonly === true) {
@@ -1271,7 +1308,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(srcPath, (err, dossierContext) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${srcPath}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${srcPath}`, err));
             }
             if (dossierContext.readonly === true) {
                 return callback(Error("Tried to rename in a readonly mounted RawDossier"));
@@ -1279,7 +1316,7 @@ function Archive(archiveConfigurator) {
 
             this.getArchiveForPath(dstPath, (err, dstDossierContext) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${dstPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${dstPath}`, err));
                 }
 
                 if (dstDossierContext.prefixPath !== dossierContext.prefixPath) {
@@ -1305,12 +1342,12 @@ function Archive(archiveConfigurator) {
 
             return _listFiles(path, options, (err, files) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${path}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list files at path ${path}`, err));
                 }
 
                 getManifest((err, manifest) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
                     }
 
                     const mountPoints = manifest.getMountPoints();
@@ -1320,7 +1357,7 @@ function Archive(archiveConfigurator) {
 
                     _listMountedFiles(mountPoints, (err, mountedFiles) => {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to list mounted files at mountPoints ${mountPoints}`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list mounted files at mountPoints ${mountPoints}`, err));
                         }
 
                         files = files.concat(...mountedFiles);
@@ -1332,7 +1369,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             options.ignoreMounts = true;
@@ -1353,12 +1390,12 @@ function Archive(archiveConfigurator) {
 
             return _listFolders(path, options, (err, folders) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to list folders at path ${path}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list folders at path ${path}`, err));
                 }
 
                 getManifest((err, manifest) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest`, err));
                     }
 
                     const mountPoints = manifest.getMountPoints();
@@ -1368,7 +1405,7 @@ function Archive(archiveConfigurator) {
 
                     _listMountedFolders(mountPoints, (err, mountedFolders) => {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to list mounted folders at mountPoints ${mountPoints}`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list mounted folders at mountPoints ${mountPoints}`, err));
                         }
 
                         folders = folders.concat(...mountedFolders);
@@ -1380,7 +1417,7 @@ function Archive(archiveConfigurator) {
 
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             options.ignoreMounts = true;
@@ -1403,7 +1440,7 @@ function Archive(archiveConfigurator) {
         } else {
             this.getArchiveForPath(barPath, (err, dossierContext) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${barPath}`, err));
                 }
                 if (dossierContext.readonly === true) {
                     return callback(Error("Tried to write in a readonly mounted RawDossier"));
@@ -1426,12 +1463,12 @@ function Archive(archiveConfigurator) {
         const entries = {};
         this.getArchiveForPath(folderPath, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${folderPath}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${folderPath}`, err));
             }
 
             result.archive.listFiles(result.relativePath, {recursive: false, ignoreMounts: true}, (err, files) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to list files at path ${result.relativePath}`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list files at path ${result.relativePath}`, err));
                 }
 
                 entries.files = files;
@@ -1441,7 +1478,7 @@ function Archive(archiveConfigurator) {
                     ignoreMounts: true
                 }, (err, folders) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to list folders at path ${result.relativePath}`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list folders at path ${result.relativePath}`, err));
                     }
 
                     if (options.withFileTypes) {
@@ -1457,12 +1494,12 @@ function Archive(archiveConfigurator) {
 
                     function listMounts(err, handler) {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
                         }
 
                         handler.getMountedDossiers(result.relativePath, (err, mounts) => {
                             if (err) {
-                                return callback(createOpenDSUErrorWrapper(`Failed to get mounted DSUs at path ${result.relativePath}`, err));
+                                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get mounted DSUs at path ${result.relativePath}`, err));
                             }
                             let mountPaths = mounts.map(mount => mount.path);
                             let folders = mountPaths.filter(mountPath => mountPath.split('/').length >= 2);
@@ -1485,30 +1522,43 @@ function Archive(archiveConfigurator) {
     };
 
 
-    this.mount = (path, archiveIdentifier, options, callback) => {
+    this.mount = (path, archiveSSI, options, callback) => {
         if (typeof options === "function") {
             callback = options;
             options = undefined;
         }
 
-        _listFiles(path, (err, files) => {
-            if (!err && files.length > 0) {
-                return callback(Error("Tried to mount in a non-empty folder"));
-            }
-            getManifest((err, manifestHandler) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+        function internalMount(){
+            _listFiles(path, (err, files) => {
+                if (!err && files.length > 0) {
+                    return callback(Error("Tried to mount in a non-empty folder"));
                 }
+                getManifest((err, manifestHandler) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+                    }
 
-                manifestHandler.mount(path, archiveIdentifier, options, callback);
+                    manifestHandler.mount(path, archiveSSI, options, callback);
+                });
             });
+        }
+
+        this.getArchiveForPath(path, (err, result) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+            }
+            if(result.relativePath === path){
+                internalMount()
+            } else {
+                result.archive.mount(result.relativePath, archiveSSI, options, callback)
+            }
         });
     };
 
     this.unmount = (path, callback) => {
         getManifest((err, manifestHandler) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
             }
 
             manifestHandler.unmount(path, callback);
@@ -1518,7 +1568,7 @@ function Archive(archiveConfigurator) {
     this.listMountedDossiers = (path, callback) => {
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
 
             if (result.archive === this) {
@@ -1529,7 +1579,7 @@ function Archive(archiveConfigurator) {
 
             function listMounts(err, handler) {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to list mounts`, err));
                 }
 
                 handler.getMountedDossiers(result.relativePath, callback);
@@ -1547,7 +1597,7 @@ function Archive(archiveConfigurator) {
     this.getArchiveForPath = (path, callback) => {
         getManifest((err, handler) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
             }
 
             if (this.batchInProgress()) {
@@ -1601,10 +1651,14 @@ function Archive(archiveConfigurator) {
                 this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
 
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to anchor`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to anchor`, err));
                 }
-
-                callback(undefined, result);
+                this.init((err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
+                    }
+                    callback(undefined, result);
+                })
             });
         });
     };
@@ -1619,14 +1673,14 @@ function Archive(archiveConfigurator) {
 
         cancelBatchesInMountedArchives((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to cancel batches in mounted archive`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to cancel batches in mounted archive`, err));
             }
 
             batchOperationsInProgress = false;
             this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
             this.load((err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
                 }
                 callback();
             })
@@ -1644,7 +1698,7 @@ function Archive(archiveConfigurator) {
         this.beginBatch();
         batch((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to execute batch operations`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute batch operations`, err));
             }
 
             this.commitBatch(callback);
@@ -1667,7 +1721,7 @@ function Archive(archiveConfigurator) {
 
 module.exports = Archive;
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Manifest.js","blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js","opendsu":"opendsu","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/opt/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/opt/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/opt/privatesky/modules/bar/lib/Manifest.js","blockchain":"/opt/privatesky/modules/blockchain/index.js","path":"/opt/privatesky/node_modules/path-browserify/index.js","stream":"/opt/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 
@@ -1709,14 +1763,6 @@ function ArchiveConfigurator() {
         }
 
         config.keySSI.getRelatedType(keySSIType, callback);
-    }
-
-    this.getFavouriteEndpoint = () => {
-        if (!config.keySSI) {
-            return;
-        }
-        keySSI = config.keySSI;
-        return keySSI.getHint();
     }
 
     this.getDLDomain = () => {
@@ -1880,23 +1926,40 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 
 module.exports = ArchiveConfigurator;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
-const keyssi = openDSU.loadApi("keyssi");
-const BrickTransformFactory = require("./transforms/BrickTransformFactory");
-const transformFactory = new BrickTransformFactory();
-// const adler32 = require("adler32");
+const keySSISpace = openDSU.loadApi("keyssi");
+const brickTransforms = require("./brick-transforms");
 
-function Brick(keySSI) {
+function Brick(options) {
+    options = options || {};
+    if (typeof options.encrypt === "undefined") {
+        options.encrypt = true;
+    }
     let rawData;
     let transformedData;
     let hashLink;
-    let transformParameters;
     let transform;
+    let keySSI;
+
+    this.setTemplateKeySSI = (templateKeySSI) => {
+        options.templateKeySSI = templateKeySSI;
+    };
 
     this.setKeySSI = (_keySSI) => {
+        if (typeof _keySSI === "string") {
+            _keySSI = keySSISpace.parse(_keySSI);
+        }
         keySSI = _keySSI;
+    };
+
+    this.getKeySSI = () => {
+        if (typeof keySSI !== "undefined") {
+            return keySSI;
+        }
+
+        return generateBrickKeySSI(options);
     };
 
     this.getHashLink = (callback) => {
@@ -1906,15 +1969,15 @@ function Brick(keySSI) {
 
         this.getTransformedData((err, _transformedData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
-            crypto.hash(keySSI, _transformedData, (err, _hash) => {
+            crypto.hash(options.templateKeySSI, _transformedData, (err, _hash) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create hash`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create hash`, err));
                 }
 
-                hashLink = keyssi.buildHashLinkSSI(keySSI.getDLDomain(), _hash, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+                hashLink = keySSISpace.createHashLinkSSI(options.templateKeySSI.getDLDomain(), _hash, options.templateKeySSI.getVn());
                 callback(undefined, hashLink);
             });
         });
@@ -1923,7 +1986,7 @@ function Brick(keySSI) {
     this.getAdler32 = (callback) => {
         this.getTransformedData((err, _transformedData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
             callback(undefined, adler32.sum(_transformedData));
@@ -1939,16 +2002,16 @@ function Brick(keySSI) {
             return callback(undefined, rawData);
         }
 
-        if (!transformParameters.key) {
+        if (!keySSI) {
             rawData = transformedData;
             return this.getRawData(callback);
         }
 
         if (transformedData) {
-            transform = transformFactory.createBrickTransform(keySSI);
-            return transform.applyInverseTransform(transformedData, transformParameters, (err, _rawData) => {
+            transform = brickTransforms.createBrickTransformation(options);
+            return transform.undo(keySSI, transformedData, (err, _rawData) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to apply inverse transform`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to apply inverse transform`, err));
                 }
 
                 rawData = _rawData;
@@ -1968,14 +2031,14 @@ function Brick(keySSI) {
             return callback(undefined, transformedData);
         }
 
-        if (!keySSI.getSpecificString()) {
+        if (!options.templateKeySSI.getSpecificString()) {
             transformedData = rawData;
             return this.getTransformedData(callback);
         }
 
         transformData((err, _transformedData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to transform data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to transform data`, err));
             }
 
             if (typeof transformedData === "undefined") {
@@ -1990,39 +2053,6 @@ function Brick(keySSI) {
         });
     };
 
-    this.getTransformParameters = (callback) => {
-        if (!transformedData) {
-            transformData((err, _transformedData) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to transform data`, err));
-                }
-
-                callback(undefined, transformParameters);
-            });
-        } else {
-            callback(undefined, transformParameters);
-        }
-    };
-
-    this.setTransformParameters = (newTransformParams) => {
-        if (!newTransformParams) {
-            return;
-        }
-
-        if (!transformParameters) {
-            transformParameters = newTransformParams;
-            return;
-        }
-
-        Object.keys(newTransformParams).forEach(key => {
-            transformParameters[key] = newTransformParams[key];
-        });
-    };
-
-    this.getRawSize = () => {
-        return rawData.length;
-    };
-
     this.getTransformedSize = () => {
         if (!transformedData) {
             return rawData.length;
@@ -2032,46 +2062,36 @@ function Brick(keySSI) {
     };
 
     this.getSummary = (callback) => {
-        let encryptionKey;
+        let keySSIIdentifier = keySSI;
+        if (typeof keySSIIdentifier === "object") {
+            keySSIIdentifier = keySSI.getIdentifier();
+        }
+        const summary = {
+            encryptionKey: keySSIIdentifier
+        };
 
-        this.getTransformParameters((err, _transformParameters) => {
+        this.getHashLink((err, _hashLink) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get transform parameters`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get hash link`, err));
             }
 
-            if (transformParameters) {
-                encryptionKey = transformParameters.key;
-            }
-
-            const summary = {
-                encryptionKey
-            };
-
-            // this.getAdler32((err, adler32) => {
-            //     if (err) {
-            //         return callback(err);
-            //     }
-            //
-            //     summary.checkSum = adler32;
-                this.getHashLink((err, _hashLink) => {
-                    if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get hash link`, err));
-                    }
-
-                    summary.hashLink = _hashLink.getIdentifier();
-                    callback(undefined, summary);
-                });
-            });
-        // });
+            summary.hashLink = _hashLink.getIdentifier();
+            callback(undefined, summary);
+        });
     }
 
 //----------------------------------------------- internal methods -----------------------------------------------------
     function transformData(callback) {
-        transform = transformFactory.createBrickTransform(keySSI);
+        transform = brickTransforms.createBrickTransformation(options);
         if (rawData) {
-            transform.applyDirectTransform(rawData, transformParameters, (err, _transformedData) => {
+            keySSI = generateBrickKeySSI(options);
+            if (typeof keySSI === "undefined") {
+                transformedData = rawData;
+                return callback(undefined, rawData)
+            }
+            transform.do(keySSI, rawData, (err, _transformedData) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to apply direct transform`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to apply direct transform`, err));
                 }
 
                 if (typeof _transformedData === "undefined") {
@@ -2080,19 +2100,37 @@ function Brick(keySSI) {
                     transformedData = _transformedData;
                 }
 
-                transformParameters = transform.getTransformParameters();
                 callback(undefined, transformedData);
             });
         } else {
-            transformParameters = transform.getTransformParameters();
             callback();
         }
+    }
+
+    function generateBrickKeySSI(options) {
+        if (typeof options.templateKeySSI === "undefined") {
+            throw Error('A template keySSI should be provided when generating a keySSI used for brick encryption.')
+        }
+        const keySSISpace = require("opendsu").loadAPI("keyssi");
+        if (options.encrypt && !options.brickMap) {
+            keySSI = keySSISpace.buildSymmetricalEncryptionSSI(options.templateKeySSI.getDLDomain(), undefined, '', options.templateKeySSI.getVn());
+        } else {
+            if (options.brickMap && options.encrypt === false) {
+                keySSI = keySSISpace.buildTemplateSeedSSI(options.templateKeySSI.getDLDomain(), undefined, options.templateKeySSI.getControl(), options.templateKeySSI.getVn());
+            } else if(options.brickMap && options.encrypt){
+                keySSI = options.templateKeySSI;
+            }else{
+                keySSI = undefined;
+            }
+        }
+
+        return keySSI;
     }
 }
 
 module.exports = Brick;
 
-},{"./transforms/BrickTransformFactory":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
+},{"./brick-transforms":"/opt/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
 const BrickMapMixin = require('./BrickMapMixin');
 
 /**
@@ -2139,7 +2177,7 @@ function BrickMap(header) {
     this.initialize(header);
 }
 module.exports = BrickMap;
-},{"./BrickMapMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/opt/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/opt/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
 'use strict';
 
 /**
@@ -2297,14 +2335,14 @@ function BrickMapController(options) {
             brickMapDiff = new BrickMapDiff();
             return brickMapDiff.initialize((err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to initialize brickMapDiff`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to initialize brickMapDiff`, err));
                 }
 
 
                 brickMapDiff.setPrevDiffHashLink(lastDiffHash);
                 this.configureBrickMap(brickMapDiff, (err) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
                     }
 
                     currentDiffBrickMap = brickMapDiff;
@@ -2333,7 +2371,7 @@ function BrickMapController(options) {
         const diff = newDiffs.shift();
         diff.getHashLink((err, _lastDiffHashLink) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get hashLink`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get hashLink`, err));
             }
 
             lastDiffHash = _lastDiffHashLink;
@@ -2394,13 +2432,13 @@ function BrickMapController(options) {
     this.init = (callback) => {
         this.createNewBrickMap((err, _brickMap) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create new brickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create new brickMap`, err));
             }
 
             validBrickMap = _brickMap;
             validBrickMap.clone((err, _dirtyBrickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to clone valid brickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone valid brickMap`, err));
                 }
 
                 dirtyBrickMap = _dirtyBrickMap;
@@ -2415,18 +2453,18 @@ function BrickMapController(options) {
     this.load = (callback) => {
         config.getKeySSI((err, keySSI) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
             }
 
             strategy.load(keySSI, (err, brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
                 }
 
                 validBrickMap = brickMap;
                 brickMap.clone((err, _dirtyBrickMap) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to clone brickMap`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone brickMap`, err));
                     }
 
                     dirtyBrickMap = _dirtyBrickMap;
@@ -2448,12 +2486,12 @@ function BrickMapController(options) {
             bricksData
         }, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate addFile operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate addFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 this.addFileEntry(path, bricksData);
@@ -2472,17 +2510,17 @@ function BrickMapController(options) {
             dstPath
         }, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate rename operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate rename operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
                 try {
                     this.copy(srcPath, dstPath);
                 } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to copy`, e));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy`, e));
                 }
 
                 this.delete(srcPath);
@@ -2501,12 +2539,12 @@ function BrickMapController(options) {
             bricksData
         }, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate appendToFile operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate appendToFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 this.appendBricksToFile(path, bricksData);
@@ -2525,12 +2563,12 @@ function BrickMapController(options) {
             filesBricksData
         }, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate addFiles operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate addFiles operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 for (const filePath in filesBricksData) {
@@ -2549,18 +2587,18 @@ function BrickMapController(options) {
     this.deleteFile = (path, callback) => {
         validator.validate('preWrite', dirtyBrickMap, 'deleteFile', path, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate deleteFile operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate deleteFile operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 try {
                     this.delete(path);
                 } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to delete`, e));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to delete`, e));
                 }
                 this.attemptAnchoring(callback);
             })
@@ -2574,18 +2612,18 @@ function BrickMapController(options) {
     this.createDirectory = (path, callback) => {
         validator.validate('preWrite', dirtyBrickMap, 'createFolder', path, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to validate createFolder operation`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate createFolder operation`, err));
             }
 
             getCurrentDiffBrickMap((err, _brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
                 }
 
                 try {
                     this.createFolder(path);
                 } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create folder ${path}`, e));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create folder ${path}`, e));
                 }
                 this.attemptAnchoring(callback);
             })
@@ -2700,10 +2738,10 @@ function BrickMapController(options) {
      */
     this.saveBrickMap = (keySSI, brickMap, callback) => {
         const brickMapBrick = brickMap.toBrick();
-        brickMapBrick.setTransformParameters(brickMap.getTransformParameters());
+        brickMapBrick.setKeySSI(brickMap.getBrickEncryptionKeySSI());
         brickMapBrick.getTransformedData((err, brickData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get brickMap brick's transformed data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brickMap brick's transformed data`, err));
             }
 
             brickStorageService.putBrick(keySSI, brickData, callback);
@@ -2747,7 +2785,7 @@ function BrickMapController(options) {
         //     brickMap.setEncryptionKey(config.getMapEncryptionKey());
         // }
 
-        if (!brickMap.getKeySSI()) {
+        if (!brickMap.getTemplateKeySSI()) {
             brickMap.setKeySSI(keySSI);
         }
 
@@ -2772,7 +2810,7 @@ function BrickMapController(options) {
     this.attemptAnchoring = (callback) => {
         strategy.ifChangesShouldBeAnchored(dirtyBrickMap, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to determine if changes should be anchored`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to determine if changes should be anchored`, err));
             }
 
             if (!result) {
@@ -2817,7 +2855,7 @@ function BrickMapController(options) {
             // diff object. Once this happens the "pendingAnchoringDiff" list is emptied
             strategy.compactDiffs(pendingAnchoringDiffs, (err, brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to compact diffs`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to compact diffs`, err));
                 }
 
                 this.saveBrickMap(keySSI, brickMap, (err, hash) => {
@@ -2826,7 +2864,7 @@ function BrickMapController(options) {
                         return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
                     }
 
-                    const hashLink = keyssi.buildHashLinkSSI(keySSI.getDLDomain(), hash, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
+                    const hashLink = keyssi.createHashLinkSSI(keySSI.getBricksDomain(), hash, keySSI.getVn());
                     // TODO: call strategy.signHash() and pass the signedHash
                     this.addVersion(keySSI, hashLink, lastValidHashLink, (err) => {
                         if (err) {
@@ -2924,7 +2962,7 @@ function BrickMapController(options) {
 
 module.exports = BrickMapController;
 
-},{"./AnchorValidator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
+},{"./AnchorValidator":"/opt/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/opt/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapMixin = require('./BrickMapMixin');
@@ -2947,7 +2985,7 @@ function BrickMapDiff(header) {
         BrickMapMixin.initialize.call(this, header);
         this.load((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load BrickMapDiff`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load BrickMapDiff`, err));
             }
 
             if (!this.header.metadata.log) {
@@ -3022,7 +3060,7 @@ function BrickMapDiff(header) {
 }
 module.exports = BrickMapDiff;
 
-},{"./BrickMapMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/opt/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/opt/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
 'use strict';
 
 const Brick = require("./Brick");
@@ -3040,7 +3078,7 @@ try {
 
 const BrickMapMixin = {
     header: null,
-    keySSI: null,
+    templateKeySSI: null,
 
     /**
      * @param {Brick|string|object} header
@@ -3477,8 +3515,8 @@ const BrickMapMixin = {
      * @return {Brick}
      */
     toBrick: function () {
-        const brick = new Brick(this.keySSI);
-        brick.setTransformParameters({key: this.keySSI.getEncryptionKey()});
+        const brick = new Brick({templateKeySSI: this.templateKeySSI, brickMap: true});
+        brick.setKeySSI(this.templateKeySSI);
         brick.setRawData($$.Buffer.from(JSON.stringify(this.header)));
         return brick;
     },
@@ -3562,22 +3600,12 @@ const BrickMapMixin = {
         return folders;
     },
 
-    /**
-     * @param {object} brickMeta
-     * @param {$$.Buffer} brickMeta.key
-     * @return {object}
-     */
-    getTransformParameters: function (brickMeta) {
+    getBrickEncryptionKeySSI: function (brickMeta) {
         if (typeof brickMeta === "undefined") {
-            return {key: this.keySSI.getIdentifier()}
+            return this.templateKeySSI.getIdentifier();
         }
 
-        const addTransformData = {};
-        // if (brickMeta.key) {
-        //     addTransformData.key = $$.Buffer.from(brickMeta.key);
-        // }
-        addTransformData.key = brickMeta.key;
-        return addTransformData;
+        return brickMeta.key;
     },
 
     /**
@@ -3611,11 +3639,11 @@ const BrickMapMixin = {
         };
 
         if (this.header instanceof Brick) {
-            this.header.setKeySSI(this.keySSI);
-            this.header.setTransformParameters({key: this.keySSI.getIdentifier()});
+            this.header.setKeySSI(this.templateKeySSI);
+            this.header.setKeySSI(this.templateKeySSI.getIdentifier());
             this.header.getRawData((err, rawData) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get raw data`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get raw data`, err));
                 }
 
                 this.header = JSON.parse(rawData.toString(), reviver);
@@ -3637,14 +3665,14 @@ const BrickMapMixin = {
      * @param {KeySSI} keySSI
      */
     setKeySSI: function (keySSI) {
-        this.keySSI = keySSI;
+        this.templateKeySSI = keySSI;
     },
 
     /**
      * @return {KeySSI}
      */
-    getKeySSI: function () {
-        return this.keySSI;
+    getTemplateKeySSI: function () {
+        return this.templateKeySSI;
     },
 
     /**
@@ -3653,10 +3681,10 @@ const BrickMapMixin = {
     clone: function (callback) {
         const InstanceClass = this.constructor;
         const brickMap = new InstanceClass(JSON.stringify(this.header));
-        brickMap.setKeySSI(this.keySSI);
+        brickMap.setKeySSI(this.templateKeySSI);
         brickMap.load((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
             }
 
             callback(undefined, brickMap);
@@ -3780,7 +3808,7 @@ const BrickMapMixin = {
 
     getHashLink: function (callback) {
         const brick = this.toBrick();
-        brick.setTransformParameters(this.getTransformParameters());
+        brick.setKeySSI(this.getBrickEncryptionKeySSI());
         brick.getHashLink(callback);
     }
 
@@ -3789,7 +3817,7 @@ const BrickMapMixin = {
 
 module.exports = BrickMapMixin;
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
+},{"./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
     brickMapController: null,
     anchoringEventListener: null,
@@ -3933,7 +3961,7 @@ const BrickMapStrategyMixin = {
         if (this.delay !== null) {
             clearTimeout(this.anchoringTimeout);
             this.anchoringTimeout = setTimeout(() => {
-                const anchoringEventListener = this.getAnchoringEventListener();
+                const anchoringEventListener = this.getAnchoringEventListener(function(){console.log("Anchoring...")});
                 this.brickMapController.anchorChanges(anchoringEventListener);
             }, this.delay);
             return callback(undefined, false);
@@ -3972,7 +4000,7 @@ const BrickMapStrategyMixin = {
 
 module.exports = BrickMapStrategyMixin;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../../lib/BrickMapDiff');
@@ -4003,7 +4031,7 @@ function DiffStrategy(options) {
     const createBrickMapFromDiffs = (brickMapDiffs, callback) => {
         this.brickMapController.createNewBrickMap((err, brickMap) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
             }
 
             try {
@@ -4011,7 +4039,7 @@ function DiffStrategy(options) {
                     brickMap.applyDiff(brickMapDiff);
                 }
             } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to apply diffs on brickMap`, e));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to apply diffs on brickMap`, e));
             }
 
             callback(undefined, brickMap);
@@ -4019,12 +4047,12 @@ function DiffStrategy(options) {
     }
 
     /**
-     * @param {Array<string>} hashes
+     * @param {Array<string>} hashLinks
      * @return {string}
      */
-    const createBricksCacheKey = (hashes) => {
-        return hashes.map(hash => {
-            return hash.getIdentifier();
+    const createBricksCacheKey = (hashLinks) => {
+        return hashLinks.map(hashLink => {
+            return hashLink.getIdentifier();
         }).join(':');
     };
 
@@ -4042,7 +4070,7 @@ function DiffStrategy(options) {
             const brick = _bricks.shift();
             this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
                 }
 
                 diffs.push(brickMap);
@@ -4057,11 +4085,11 @@ function DiffStrategy(options) {
      * Get the list of BrickMapDiffs either from cache
      * or from Brick storage
      *
-     * @param {Array<string>} hashes
+     * @param {Array<string>} hashLinks
      * @param {callback} callback
      */
-    const getBrickMapDiffs = (hashes, callback) => {
-        const cacheKey = createBricksCacheKey(hashes);
+    const getBrickMapDiffs = (hashLinks, callback) => {
+        const cacheKey = createBricksCacheKey(hashLinks);
         if (this.hasInCache(cacheKey)) {
             const brickMapDiffs = this.getFromCache(cacheKey);
             return callback(undefined, brickMapDiffs);
@@ -4072,17 +4100,17 @@ function DiffStrategy(options) {
         const taskCounter = new TaskCounter(() => {
             createDiffsFromBricks(bricks, (err, brickMapDiffs) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create diffs from bricks`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create diffs from bricks`, err));
                 }
 
                 this.storeInCache(cacheKey, brickMapDiffs);
                 callback(undefined, brickMapDiffs);
             });
         });
-        taskCounter.increment(hashes.length);
-        this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
+        taskCounter.increment(hashLinks.length);
+        this.brickMapController.getMultipleBricks(hashLinks, (err, brickData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
 
             bricks.push(createBrick(brickData));
@@ -4100,19 +4128,19 @@ function DiffStrategy(options) {
      * Assemble a final BrickMap from several BrickMapDiffs
      * after validating the history
      *
-     * @param {Array<string>} hashes
+     * @param {Array<string>} hashLinks
      * @param {callback} callback
      */
-    const assembleBrickMap = (hashes, callback) => {
-        this.lastHashLink = hashes[hashes.length - 1];
-        getBrickMapDiffs(hashes, (err, brickMapDiffs) => {
+    const assembleBrickMap = (hashLinks, callback) => {
+        this.lastHashLink = hashLinks[hashLinks.length - 1];
+        getBrickMapDiffs(hashLinks, (err, brickMapDiffs) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to retrieve brickMap diffs`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve brickMap diffs`, err));
             }
 
             this.validator.validate('brickMapHistory', brickMapDiffs, (err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to validate brickMapDiffs`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate brickMapDiffs`, err));
                 }
 
                 createBrickMapFromDiffs(brickMapDiffs, callback);
@@ -4126,16 +4154,16 @@ function DiffStrategy(options) {
     ////////////////////////////////////////////////////////////
 
     this.load = (keySSI, callback) => {
-        this.brickMapController.versions(keySSI, (err, versionHashes) => {
+        this.brickMapController.versions(keySSI, (err, hashLinks) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${keySSI.getAnchorId()}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${keySSI.getAnchorId()}`, err));
             }
 
-            if (!versionHashes.length) {
+            if (!hashLinks.length) {
                 return callback(new Error(`No data found for alias <${keySSI.getAnchorId()}>`));
             }
 
-            assembleBrickMap(versionHashes, callback);
+            assembleBrickMap(hashLinks, callback);
         })
     }
 
@@ -4215,7 +4243,7 @@ function DiffStrategy(options) {
         // Try and apply the changes on a brickMap copy
         brickMap.clone((err, brickMapCopy) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
             }
 
             try {
@@ -4241,7 +4269,7 @@ function DiffStrategy(options) {
 
 module.exports = DiffStrategy;
 
-},{"../../lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
+},{"../../lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../BrickMapDiff');
@@ -4291,7 +4319,7 @@ function LatestVersionStrategy(options) {
             const brick = _bricks.shift();
             this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
                 }
 
                 brickMaps.push(brickMap);
@@ -4323,7 +4351,7 @@ function LatestVersionStrategy(options) {
         const taskCounter = new TaskCounter(() => {
             createMapsFromBricks(bricks, (err, brickMaps) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create maps from bricks`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create maps from bricks`, err));
                 }
 
                 this.storeInCache(cacheKey, brickMaps);
@@ -4333,7 +4361,7 @@ function LatestVersionStrategy(options) {
         taskCounter.increment(hashes.length);
         this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
 
             bricks.push(createBrick(brickData));
@@ -4358,12 +4386,12 @@ function LatestVersionStrategy(options) {
         this.lastHashLink = hashes[hashes.length - 1];
         createBrickMapsFromHistory([this.lastHashLink], (err, brickMaps) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create BrickMaps from history`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create BrickMaps from history`, err));
             }
 
             this.validator.validate('brickMapHistory', brickMaps, (err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to validate BrickMaps`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate BrickMaps`, err));
                 }
 
                 const latestBrickMap = brickMaps[brickMaps.length - 1];
@@ -4380,7 +4408,7 @@ function LatestVersionStrategy(options) {
     this.load = (keySSI, callback) => {
         this.brickMapController.versions(keySSI, (err, versionHashes) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
             }
 
             if (!versionHashes.length) {
@@ -4409,7 +4437,7 @@ function LatestVersionStrategy(options) {
 
         this.brickMapController.getValidBrickMap().clone((err, validBrickMapClone) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to clone valid BrickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone valid BrickMap`, err));
             }
             const brickMap = this.mergeDiffs(validBrickMapClone, diffsList);
             callback(undefined, brickMap);
@@ -4446,7 +4474,14 @@ function LatestVersionStrategy(options) {
     this.handleConflict = (conflictInfo, callback) => {
         if (typeof this.conflictResolutionFn !== 'function') {
             return setTimeout(() => {
-                callback(conflictInfo.error);
+                // This function must use the conflictInfo object to fix
+                // the merging conflicts, apply the new changes from the pendingAnchoringDiffs and newDiffs and update the valid bar map and the dirty bar map clone
+                // using the brickMapController, then call the callback to resume the anchoring process
+
+                // If fixing the conflict fails, the `callback` must be called with an error
+                // to abort the anchoring process.
+                console.log(conflictInfo);
+                //callback(conflictInfo.error);
             }, 0)
         }
 
@@ -4474,7 +4509,7 @@ function LatestVersionStrategy(options) {
         // Try and apply the changes on a brickMap copy
         brickMap.clone((err, brickMapCopy) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
             }
 
             try {
@@ -4551,13 +4586,13 @@ function LatestVersionStrategy(options) {
 
 module.exports = LatestVersionStrategy;
 
-},{"../../lib/Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js":[function(require,module,exports){
+},{"../../lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js":[function(require,module,exports){
 module.exports = {
     DIFF: 'Diff',
     LATEST_VERSION: 'LatestVersion'
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
 /**
  * @param {object} options
  */
@@ -4623,7 +4658,7 @@ function Factory(options) {
 
 module.exports = Factory;
 
-},{"./DiffStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./bultinBrickMapStrategies":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
+},{"./DiffStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./bultinBrickMapStrategies":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/opt/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 'use strict';
 
 
@@ -4644,6 +4679,7 @@ function Service(options) {
     const isStream = require("../../utils/isStream");
     const stream = require('stream');
     const utils = require("swarmutils");
+    const crypto = require("opendsu").loadAPI("crypto");
     const HASHLINK_EMBEDDED_HINT_PREFIX = 'embedded/';
 
     options = options || {};
@@ -4682,10 +4718,9 @@ function Service(options) {
      * @return {HashLinkSSI}
      */
     const stripHintFromHashLinkSSI = (hlSSI) => {
-        return SSIKeys.buildHashLinkSSI(
+        return SSIKeys.createHashLinkSSI(
             hlSSI.getDLDomain(),
             hlSSI.getSpecificString(),
-            hlSSI.getControl(),
             hlSSI.getVn()
         ).getIdentifier();
     };
@@ -4734,17 +4769,17 @@ function Service(options) {
 
                     brick.getTransformedData((err, brickData) => {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                         }
 
                         self.putBrick(self.keySSI, brickData, (err, digest) => {
                             if (err) {
-                                return callback(createOpenDSUErrorWrapper(`Failed to put brick`, err));
+                                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                             }
 
                             brick.getSummary((err, brickSummary) => {
                                 if (err) {
-                                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
+                                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
                                 }
 
 
@@ -4866,13 +4901,13 @@ function Service(options) {
         // Get the container Brick data
         getBrickAsBuffer(containerBrickMeta, (err, data) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
             }
 
             const brickData = data.slice(offset, offset + size);
             return this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
                 }
 
                 storeInCache(cacheKey, data);
@@ -4903,20 +4938,42 @@ function Service(options) {
 
         this.getBrick(hlSSI, (err, brickData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get brick data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick data`, err));
             }
 
-            this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
+            function checkBrickDataIntegrity(brickData, callback) {
+                brickData = utils.ensureIsBuffer(brickData);
+                crypto.hash(hlSSI, brickData, (err, _brickHash) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to compute brick hash`, err));
+                    }
+
+                    const brickHash = hlSSI.getHash();
+
+                    if (brickHash !== _brickHash) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Got invalid data for brick ${brickHash}`, Error("Possible brick data corruption")));
+                    }
+
+                    callback();
+                });
+            }
+
+            checkBrickDataIntegrity(brickData, (err) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
+                    return callback(err);
                 }
 
-                if (!$$.Buffer.isBuffer(data) && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
-                    data = utils.convertToBuffer(data);
-                }
+                this.brickDataExtractorCallback(brickMeta, createBrick(brickData), (err, data) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to process brick data`, err));
+                    }
 
-                storeInCache(cacheKey, data);
-                return callback(undefined, data);
+                    if (!$$.Buffer.isBuffer(data) && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
+                        data = utils.ensureIsBuffer(data);
+                    }
+                    storeInCache(cacheKey, data);
+                    return callback(undefined, data);
+                });
             });
         });
     };
@@ -4930,7 +4987,7 @@ function Service(options) {
     const getFileBlocksCount = (filePath, callback) => {
         this.fsAdapter.getFileSize(filePath, (err, size) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
             }
 
             let blocksCount = Math.floor(size / this.bufferSize);
@@ -4959,17 +5016,17 @@ function Service(options) {
         brick.setRawData(data);
         brick.getTransformedData((err, brickData) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
             this.putBrick(this.keySSI, brickData, (err, digest) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to put brick`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                 }
 
                 brick.getSummary((err, brickSummary) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get bricks summary`, err));
                     }
 
 
@@ -5003,7 +5060,7 @@ function Service(options) {
 
         convertDataBlockToBrick(blockData, encrypt, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
             }
 
             resultContainer.push(result);
@@ -5046,12 +5103,12 @@ function Service(options) {
         const blockEndOffset = (blockIndex + 1) * this.bufferSize - 1;
         this.fsAdapter.readBlockFromFile(filePath, blockOffset, blockEndOffset, (err, data) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read block from file <${filePath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read block from file <${filePath}>`, err));
             }
 
             convertDataBlockToBrick(data, options.encrypt, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
                 }
 
                 resultContainer.push(result);
@@ -5088,7 +5145,7 @@ function Service(options) {
     const storeCompactedFiles = (buffer, filesList, callback) => {
         return convertDataBlockToBrick(buffer, false, (err, brickMeta) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to convert data block to brick`, err));
             }
             const files = {};
             const brickHLSSI = SSIKeys.parse(brickMeta.hashLink);
@@ -5096,7 +5153,7 @@ function Service(options) {
             for (const fileInfo of filesList) {
                 const fileHLSSIHint = `${HASHLINK_EMBEDDED_HINT_PREFIX}${fileInfo.offset},${fileInfo.size},${fileInfo.brickSummary.hashLink}`;
 
-                const fileHLSSI = SSIKeys.buildHashLinkSSI(
+                const fileHLSSI = SSIKeys.createHashLinkSSI(
                     brickHLSSI.getDLDomain(),
                     brickHLSSI.getSpecificString(),
                     brickHLSSI.getControl(),
@@ -5132,10 +5189,9 @@ function Service(options) {
         }
 
         const bricksSummary = [];
-
         convertBufferToBricks(bricksSummary, buffer, 0, options, (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to convert buffer to bricks`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to convert buffer to bricks`, err));
             }
 
             callback(undefined, bricksSummary);
@@ -5186,7 +5242,7 @@ function Service(options) {
             }
         });
         stream.on('error', (err) => {
-            return callback(createOpenDSUErrorWrapper(`Failed to ingest stream`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest stream`, err));
         });
         stream.on('end', () => {
             const buffer = $$.Buffer.concat(receivedData);
@@ -5196,7 +5252,7 @@ function Service(options) {
             };
             this.ingestBuffer(buffer, ingestBufferOptions, (err, summary) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to ingest buffer`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest buffer`, err));
                 }
 
                 bricksSummary = bricksSummary.concat(summary);
@@ -5251,14 +5307,14 @@ function Service(options) {
 
         getFileBlocksCount(filePath, (err, blocksCount) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed get blocks for file <${filePath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed get blocks for file <${filePath}>`, err));
             }
 
             const conversionOptions = Object.assign({}, options);
             conversionOptions.blocksCount = blocksCount;
             convertFileToBricks(bricksSummary, filePath, conversionOptions, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to convert file <${filePath}> to bricks`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to convert file <${filePath}> to bricks`, err));
                 }
 
                 callback(undefined, bricksSummary);
@@ -5294,7 +5350,7 @@ function Service(options) {
 
             this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                 }
 
                 bricksSummary[filename] = result;
@@ -5329,7 +5385,7 @@ function Service(options) {
 
         const iteratorHandler = (err, filename, dirname) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create brick from folder <${folderPath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create brick from folder <${folderPath}>`, err));
             }
 
             if (typeof filename === 'undefined') {
@@ -5340,19 +5396,19 @@ function Service(options) {
             const filePath = require("path").join(dirname, filename);
             this.readFile(filePath, (err, fileBuffer) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 const fileBrick = this.brickFactoryFunction(options.encrypt);
                 fileBrick.setRawData(fileBuffer);
                 fileBrick.getTransformedData((err, brickData) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                     }
 
                     fileBrick.getSummary((err, brickSummary) => {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to get brick summary`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick summary`, err));
                         }
 
                         const size = brickData.length;
@@ -5396,7 +5452,6 @@ function Service(options) {
 
         const brickBuffers = [];
         let currentOffset = 0;
-
         const readFilesRecursive = (files, callback) => {
             if (!files.length) {
                 const buffer = $$.Buffer.concat(brickBuffers);
@@ -5408,19 +5463,19 @@ function Service(options) {
 
             this.readFile(filePath, (err, fileBuffer) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
                 }
 
                 const fileBrick = this.brickFactoryFunction(options.encrypt);
                 fileBrick.setRawData(fileBuffer);
                 fileBrick.getTransformedData((err, brickData) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                     }
 
                     fileBrick.getSummary((err, brickSummary) => {
                         if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                         }
 
                         const size = brickData.length;
@@ -5464,7 +5519,7 @@ function Service(options) {
 
         const iteratorHandler = (err, filename, dirname) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to ingest folder <${folderPath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest folder <${folderPath}>`, err));
             }
 
             if (typeof filename === 'undefined') {
@@ -5474,7 +5529,7 @@ function Service(options) {
             const filePath = require("path").join(dirname, filename);
             this.ingestFile(filePath, options, (err, result) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to ingest file <${filePath}>`, err));
                 }
 
                 bricksSummary[filename] = result;
@@ -5494,13 +5549,11 @@ function Service(options) {
      */
     this.createBufferFromBricks = (bricksMeta, callback) => {
         const buffers = [];
-
         const getBricksAsBufferRecursive = (index, callback) => {
             const brickMeta = bricksMeta[index];
-
             getBrickAsBuffer(brickMeta, (err, data) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
                 }
 
                 buffers.push(data);
@@ -5575,12 +5628,12 @@ function Service(options) {
 
             getBrickAsBuffer(brickMeta, (err, data) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get bricks as buffer`, err));
                 }
 
                 this.fsAdapter.appendBlockToFile(filePath, data, (err) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to append block to file <${filePath}>`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to append block to file <${filePath}>`, err));
                     }
 
                     ++index;
@@ -5623,7 +5676,7 @@ function Service(options) {
             const dstStream = createBricksWritableStream(options.dstStorage, options.beforeCopyCallback);
 
             srcStream.on('error', (err) => {
-                callback(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
+                OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
                 dstStream.destroy(err);
             });
 
@@ -5638,7 +5691,7 @@ function Service(options) {
 
         copyBricksRecursive((err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to copy bricks recursive`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy bricks recursive`, err));
 
             }
 
@@ -5653,7 +5706,7 @@ function Service(options) {
     this.readFile = (filePath, callback) => {
         this.fsAdapter.getFileSize(filePath, (err, size) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get size for file <${filePath}>`, err));
             }
 
             if (!size) {
@@ -5708,20 +5761,416 @@ function Service(options) {
 
 module.exports = Service;
 
-},{"../../utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/opt/privatesky/modules/bar/utils/isStream.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js","path":"/opt/privatesky/node_modules/path-browserify/index.js","stream":"/opt/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
     Service: require('./Service')
 };
 
-},{"./Service":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FileBrickStorage.js":[function(require,module,exports){
+},{"./Service":"/opt/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/opt/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
+const MANIFEST_PATH = "/manifest";
+
+function Manifest(archive, callback) {
+    const pskPath = require("swarmutils").path;
+    let manifest;
+    let temporary = {};
+    let manifestHandler = {};
+
+
+    manifestHandler.mount = function (path, archiveIdentifier, options, callback) {
+        if (typeof options === "function") {
+            callback = options;
+            options = {persist: true};
+        }
+
+        if (typeof options === "undefined") {
+            options = {persist: true};
+        }
+        // if (/\W-_/.test(name) === true) {
+        //     return callback(Error("Invalid mount name"));
+        // }
+
+        for (let mountingPoint in manifest.mounts) {
+            if (pskPath.isSubpath(path, mountingPoint) || pskPath.isSubpath(path, mountingPoint)) {
+                return callback(Error(`Mount not allowed. Already exist a mount for ${mountingPoint}`));
+            }
+        }
+
+        manifest.mounts[path] = archiveIdentifier;
+        if (options.persist === true) {
+            return persist(callback);
+        } else {
+            temporary[path] = true;
+        }
+
+        callback(undefined);
+    };
+
+    manifestHandler.unmount = function (path, callback) {
+        if (typeof manifest.mounts[path] === "undefined") {
+            return callback(Error(`No mount found at path ${path}`));
+        }
+
+        delete manifest.mounts[path];
+
+        if (temporary[path]) {
+            delete temporary[path];
+        } else {
+            persist(callback);
+        }
+    };
+
+    manifestHandler.getArchiveIdentifier = function (path, callback) {
+        if (typeof manifest.mounts[path] === "undefined") {
+            return callback(Error(`No mount found at path ${path}`));
+        }
+
+        callback(undefined, manifest.mounts[path]);
+    };
+
+    manifestHandler.getArchiveForPath = function (path, callback) {
+        if (path[0] !== '/') {
+            path = `/${path}`;
+        }
+        for (let mountingPoint in manifest.mounts) {
+            if (mountingPoint === path) {
+                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
+                    }
+
+                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive, identifier: manifest.mounts[mountingPoint]});
+                });
+            }
+
+            if (pskPath.isSubpath(path, mountingPoint)) {
+                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
+                    }
+
+                    let remaining = path.substring(mountingPoint.length);
+                    remaining = pskPath.ensureIsAbsolute(remaining);
+                    return archive.getArchiveForPath(remaining, function (err, result) {
+                        if (err) {
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU mounted at path ${remaining}`, err));
+                        }
+                        result.prefixPath = pskPath.join(mountingPoint, result.prefixPath);
+                        callback(undefined, result);
+                    });
+                });
+            }
+        }
+
+        callback(undefined, {prefixPath: "/", relativePath: path, archive: archive});
+    };
+
+    manifestHandler.getMountPoints = function () {
+        return Object.keys(manifest.mounts);
+    }
+
+    manifestHandler.getMountedDossiers = function (path, callback) {
+        let mountedDossiers = [];
+        for (let mountPoint in manifest.mounts) {
+            if (pskPath.isSubpath(mountPoint, path)) {
+                let mountPath = mountPoint.substring(path.length);
+                if (mountPath[0] === "/") {
+                    mountPath = mountPath.substring(1);
+                }
+                mountedDossiers.push({
+                    path: mountPath,
+                    identifier: manifest.mounts[mountPoint]
+                });
+            }
+        }
+
+        const mountPaths = mountedDossiers.map(mountedDossier => mountedDossier.path);
+        mountedDossiers = mountedDossiers.filter((mountedDossier, index) => {
+            return mountPaths.indexOf(mountedDossier.path) === index;
+        });
+
+        callback(undefined, mountedDossiers);
+    };
+
+    function getArchive(seed, callback) {
+        const resolver = require("opendsu").loadApi("resolver");
+
+        resolver.loadDSU(seed, (err, dossier) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU from keySSI ${seed}`, err));
+            }
+            callback(undefined, dossier);
+        })
+    }
+
+    function persist(callback) {
+        archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
+    }
+
+    function init(callback) {
+        archive.readFile(MANIFEST_PATH, {ignoreMounts: true}, (err, manifestContent) => {
+            if (err) {
+                manifest = {mounts: {}};
+            } else {
+                try {
+                    manifest = JSON.parse(manifestContent.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+            }
+
+            callback(undefined, manifestHandler);
+        });
+    }
+
+    init(callback);
+}
+
+module.exports.getManifest = function getManifest(archive, callback) {
+    Manifest(archive, callback);
+};
+
+
+},{"opendsu":"opendsu","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
+const zlib = require("zlib");
+
+function CompressionTransformation(config) {
+
+    this.getInverseTransformParameters = (transformedData) => {
+        return {data: transformedData};
+    };
+
+    this.createDirectTransform = () => {
+        return getCompression(true);
+    };
+
+    this.createInverseTransform = () => {
+        return getCompression(false);
+    };
+
+    function getCompression(isCompression) {
+        const algorithm = config.getCompressionAlgorithm();
+        switch (algorithm) {
+            case "gzip":
+                return __createCompress(zlib.gzipSync, zlib.gunzipSync, isCompression);
+            case "br":
+                return __createCompress(zlib.brotliCompressSync, zlib.brotliDecompressSync, isCompression);
+            case "deflate":
+                return __createCompress(zlib.deflateSync, zlib.inflateSync, isCompression);
+            case "deflateRaw":
+                return __createCompress(zlib.deflateRawSync, zlib.inflateRawSync, isCompression);
+            default:
+                return;
+        }
+    }
+
+    function __createCompress(compress, decompress, isCompression) {
+        const options = config.getCompressionOptions();
+        if (!isCompression) {
+            return {
+                transform(data) {
+                    return decompress(data, options);
+                }
+            }
+        }
+
+        return {
+            transform(data) {
+                return compress(data, options);
+            }
+        }
+    }
+}
+
+module.exports = CompressionTransformation;
+
+
+},{"zlib":"/opt/privatesky/node_modules/browserify-zlib/lib/index.js"}],"/opt/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
+const openDSU = require("opendsu");
+const crypto = openDSU.loadApi("crypto");
+
+function EncryptionTransformation() {
+    this.do = (keySSI, data, callback) => {
+        crypto.encrypt(keySSI, data, callback);
+    };
+
+    this.undo = (keySSI, data, callback) => {
+        crypto.decrypt(keySSI, data, callback);
+    };
+}
+
+module.exports = EncryptionTransformation;
+},{"opendsu":"opendsu"}],"/opt/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
+const CompressionTransformation = require("./CompressionTransformation");
+const EncryptionTransformation = require("./EncryptionTransformation");
+
+const createBrickTransformation = (options) => {
+    options = options || {};
+    return new EncryptionTransformation();
+};
+
+
+module.exports = {
+    createBrickTransformation
+};
+
+
+},{"./CompressionTransformation":"/opt/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/opt/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/opt/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+    anchoringStatus: {
+        OK: 0,
+        PERSIST_BRICKMAP_ERR: -1,
+        ANCHOR_VERSION_ERR: -2,
+        BRICKMAP_UPDATE_ERR: -3,
+        BRICKMAP_LOAD_ERR: -4,
+        BRICKMAP_RECONCILE_ERR: -5
+    }
+}
+},{}],"/opt/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
+const Brick = require("../Brick");
+const util = require("../../utils/utilities");
+const pathModule = "path";
+const path = require(pathModule);
+
+function FileBrickMap(header) {
+    header = header || {};
+
+    let brickOffset = util.getBrickMapOffsetSize();
+    let archiveConfig;
+    let encryptionKey;
+
+    this.addFileEntry = (path, bricks) => {
+        this.appendBricksToEntry(path, bricks);
+    };
+
+    this.appendBricksToEntry = (path, bricks) => {
+        for (const data of bricks) {
+            this.add(path, data);
+        }
+    }
+
+    this.add = (filePath, brick) => {
+        filePath = filePath.split(path.sep).join(path.posix.sep);
+        this.load();
+        if (typeof header[filePath] === "undefined") {
+            header[filePath] = [];
+        }
+
+        const brickObj = {
+            checkSum: brick.getAdler32(),
+            offset: brickOffset,
+            hash: brick.getHash()
+        };
+
+        const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
+        if (encKey) {
+            brickObj.key = encKey;
+        }
+
+        header[filePath].push(brickObj);
+        brickOffset += brick.getTransformedSize();
+    };
+
+    this.getHashList = (filePath) => {
+        this.load();
+        return header[filePath].map(brickObj => brickObj.offset);
+    };
+
+    this.getFileList = (folderBarPath) => {
+        this.load();
+        if (!folderBarPath) {
+            return Object.keys(header);
+        }
+        return Object.keys(header).filter(fileName => fileName.includes(folderBarPath));
+    };
+
+    this.getDictionaryObject = () => {
+        let objectDict = {};
+        Object.keys(header).forEach((fileName) => {
+            let brickObjects = header[fileName];
+            for (let j = 0; j < brickObjects.length; j++) {
+                if (typeof objectDict[brickObjects[j]['checkSum']] === 'undefined') {
+                    objectDict[brickObjects[j]['checkSum']] = [];
+                }
+                objectDict[brickObjects[j]['checkSum']].push(brickObjects[j]['hash']);
+            }
+        });
+        return objectDict;
+    };
+
+    this.getTransformParameters = (brickId) => {
+        if (!brickId) {
+            return encryptionKey ? {key: encryptionKey} : {};
+        }
+
+        this.load();
+        let bricks = [];
+        const files = this.getFileList();
+
+        files.forEach(filePath => {
+            bricks = bricks.concat(header[filePath]);
+        });
+
+        const brickObj = bricks.find(brick => {
+            return brick.offset === brickId;
+        });
+
+        const addTransformData = {};
+        if (brickObj.key) {
+            addTransformData.key = $$.Buffer.from(brickObj.key);
+        }
+
+        return addTransformData;
+    };
+
+    this.toBrick = () => {
+        this.load();
+        const brick = new Brick(archiveConfig);
+        brick.setTransformParameters({key: encryptionKey});
+        brick.setRawData($$.Buffer.from(JSON.stringify(header)));
+        return brick;
+    };
+
+    this.load = () => {
+        if (header instanceof Brick) {
+            header.setConfig(archiveConfig);
+            if (encryptionKey) {
+                header.setTransformParameters({key: encryptionKey});
+            }
+            header = JSON.parse(header.getRawData().toString());
+        }
+    };
+
+    this.setConfig = (config) => {
+        archiveConfig = config;
+    };
+
+    this.getConfig = () => {
+        return archiveConfig;
+    };
+
+    this.setEncryptionKey = (encKey) => {
+        encryptionKey = encKey;
+    };
+
+    this.removeFile = (filePath) => {
+        this.load();
+        delete header[filePath];
+    };
+}
+
+module.exports = FileBrickMap;
+
+},{"../../utils/utilities":"/opt/privatesky/modules/bar/utils/utilities.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js"}],"/opt/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
-    const BrickMap = require("./obsolete/FileBrickMap");
-    const util = require("../utils/utilities");
-    const Brick = require("./Brick");
+    const BrickMap = require("./FileBrickMap");
+    const util = require("../../utils/utilities");
+    const Brick = require("../Brick");
 
     let isFirstBrick = true;
     let map;
@@ -5934,9 +6383,9 @@ module.exports = {
     }
 };
 
-},{"../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./obsolete/FileBrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/FolderBrickStorage.js":[function(require,module,exports){
-const BrickMap = require("./BrickMap");
-const Brick = require("./Brick");
+},{"../../utils/utilities":"/opt/privatesky/modules/bar/utils/utilities.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/opt/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/opt/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
+const BrickMap = require("../BrickMap");
+const Brick = require("../Brick");
 
 function FolderBrickStorage(location) {
     const fs = require("fs");
@@ -6034,538 +6483,7 @@ module.exports = {
     }
 };
 
-},{"./Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/BrickMap.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
-const MANIFEST_PATH = "/manifest";
-
-function Manifest(archive, callback) {
-    const pskPath = require("swarmutils").path;
-    let manifest;
-    let temporary = {};
-    let manifestHandler = {};
-
-
-    manifestHandler.mount = function (path, archiveIdentifier, options, callback) {
-        if (typeof options === "function") {
-            callback = options;
-            options = {persist: true};
-        }
-
-        if (typeof options === "undefined") {
-            options = {persist: true};
-        }
-        // if (/\W-_/.test(name) === true) {
-        //     return callback(Error("Invalid mount name"));
-        // }
-
-        for (let mountingPoint in manifest.mounts) {
-            if (pskPath.isSubpath(path, mountingPoint) || pskPath.isSubpath(path, mountingPoint)) {
-                return callback(Error(`Mount not allowed. Already exist a mount for ${mountingPoint}`));
-            }
-        }
-
-        manifest.mounts[path] = archiveIdentifier;
-        if (options.persist === true) {
-            return persist(callback);
-        } else {
-            temporary[path] = true;
-        }
-
-        callback(undefined);
-    };
-
-    manifestHandler.unmount = function (path, callback) {
-        if (typeof manifest.mounts[path] === "undefined") {
-            return callback(Error(`No mount found at path ${path}`));
-        }
-
-        delete manifest.mounts[path];
-
-        if (temporary[path]) {
-            delete temporary[path];
-        } else {
-            persist(callback);
-        }
-    };
-
-    manifestHandler.getArchiveIdentifier = function (path, callback) {
-        if (typeof manifest.mounts[path] === "undefined") {
-            return callback(Error(`No mount found at path ${path}`));
-        }
-
-        callback(undefined, manifest.mounts[path]);
-    };
-
-    manifestHandler.getArchiveForPath = function (path, callback) {
-        if (path[0] !== '/') {
-            path = `/${path}`;
-        }
-        for (let mountingPoint in manifest.mounts) {
-            if (mountingPoint === path) {
-                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
-                    if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
-                    }
-
-                    return callback(undefined, {prefixPath: mountingPoint, relativePath: "/", archive: archive, identifier: manifest.mounts[mountingPoint]});
-                });
-            }
-
-            if (pskPath.isSubpath(path, mountingPoint)) {
-                return getArchive(manifest.mounts[mountingPoint], (err, archive) => {
-                    if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at mounting point ${manifest.mounts[mountingPoint]}`, err));
-                    }
-
-                    let remaining = path.substring(mountingPoint.length);
-                    remaining = pskPath.ensureIsAbsolute(remaining);
-                    return archive.getArchiveForPath(remaining, function (err, result) {
-                        if (err) {
-                            return callback(createOpenDSUErrorWrapper(`Failed to load DSU mounted at path ${remaining}`, err));
-                        }
-                        result.prefixPath = pskPath.join(mountingPoint, result.prefixPath);
-                        callback(undefined, result);
-                    });
-                });
-            }
-        }
-
-        callback(undefined, {prefixPath: "/", relativePath: path, archive: archive});
-    };
-
-    manifestHandler.getMountPoints = function () {
-        return Object.keys(manifest.mounts);
-    }
-
-    manifestHandler.getMountedDossiers = function (path, callback) {
-        let mountedDossiers = [];
-        for (let mountPoint in manifest.mounts) {
-            if (pskPath.isSubpath(mountPoint, path)) {
-                let mountPath = mountPoint.substring(path.length);
-                if (mountPath[0] === "/") {
-                    mountPath = mountPath.substring(1);
-                }
-                mountedDossiers.push({
-                    path: mountPath,
-                    identifier: manifest.mounts[mountPoint]
-                });
-            }
-        }
-
-        const mountPaths = mountedDossiers.map(mountedDossier => mountedDossier.path);
-        mountedDossiers = mountedDossiers.filter((mountedDossier, index) => {
-            return mountPaths.indexOf(mountedDossier.path) === index;
-        });
-
-        callback(undefined, mountedDossiers);
-    };
-
-    function getArchive(seed, callback) {
-        const resolver = require("opendsu").loadApi("resolver");
-
-        resolver.loadDSU(seed, (err, dossier) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to load DSU from keySSI ${seed}`, err));
-            }
-            callback(undefined, dossier);
-        })
-    }
-
-    function persist(callback) {
-        archive.writeFile(MANIFEST_PATH, JSON.stringify(manifest), callback);
-    }
-
-    function init(callback) {
-        archive.readFile(MANIFEST_PATH, {ignoreMounts: true}, (err, manifestContent) => {
-            if (err) {
-                manifest = {mounts: {}};
-            } else {
-                try {
-                    manifest = JSON.parse(manifestContent.toString());
-                } catch (e) {
-                    return callback(e);
-                }
-            }
-
-            callback(undefined, manifestHandler);
-        });
-    }
-
-    init(callback);
-}
-
-module.exports.getManifest = function getManifest(archive, callback) {
-    Manifest(archive, callback);
-};
-
-
-},{"opendsu":"opendsu","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
-'use strict';
-
-module.exports = {
-    anchoringStatus: {
-        OK: 0,
-        PERSIST_BRICKMAP_ERR: -1,
-        ANCHOR_VERSION_ERR: -2,
-        BRICKMAP_UPDATE_ERR: -3,
-        BRICKMAP_LOAD_ERR: -4,
-        BRICKMAP_RECONCILE_ERR: -5
-    }
-}
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
-const Brick = require("../Brick");
-const util = require("../../utils/utilities");
-const pathModule = "path";
-const path = require(pathModule);
-
-function FileBrickMap(header) {
-    header = header || {};
-
-    let brickOffset = util.getBrickMapOffsetSize();
-    let archiveConfig;
-    let encryptionKey;
-
-    this.addFileEntry = (path, bricks) => {
-        this.appendBricksToEntry(path, bricks);
-    };
-
-    this.appendBricksToEntry = (path, bricks) => {
-        for (const data of bricks) {
-            this.add(path, data);
-        }
-    }
-
-    this.add = (filePath, brick) => {
-        filePath = filePath.split(path.sep).join(path.posix.sep);
-        this.load();
-        if (typeof header[filePath] === "undefined") {
-            header[filePath] = [];
-        }
-
-        const brickObj = {
-            checkSum: brick.getAdler32(),
-            offset: brickOffset,
-            hash: brick.getHash()
-        };
-
-        const encKey = brick.getTransformParameters() ? brick.getTransformParameters().key : undefined;
-        if (encKey) {
-            brickObj.key = encKey;
-        }
-
-        header[filePath].push(brickObj);
-        brickOffset += brick.getTransformedSize();
-    };
-
-    this.getHashList = (filePath) => {
-        this.load();
-        return header[filePath].map(brickObj => brickObj.offset);
-    };
-
-    this.getFileList = (folderBarPath) => {
-        this.load();
-        if (!folderBarPath) {
-            return Object.keys(header);
-        }
-        return Object.keys(header).filter(fileName => fileName.includes(folderBarPath));
-    };
-
-    this.getDictionaryObject = () => {
-        let objectDict = {};
-        Object.keys(header).forEach((fileName) => {
-            let brickObjects = header[fileName];
-            for (let j = 0; j < brickObjects.length; j++) {
-                if (typeof objectDict[brickObjects[j]['checkSum']] === 'undefined') {
-                    objectDict[brickObjects[j]['checkSum']] = [];
-                }
-                objectDict[brickObjects[j]['checkSum']].push(brickObjects[j]['hash']);
-            }
-        });
-        return objectDict;
-    };
-
-    this.getTransformParameters = (brickId) => {
-        if (!brickId) {
-            return encryptionKey ? {key: encryptionKey} : {};
-        }
-
-        this.load();
-        let bricks = [];
-        const files = this.getFileList();
-
-        files.forEach(filePath => {
-            bricks = bricks.concat(header[filePath]);
-        });
-
-        const brickObj = bricks.find(brick => {
-            return brick.offset === brickId;
-        });
-
-        const addTransformData = {};
-        if (brickObj.key) {
-            addTransformData.key = $$.Buffer.from(brickObj.key);
-        }
-
-        return addTransformData;
-    };
-
-    this.toBrick = () => {
-        this.load();
-        const brick = new Brick(archiveConfig);
-        brick.setTransformParameters({key: encryptionKey});
-        brick.setRawData($$.Buffer.from(JSON.stringify(header)));
-        return brick;
-    };
-
-    this.load = () => {
-        if (header instanceof Brick) {
-            header.setConfig(archiveConfig);
-            if (encryptionKey) {
-                header.setTransformParameters({key: encryptionKey});
-            }
-            header = JSON.parse(header.getRawData().toString());
-        }
-    };
-
-    this.setConfig = (config) => {
-        archiveConfig = config;
-    };
-
-    this.getConfig = () => {
-        return archiveConfig;
-    };
-
-    this.setEncryptionKey = (encKey) => {
-        encryptionKey = encKey;
-    };
-
-    this.removeFile = (filePath) => {
-        this.load();
-        delete header[filePath];
-    };
-}
-
-module.exports = FileBrickMap;
-
-},{"../../utils/utilities":"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/Brick.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js":[function(require,module,exports){
-function BrickTransform(transformGenerator) {
-    let directTransform;
-    let inverseTransform;
-
-    this.getTransformParameters = () => {
-        return directTransform ? directTransform.transformParameters : undefined;
-    };
-
-    this.applyDirectTransform = (data, transformParameters, callback) => {
-        if (!directTransform) {
-            transformGenerator.createDirectTransform(transformParameters, (err, _directTransform) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create direct transform`, err));
-                }
-
-                if (typeof _directTransform === "undefined") {
-                    return callback();
-                }
-
-                directTransform = _directTransform;
-                directTransform.transform(data, callback);
-            });
-        } else {
-            directTransform.transform(data, callback);
-        }
-    };
-
-    this.applyInverseTransform = (data, transformParameters, callback) => {
-        if (!inverseTransform) {
-            return transformGenerator.createInverseTransform(transformParameters, (err, _inverseTransform) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create inverse transform`, err));
-                }
-
-                inverseTransform = _inverseTransform;
-                inverseTransform.transform(data, callback);
-            });
-        }
-
-        inverseTransform.transform(data, callback);
-    };
-}
-
-module.exports = BrickTransform;
-
-
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransformFactory.js":[function(require,module,exports){
-const CompressionGenerator = require("./CompressionGenerator");
-const EncryptionGenerator = require("./EncryptionGenerator");
-const CompressionEncryptionGenerator = require("./CompressionEncryptionGenerator");
-const BrickTransform = require("./BrickTransform");
-
-function BrickTransformFactory() {
-    this.createBrickTransform = (keySSI) => {
-        const generator = new EncryptionGenerator(keySSI);
-        return new BrickTransform(generator);
-    }
-}
-
-module.exports = BrickTransformFactory;
-
-
-},{"./BrickTransform":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/BrickTransform.js","./CompressionEncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js","./CompressionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionEncryptionGenerator.js":[function(require,module,exports){
-const CompressionGenerator = require("./CompressionGenerator");
-const EncryptionGenerator = require("./EncryptionGenerator");
-
-function CompressionEncryptionGenerator(config) {
-    let compressionGenerator = new CompressionGenerator(config);
-    let encryptionGenerator = new EncryptionGenerator(config);
-
-    this.getInverseTransformParameters = (transformedData) => {
-        return encryptionGenerator.getInverseTransformParameters(transformedData);
-    };
-
-    this.createDirectTransform = (transformParameters) => {
-        const compression = compressionGenerator.createDirectTransform();
-        const encryption = encryptionGenerator.createDirectTransform(transformParameters);
-        const compressionEncryption = {};
-        Object.keys(encryption).forEach(key => {
-            compressionEncryption[key] = encryption[key]
-        });
-
-        compressionEncryption.transform = (data) => {
-            return encryption.transform(compression.transform(data));
-        };
-
-        return compressionEncryption;
-    };
-
-    this.createInverseTransform = (transformParameters) => {
-        const decompression = compressionGenerator.createInverseTransform();
-        const decryption = encryptionGenerator.createInverseTransform(transformParameters);
-        const compressionEncryption = {};
-        Object.keys(decompression).forEach(key => {
-            compressionEncryption[key] = decompression[key]
-        });
-        compressionEncryption.transform = (data) => {
-            return decompression.transform(decryption.transform(data));
-        };
-
-        return compressionEncryption;
-    };
-}
-
-module.exports = CompressionEncryptionGenerator;
-},{"./CompressionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js","./EncryptionGenerator":"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/CompressionGenerator.js":[function(require,module,exports){
-const zlib = require("zlib");
-
-function CompressionGenerator(config) {
-
-    this.getInverseTransformParameters = (transformedData) => {
-        return {data: transformedData};
-    };
-
-    this.createDirectTransform = () => {
-        return getCompression(true);
-    };
-
-    this.createInverseTransform = () => {
-        return getCompression(false);
-    };
-
-    function getCompression(isCompression) {
-        const algorithm = config.getCompressionAlgorithm();
-        switch (algorithm) {
-            case "gzip":
-                return __createCompress(zlib.gzipSync, zlib.gunzipSync, isCompression);
-            case "br":
-                return __createCompress(zlib.brotliCompressSync, zlib.brotliDecompressSync, isCompression);
-            case "deflate":
-                return __createCompress(zlib.deflateSync, zlib.inflateSync, isCompression);
-            case "deflateRaw":
-                return __createCompress(zlib.deflateRawSync, zlib.inflateRawSync, isCompression);
-            default:
-                return;
-        }
-    }
-
-    function __createCompress(compress, decompress, isCompression) {
-        const options = config.getCompressionOptions();
-        if (!isCompression) {
-            return {
-                transform(data) {
-                    return decompress(data, options);
-                }
-            }
-        }
-
-        return {
-            transform(data) {
-                return compress(data, options);
-            }
-        }
-    }
-}
-
-module.exports = CompressionGenerator;
-
-
-},{"zlib":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/lib/transforms/EncryptionGenerator.js":[function(require,module,exports){
-const openDSU = require("opendsu");
-const crypto = openDSU.loadApi("crypto");
-const keyssiSpace = openDSU.loadApi("keyssi");
-
-function EncryptionGenerator(keySSI) {
-    this.setKeySSI = (newConfig) => {
-        keySSI = newConfig;
-    };
-
-    this.createDirectTransform = (transformParameters, callback) => {
-        createBrickEncryptionTransformation(transformParameters, callback);
-    };
-
-    this.createInverseTransform = (transformParameters, callback) => {
-        getDecryption(transformParameters, callback);
-    };
-
-    //--------------------------------------- internal methods ------------------------------------------------------
-    function createBrickEncryptionTransformation(transformParameters, callback) {
-        const _createResult = (_keySSI) => {
-            //const _keySSI = keyssi.buildTemplateKeySSI(keySSI.getName(), keySSI.getDLDomain(), key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-            // _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-            return {
-                transform(data, callback) {
-                    crypto.encrypt(_keySSI, data, callback);
-                },
-                transformParameters: {
-                    key: _keySSI.getIdentifier()
-                }
-            }
-        }
-        let seKeySSI;
-        if (transformParameters && transformParameters.key) {
-            seKeySSI = keyssiSpace.parse(transformParameters.key);
-        } else {
-            seKeySSI = keyssiSpace.buildSymmetricalEncryptionSSI(keySSI.getDLDomain(), undefined, '', keySSI.getVn());
-        }
-
-        callback(undefined, _createResult(seKeySSI));
-    }
-
-
-    function getDecryption(transformParameters, callback) {
-        const ret = {
-            transform(data, callback) {
-                //const _keySSI = keyssi.buildTemplateKeySSI(keySSI.getName(), keySSI.getDLDomain(), transformParameters.key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-                // const _keySSI = keySSI.clone();
-                // _keySSI.load(keySSI.getName(), keySSI.getDLDomain(), transformParameters.key, keySSI.getControl(), keySSI.getVn(), keySSI.getHint());
-                const _keySSI = keyssiSpace.parse(transformParameters.key);
-                crypto.decrypt(_keySSI, data, callback);
-            }
-        }
-        callback(undefined, ret);
-    }
-
-}
-
-module.exports = EncryptionGenerator;
-},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{"../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","path":"/opt/privatesky/node_modules/path-browserify/index.js"}],"/opt/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -6597,7 +6515,7 @@ module.exports = {
     isDuplex
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
 const OFFSET_SIZE = 8;
 
 function getBrickMapOffsetSize() {
@@ -6616,7 +6534,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
+},{"fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js"}],"/opt/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -6775,7 +6693,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"./transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
+},{"./transactionsUtil":"/opt/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
 function PulseUtil(signer, currentPulseNumber, block, newTransactions, vsd, top, last) {
     this.signer         = signer;               //a.k.a. delegatedAgentName
     this.currentPulse   = currentPulseNumber;
@@ -6799,7 +6717,7 @@ function PulseHistory(){
 module.exports.createPulseHistory = function () {
     return new PulseHistory();
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
 /*
 consensus helper functions when working with transactions
 */
@@ -6827,7 +6745,7 @@ module.exports.orderCRTransactions = function (pset) { //order in place the pset
     return arr;
 }
 
-},{"pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
+},{"pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
 var CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -6874,7 +6792,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","callflow":"/opt/privatesky/modules/callflow/index.js"}],"/opt/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -6921,7 +6839,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","callflow":"/opt/privatesky/modules/callflow/index.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
 
 $$.asset.describe("ACLScope", {
     public:{
@@ -6944,7 +6862,7 @@ $$.asset.describe("ACLScope", {
         return true;
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
 
 $$.asset.describe("Agent", {
     public:{
@@ -6970,7 +6888,7 @@ $$.asset.describe("Agent", {
 
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
 
 $$.asset.describe("Backup", {
     public:{
@@ -6984,7 +6902,7 @@ $$.asset.describe("Backup", {
     }
 });
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
 $$.asset.describe("BarAnchor", {
     public: {
         alias: "string",
@@ -7011,7 +6929,7 @@ $$.asset.describe("BarAnchor", {
         this.writeList.push(agentId);
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
 
 $$.asset.describe("CSBMeta", {
 	public:{
@@ -7034,7 +6952,7 @@ $$.asset.describe("CSBMeta", {
 
 });
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
 
 $$.asset.describe("DomainConfig", {
     public:{
@@ -7076,7 +6994,7 @@ $$.asset.describe("DomainConfig", {
         this.workerStrategy = workerStrategy;
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
 
 $$.asset.describe("DomainReference", {
     public:{
@@ -7102,7 +7020,7 @@ $$.asset.describe("DomainReference", {
         return this.workspace;
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
 $$.asset.describe("FileAnchor", {
     public: {
         alias: "string",
@@ -7121,7 +7039,7 @@ $$.asset.describe("FileAnchor", {
 });
 
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
 
 $$.asset.describe("key", {
     public:{
@@ -7135,7 +7053,7 @@ $$.asset.describe("key", {
         this.value = value;
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
 module.exports = $$.library(function(){
     require("./DomainReference");
     require("./DomainConfig");
@@ -7148,7 +7066,7 @@ module.exports = $$.library(function(){
     require("./FileAnchor");
     require('./CSBMeta');
 });
-},{"../transactions/transactions":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
+},{"../transactions/transactions":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
 if($$.swarms){
     $$.swarms.describe("transactionHandler", {
         start: function (identity, transactionName, methodName, ...args) {
@@ -7160,7 +7078,7 @@ if($$.swarms){
     });
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Agents", {
@@ -7181,7 +7099,7 @@ $$.transaction.describe("Agents", {
     getAgents: sharedPhases.getAllAssetsFactory('global.Agent')
 });
 
-},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("DomainConfigTransaction", {
@@ -7215,7 +7133,7 @@ $$.transaction.describe("DomainConfigTransaction", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainConfig')
 });
 
-},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Domain", {
@@ -7318,7 +7236,7 @@ $$.transaction.describe("Domain", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainReference')
 });
 
-},{"./sharedPhases":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
+},{"./sharedPhases":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
 /**
  * FIXME
  * The first block in the blockchain is 0.
@@ -7338,13 +7256,13 @@ $$.transaction.describe("TooShortBlockChainWorkaroundDeleteThis", {
         this.commit();
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
 require('./domainTransaction');
 require('./agentTransaction');
 require('./standardCSBTransactions');
 require('./domainConfigTransaction');
 require('./firstTransactionWorkaroundDeleteThis');
-},{"./agentTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
+},{"./agentTransaction":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
 module.exports = {
     getAssetFactory: function(assetType) {
         return function(alias) {
@@ -7368,7 +7286,7 @@ module.exports = {
         };
     }
 };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
 $$.transaction.describe("StandardCSBTransactions", {
     addBarAnchor: function (mountPoint, brickMapDigest) {
         this.transaction.createAsset("BarAnchor", "init", mountPoint, brickMapDigest);
@@ -7413,7 +7331,7 @@ $$.transaction.describe("StandardCSBTransactions", {
         }
     }
 });
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
 $$.transaction.describe("transactions", {
     updateKey: function (key, value) {
         var transaction = $$.blockchain.beginTransaction(this);
@@ -7470,7 +7388,7 @@ usages:
 
  */
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/index.js":[function(require,module,exports){
 ___DISABLE_OBSOLETE_ZIP_ARCHIVER_WAIT_FOR_BARS = true;
 //require("../../../psknode/bundles/pskruntime.js");
 var callflowModule = require("callflow");
@@ -7484,7 +7402,7 @@ $$.transaction      = $$.transactions;
 module.exports = require('./moduleExports');
 
 
-},{"./blockchainSwarmTypes/asset_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
+},{"./blockchainSwarmTypes/asset_swarm_template":"/opt/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/opt/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/opt/privatesky/modules/blockchain/moduleExports.js","callflow":"/opt/privatesky/modules/callflow/index.js"}],"/opt/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
 module.exports = {
     ALIAS:"alias",
     ALIASES : '/aliases',
@@ -7499,7 +7417,7 @@ module.exports = {
     SWARMID:"swarmId",
     SWARMTYPE:"swarmTypeName"
 };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
 (function (process){(function (){
 module.exports = {
     createBlockchain:function(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, loadDefaultConstitution, forcedBoot){
@@ -7559,7 +7477,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"./pskdb":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
+},{"./pskdb":"/opt/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/opt/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/opt/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/opt/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/opt/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/opt/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/opt/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","_process":"/opt/privatesky/node_modules/process/browser.js","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
 const bm = require('../moduleExports');
 var CNST = require("../moduleConstants");
 
@@ -7762,7 +7680,7 @@ function Transaction(blockchain, pdsHandler, transactionSwarm, worldStateCache, 
 }
 
 module.exports = Blockchain;
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/opt/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/opt/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
 const Blockchain = require('./Blockchain');
 
 module.exports = {
@@ -7791,7 +7709,7 @@ module.exports = {
     }
 };
 
-},{"../defaultConstitution/assets/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
+},{"../defaultConstitution/assets/index":"/opt/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/opt/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/opt/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/opt/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/opt/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/opt/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 let cutil = require("../OBFT/transactionsUtil");
 // let bm = require("../moduleExports");
@@ -8185,7 +8103,7 @@ function VerificationKeySpaceHandler(parentStorage, worldStateCache, blockchain)
 exports.newPSKDB = function (worldStateCache, historyStorage) {
     return new PSKDB(worldStateCache, historyStorage);
 };
-},{"../OBFT/transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/opt/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/opt/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/opt/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
 let CNST=require("../../moduleConstants");
 let cache = {};
 
@@ -8260,7 +8178,7 @@ module.exports = {
     }
 };
 
-},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
+},{"../../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js"}],"/opt/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
 
 var CNST = require("../../moduleConstants");
 
@@ -8368,7 +8286,7 @@ module.exports = {
         return new Registry();
     }
 }
-},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
+},{"../../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js"}],"/opt/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -8603,7 +8521,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"../OBFT/transactionsUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/opt/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
 var mod = require("../../moduleExports");
 
 function DirectCommitAlgorithm() {
@@ -8680,7 +8598,7 @@ module.exports = {
         }
     }
 };
-},{"../../OBFT/OBFTImplementation":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
+},{"../../OBFT/OBFTImplementation":"/opt/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/opt/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/opt/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/opt/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function BarHistoryStorage(archive) {
@@ -8753,7 +8671,7 @@ function BarHistoryStorage(archive) {
 }
 
 module.exports = BarHistoryStorage;
-},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/opt/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/opt/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function FsHistoryStorage(folder) {
@@ -8858,7 +8776,7 @@ function FsHistoryStorage(folder) {
 
 module.exports = FsHistoryStorage;
 
-},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/opt/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js"}],"/opt/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
 function LatestHashTracker() {
     let hlb = "none";
     let maxBlockNumber = 0;
@@ -8875,7 +8793,7 @@ function LatestHashTracker() {
 }
 
 module.exports = LatestHashTracker;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function MemoryHistoryStorage() {
@@ -8902,7 +8820,7 @@ function MemoryHistoryStorage() {
 }
 
 module.exports = MemoryHistoryStorage;
-},{"./LatestHashTracker":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/opt/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/opt/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
 const FsHistoryStorage = require("./FsHistoryStorage");
 const MemoryHistoryStorage = require("./MemoryHistoryStorage");
 const BarHistoryStorage = require("./BarHistoryStorage");
@@ -8921,7 +8839,7 @@ module.exports = {
         }
     }
 };
-},{"./BarHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
+},{"./BarHistoryStorage":"/opt/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/opt/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/opt/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/opt/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
 (function (process){(function (){
 const mc = require("../../moduleConstants");
 let pulseUtil = require("../../OBFT/PulseUtil");
@@ -8987,7 +8905,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"../../OBFT/PulseUtil":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
+},{"../../OBFT/PulseUtil":"/opt/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
 function PermissiveSignatureProvider(){
     /*
     return a signature of message ms for agent agentId
@@ -9014,7 +8932,7 @@ module.exports = {
     }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
 
 function SimpleMajoritarianStrategy(shareHoldersCounter){
     this.refreshShares = function(){
@@ -9064,7 +8982,7 @@ module.exports = {
         }
     }
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
 (function (setImmediate){(function (){
 const mc = require("../../moduleConstants");
 
@@ -9222,7 +9140,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require("timers").setImmediate)
 
-},{"../../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/blockchain/moduleConstants.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","timers":"/home/travis/build/PrivateSky/privatesky/node_modules/timers-browserify/main.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"../../moduleConstants":"/opt/privatesky/modules/blockchain/moduleConstants.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","timers":"/opt/privatesky/node_modules/timers-browserify/main.js"}],"/opt/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -9244,7 +9162,7 @@ $$.CONSTANTS.mixIn = function(otherConstants){
     }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/callflow/index.js":[function(require,module,exports){
 (function (global){(function (){
 function initialise() {
     if($$.callflow){
@@ -9332,7 +9250,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./constants":"/home/travis/build/PrivateSky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","path":"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
+},{"./constants":"/opt/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/opt/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/opt/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/opt/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/opt/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/opt/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/opt/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js","path":"/opt/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/opt/privatesky/modules/soundpubsub/index.js"}],"/opt/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
 (function (global){(function (){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
@@ -9527,7 +9445,7 @@ exports.createInterceptorRegistry = function () {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -9631,7 +9549,7 @@ exports.loadLibrary = function(prefixName, folder){
 }
 
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
 (function (process){(function (){
 
 var globalJoinCounter = 0;
@@ -9771,7 +9689,7 @@ exports.createJoinPoint = function(swarm, callback, args){
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
 
 var joinCounter = 0;
 
@@ -9896,7 +9814,7 @@ exports.createSerialJoinPoint = function(swarm, callback, args){
     jp.setProxyObject(p);
     return p;
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
 const swarmDescriptionsRegistry = {};
 let currentInlineCounter = 0;
 
@@ -10261,7 +10179,7 @@ exports.createSwarmEngine = function(swarmType, utils){
 };
 
 
-},{"./utilityFunctions/callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
+},{"./utilityFunctions/callflow":"/opt/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
 (function (process,global){(function (){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
@@ -10460,7 +10378,7 @@ function localLog (logType, message, err) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","fs":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var swarmDebug = require("./SwarmDebug");
 	let ret = {};
@@ -10589,12 +10507,12 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 };
 
-},{"../parallelJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
+},{"../parallelJoinPoint":"/opt/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/opt/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/opt/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/home/travis/build/PrivateSky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js":[function(require,module,exports){
+},{"./base":"/opt/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/opt/privatesky/modules/key-ssi-resolver/index.js":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 const BootStrapingService = require("./lib/BootstrapingService");
@@ -10629,11 +10547,12 @@ module.exports = {
     initialize,
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
     CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
+    CryptoFunctionTypes: require('./lib/KeySSIs/CryptoFunctionTypes'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
+},{"./lib/BootstrapingService":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/CryptoFunctionTypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js","./lib/KeySSIs/KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"/opt/privatesky/modules/bar/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
 'use strict';
 
 function RequestsChain() {
@@ -10673,11 +10592,11 @@ function RequestsChain() {
         const next = (err, result) => {
             if (err) {
                 if (isFatalError(err)) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 if (!chain.length) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
                 }
 
                 return executeChain(callback);
@@ -10700,7 +10619,7 @@ function RequestsChain() {
 
 module.exports = RequestsChain;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js":[function(require,module,exports){
 'use strict';
 
 const RequestsChain = require('./RequestsChain');
@@ -10773,7 +10692,7 @@ function BootstrapingService(options) {
 
 module.exports = BootstrapingService;
 
-},{"./RequestsChain":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+},{"./RequestsChain":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":"opendsu"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -10803,6 +10722,10 @@ function ConstDSUFactory(options) {
             callback = options;
             options = {};
         }
+        if(typeof options.useSSIAsIdentifier === "undefined" || !options.useSSIAsIdentifier){
+            throw Error("Creating a DSU using keySSI from the arraySSI family not allowed. Use the resolver.createDSUForExisting method instead.");
+        }
+
         // enable options.validationRules.preWrite to stop content update
         this.barFactory.create(keySSI, options, callback);
     };
@@ -10835,7 +10758,7 @@ function ConstDSUFactory(options) {
 
 module.exports = ConstDSUFactory;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -10871,6 +10794,9 @@ function DSUFactory(options) {
         return ssi;
     }
 
+    let forcedArchiveSingletonsCache = {};
+
+
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
@@ -10881,6 +10807,12 @@ function DSUFactory(options) {
      * @return {Archive}
      */
     const createInstance = (keySSI, options) => {
+        let identifier = keySSI;
+        if(typeof identifier == "string"){
+            let bar = forcedArchiveSingletonsCache[identifier];
+            if(bar) return bar;
+        }
+
         const ArchiveConfigurator = barModule.ArchiveConfigurator;
         ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
         const archiveConfigurator = new ArchiveConfigurator();
@@ -10913,7 +10845,7 @@ function DSUFactory(options) {
         const bar = barModule.createArchive(archiveConfigurator);
         const DSUBase = require("./mixins/DSUBase");
         DSUBase(bar);
-
+        forcedArchiveSingletonsCache[identifier] = bar;
         return bar;
     }
 
@@ -10974,21 +10906,21 @@ function DSUFactory(options) {
             try {
                 bar = createInstance(keySSI, options);
             } catch (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             return bar.init(err => callback(err, bar));
         }
 
         initializeKeySSI(keySSI, (err, _keySSI) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to initialize keySSI <${keySSI.getIdentifier(true)}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to initialize keySSI <${keySSI.getIdentifier(true)}>`, err));
             }
 
             let bar;
             try {
                 bar = createInstance(_keySSI, options);
             } catch (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             bar.init(err => callback(err, bar));
         });
@@ -11020,7 +10952,7 @@ function DSUFactory(options) {
         try {
             bar = createInstance(keySSI, options);
         } catch (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
         }
         bar.load(err => callback(err, bar));
     }
@@ -11028,7 +10960,7 @@ function DSUFactory(options) {
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"/home/travis/build/PrivateSky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/travis/build/PrivateSky/privatesky/modules/bar-fs-adapter/index.js","opendsu":"opendsu","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js","psk-cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"/opt/privatesky/modules/bar/index.js","bar-fs-adapter":"/opt/privatesky/modules/bar-fs-adapter/index.js","opendsu":"opendsu","overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js","psk-cache":"/opt/privatesky/modules/psk-cache/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {BootstrapingService} options.bootstrapingService
@@ -11067,10 +10999,10 @@ function WalletFactory(options) {
         options = defaultOpts;
 
         let createWritableDSU = () => {
-            let templateSSI = require("opendsu").loadApi("keyssi").buildSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
+            let templateSSI = require("opendsu").loadApi("keyssi").buildTemplateSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
             this.dsuFactory.create(templateSSI, (err, writableDSU) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
                 }
                 writableWallet = writableDSU;
                 mountDSUType();
@@ -11080,7 +11012,7 @@ function WalletFactory(options) {
         let mountDSUType = () =>{
             writableWallet.mount("/code", options.dsuTypeSSI, (err => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to mount constitution in writable DSU`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to mount constitution in writable DSU`, err));
                 }
                 createConstDSU();
             }));
@@ -11091,7 +11023,7 @@ function WalletFactory(options) {
         let createConstDSU = () => {
             this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
                 }
 
                 constDSUWallet = constWallet;
@@ -11104,13 +11036,13 @@ function WalletFactory(options) {
 
 
         let mountWritableWallet = () => {
-            writableWallet.getKeySSI((err,seedSSI) =>{
+            writableWallet.getKeySSIAsString((err,seedSSI) =>{
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to get seedSSI",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get seedSSI",err));
                 }
                 constDSUWallet.mount(WALLET_MOUNT_POINT, seedSSI, (err => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet",err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet",err));
                     }
                     callback(undefined, constDSUWallet);
                 }));
@@ -11150,7 +11082,7 @@ function WalletFactory(options) {
         let loadConstDSU = () =>{
             this.dsuFactory.load(keySSI, options, (err, dsu) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to load ConstDSU",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load ConstDSU",err));
                 }
                 constDSU = dsu;
                 getSSIFromMountPoint();
@@ -11161,7 +11093,7 @@ function WalletFactory(options) {
         let  getSSIFromMountPoint = () => {
             constDSU.getSSIForMount(WALLET_MOUNT_POINT, (err, ssi) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU",err));
                 }
                 writableSSI = require("opendsu").loadApi("keyssi").parse(ssi);
                 loadWritableDSU();
@@ -11171,7 +11103,7 @@ function WalletFactory(options) {
         let loadWritableDSU = () => {
             this.dsuFactory.load(writableSSI, options, (err, dsu) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet", err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet", err));
                 }
                 writableDSU = dsu;
                 constDSU.getWritableDSU = function(){
@@ -11189,7 +11121,7 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{"opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
 const SSITypes = require("../KeySSIs/SSITypes");
 /**
@@ -11323,44 +11255,67 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 
 module.exports = Registry;
 
-},{"../KeySSIs/SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstDSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstDSUFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
 			throw Error('Missing arguments. Usage: call(functionName, [arg1, arg2 ...] callback)');
 		}
-
 		const callback = args.pop();
+		if(typeof  callback !== "function"){
+			throw Error('Last argument is always a callback function. Usage: call(functionName, [arg1, arg2 ...] callback)');
+		}
 
-		archive.readFile("/code/api.js", function(err, apiCode){
-			if(err){
-				return callback(createOpenDSUErrorWrapper(`Failed to create read file /code/api.js`, err));
+		let evaluatedAPICode;
+
+		function doEval(apiCode){
+			const or = require("overwrite-require");
+
+			switch($$.environmentType){
+				case or.constants.BROWSER_ENVIRONMENT_TYPE:
+				case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
+					apiCode = new TextDecoder("utf-8").decode(apiCode);
+					break;
+				default:
+					apiCode = apiCode.toString();
 			}
+			apiCode = "let module = {exports: {}}\n" + apiCode + "\nmodule.exports";
+			evaluatedAPICode = eval(apiCode);
+		}
 
+		function execute(){
 			try{
 				//before eval we need to convert from $$.Buffer/ArrayBuffer to String
-				const or = require("overwrite-require");
-				switch($$.environmentType){
-					case or.constants.BROWSER_ENVIRONMENT_TYPE:
-					case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
-						apiCode = new TextDecoder("utf-8").decode(apiCode);
-						break;
-					default:
-						apiCode = apiCode.toString();
-				}
-				apiCode = "let module = {exports: {}}\n" + apiCode + "\nmodule.exports";
-				const apis = eval(apiCode);
-				apis[functionName].call(this, ...args, callback);
-
+				evaluatedAPICode[functionName].call(this, ...args, callback);
 			}catch(err){
-				return callback(createOpenDSUErrorWrapper(`Failed to create eval code in file /code/api.js`, err));
+				return callback(createOpenDSUErrorWrapper(`Failed to  execute api.js code `, err));
 			}
-		});
+		}
+
+		if(!evaluatedAPICode){
+			archive.readFile("/code/api.js", function(err, apiCode){
+				if(err){
+					archive.readFile("/app/api.js", function(err, apiCode){
+						if(err){
+							return callback(createOpenDSUErrorWrapper(`Failed to  read file api.js in /code or /app`, err));
+						} else {
+							doEval(apiCode);
+							execute();
+						}
+					});
+				} else {
+					doEval(apiCode);
+					execute();
+				}
+			});
+		} else {
+			execute();
+		}
 	}
 	return archive;
 }
 
-},{"overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+},{"overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 const defaultBootStrapingService = require("./BootstrapingService");
 /**
  * @param {BoostrapingService} options.bootstrapingService
@@ -11465,7 +11420,7 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{"./BootstrapingService":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+},{"./BootstrapingService":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
 function ArraySSI(identifier) {
     const SSITypes = require("../SSITypes");
     const KeySSIMixin = require("../KeySSIMixin");
@@ -11505,7 +11460,7 @@ function createArraySSI(identifier) {
 module.exports = {
     createArraySSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -11532,7 +11487,7 @@ function createCZaSSI(identifier) {
 module.exports = {
     createCZaSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const CZaSSI = require("./CZaSSI");
 const SSITypes = require("../SSITypes");
@@ -11568,7 +11523,7 @@ function createConstSSI(identifier) {
 module.exports = {
     createConstSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ConstSSI = require("./ConstSSI");
 const SSITypes = require("../SSITypes");
@@ -11605,9 +11560,10 @@ function createPasswordSSI(identifier) {
 module.exports = {
     createPasswordSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
 const crypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
+const CryptoFunctionTypes = require("./CryptoFunctionTypes");
 const algorithms = {};
 const defaultAlgorithms = {
     hash: (data) => {
@@ -11628,10 +11584,10 @@ const defaultAlgorithms = {
         const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
         const utils = require("swarmutils");
         if (!$$.Buffer.isBuffer(decryptionKey) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
-            decryptionKey = utils.convertToBuffer(decryptionKey);
+            decryptionKey = utils.ensureIsBuffer(decryptionKey);
         }
         if (!$$.Buffer.isBuffer(encryptedData) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
-            encryptedData = utils.convertToBuffer(encryptedData);
+            encryptedData = utils.ensureIsBuffer(encryptedData);
         }
         return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
     },
@@ -11682,93 +11638,95 @@ const getCryptoFunction = (keySSI, algorithmType) => {
 
 
 CryptoAlgorithmsRegistry.prototype.registerHashFunction = (keySSIType, vn, hashFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'hash', hashFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.HASH, hashFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getHashFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'hash');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.HASH);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerKeyDerivationFunction = (keySSIType, vn, keyDerivationFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'keyDerivation', keyDerivationFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.KEY_DERIVATION, keyDerivationFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getKeyDerivationFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'keyDerivation');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_DERIVATION);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerEncryptionFunction = (keySSIType, vn, encryptionFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'encryption', encryptionFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCRYPTION, encryptionFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getEncryptionFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'encryption');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerEncryptionKeyGenerationFunction = (keySSIType, vn, keyGeneratorFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'encryptionKeyGeneration', keyGeneratorFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCRYPTION_KEY_GENERATION, keyGeneratorFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getEncryptionKeyGenerationFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'encryptionKeyGeneration');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION_KEY_GENERATION);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerDecryptionFunction = (keySSIType, vn, decryptionFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'decryption', decryptionFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DECRYPTION, decryptionFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getDecryptionFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'decryption');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECRYPTION);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerEncodingFunction = (keySSIType, vn, encodingFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'encoding', encodingFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCODING, encodingFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getEncodingFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'encoding');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCODING);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerDecodingFunction = (keySSIType, vn, decodingFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'decoding', decodingFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DECODING, decodingFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getDecodingFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'decoding');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECODING);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerKeyPairGenerator = (keySSIType, vn, keyPairGenerator) => {
-    registerCryptoFunction(keySSIType, vn, 'keyPairGenerator', keyPairGenerator);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.KEY_PAIR_GENERATOR, keyPairGenerator);
 };
 
 CryptoAlgorithmsRegistry.prototype.getKeyPairGenerator = (keySSI) => {
-    return getCryptoFunction(keySSI, 'keyPairGenerator');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_PAIR_GENERATOR);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerSignFunction = (keySSIType, vn, signFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'sign', signFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.SIGN, signFunction);
 };
 
-
 CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'sign');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.SIGN);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerVerifyFunction = (keySSIType, vn, verifyFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'verify', verifyFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.VERIFY, verifyFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'verify');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.VERIFY);
 };
 
 CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction = (keySSIType, vn, deriveFunction) => {
-    registerCryptoFunction(keySSIType, vn, 'derivePublicKey', deriveFunction);
+    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DERIVE_PUBLIC_KEY, deriveFunction);
 };
 
 CryptoAlgorithmsRegistry.prototype.getDerivePublicKeyFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, 'derivePublicKey');
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DERIVE_PUBLIC_KEY);
 };
+
+
+CryptoAlgorithmsRegistry.prototype.getCryptoFunction = getCryptoFunction;
 
 module.exports = new CryptoAlgorithmsRegistry();
 
@@ -11811,13 +11769,27 @@ CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction(SSITypes.SEED
 CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SREAD_SSI, "v0", defaultKeySSIVerify);
 
 
-},{"./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+},{"./CryptoFunctionTypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js","./SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js":[function(require,module,exports){
+module.exports = {
+    HASH: "hash",
+    ENCRYPTION: "encryption",
+    DECRYPTION: "decryption",
+    ENCRYPTION_KEY_GENERATION: "encryptionKeyGeneration",
+    KEY_DERIVATION: "keyDerivation",
+    ENCODING: "encoding",
+    DECODING: "decoding",
+    SIGN: "sign",
+    VERIFY: "verify",
+    DERIVE_PUBLIC_KEY: "derivePublicKey",
+    KEY_PAIR_GENERATOR: "keyPairGenerator"
+};
+},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
 
 module.exports = DSURepresentationNames;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -11895,7 +11867,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     try {
         derivedKeySSI = getDerivedType(keySSI, otherType);
     } catch (err){
-        return callback(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI <${keySSI.getIdentifier(true)}>`, err));
+        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI <${keySSI.getIdentifier(true)}>`, err));
     }
 
     callback(undefined, derivedKeySSI);
@@ -11940,18 +11912,38 @@ KeySSIFactory.prototype.registerFactory(SSITypes.HASH_LINK_SSI, 'v0', undefined,
 KeySSIFactory.prototype.registerFactory(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, 'v0', undefined, createSymmetricalEncryptionSSI);
 
 module.exports = new KeySSIFactory();
-},{"./ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("./CryptoAlgorithmsRegistry");
+const { BRICKS_DOMAIN_KEY } = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 
+const MAX_KEYSSI_LENGHT = 2048
+
 function keySSIMixin(target){
-        let _prefix = "ssi";
-        let _subtype;
-        let _dlDomain;
-        let _subtypeSpecificString;
-        let _control;
-        let _vn = "v0";
-        let _hint;
+    let _prefix = "ssi";
+    let _subtype;
+    let _dlDomain;
+    let _subtypeSpecificString;
+    let _control;
+    let _vn = "v0";
+    let _hint;
+    let _hintObject = {};
+
+    const _createHintObject = (hint = _hint) => {
+        try {
+            _hintObject = JSON.parse(hint)
+        }
+        catch (error) {
+            //console.error('Parsing of hint failed, hint:', hint)
+            _hintObject = {
+                value:hint
+            }
+        }
+    }
+
+    const _inferJSON = (hintString) => {
+        return hintString[0] === '{' || hintString[0] === '['
+    }
 
     target.autoLoad = function (identifier) {
         if(typeof identifier === "undefined"){
@@ -11961,6 +11953,8 @@ function keySSIMixin(target){
         if(typeof identifier !== "string"){
             throw new Error("The identifier should be string");
         }
+
+        target.validateKeySSICharLength();
 
         let originalId = identifier;
         if(identifier.indexOf(":") === -1){
@@ -11983,20 +11977,36 @@ function keySSIMixin(target){
         }
         if (segments.length > 0) {
             _hint = segments.join(":");
+            if (_inferJSON(_hint)) {
+                _createHintObject(_hint);
+            }
         }
         // _subtypeSpecificString = cryptoRegistry.getDecodingFunction(target)(_subtypeSpecificString);
+    }
+
+    target.validateKeySSICharLength = () => {
+        if (target.getIdentifier() > MAX_KEYSSI_LENGHT) {
+            throw new Error(`The identifier length exceed maximum char length ${MAX_KEYSSI_LENGHT}`);
+        }
     }
 
     target.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
         if ($$.Buffer.isBuffer(subtypeSpecificString)) {
             throw Error("Invalid subtypeSpecificString");
         }
+
         _subtype = subtype;
         _dlDomain = dlDomain;
         _subtypeSpecificString = subtypeSpecificString;
         _control = control;
         _vn = vn || "v0";
         _hint = hint;
+
+        target.validateKeySSICharLength();
+
+        if (_hint) {
+            _createHintObject(_hint)
+        }
     }
 
     /**
@@ -12059,6 +12069,10 @@ function keySSIMixin(target){
         return plain ? id : pskCrypto.pskBase58Encode(id);
     }
 
+    target.getBricksDomain = function() {
+        return _hintObject[BRICKS_DOMAIN_KEY] ? _hintObject[BRICKS_DOMAIN_KEY] : _dlDomain;
+    }
+
     target.clone = function(){
         let clone = {};
         clone.prototype = target.prototype;
@@ -12077,7 +12091,7 @@ function keySSIMixin(target){
 }
 
 module.exports = keySSIMixin;
-},{"./CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+},{"./CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -12113,7 +12127,7 @@ function createHashLinkSSI(identifier) {
 module.exports = {
     createHashLinkSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
@@ -12158,7 +12172,7 @@ function createSymmetricalEncryptionSSI(identifier) {
 module.exports = {
     createSymmetricalEncryptionSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
 const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
@@ -12183,7 +12197,7 @@ module.exports = {
     createWalletSSI
 }
 
-},{"../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -12202,7 +12216,7 @@ module.exports = {
     WALLET_SSI: "wallet",
     SYMMETRICAL_ENCRYPTION_SSI: "se"
 };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ReadSSI = require("./ReadSSI");
 const SSITypes = require("../SSITypes");
@@ -12230,7 +12244,7 @@ function createAnchorSSI(identifier) {
 module.exports = {
     createAnchorSSI
 }
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZaSSI = require("./ZaSSI");
 const SSITypes = require("../SSITypes");
@@ -12258,7 +12272,7 @@ function createPublicSSI(identifier) {
 module.exports = {
     createPublicSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const PublicSSI = require("./PublicSSI");
 const SSITypes = require("../SSITypes");
@@ -12286,7 +12300,7 @@ function createReadSSI(identifier) {
 module.exports = {
     createReadSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const AnchorSSI = require("./AnchorSSI");
 const SSITypes = require("../SSITypes");
@@ -12313,7 +12327,7 @@ function createSecretSSI (identifier){
 module.exports = {
     createSecretSSI
 }
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 function ZaSSI(identifier) {
     KeySSIMixin(this);
@@ -12334,7 +12348,7 @@ function createZaSSI(identifier) {
 module.exports = {
     createZaSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -12372,7 +12386,7 @@ function createSReadSSI(identifier) {
 module.exports = {
     createSReadSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -12400,7 +12414,7 @@ function createSZaSSI(identifier) {
 module.exports = {
     createSZaSSI
 };
-},{"../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SReadSSI = require("./SReadSSI");
 const SSITypes = require("../SSITypes");
@@ -12434,15 +12448,19 @@ function SeedSSI(identifier) {
         if (typeof privateKey === "undefined") {
             cryptoRegistry.getKeyPairGenerator(self)().generateKeyPair((err, publicKey, privateKey) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err));
                 }
                 privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
                 self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
-                callback(undefined, self);
+                if(callback) {
+                    callback(undefined, self);
+                }
             });
         } else {
             self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
-            callback(undefined, self);
+            if(callback) {
+                callback(undefined, self);
+            }
         }
         self.initialize = function (){
             throw Error("KeySSI already initialized");
@@ -12488,17 +12506,17 @@ function createSeedSSI(identifier) {
 module.exports = {
     createSeedSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
+},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/opt/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const keySSISpace = openDSU.loadApi("keyssi");
-const cachedStores = require("../cache/cachedStores");
+const cachedStores = require("../cache/");
 const storeName = "anchors";
 
 function addVersion(anchorId, newHashLinkId, callback) {
-    const cache = cachedStores.getCache(storeName);
+    const cache = cachedStores.getCacheForVault(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -12511,10 +12529,10 @@ function addVersion(anchorId, newHashLinkId, callback) {
 }
 
 function versions(anchorId, callback) {
-    const cache = cachedStores.getCache(storeName);
+    const cache = cachedStores.getCacheForVault(storeName);
     cache.get(anchorId, (err, hashLinkIds) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
         }
 
         if (typeof hashLinkIds === "undefined") {
@@ -12529,10 +12547,11 @@ module.exports = {
     addVersion,
     versions
 }
-},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
 const bdns = require("../bdns");
 const keyssi = require("../keyssi");
 const crypto = require("../crypto");
+const sc = require("../sc");
 const {fetch, doPut} = require("../http");
 const constants = require("../moduleConstants");
 const promiseRunner = require("../utils/promise-runner");
@@ -12564,7 +12583,7 @@ const versions = (powerfulKeySSI, authToken, callback) => {
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
@@ -12586,7 +12605,7 @@ const versions = (powerfulKeySSI, authToken, callback) => {
                 });
         };
 
-        promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback);
+        promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
     });
 };
 
@@ -12619,23 +12638,23 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
 
         if (!anchoringServicesArray.length) {
             return callback('No anchoring service provided');
         }
 
-        const hash = {
+        const hashLinkIds = {
             last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
             new: newHashLinkSSI.getIdentifier()
         };
-        createDigitalProof(powerfulKeySSI, hash.new, hash.last, zkpValue, (err, digitalProof) => {
+        createDigitalProof(powerfulKeySSI, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create digital proof`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create digital proof`, err));
             }
             const body = {
-                hash,
+                hashLinkIds,
                 digitalProof,
                 zkp: zkpValue
             };
@@ -12659,7 +12678,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
                 })
             };
 
-            promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback);
+            promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback, new Error("Storing a brick"));
         });
     });
 };
@@ -12676,7 +12695,7 @@ function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkI
         case constants.KEY_SSIS.SEED_SSI:
             crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
                 if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to sign data`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
                 }
                 const digitalProof = {
                     signature: crypto.encodeBase58(signature),
@@ -12689,12 +12708,17 @@ function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkI
         case constants.KEY_SSIS.CONST_SSI:
         case constants.KEY_SSIS.ARRAY_SSI:
         case constants.KEY_SSIS.WALLET_SSI:
-
             return callback(undefined, {signature:"",publicKey:""})
-            break;
         default:
-            console.log("Unknown digital proof for " + ssiType + " Defaulting to ConstSSI")
-            return callback(undefined, {signature:"",publicKey:""})
+            const securityContext = sc.createSecurityContext();
+            const keySSI = securityContext.getKeySSI(powerfulKeySSI);
+            securityContext.sign(powerfulKeySSI, dataToSign, (err, signature) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
+                }
+
+                return callback(undefined, {signature, publicKey: keySSI.getPublicKey()})
+            });
     }
 }
 
@@ -12706,7 +12730,7 @@ module.exports = {
     addVersion,
     versions
 }
-},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedAnchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+},{"../bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","../config":"/opt/privatesky/modules/opendsu/config/index.js","../crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","../http":"/opt/privatesky/modules/opendsu/http/index.js","../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../sc":"/opt/privatesky/modules/opendsu/sc/index.js","../utils/promise-runner":"/opt/privatesky/modules/opendsu/utils/promise-runner.js","./cachedAnchoring":"/opt/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
@@ -12745,8 +12769,14 @@ function BDNS() {
     this.getBrickStorages = (dlDomain, callback) => {
         if (!isInitialized) {
             return this.addPendingCall(() => {
+                if (dlDomain === undefined){
+                    callback(new Error("The domain is not defined"));
+                }
                 callback(undefined, bdnsCache[dlDomain].brickStorages);
             })
+        }
+        if (dlDomain === undefined){
+            callback(new Error("The domain is not defined"));
         }
         callback(undefined, bdnsCache[dlDomain].brickStorages);
     };
@@ -12757,7 +12787,11 @@ function BDNS() {
                 callback(undefined, bdnsCache[dlDomain].anchoringServices);
             })
         }
-        callback(undefined, bdnsCache[dlDomain].anchoringServices);
+        if(dlDomain !== undefined){
+            callback(undefined, bdnsCache[dlDomain].anchoringServices);
+        } else {
+            callback(new Error("undefined domain does not exist"));
+        }
     };
 
     this.getReplicas = (dlDomain, callback) => {
@@ -12792,23 +12826,23 @@ function BDNS() {
 
 
 module.exports = new BDNS();
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/opt/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
-const cachedStores = require("../cache/cachedStores");
+const cachedStores = require("../cache/");
 const storeName = "bricks";
 
 function putBrick(brick, callback) {
-    const cache = cachedStores.getCache(storeName);
-    crypto.hash(keySSISpace.buildSeedSSI("vault"), brick, (err, brickHash) => {
+    const cache = cachedStores.getCacheForVault(storeName);
+    crypto.hash(keySSISpace.buildTemplateSeedSSI("vault"), brick, (err, brickHash) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to create brick hash`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create brick hash`, err));
         }
 
         cache.put(brickHash, brick, (err, hash) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
             }
 
             callback(undefined, hash);
@@ -12817,10 +12851,10 @@ function putBrick(brick, callback) {
 }
 
 function getBrick(brickHash, callback) {
-    const cache = cachedStores.getCache(storeName);
+    const cache = cachedStores.getCacheForVault(storeName);
     cache.get(brickHash, (err, brickData) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get retrieve brick <${brickHash}> from cache`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get retrieve brick <${brickHash}> from cache`, err));
         }
 
         callback(undefined, brickData);
@@ -12839,12 +12873,12 @@ module.exports = {
     getBrick,
     getMultipleBricks
 }
-},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
+},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
 const constants = require("../moduleConstants");
-const cache = require("../cache/cachedStores").getCache(constants.CACHE.ENCRYPTED_BRICKS_CACHE);
+const cache = require("../cache/").getCacheForVault(constants.CACHE.ENCRYPTED_BRICKS_CACHE);
 const cachedBricking = require("./cachedBricking");
 const promiseRunner = require("../utils/promise-runner");
 const config = require("../config");
@@ -12887,7 +12921,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
     function __getBrickFromEndpoint() {
         bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
             }
 
             if (!brickStorageArray.length) {
@@ -12904,7 +12938,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
                     callback(null, data)
                 });
             }).catch((err) => {
-                return callback(createOpenDSUErrorWrapper(`Failed to get brick <${brickHash}> from brick storage`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick <${brickHash}> from brick storage`, err));
             });
         });
     }
@@ -12947,7 +12981,8 @@ const putBrick = (keySSI, brick, authToken, callback) => {
         callback = authToken;
         authToken = undefined;
     }
-    const dlDomain = keySSI.getDLDomain();
+
+    const dlDomain = keySSI.getBricksDomain();
 
     if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
         return cachedBricking.putBrick(brick, callback);
@@ -12955,7 +12990,7 @@ const putBrick = (keySSI, brick, authToken, callback) => {
 
     bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
         }
         const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
@@ -12977,7 +13012,7 @@ const putBrick = (keySSI, brick, authToken, callback) => {
                 if (!err) {
                     err = new Error('Failed to create bricks in:' + brickStorageArray);
                 }
-                return callback(err);
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create bricks",err));
             }
 
             const foundBrick = results[0];
@@ -12986,24 +13021,103 @@ const putBrick = (keySSI, brick, authToken, callback) => {
                 return callback(undefined, brickHash)
             }
 
-            cache
-                .put(brickHash, brick, (err) => {
+            cache.put(brickHash, brick, (err) => {
                     if (err) {
-                        return callback(createOpenDSUErrorWrapper(`Failed to put brick <${brickHash}> in cache`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick <${brickHash}> in cache`, err));
                     }
                     callback(undefined, brickHash);
                 })
-                .catch((err) => {
-                    callback(err);
-                });
-        });
+
+        }, new Error("Storing a brick"));
     });
 };
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-},{"../cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","../config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js":[function(require,module,exports){
+},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","../config":"/opt/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/opt/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/opt/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 (function (process){(function (){
+let stores = {};
+const config = require("opendsu").loadApi("config");
+const CacheMixin = require("../utils/PendingCallMixin");
+const constants = require("../moduleConstants");
+
+function FSCache(folderName) {
+    const self = this;
+    CacheMixin(self);
+    const fsName = "fs"; //do not tempt browserify
+    const fs = require(fsName);
+    let baseFolder = config.get(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY);
+    if (typeof baseFolder === "undefined") {
+        baseFolder = process.cwd();
+    }
+    const path = require("swarmutils").path;
+    const folderPath = path.join(baseFolder, folderName);
+    let storageFolderIsCreated = false;
+    fs.mkdir(folderPath, {recursive: true}, (err) => {
+        if (err) {
+            throw err;
+        }
+
+        storageFolderIsCreated = true;
+    });
+
+    self.get = function (key, callback) {
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.get(key, callback);
+            })
+        } else {
+            const filePath =path.join(folderPath, key)
+            fs.readFile(filePath, (err, data) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
+                }
+
+                let content = data;
+                try {
+                    if(content != undefined && content != "undefined"){
+                        content = JSON.parse(content.toString())
+                    } else {
+                        callback(undefined, undefined);
+                    }
+                } catch (e) {
+                    console.log(e, content);
+                    if(callback){
+                        return callback(e);
+                    }
+                    return undefined;
+                }
+                callback(undefined, content);
+            });
+        }
+    };
+
+    self.put = function (key, value, callback) {
+        if (Array.isArray(value)) {
+            value = JSON.stringify(value);
+        }
+        if (!storageFolderIsCreated) {
+            self.addPendingCall(() => {
+                self.put(key, value, callback);
+            });
+        } else {
+            if (!callback) {
+                callback = () => {
+                };
+            }
+            fs.writeFile(path.join(folderPath, key), value, callback);
+        }
+    }
+
+    self.set = self.put;
+}
+
+
+
+module.exports.FSCache = FSCache;
+}).call(this)}).call(this,require('_process'))
+
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","_process":"/opt/privatesky/node_modules/process/browser.js","opendsu":"opendsu","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -13090,10 +13204,13 @@ function IndexedDBCache(storeName, lifetime) {
         });
     };
 
+
+    self.set = self.put;
+
     self.delete = (key, callback) => {
             self.addSerialPendingCall((next) => {
                 let transaction;
-                let store
+                let store;
                 try {
                     transaction = db.transaction(storeName, "readwrite");
                     store = transaction.objectStore(storeName);
@@ -13119,75 +13236,62 @@ function IndexedDBCache(storeName, lifetime) {
     }
 }
 
-function FSCache(folderName) {
-    const self = this;
-    CacheMixin(self);
-    const fsName = "fs";
-    const fs = require(fsName);
-    let baseFolder = config.get(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY);
-    if (typeof baseFolder === "undefined") {
-        baseFolder = process.cwd();
-    }
-    const path = require("swarmutils").path;
-    const folderPath = path.join(baseFolder, folderName);
-    let storageFolderIsCreated = false;
-    fs.mkdir(folderPath, {recursive: true}, (err) => {
-        if (err) {
-            throw err;
-        }
 
-        storageFolderIsCreated = true;
-    });
+module.exports.IndexedDBCache  = IndexedDBCache;
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
+
+const constants = require("../moduleConstants");
+
+function MemoryCache() {
+    let storage = {};
+    const self = this;
 
     self.get = function (key, callback) {
-        if (!storageFolderIsCreated) {
-            self.addPendingCall(() => {
-                self.get(key, callback);
-            })
-        } else {
-            const filePath =path.join(folderPath, key)
-            fs.readFile(filePath, (err, data) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
-                }
-
-                let content = data;
-                try {
-                    content = JSON.parse(content.toString())
-                } catch (e) {
-                    return callback(data);
-                }
-                callback(undefined, content);
-            });
+        if(typeof key !== "string"){
+            throw new Error("Keys should be strings");
         }
+        if(callback){
+            callback(undefined, storage[key])
+        }
+        return storage[key];
     };
 
     self.put = function (key, value, callback) {
-        if (Array.isArray(value)) {
-            value = JSON.stringify(value);
+        if(typeof key !== "string"){
+            throw new Error("Keys should be strings");
         }
-        if (!storageFolderIsCreated) {
-            self.addPendingCall(() => {
-                self.put(key, value, callback);
-            });
-        } else {
-            if (!callback) {
-                callback = () => {
-                };
-            }
-            fs.writeFile(path.join(folderPath, key), value, callback);
+        storage[key] = value;
+        if(callback){
+            callback(undefined, true)
         }
     }
+
+    self.set = self.put;
 }
 
-function getCache(storeName, lifetime) {
+
+module.exports.MemoryCache = MemoryCache;
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js"}],"/opt/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
+let stores = {};
+const config = require("opendsu").loadApi("config");
+const CacheMixin = require("../utils/PendingCallMixin");
+const constants = require("../moduleConstants");
+
+const IndexedDBCache = require("./IndexeDBCache").IndexedDBCache;
+const FSCache        = require("./FSCache").FSCache;
+const MemoryCache    = require("./MemoryCache").MemoryCache;
+
+function getCacheForVault(storeName, lifetime) {
     if (typeof stores[storeName] === "undefined") {
         switch (config.get(constants.CACHE.VAULT_TYPE)) {
             case constants.CACHE.INDEXED_DB:
                 stores[storeName] = new IndexedDBCache(storeName, lifetime);
                 break;
             case constants.CACHE.FS:
-                stores[storeName] = new FSCache(storeName);
+                stores[storeName] = new FSCache(storeName, lifetime);
+                break;
+            case constants.CACHE.MEMORY:
+                stores[storeName] = new MemoryCache(storeName, lifetime);
                 break;
             case constants.CACHE.NO_CACHE:
                 break;
@@ -13199,19 +13303,20 @@ function getCache(storeName, lifetime) {
     return stores[storeName];
 }
 
+function getMemoryCache(storeName){
+    return stores[storeName] = new MemoryCache(storeName);
+}
 
 module.exports = {
-    getCache
+    getCacheForVault,
+    getMemoryCache
 }
-}).call(this)}).call(this,require('_process'))
-
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","opendsu":"opendsu","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
-(function (global){(function (){
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/opt/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/opt/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/opt/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
 const config = require("./index");
 const constants = require("../moduleConstants");
 const system = require("../system");
 const getBaseURL = require("../utils/getBaseURL");
-const createErrorWrapper = require("../error").createErrorWrapper;
+const errorModule = require("../error");
 
 system.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS, `${getBaseURL()}/bdns#x-blockchain-domain-request`);
 switch ($$.environmentType) {
@@ -13230,28 +13335,19 @@ switch ($$.environmentType) {
 
 config.set(constants.CACHE.BASE_FOLDER_CONFIG_PROPERTY, constants.CACHE.BASE_FOLDER);
 
-switch ($$.environmentType) {
-    case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
-        if (typeof self !== "undefined") {
-            self.createOpenDSUErrorWrapper = createErrorWrapper;
-        }
-        break;
-    case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
-        if (typeof window !== "undefined") {
-            window.createOpenDSUErrorWrapper = createErrorWrapper;
-        }
-        break;
-    case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
-    default:
-        if (typeof global !== "undefined") {
-            global.createOpenDSUErrorWrapper = createErrorWrapper;
-        }
-}
+setGlobalVariable("createOpenDSUErrorWrapper", errorModule.createOpenDSUErrorWrapper);
+setGlobalVariable("OpenDSUSafeCallback", errorModule.OpenDSUSafeCallback);
+setGlobalVariable("reportUserRelevantWarning", errorModule.reportUserRelevantWarning);
+setGlobalVariable("reportUserRelevantInfo", errorModule.reportUserRelevantInfo);
+setGlobalVariable("reportDevRelevantInfo", errorModule.reportDevRelevantInfo);
+setGlobalVariable("reportUserRelevantError", errorModule.reportUserRelevantError);
+setGlobalVariable("registerMandatoryCallback", errorModule.registerMandatoryCallback);
+setGlobalVariable("printOpenDSUError", errorModule.printOpenDSUError);
 
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../error":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+
+},{"../error":"/opt/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../system":"/opt/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/opt/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/opt/privatesky/modules/opendsu/config/index.js"}],"/opt/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
 
 module.exports = function(environment){
         const config = require("./index.js");
@@ -13268,7 +13364,7 @@ module.exports = function(environment){
         }
         console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
 }
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/opt/privatesky/modules/opendsu/config/index.js"}],"/opt/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
 const config = {};
 function set(key, value) {
     config[key] = value;
@@ -13295,7 +13391,7 @@ module.exports = {
 };
 
 
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/opt/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/opt/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const keySSIFactory = keySSIResolver.KeySSIFactory;
@@ -13307,11 +13403,16 @@ templateSeedSSI.load(SSITypes.SEED_SSI, "default");
 
 const { JWT_ERRORS } = jwtUtils;
 
+const getCryptoFunctionForKeySSI = (keySSI, cryptoFunctionType)=>{
+    return cryptoRegistry.getCryptoFunction(keySSI, cryptoFunctionType);
+}
 const hash = (keySSI, data, callback) => {
+    console.log("This function is obsolete");
     callback(undefined, hashSync(keySSI, data));
 };
 
 const hashSync = (keySSI, data) => {
+    console.log("This function is obsolete");
     if (typeof data === "object" && !$$.Buffer.isBuffer(data)) {
         data = JSON.stringify(data);
     }
@@ -13320,11 +13421,13 @@ const hashSync = (keySSI, data) => {
 }
 
 const encrypt = (keySSI, buffer, callback) => {
+    console.log("This function is obsolete");
     const encrypt = cryptoRegistry.getEncryptionFunction(keySSI);
     callback(undefined, encrypt(buffer, keySSI.getEncryptionKey()));
 };
 
 const decrypt = (keySSI, encryptedBuffer, callback) => {
+    console.log("This function is obsolete");
     const decrypt = cryptoRegistry.getDecryptionFunction(keySSI);
     let decryptedBuffer;
     try {
@@ -13368,11 +13471,13 @@ const generateEncryptionKey = (keySSI, callback) => {
 };
 
 const encode = (keySSI, data) => {
+    console.log("This function is obsolete");
     const encode = cryptoRegistry.getEncodingFunction(keySSI);
     return encode(data);
 };
 
 const decode = (keySSI, data) => {
+    console.log("This function is obsolete");
     const decode = cryptoRegistry.getDecodingFunction(keySSI);
     return decode(data);
 };
@@ -13501,6 +13606,7 @@ function createBloomFilter(options) {
 
 
 module.exports = {
+    getCryptoFunctionForKeySSI,
     hash,
     hashSync,
     generateRandom,
@@ -13527,7 +13633,7 @@ module.exports = {
     JWT_ERRORS,
 };
 
-},{"./jwt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/index.js","pskcrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"./jwt":"/opt/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"/opt/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/opt/privatesky/modules/psk-dbf/index.js","pskcrypto":"/opt/privatesky/modules/pskcrypto/index.js"}],"/opt/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -13753,42 +13859,840 @@ module.exports = {
     JWT_ERRORS,
 };
 
-},{"key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
-
-
-function getSelfSovereignDB(mountingPoint, sharedSSI, mySeedSSI){
-    return new require("./SSDB")(mountingPoint, sharedSSI, mySeedSSI);
-}
-
-module.exports = {
-    getSelfSovereignDB
-}
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"key-ssi-resolver":"/opt/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/db/BasicDB.js":[function(require,module,exports){
 /*
-html API space
-*/
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
-function ErrorWrapper(message, err){
-    this.previousError = err;
-    this.message = message;
-    try{
-        throw Error(message);
-    }catch (e) {
-        this.currentStack = e.stack.toString();
+    An OpenDSU  BasicDB is a simple noSQL database
+    The DB is used with a concept of "table" and rows (records) that have multiple versions
+    The support for multiple versions is offered by getVersions function and by automatically managing 2 fields in the records:
+         - the "__version" field
+         - the "__previousRecord" field  pointing to the previous version of the record
+
+    As you can see, nothing is ever realy updated, even the deletion is done by marking the record with the field "deleted"
+ */
+
+const ObservableMixin  = require("../utils/ObservableMixin");
+
+function BasicDB(storageStrategy){
+    let self = this;
+    ObservableMixin(this);
+    /*
+        Get the whole content of the table and asynchorunsly return an array with all the  records satisfying the condition tested by the filterFunction
+     */
+    this.filter = function(tableName, filterFunction, callback){
+        storageStrategy.filterTable(tableName, filterFunction, callback);
+    };
+
+    this.query = this.filter;
+
+    function getDefaultCallback(message, tableName, key){
+        return function (err,res){
+            if(err){
+                console.log(message,err);
+            }else {
+                console.log(message,`in table ${tableName} for key ${key} at version ${res.__version}`);
+            }
+
+        }
+    }
+
+    /*
+      Insert a record, return error if already exists
+    */
+    this.insertRecord = function(tableName, key, record, callback){
+        callback = callback?callback:getDefaultCallback("Inserting a record",tableName, key);
+        record.__version = 0;
+        storageStrategy.insertRecord(tableName,key, record, callback);
+    };
+
+    /*
+        Update a record, does not return an error if does not exists
+     */
+    this.updateRecord = function(tableName, key, record, callback){
+        callback = callback?callback:getDefaultCallback("Updating a record", tableName, key);
+
+        function doVersionIncAndUpdate(){
+            record.__version++;
+            if(record.__version == 0){
+                storageStrategy.insertRecord(tableName, key, record, callback);
+            } else {
+                storageStrategy.updateRecord(tableName, key, record, callback);
+            }
+        }
+
+        if(record.__version === undefined){
+            self.getRecord(tableName,key, function(err,res){
+                if(err || !res){
+                    res = {__version:-1};
+                }
+                record.__version = res.__version;
+                doVersionIncAndUpdate();
+            });
+        } else {
+            doVersionIncAndUpdate()
+        }
+    };
+
+    /*
+        Get a single row from a table
+     */
+    this.getRecord = function(tableName, key, callback){
+        storageStrategy.getRecord(tableName, key, function(err,res){
+            if(err || res.__deleted){
+                return callback( createOpenDSUErrorWrapper(`Missing record in table ${tableName} and key ${key}`, err));
+            }
+            callback(undefined,res);
+        });
+    };
+
+    /*
+      Get the history of a record, including the deleted versions
+   */
+    this.getHistory = function(tableName, key, callback){
+        storageStrategy.getRecord(tableName, key, function(err,res){
+            if(err){
+                return callback( createOpenDSUErrorWrapper(`No history for table ${tableName} and key ${key}`, err));
+            }
+            callback(undefined, self.getRecordVersions(res));
+        });
+    };
+
+    /*
+      Delete a record
+     */
+    this.deleteRecord = function(tableName, key, callback){
+        self.getRecord(tableName, key, function(err, record){
+            record.__version++;
+            record.__deleted = true;
+            storageStrategy.updateRecord(tableName, key, record, callback);
+        })
+    };
+
+    this.getRecordVersions = function(record){
+        let arrRes = []
+        while(record){
+            arrRes.unshift(record);
+            record = record.__previousRecord;
+        }
+        return arrRes;
     }
 }
 
-function createErrorWrapper(message, err){
-    return new ErrorWrapper(message, err);
+module.exports = BasicDB;
+},{"../utils/ObservableMixin":"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/opt/privatesky/modules/opendsu/db/BigFileStorageStrategy.js":[function(require,module,exports){
+
+    function BigFileStorageStrategy(loadFunction, storeFunction, afterInitialisation){
+    let volatileMemory = {
+
+    }
+    if(loadFunction){
+        loadFunction( (err, data) => {
+            if(err){
+                console.log(err.message);
+            } else {
+                volatileMemory = JSON.parse(data);
+                console.log("BigFileStorageStrategy loading state:",volatileMemory);
+            }
+            if(afterInitialisation) afterInitialisation();
+        });
+    } else {
+        if(afterInitialisation) afterInitialisation();
+    }
+    function autoStore(){
+        if(storeFunction){
+            let storedState = JSON.stringify(volatileMemory);
+            storeFunction(storedState, function(err, res){
+                if(err){
+                    reportUserRelevantError(createOpenDSUErrorWrapper("Failed to autostore db file", err));
+                }
+                console.log("BigFileStorageStrategy storing state:",storedState, volatileMemory);
+            });
+        }
+    }
+
+    function getTable(tableName){
+        let table = volatileMemory[tableName];
+        if(!table){
+            table = volatileMemory[tableName] = {};
+        }
+        return table;
+    }
+
+    /*
+       Get the whole content of the table and asynchronously returns an array with all the  records satisfying the condition tested by the filterFunction
+    */
+    this.filterTable = function(tableName, filterFunction, callback){
+        let tbl = getTable(tableName);
+        let result = [];
+        for(let n in tbl){
+            let item = tbl[n];
+            if(filterFunction(item)){
+                item.__key = n;
+                result.push(item);
+            }
+        }
+        callback(undefined,result);
+    };
+
+    /*
+      Insert a record, return error if already exists
+    */
+    this.insertRecord = function(tableName, key, record, callback){
+        let tbl = getTable(tableName);
+        if(tbl[key] !== undefined){
+            return callback(new Error("Can't insert a new record for key "+ key))
+        }
+        tbl[key] = record;
+        autoStore();
+        callback(undefined, record);
+    };
+
+    /*
+        Update a record, return error if does not exists
+     */
+    this.updateRecord = function(tableName, key, record, callback){
+        let tbl = getTable(tableName);
+        if(tbl[key] === undefined){
+            return callback(new Error("Can't update a record for key "+ key))
+        }
+        record.__previousRecord = tbl[key] ;
+        tbl[key] = record;
+        autoStore();
+        callback(undefined, record);
+    };
+
+    /*
+        Get a single row from a table
+     */
+    this.getRecord = function(tableName, key, callback){
+        let tbl = getTable(tableName);
+        let record = tbl[key];
+        if( record === undefined){
+            return callback(new Error("Can't retrieve a record for key "+ key))
+        }
+        callback(undefined,record);
+    };
+}
+module.exports = BigFileStorageStrategy;
+},{}],"/opt/privatesky/modules/opendsu/db/SSDB.js":[function(require,module,exports){
+/*
+    An OpenDSU  Data Base (DB) is a simple noSQL database offered by OpenDSU for programmers to handle tasks where multiple users are contributing to a database.
+    The DB is used with a concept of "table" as described bellow:
+     - users are sharing information in the database with other users in a self sovereign way
+        - users are capable to read data from other users
+        - users are keeping strict audiatbility and ownership on written data (they share only sReadSSI and not SeedSSIs with other users)
+     - users are working with a concept of "tables" at a logical level:  however each user has a "shard" that he is updating
+     - the data stored as a map of objects. The objects have a primary key and are indexed by this primary key
+     -  the array of objects from all users is automatically merged when the user is reading a table.
+
+
+       The initialisation a DB can be done using and "mountingPoint" and 2 KeySSIs:
+       - sharedSSI :
+                - typically is a sReadSSI that users  use for reading data
+                - if sharedSSI is a SeedSSI, that this can be used  in the wallets belonging to the organisation to enrol new users.
+       - mySeedSSI: the current user use it to write data in its shard
+ */
+
+
+function SSDB(mountingPoint, sharedSSI, mySeedSSI){
+
+    /*
+        Get the whole content of the table and returns an array with all the  records satisfying the condition tested by the filterFunction
+     */
+    this.filterTable = function(tableName, filterFunction){
+
+    };
+
+
+    /*
+        Update the content of my part of the table
+     */
+    this.updateMyShard = function(tableName, shardObject){
+
+    };
+
+
+    /*
+        Get a single row from a table
+     */
+    this.getRow = function(tableName, key){
+
+    };
+
+    /*
+        Update a single row
+     */
+    this.updateRow = function(tableName, key, value){
+
+    };
+
+
+    /*
+       Insert a single row
+     */
+    this.insertRow = function(tableName, key, value){
+
+    };
+
+
+    /*
+      Delete a single row
+     */
+    this.deleteRow = function(tableName, key, value){
+
+    };
+
+
+    /*
+      Enrol a user by mounting the sReadSSI in the list of users
+     */
+    this.enrolUser = function(userName, sReadSSI){
+
+    };
+
+    /*
+      Enrol a user by mounting the sReadSSI in the list of users
+     */
+    this.removeUser = function(userName, sReadSSI){
+
+    };
+}
+
+module.exports = SSDB;
+},{}],"/opt/privatesky/modules/opendsu/db/SharedDB.js":[function(require,module,exports){
+
+
+/*
+    A shared DB is a baseDB stored in a writable DSU mounted in a /data folder in another wrapper DSU.
+    This scheme is useful to share the database without sharing the SeedSSI of the wrapper DSU as this is usually used for signing, etc
+ */
+function getSharedDB(keySSI, dbName){
+    let db;
+    let dbModule = require("./index.js");
+    let storageDSU;
+    let shareableSSI;
+    let skipFirstRead = false;
+    let pendingReadFunctionCallback = undefined;
+
+    if(!dbName){
+        throw new Error("Please provide a database name");
+    }
+
+    let doStorageDSUInitialisation = registerMandatoryCallback(
+            function (dsu, ssi, skip) {
+            storageDSU = dsu;
+            shareableSSI = ssi;
+            skipFirstRead = skip;
+            if(pendingReadFunctionCallback){
+                if (!skipFirstRead) {
+                    console.log("Reading state during initialisation for:",keySSI.getAnchorId());
+                    readFunction(pendingReadFunctionCallback);
+                } else {
+                    pendingReadFunctionCallback(undefined, "{}");
+                }
+            }
+            db.dispatchEvent("initialised", storageDSU);
+        }, 10000);
+
+    let resolver = require("../resolver");
+    let keySSIApis = require("../keyssi");
+    let constants = require("../moduleConstants");
+    let bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+
+    if(keySSI.getTypeName() === constants.KEY_SSIS.SEED_SSI){
+        let writableDSU;
+        function createWritableDSU(){
+            let writableSSI = keySSIApis.createTemplateKeySSI(constants.KEY_SSIS.SEED_SSI, keySSI.getDLDomain());
+            resolver.createDSU(writableSSI, function(err,res){
+                writableDSU = res;
+                createWrapperDSU();
+            });
+        }
+        function createWrapperDSU(){
+            resolver.createDSUForExistingSSI(keySSI, function(err,res){
+                res.mount("/data", writableDSU.getCreationSSI(), function(err, resSSI){
+                    if(err){
+                        return reportUserRelevantError("Failed to create writable DSU while initialising shared database " + dbName, err);
+                    }
+                    doStorageDSUInitialisation(res, keySSI.derive(), true);
+                });
+            });
+        }
+        reportUserRelevantWarning("Creating a new shared database");
+        createWritableDSU();
+    } else {
+        resolver.loadDSU(keySSI, function(err,res){
+            if(err){
+                reportUserRelevantError("Failed to load the DSU of a shared database " + dbName, err);
+            }
+            doStorageDSUInitialisation(res, keySSI, false);
+            reportUserRelevantWarning("Loading a shared database");
+        });
+    }
+
+
+    function readFunction(callback){
+        if(storageDSU){
+            if(skipFirstRead) {
+                callback(undefined, "{}");
+            } else {
+                console.log("Reading state for:",keySSI.getAnchorId());
+                storageDSU.readFile(`/data/${dbName}`, callback);
+            }
+        } else {
+            pendingReadFunctionCallback = callback;
+        }
+    }
+
+    function writeFunction(dbState,callback){
+        storageDSU.writeFile(`/data/${dbName}`,dbState, callback);
+    }
+    let storageStrategy = dbModule.getBigFileStorageStrategy(readFunction, writeFunction, onInitialisationDone);
+
+    db = bindAutoPendingFunctions(dbModule.getBasicDB(storageStrategy), {});
+
+    function onInitialisationDone(){
+        setTimeout(function(){
+            db.finishInitialisation();
+        },1)
+    }
+
+    db.getShareableSSI = function(){
+        return shareableSSI;
+    }
+    return db;
+}
+
+module.exports.getSharedDB = getSharedDB;
+},{"../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../resolver":"/opt/privatesky/modules/opendsu/resolver/index.js","../utils/BindAutoPendingFunctions":"/opt/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./index.js":"/opt/privatesky/modules/opendsu/db/index.js"}],"/opt/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+
+function getSelfSovereignDB(mountingPoint, sharedSSI, mySeedSSI){
+    return new (require("./SSDB"))(mountingPoint, sharedSSI, mySeedSSI);
+}
+
+function getBasicDB(storageStrategy){
+    return new (require("./BasicDB"))(storageStrategy);
+}
+
+function getBigFileStorageStrategy(readFunction, writeFunction, onInitialisationDone){
+    return new (require("./BigFileStorageStrategy"))(readFunction, writeFunction, onInitialisationDone);
+}
+
+let getSharedDB = require("./SharedDB").getSharedDB;
+
+module.exports = {
+    getSelfSovereignDB,
+    getBasicDB,
+    getSharedDB,
+    getBigFileStorageStrategy
+}
+
+},{"./BasicDB":"/opt/privatesky/modules/opendsu/db/BasicDB.js","./BigFileStorageStrategy":"/opt/privatesky/modules/opendsu/db/BigFileStorageStrategy.js","./SSDB":"/opt/privatesky/modules/opendsu/db/SSDB.js","./SharedDB":"/opt/privatesky/modules/opendsu/db/SharedDB.js"}],"/opt/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+/*
+html API space
+*/
+},{}],"/opt/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
+const fs = require("fs");
+const openDSU = require("opendsu");
+const keyssi = openDSU.loadApi("keyssi");
+const resolver = openDSU.loadApi("resolver");
+
+const operations = {
+    DELETE: "delete",
+    ADD_FOLDER: "addfolder",
+    ADD_FILE: "addfile",
+    MOUNT: "mount"
+}
+
+/**
+ * Automates the Dossier Building process
+ * Call via
+ * <pre>
+ *     builder.buildDossier(config, commands, callback)
+ * </pre>
+ * where the config is as follows (this config is generated by the buildDossier script in octopus given the proper commands):
+ * <pre>
+ *     {
+ *          "seed": "./seed",
+ *          "domain": "default",
+ *     }
+ * </pre>
+ * For a Simple SSApp (with only mounting of cardinal/themes and creation of code folder) the commands would be like:
+ * <pre>
+ *     delete /
+ *     addfolder code
+ *     mount ../cardinal/seed /cardinal
+ *     mount ../themes/'*'/seed /themes/'*'
+ * </pre>
+ */
+const DossierBuilder = function(){
+
+    /**
+     * recursively executes the provided func with the dossier and each of the provided arguments
+     * @param {DSU Archive} dossier: The DSU instance
+     * @param {function} func: function that accepts the dossier and one param as arguments
+     * @param {any} arguments: a list of arguments to be consumed by the func param
+     * @param {function} callback: callback function. The first argument must be err
+     */
+    let execute = function (dossier, func, arguments, callback) {
+        let arg = arguments.pop();
+        if (! arg)
+            return callback();
+        let options = typeof arg === 'object' && arg.options ? arg.options : undefined;
+        func(dossier, arg, options, (err, result) => {
+            if (err)
+                return callback(err);
+
+            if (arguments.length !== 0) {
+                execute(dossier, func, arguments, callback);
+            } else {
+                callback(undefined, result);
+            }
+        });
+    };
+
+    let del = function (bar, path, options, callback) {
+        if (typeof options === 'function'){
+            callback = options;
+            options = {}
+        }
+        options = options || {ignoreMounts: false};
+        console.log("Deleting " + path);
+        bar.delete(path, options, err => callback(err, bar));
+    };
+
+    let addFolder = function (folder_root = "/") {
+        return function (bar, arg, options, callback){
+            if (typeof options === 'function'){
+                callback = options;
+                options = {}
+            }
+            options = options || {batch: false, encrypt: false};
+            console.log("Adding Folder " + folder_root + arg)
+            bar.addFolder(arg, folder_root, options, err => callback(err, bar));
+        };
+    };
+
+    let addFile = function (bar, arg, options, callback) {
+        if (typeof options === 'function'){
+            callback = options;
+            options = {}
+        }
+        options = options || {encrypt: true, ignoreMounts: false}
+        console.log("Copying file " + arg.from + " to " + arg.to)
+        bar.addFile(arg.from, arg.to, options, err => callback(err, bar));
+    };
+
+    let mount = function (bar, arg, options, callback) {
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined
+        }
+
+        readFile(arg.seed_path, (err, data) => {
+            if (err)
+                return callback(err);
+            let seed = data.toString();
+            console.log("Mounting " + arg.seed_path + " with seed " + seed + " to " + arg.mount_point);
+            bar.mount(arg.mount_point, seed, err => callback(err, bar));
+        });
+    };
+
+    let mount_folders = function (bar, arg, callback) {
+        let base_path = arg.seed_path.split("*");
+        let names = fs.readdirSync(base_path[0]);
+        let arguments = names.map(n => {
+            return {
+                "seed_path": arg.seed_path.replace("*", n),
+                "mount_point": arg.mount_point.replace("*", n)
+            };
+        });
+        execute(bar, mount, arguments, callback);
+    };
+
+    let evaluate_mount = function(bar, cmd, callback){
+        let arguments = {
+            "seed_path": cmd[0],
+            "mount_point": cmd[1]
+        };
+
+        if (!arguments.seed_path.match(/[\\/]\*[\\/]/))
+            mount(bar, arguments, callback);             // single mount
+        else
+            mount_folders(bar, arguments, callback);     // folder mount
+    };
+
+    let createDossier = function (conf, commands, callback) {
+        console.log("creating a new dossier...")
+        resolver.createDSU(keyssi.buildTemplateSeedSSI(conf.domain), (err, bar) => {
+            if (err)
+                return callback(err);
+            updateDossier(bar, conf, commands, callback);
+        });
+    };
+
+    let readFile = function (filePath, callback) {
+        fs.readFile(filePath, (err, content) => {
+            if (err || content.length === 0)
+                return callback(err);
+
+            callback(undefined, content.toString());
+        })
+    };
+
+    let writeFile = function (filePath, data, callback) {
+        fs.writeFile(filePath, data, (err) => {
+            if (err)
+                return callback(err);
+            callback(undefined, data.toString());
+        });
+    };
+
+    let storeKeySSI = function (seed_path, keySSI, callback) {
+        writeFile(seed_path, keySSI, callback);
+    };
+
+    let runCommand = function(bar, command, callback){
+        let cmd = command.split(/\s+/);
+        switch (cmd.shift().toLowerCase()){
+            case operations.DELETE:
+                execute(bar, del, cmd, callback);
+                break;
+            case operations.ADD_FOLDER:
+                execute(bar, addFolder(), cmd, callback);
+                break;
+            case operations.ADD_FILE:
+                let arg = {
+                    "from": cmd[0],
+                    "to": cmd[1]
+                }
+                addFile(bar, arg, callback);
+                break;
+            case operations.MOUNT:
+                evaluate_mount(bar, cmd, callback)
+                break;
+            default:
+                return callback(new Error("Invalid operation requested: " + command));
+        }
+    };
+
+    let saveDSU = function(bar, cfg, callback){
+        bar.getKeySSIAsString((err, barKeySSI) => {
+            if (err)
+                return callback(err);
+            storeKeySSI(cfg.seed, barKeySSI, callback);
+        });
+    };
+
+    let updateDossier = function(bar, cfg, commands, callback) {
+        if (commands.length === 0)
+            return saveDSU(bar, cfg, callback);
+        let cmd = commands.shift();
+        runCommand(bar, cmd, (err, updated_bar) => {
+            if (err)
+                return callback(err);
+            updateDossier(updated_bar, cfg, commands, callback);
+        });
+    };
+
+    this.buildDossier = function(cfg, commands, callback){
+        if (typeof commands === 'function'){
+            callback = commands;
+            commands = [];
+        }
+
+        readFile(cfg.seed, (err, content) => {
+            if (err || content.length === 0)
+                return createDossier(cfg, commands, callback);
+
+            let keySSI;
+            try {
+                keySSI = keyssi.parse(content.toString());
+            } catch (err) {
+                console.log("Invalid keySSI");
+                return createDossier(cfg, commands, callback);
+            }
+
+            if (keySSI.getDLDomain() !== cfg.domain) {
+                console.log("Domain change detected.");
+                return createDossier(cfg, commands, callback);
+            }
+
+            let identifier = content.toString();
+            resolver.loadDSU(identifier, (err, bar) => {
+                if (err){
+                    console.log("DSU not available. Creating a new DSU for", identifier);
+                    return resolver.createDSU(identifier, {useSSIAsIdentifier: true}, (err, bar)=>{
+                        if(err){
+                            return callback(err);
+                        }
+
+                        updateDossier(bar, cfg, commands, callback);
+                    });
+                }
+                console.log("Dossier updating...");
+                updateDossier(bar, cfg, commands, callback);
+            });
+        });
+    };
+};
+
+module.exports = DossierBuilder;
+
+},{"fs":"/opt/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
+/*
+html API space
+*/
+
+const getDossierBuilder = () => {
+    return new (require("./DossierBuilder"))()
 }
 
 module.exports = {
-    createErrorWrapper
+    getDossierBuilder
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
+},{"./DossierBuilder":"/opt/privatesky/modules/opendsu/dt/DossierBuilder.js"}],"/opt/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+function ErrorWrapper(message, err, otherErrors){
+    let newErr;
+    try{
+        throw Error(message);
+    }catch (e) {
+        newErr = e;
+    }
+    newErr.previousError = err;
+    newErr.debug_message = message;
+    if(err){
+        newErr.debug_stack   = err.stack;
+    }
+    if(otherErrors){
+        newErr.otherErrors = otherErrors;
+    }
+    return newErr;
+}
+
+function createOpenDSUErrorWrapper(message, err, otherErrors){
+    if(typeof message !== "string"){
+        if(typeof err != "undefined"){
+            err = message;
+            message = "Wrong usage of createErrorWrapper";
+        } else {
+            message = "Wrong usage of createErrorWrapper";
+        }
+    }
+    return ErrorWrapper(message, err, otherErrors);
+}
+
+function registerMandatoryCallback(callback, timeout){
+    if(timeout == undefined){
+        timeout = 5000; //5 seconds
+    }
+    let callbackCalled = false;
+    let callStackErr = false;
+    try{
+        throw new Error("Callback should be called");
+    } catch(err){
+        callStackErr = err;
+    }
+    setTimeout(function(){
+        if(!callbackCalled){
+            reportUserRelevantError("Expected callback not called after " + timeout + " seconds. The calling stack is here: ", callStackErr);
+        }
+    }, timeout);
+
+    return function(...args){
+        callbackCalled = true;
+        callback(...args);
+    };
+}
+
+function OpenDSUSafeCallback(callback){
+    if(callback && typeof callback === 'function') {
+        return callback;
+    }
+    else return function(err, res){
+        if(err){
+            reportUserRelevantError("Unexpected error happened without proper handling:", err);
+        } else {
+            reportUserRelevantWarning("Ignored result. Please add a proper callback when using this function! " + res)
+        }
+    }
+}
+
+let errorObservers = [];
+let infoObservers = [];
+let warnObservers = [];
+let devObservers = [];
+function reportUserRelevantError(message, err){
+    errorObservers.forEach( c=> {
+        c(message, err);
+    })
+    console.error(message, err);
+}
+
+function reportUserRelevantWarning(message){
+    warnObservers.forEach( c=> {
+        c(message);
+    })
+    console.log(">>>",message);
+}
+
+
+function reportUserRelevantInfo(message){
+    infoObservers.forEach( c=> {
+        c(message);
+    })
+    console.log(">>>",message);
+}
+
+function reportDevRelevantInfo(message){
+    devObservers.forEach( c=> {
+        c(message);
+    })
+    console.log(">>>",message);
+}
+
+function observeUserRelevantMessages(type, callback){
+    switch(type){
+        case "error": errorObservers.push(callback);break;
+        case "info": infoObservers.push(callback);break;
+        case "warn": warnObservers.push(callback);break;
+        case "dev": devObservers.push(callback);break;
+        default: devObservers.push(callback);break;
+    }
+}
+
+function printErrorWrapper(ew){
+    let level = 0;
+     while(ew){
+         console.log("Error at layer ",level," :", ew);
+         level++;
+         ew = ew.previousError;
+     }
+}
+
+function printOpenDSUError(...args){
+    for( let elem of args){
+        if( typeof elem.previousError !=  "undefined"){
+            printErrorWrapper(elem);
+        } else {
+            console.log(elem);
+        }
+    }
+}
+
+module.exports = {
+    createOpenDSUErrorWrapper,
+    reportUserRelevantError,
+    reportUserRelevantWarning,
+    reportUserRelevantInfo,
+    reportDevRelevantInfo,
+    observeUserRelevantMessages,
+    OpenDSUSafeCallback,
+    registerMandatoryCallback,
+    printOpenDSUError
+}
+
+},{}],"/opt/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -13797,12 +14701,6 @@ function generateMethodForRequestWithData(httpMethod) {
 		}
 
 		const xhr = new XMLHttpRequest();
-
-		if(typeof options.headers !== "undefined"){
-			for(let name in options.headers){
-				xhr.setRequestHeader(name, options.headers[name]);
-			}
-		}
 
 		xhr.onload = function () {
 			if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
@@ -13824,6 +14722,11 @@ function generateMethodForRequestWithData(httpMethod) {
 
 		xhr.open(httpMethod, url, true);
 		//xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		if(typeof options.headers !== "undefined"){
+			for(let name in options.headers){
+				xhr.setRequestHeader(name, options.headers[name]);
+			}
+		}
 
 		if(data && data.pipe && typeof data.pipe === "function"){
 			const buffers = [];
@@ -13851,12 +14754,21 @@ function generateMethodForRequestWithData(httpMethod) {
 	};
 }
 
+function doGet(url, callback){
+	fetch(url)
+		.then(response => response.text())
+		.then(data => callback(undefined, data))
+		.catch(err => callback(err));
+
+}
+
 module.exports = {
 	fetch: fetch,
 	doPost: generateMethodForRequestWithData('POST'),
-	doPut: generateMethodForRequestWithData('PUT')
+	doPut: generateMethodForRequestWithData('PUT'),
+	doGet
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -13888,7 +14800,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
+},{"./browser":"/opt/privatesky/modules/opendsu/http/browser/index.js","./node":"/opt/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/opt/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/opt/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/opt/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js"}],"/opt/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -13957,7 +14869,12 @@ function fetch(url, options = {}) {
 
 	let promise = new Promise((resolve, reject) => {
 		decipherUrl(url, options);
-		let request = protocol.request(url, {}, (response) => {
+
+		if(options && options.method && options.method.toLowerCase() !== "get"){
+			throw Error("http.fetch on nodejs environment should be used only for GET requests for the moment. Use http.doPost instead.");
+		}
+
+		let request = protocol.request(url, options, (response) => {
 			resolve(new Response(request, response));
 		});
 
@@ -14007,7 +14924,7 @@ function Response(httpRequest, httpResponse) {
 				}
 				callback(undefined, rawData);
 			} catch (err) {
-				callback(createOpenDSUErrorWrapper(`Failed to process raw data`, err));
+				OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to process raw data`, err));
 			} finally {
 				//trying to prevent getting ECONNRESET error after getting our response
 				httpRequest.abort();
@@ -14094,7 +15011,7 @@ function Response(httpRequest, httpResponse) {
 module.exports = {
 	fetch
 }
-},{"http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
+},{"http":"/opt/privatesky/node_modules/stream-http/index.js","https":"/opt/privatesky/node_modules/https-browserify/index.js","url":"/opt/privatesky/node_modules/url/url.js"}],"/opt/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 (function (process){(function (){
 const http = require("http");
 const https = require("https");
@@ -14205,7 +15122,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"./fetch":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/node/fetch.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","https":"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./fetch":"/opt/privatesky/modules/opendsu/http/node/fetch.js","_process":"/opt/privatesky/node_modules/process/browser.js","http":"/opt/privatesky/node_modules/stream-http/index.js","https":"/opt/privatesky/node_modules/https-browserify/index.js","url":"/opt/privatesky/node_modules/url/url.js"}],"/opt/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -14252,7 +15169,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
 function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 	const requests = {};
@@ -14370,7 +15287,7 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 }
 
 module.exports = PollRequestManager;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
 let interceptors = [];
 
 function registerInterceptor(interceptor){
@@ -14397,7 +15314,7 @@ function callInterceptors(target, callback){
         let interceptor = interceptors[index];
         interceptor(target, (err, result)=>{
             if(err){
-                return callback(createOpenDSUErrorWrapper(`Failed to execute interceptor`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute interceptor`, err));
             }
             return executeInterceptor(result);
         });
@@ -14472,7 +15389,7 @@ function enable(handler){
 }
 
 module.exports = {enable};
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 const SSITypes = keySSIResolver.SSITypes;
@@ -14481,23 +15398,43 @@ const parse = (ssiString, options) => {
     return keySSIFactory.create(ssiString, options);
 };
 
-const buildSeedSSI = (domain, specificString, control, vn, hint, callback) => {
-    return buildTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
+const createSeedSSI = (domain, vn, hint, callback) => {
+    if(typeof vn == "function"){
+        callback = vn;
+        vn = undefined;
+    }
+
+    if(typeof hint == "function"){
+        callback = hint;
+        hint = undefined;
+    }
+
+    let seedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
+
+    seedSSI.initialize(domain, undefined, undefined, vn, hint, callback );
+    return seedSSI;
 };
 
-const buildSReadSSI = (domain,  specificString, control, vn, hint, callback) => {
-    return buildTemplateKeySSI(SSITypes.SREAD_SSI, domain, specificString, control, vn, hint, callback);
+const buildSeedSSI = function(){
+    throw new Error("Obsoleted, use buildTemplateSeedSSI");
+}
+
+const buildTemplateSeedSSI = (domain, specificString, control, vn, hint, callback) => {
+    console.log("This function is obsolete. Use createTemplateSeedSSI instead.");
+    return createTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildSZeroAccessSSI = (domain,  specificString, control, vn, hint, callback) => {
-    return buildTemplateKeySSI(SSITypes.SZERO_ACCESS_SSI, domain, specificString, control, vn, hint, callback);
+const createTemplateSeedSSI = (domain, specificString, control, vn, hint, callback) => {
+    return createTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const buildHashLinkSSI = (domain, specificString, control, vn, hint, callback) => {
-    return buildTemplateKeySSI(SSITypes.HASH_LINK_SSI, domain,  specificString, control, vn, hint, callback);
+const createHashLinkSSI = (domain, hash, vn) => {
+    const hashLinkSSI = keySSIFactory.createType(SSITypes.HASH_LINK_SSI)
+    hashLinkSSI.initialize(domain, hash, vn);
+    return hashLinkSSI;
 };
 
-const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint, callback) => {
+const createTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint, callback) => {
     //only ssiType and domain are mandatory arguments
     if (typeof specificString === "function") {
         callback = specificString;
@@ -14524,9 +15461,10 @@ const buildTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint,
 };
 
 
-const buildWalletSSI = (domain, arrayWIthCredentials, hint) => {
+const buildTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
+    console.log("This function is obsolete. Use createTemplateWalletSSI instead.");
     try{
-        let ssi  = buildArraySSI(domain, arrayWIthCredentials,undefined,hint);
+        let ssi  = createArraySSI(domain, arrayWIthCredentials,undefined,hint);
         ssi.cast(SSITypes.WALLET_SSI);
         return parse(ssi.getIdentifier());
     } catch(err){
@@ -14534,28 +15472,45 @@ const buildWalletSSI = (domain, arrayWIthCredentials, hint) => {
     }
 };
 
-const buildArraySSI = (domain, arr, vn, hint, callback) => {
+const createTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
+    try{
+        let ssi  = createArraySSI(domain, arrayWIthCredentials,undefined,hint);
+        ssi.cast(SSITypes.WALLET_SSI);
+        return parse(ssi.getIdentifier());
+    } catch(err){
+        console.log("Failing to build WalletSSI");
+    }
+};
+const createArraySSI = (domain, arr, vn, hint, callback) => {
     const arraySSI = keySSIFactory.createType(SSITypes.ARRAY_SSI);
     arraySSI.initialize(domain, arr, vn, hint);
     return arraySSI;
 };
 
 const buildSymmetricalEncryptionSSI = (domain, encryptionKey, control, vn, hint, callback) => {
-    return buildTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
+    console.log("This function is obsolete. Use createTemplateSymmetricalEncryptionSSI instead.");
+    return createTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
+};
+
+const createTemplateSymmetricalEncryptionSSI = (domain, encryptionKey, control, vn, hint, callback) => {
+    return createTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
 };
 
 module.exports = {
     parse,
+    createSeedSSI,
     buildSeedSSI,
-    buildWalletSSI,
-    buildSReadSSI,
-    buildSZeroAccessSSI,
-    buildHashLinkSSI,
-    buildTemplateKeySSI,
-    buildArraySSI,
+    buildTemplateSeedSSI,
+    buildTemplateWalletSSI,
+    createTemplateSeedSSI,
+    createTemplateSymmetricalEncryptionSSI,
+    createTemplateWalletSSI,
+    createTemplateKeySSI,
+    createHashLinkSSI,
+    createArraySSI,
     buildSymmetricalEncryptionSSI
 };
-},{"key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+},{"key-ssi-resolver":"/opt/privatesky/modules/key-ssi-resolver/index.js"}],"/opt/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
 const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
 
 let cachedKeySSIResolver = undefined;
@@ -14576,6 +15531,7 @@ module.exports = {
 	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
 	CACHE: {
 		FS: "fs",
+		MEMORY: "memory",
 		INDEXED_DB: "cache.indexedDB",
 		VAULT_TYPE: "cache.vaultType",
 		BASE_FOLDER: "internal-volume/cache",
@@ -14591,6 +15547,7 @@ module.exports = {
 		BRICKS_STORE: "bricks",
 		ANCHORS_STORE: "anchors"
 	},
+	BRICKS_DOMAIN_KEY: "bricksDomain",
 	LOADER_ENVIRONMENT_JSON:{
 		AGENT: "agent",
 		SERVER: "server",
@@ -14602,13 +15559,19 @@ module.exports = {
 			cachedKeySSIResolver = require("key-ssi-resolver");
 		}
 		 return cachedKeySSIResolver.SSITypes;
-	 }
+	 },
+	get CRYPTO_FUNCTION_TYPES(){
+		if(cachedKeySSIResolver === undefined){
+			cachedKeySSIResolver = require("key-ssi-resolver");
+		}
+		return cachedKeySSIResolver.CryptoFunctionTypes;
+	}
 }
 
 
 
 
-},{"../overwrite-require/moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/opt/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"/opt/privatesky/modules/key-ssi-resolver/index.js"}],"/opt/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -14619,7 +15582,7 @@ let bdns = require("../bdns")
 function send(keySSI, message, callback){
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
         if(err){
-            return callback(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
         let url = endpoints[0]+`/mq/send-message/${keySSI}`;
         let options = {body: message};
@@ -14629,7 +15592,7 @@ function send(keySSI, message, callback){
         request.then((response)=>{
             callback(undefined, response);
         }).catch((err)=>{
-            return callback(createOpenDSUErrorWrapper(`Failed to send message`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to send message`, err));
         });
     });
 }
@@ -14685,7 +15648,7 @@ module.exports = {
     getHandler,
     unsubscribe
 }
-},{"../bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","../http":"/opt/privatesky/modules/opendsu/http/index.js","../utils/observable":"/opt/privatesky/modules/opendsu/utils/observable.js"}],"/opt/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -14707,7 +15670,7 @@ function publish(keySSI, message, callback){
 		request.then((response)=>{
 			callback(undefined, response);
 		}).catch((err)=>{
-			return callback(createOpenDSUErrorWrapper(`Failed to publish message`, err));
+			return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish message`, err));
 		});
 	});
 }
@@ -14749,10 +15712,13 @@ module.exports = {
 	getObservableHandler,
 	unsubscribe
 }
-},{"../index":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/index.js","../utils/observable":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+},{"../index":"/opt/privatesky/modules/opendsu/index.js","../utils/observable":"/opt/privatesky/modules/opendsu/utils/observable.js"}],"/opt/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
-const dsuInstances = {};
+const cache = require("../cache");
+const sc = require("../sc").createSecurityContext();
+let dsuCache = cache.getMemoryCache("DSUs");
+
 const initializeResolver = (options) => {
     options = options || {};
     return KeySSIResolver.initialize(options);
@@ -14763,17 +15729,12 @@ const registerDSUFactory = (type, factory) => {
 };
 
 function addDSUInstanceInCache(dsuInstance, callback) {
-    dsuInstance.getKeySSI((err, keySSI) => {
+    dsuInstance.getKeySSIAsString((err, keySSI) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
         }
-
-        if(typeof dsuInstances[keySSI] === "undefined"){
-            dsuInstances[keySSI] = dsuInstance;
-        }
-
+        dsuCache.set(keySSI, dsuInstance);
         callback(undefined, dsuInstance);
-
     });
 }
 
@@ -14789,10 +15750,39 @@ const createDSU = (templateKeySSI, options, callback) => {
     const keySSIResolver = initializeResolver(options);
     keySSIResolver.createDSU(templateKeySSI, options, (err, dsuInstance) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
         }
-        addDSUInstanceInCache(dsuInstance, callback);
+
+        function addInCache(err, result){
+            if (err)
+            {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
+            }
+            addDSUInstanceInCache(dsuInstance, callback);
+        }
+
+        dsuInstance.getKeySSIAsObject((err, keySSI) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get SeedSSI`, err));
+            }
+
+            sc.registerKeySSI(keySSI);
+            dsuInstance.dsuLog("DSU created on " + Date.now(), addInCache);
+        });
     });
+};
+
+
+const createDSUForExistingSSI = (ssi, options, callback) => {
+    if(typeof options === "function"){
+        callback = options;
+        options = {};
+    }
+    if(!options){
+        options = {};
+    }
+    options.useSSIAsIdentifier = true;
+    createDSU(ssi, options, callback);
 };
 
 const loadDSU = (keySSI, options, callback) => {
@@ -14806,13 +15796,15 @@ const loadDSU = (keySSI, options, callback) => {
     }
 
     const ssiId = keySSI.getIdentifier();
-    if (dsuInstances[ssiId]) {
-        return callback(undefined, dsuInstances[ssiId]);
+    let fromCache = dsuCache.get(ssiId);
+    if (fromCache){
+        return callback(undefined, fromCache);
     }
     const keySSIResolver = initializeResolver(options);
+    sc.registerKeySSI(keySSI);
     keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
         }
         addDSUInstanceInCache(dsuInstance, callback);
     });
@@ -14825,36 +15817,163 @@ const getHandler = () => {
 
 
 function invalidateDSUCache(dsuKeySSI) {
-    const ssiId = dsuKeySSI.getIdentifier();
-    delete dsuInstances[ssiId]
+    let  ssiId = dsuKeySSI;
+    if(typeof dsuKeySSI != "string"){
+        ssiId = dsuKeySSI.getIdentifier();
+    }
+    delete dsuCache.set(ssiId,undefined);
 }
 
 module.exports = {
     createDSU,
+    createDSUForExistingSSI,
     loadDSU,
     getHandler,
     registerDSUFactory,
     invalidateDSUCache
 }
 
-},{"key-ssi-resolver":"/home/travis/build/PrivateSky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+},{"../cache":"/opt/privatesky/modules/opendsu/cache/index.js","../sc":"/opt/privatesky/modules/opendsu/sc/index.js","key-ssi-resolver":"/opt/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 /*
     Security Context related functionalities
 
  */
+const PendingCallMixin = require("../utils/PendingCallMixin");
 
 const getMainDSU = () => {
-    if (typeof rawDossier === "undefined") {
+
+    if (!globalVariableExists("rawDossier")) {
         throw Error("Main DSU does not exist in the current context.");
     }
-
-    return rawDossier;
+    return getGlobalVariable("rawDossier");
 };
 
-module.exports = {
-    getMainDSU
+const setMainDSU = (mainDSU) => {
+    return setGlobalVariable("rawDossier", mainDSU);
+};
+
+function SecurityContext(storage) {
+    const keySSISpace = require("../keyssi");
+    const crypto = require("../crypto")
+    PendingCallMixin(this);
+
+    let isInitialized = false;
+    const SECURITY_CONTEXT_PERSISTENCE_PATH = "/security_context.json";
+
+    const load = () => {
+        storage.getItem(SECURITY_CONTEXT_PERSISTENCE_PATH, (err, scData) => {
+            if (err) {
+                return console.log(err);
+            }
+
+            if ($$.Buffer.isBuffer(scData)) {
+                scData = scData.toString();
+            }
+            try {
+                keySSIs = JSON.parse(scData)
+            } catch (e) {
+                throw Error(`Failed to load security context data`);
+            }
+
+            isInitialized = true;
+            this.executePendingCalls();
+        });
+    }
+
+    let keySSIs;
+    if (typeof storage === "undefined") {
+        keySSIs = {};
+        isInitialized = true;
+    } else {
+        load();
+    }
+
+
+    this.registerKeySSI = (keySSI, callback) => {
+        if (typeof keySSI === "undefined") {
+            return callback(Error(`A SeedSSI should be specified.`));
+        }
+
+        if (typeof keySSI === "string") {
+            keySSI = keySSISpace.parse(keySSI);
+        }
+
+        let derivedKeySSI = keySSI;
+        const keySSIIdentifier = keySSI.getIdentifier();
+
+        function registerDerivedKeySSIs(derivedKeySSI) {
+            try {
+                derivedKeySSI = derivedKeySSI.derive();
+                keySSIs[derivedKeySSI.getIdentifier()] = keySSIIdentifier;
+            } catch (e) {
+                if (storage) {
+                    storage.setItem(SECURITY_CONTEXT_PERSISTENCE_PATH, (JSON.stringify(keySSIs)), callback);
+                }
+                return;
+            }
+            registerDerivedKeySSIs(derivedKeySSI);
+        }
+
+        return registerDerivedKeySSIs(derivedKeySSI);
+    };
+
+    this.getKeySSI = (keySSI, ) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                this.getKeySSI(keySSI);
+            });
+        }
+
+        if (typeof keySSI === "undefined") {
+            throw Error(`A KeySSI should be specified.`)
+        }
+
+        if (typeof keySSI !== "string") {
+            keySSI = keySSI.getIdentifier();
+        }
+
+        return keySSISpace.parse(keySSIs[keySSI]);
+    };
+
+    this.sign = (keySSI, data, callback) => {
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                this.sign(keySSI, data, callback);
+            });
+        }
+
+        const powerfulKeySSI = this.getKeySSI(keySSI);
+        crypto.sign(powerfulKeySSI, data, callback);
+    }
+
+    this.verify = (keySSI, data, signature, callback) => {
+
+    }
+
+    this.encrypt = (keySSI, data, callback) => {
+
+    };
+
+    this.decrypt = (keySSI, data, callback) => {
+
+    };
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+
+let sc;
+const createSecurityContext = (storage) => {
+    if (sc) {
+        return sc;
+    }
+
+    sc = new SecurityContext(storage);
+    return sc;
+};
+module.exports = {
+    getMainDSU,
+    setMainDSU,
+    createSecurityContext
+};
+},{"../crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/opt/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 (function (process){(function (){
 const envVariables = {};
 function getEnvironmentVariable(name){
@@ -14885,7 +16004,105 @@ module.exports = {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
+const PendingCallMixin = require("./PendingCallMixin");
+/*
+    Utility to make classes that depend on some initialisation easier to use.
+    By using the PendingCallMixin, the member function can be used but will be called in order only after proper initialisation
+ */
+
+module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
+    let originalFunctions = {};
+    for(let m in obj){
+        if(typeof obj[m] == "function"){
+            if(!exceptionList[m]){
+                originalFunctions[m] = obj[m];
+            }
+        }
+    }
+    PendingCallMixin(obj);
+    let isInitialised = false;
+
+    obj.finishInitialisation = function(){
+        isInitialised = true;
+        obj.executeSerialPendingCalls();
+    };
+
+   function getWrapper(func){
+       return function(...args){
+           if(isInitialised){
+               func(...args);
+           } else {
+               obj.addSerialPendingCall( function(next){
+                   let callback = args[args.length -1];
+                   if(typeof callback === "function"){
+                       args[args.length -1] = function(...args){
+                           callback(...args);
+                           next();
+                       }
+                   } else {
+                       next();
+                   }
+                   func(...args);
+               })
+           }
+       }.bind(obj);
+   }
+
+    for(let m in originalFunctions){
+        obj[m] = getWrapper(originalFunctions[m]);
+    }
+    return obj;
+};
+},{"./PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
+function ObservableMixin(target) {
+    let observers = {};
+
+    target.on = function(eventType, callback){
+        let arr = observers[eventType];
+        if(!arr){
+            arr = observers[eventType] = [];
+        }
+        arr.push(callback);
+    }
+
+    target.off = function(eventType, callback){
+        let arr = observers[eventType];
+        if(!arr){
+            //nothing to do...
+            reportDevRelevantInfo("Off-ing an unknown observer");
+            return;
+        }
+        let index = handlers[eventName].indexOf(callback);
+        if(index === -1){
+            reportDevRelevantInfo("Observer not found into the list of known observers.");
+            return;
+        }
+
+        handlers[eventName].splice(index, 1);
+    }
+
+    target.dispatchEvent = function(eventType, message){
+        let arr = observers[eventType];
+        if(!arr){
+            //no handlers registered
+            reportDevRelevantInfo(`No observers found for event type ${eventType}`);
+            return;
+        }
+
+        arr.forEach( c => {
+            try{
+                c(message);
+            }catch(err){
+                reportDevRelevantInfo(`Caught an error during the delivery of ${eventType} to ${c.toString()}`);
+            }
+
+        });
+    }
+}
+
+module.exports = ObservableMixin;
+},{}],"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
 function PendingCallMixin(target) {
     let pendingCalls = [];
     let serialPendingCalls = [];
@@ -14916,7 +16133,7 @@ function PendingCallMixin(target) {
         const fn = serialPendingCalls.shift();
         if (typeof fn !== "undefined") {
             try {
-                fn(function (arg) {
+                fn(function () {
                     setTimeout(() => {
                         next();
                     }, 0);
@@ -14934,7 +16151,7 @@ function PendingCallMixin(target) {
 }
 
 module.exports = PendingCallMixin;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -14944,7 +16161,7 @@ function shuffle(array) {
 
 module.exports.shuffle = shuffle;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const system = require("../system");
 function getBaseURL(){
@@ -14977,50 +16194,15 @@ function getBaseURL(){
 }
 
 module.exports = getBaseURL;
-},{"../moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
-function Observable(){
-	let handlers = {};
-
-	this.dispatch = function(eventName, data){
-		if(typeof handlers[eventName] === "undefined"){
-			//no handlers registered
-			return;
-		}
-		let subscribers = handlers[eventName];
-		subscribers.forEach((subscriber)=>{
-			try{
-				subscriber(data);
-			}catch(err){
-				// what to do if we get an error?!
-			}
-		});
-	}
-
-	this.on = function(eventName, callback){
-		if(typeof handlers[eventName] === "undefined"){
-			handlers[eventName] = [];
-		}
-		handlers[eventName].push(callback);
-	}
-
-	this.off = function(eventName, callback){
-		if(typeof handlers[eventName] === "undefined" || !Array.isArray(handlers[eventName])){
-			//nothing to do...
-			return;
-		}
-		let index = handlers[eventName].indexOf(callback);
-		if(index === -1){
-			return;
-		}
-
-		handlers[eventName].splice(index, 1);
-	}
-}
-
+},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../system":"/opt/privatesky/modules/opendsu/system/index.js"}],"/opt/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
-	return new Observable();
+	let observableMixin = require("./ObservableMixin");
+	let obs = {};
+
+	observableMixin(obs);
+	return obs;
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+},{"./ObservableMixin":"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/opt/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
 const arrayUtils = require("./array");
 
 function validateMajorityRunAllWithSuccess(successResults, errorResults, totalCount) {
@@ -15051,7 +16233,7 @@ function runSinglePromise(executePromise, promiseInput) {
     });
 }
 
-function runAll(listEntries, executeEntry, validateResults, callback) {
+function runAll(listEntries, executeEntry, validateResults, callback, debugInfo) {
   if (typeof validateResults !== "function") {
     validateResults = validateMajorityRunAllWithSuccess;
   }
@@ -15070,12 +16252,20 @@ function runAll(listEntries, executeEntry, validateResults, callback) {
         return callback(null, successExecutionResults);
       }
 
-      return callback("FAILED");
+      let baseError = debugInfo;
+      if(errorExecutions.length){
+        if(baseError){
+          baseError = createOpenDSUErrorWrapper("Error found during runAll", errorExecutions[0], debugInfo);
+        }
+      }
+      return callback(createOpenDSUErrorWrapper("FAILED to runAll " , baseError));
     })
-    .catch((error) => callback(error));
+    .catch(( error) => {
+      callback(error)
+    });
 }
 
-function runOneSuccessful(listEntries, executeEntry, callback) {
+function runOneSuccessful(listEntries, executeEntry, callback, debugInfo) {
   if (!listEntries.length) {
     return callback("EMPTY_LIST");
   }
@@ -15092,7 +16282,7 @@ function runOneSuccessful(listEntries, executeEntry, callback) {
       })
       .catch((err) => {
         if (!availableListEntries.length) {
-          return callback(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
+          return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
         }
 
         const nextEntry = availableListEntries.shift();
@@ -15103,7 +16293,7 @@ function runOneSuccessful(listEntries, executeEntry, callback) {
   executeForSingleEntry(entry);
 }
 
-function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback) {
+function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback, debugInfo) {
   const totalCount = listEntries.length;
 
   if (!initialRunCount || typeof initialRunCount !== "number") {
@@ -15132,7 +16322,7 @@ function runEnoughForMajority(listEntries, executeEntry, initialRunCount, valida
 
     if (!remainingEntries.length) {
       // the results weren't validated, but we don't have any other entry to run
-      return callback("FAILED");
+      return callback(new Error("FAILED to run enough in majority"+debugInfo));
     }
 
     const nextEntry = remainingEntries.shift();
@@ -15165,7 +16355,7 @@ module.exports = {
   runEnoughForMajority,
 };
 
-},{"./array":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/utils/array.js"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js":[function(require,module,exports){
+},{"./array":"/opt/privatesky/modules/opendsu/utils/array.js"}],"/opt/privatesky/modules/overwrite-require/index.js":[function(require,module,exports){
 (function (process,global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -15521,7 +16711,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./moduleConstants":"/opt/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
@@ -15531,7 +16721,7 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (process,global){(function (){
 let logger = console;
 
@@ -15624,9 +16814,9 @@ $$.registerGlobalSymbol("logError", function (err) {
  * @name $$#fixMe
  * @param {...*} args
  */
-console.log("Fix the fixMe to not display on console but put in logs");
+
 $$.registerGlobalSymbol("fixMe", function (...args) {
-    //$$.log(...args);
+    console.log("Fix this:", ...args);
 });
 
 /**
@@ -15854,7 +17044,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","psklogger":false,"swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/index.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","psklogger":false,"swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/psk-cache/index.js":[function(require,module,exports){
 const Cache = require("./lib/Cache")
 let cacheInstance;
 
@@ -15891,7 +17081,7 @@ module.exports = {
     }
 };
 
-},{"./lib/Cache":"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"./lib/Cache":"/opt/privatesky/modules/psk-cache/lib/Cache.js"}],"/opt/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -16010,11 +17200,11 @@ function Cache(options) {
 
 module.exports = Cache;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/psk-dbf/index.js":[function(require,module,exports){
 const BloomFilter = require("./src/bloom-filter");
 module.exports = BloomFilter;
 
-},{"./src/bloom-filter":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/bloom-filter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/bloom-filter.js":[function(require,module,exports){
+},{"./src/bloom-filter":"/opt/privatesky/modules/psk-dbf/src/bloom-filter.js"}],"/opt/privatesky/modules/psk-dbf/src/bloom-filter.js":[function(require,module,exports){
 const sha2 = require("./crypto-hash-functions/sha2");
 const linearFowlerNollVoJenkinsHashFunction = require("./hash-functions/linear-fowler–noll–vo-jenkins-hash-function");
 const InMemoryBitCollectionStrategy = require("./in-memory-bit-collection-strategy");
@@ -16145,7 +17335,7 @@ BloomFilter.prototype.test = function (data) {
 
 module.exports = BloomFilter;
 
-},{"./crypto-hash-functions/sha2":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js","./hash-functions/linear-fowler–noll–vo-jenkins-hash-function":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js","./in-memory-bit-collection-strategy":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js":[function(require,module,exports){
+},{"./crypto-hash-functions/sha2":"/opt/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js","./hash-functions/linear-fowler–noll–vo-jenkins-hash-function":"/opt/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js","./in-memory-bit-collection-strategy":"/opt/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js"}],"/opt/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js":[function(require,module,exports){
 const crypto = require("crypto");
 
 function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
@@ -16157,7 +17347,7 @@ function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
 
 module.exports = linearFowlerNollVoJenkinsHashFunction;
 
-},{"crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js":[function(require,module,exports){
+},{"crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js":[function(require,module,exports){
 /**
  * Fowler–Noll–Vo hash function - FNV-1a hash variant
  * https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1a_hash
@@ -16197,7 +17387,7 @@ function fnv_multiply(hash) {
 
 module.exports = fowlerNollVo1a;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js":[function(require,module,exports){
 /**
  * Jenkins hash function - one at a time hash function
  * https://en.wikipedia.org/wiki/Jenkins_hash_function
@@ -16219,7 +17409,7 @@ function jenkins(key) {
 
 module.exports = jenkins;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js":[function(require,module,exports){
 const fowlerNollVo1a = require("./fowler–noll–vo-1a");
 const jenkins = require("./jenkins");
 
@@ -16230,7 +17420,7 @@ function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
 
 module.exports = linearFowlerNollVoJenkinsHashFunction;
 
-},{"./fowler–noll–vo-1a":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js","./jenkins":"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js"}],"/home/travis/build/PrivateSky/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js":[function(require,module,exports){
+},{"./fowler–noll–vo-1a":"/opt/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js","./jenkins":"/opt/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js"}],"/opt/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js":[function(require,module,exports){
 function InMemoryBitCollectionStrategy(options) {
     let { byteCount, data } = options;
 
@@ -16285,7 +17475,7 @@ InMemoryBitCollectionStrategy.prototype.length = function () {
 
 module.exports = InMemoryBitCollectionStrategy;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/pskcrypto/index.js":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -16296,7 +17486,7 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
+},{"./lib/PskCrypto":"/opt/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/opt/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/opt/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"/opt/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 function ECKeyGenerator() {
     const crypto = require('crypto');
     const KeyEncoder = require('./keyEncoder');
@@ -16342,7 +17532,7 @@ function ECKeyGenerator() {
 exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
-},{"./keyEncoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./keyEncoder":"/opt/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
@@ -16540,7 +17730,7 @@ module.exports = new PskCrypto();
 
 
 
-},{"../signsensusDS/ssutil":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js","overwrite-require":"/home/travis/build/PrivateSky/privatesky/modules/overwrite-require/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"../signsensusDS/ssutil":"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/opt/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/opt/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/opt/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js","overwrite-require":"/opt/privatesky/modules/overwrite-require/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
     const crypto = require("crypto");
     const utils = require("./utils/cryptoUtils");
@@ -16632,7 +17822,7 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-},{"./utils/cryptoUtils":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -16693,7 +17883,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js","vm":"/home/travis/build/PrivateSky/privatesky/node_modules/vm-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
+},{"./asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/opt/privatesky/node_modules/util/util.js","vm":"/opt/privatesky/node_modules/vm-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('./bignum/bn');
@@ -16704,7 +17894,7 @@ asn1.constants = require('./constants/index');
 asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
-},{"./api":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./api":"/opt/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -16823,7 +18013,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -16831,7 +18021,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
 //var assert = require('double-check').assert;
@@ -17435,7 +18625,7 @@ Node.prototype._encodePrimitive = function encodePrimitive(tag, data) {
     throw new Error('Unsupported tag: ' + tag);
 };
 
-},{"../base":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 function Reporter(options) {
@@ -17539,7 +18729,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
+},{"util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
 (function (module, exports) {
 
 'use strict';
@@ -19982,7 +21172,7 @@ Mont.prototype.invm = function invm(a) {
 
 })(typeof module === 'undefined' || module, this);
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
 var constants = require('../constants');
 
 exports.tagClass = {
@@ -20026,7 +21216,7 @@ exports.tag = {
 };
 exports.tagByName = constants._reverse(exports.tag);
 
-},{"../constants":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
+},{"../constants":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
 var constants = exports;
 
 // Helper
@@ -20047,7 +21237,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -20340,13 +21530,13 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
 var decoders = exports;
 
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 
 const asn1 = require('../asn1');
@@ -20396,7 +21586,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -20666,13 +21856,13 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -20696,7 +21886,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
+},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -20860,7 +22050,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 }
 
 module.exports = KeyEncoder;
-},{"./asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+},{"./asn1/asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/opt/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
 
@@ -20949,7 +22139,7 @@ function ecdsaVerify(data, signature, key) {
 module.exports = {
     decodeDERIntoASN1ETH
 };
-},{"../asn1/asn1":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"../asn1/asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -20974,7 +22164,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
+},{"stream":"/opt/privatesky/node_modules/stream-browserify/index.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -21109,7 +22299,7 @@ module.exports = {
     encode,
     decode
 };
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -21199,7 +22389,7 @@ module.exports = {
 };
 
 
-},{"./base58":"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/opt/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -21227,7 +22417,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":"/opt/privatesky/node_modules/stream-browserify/index.js"}],"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -21426,7 +22616,7 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/queue/index.js":[function(require,module,exports){
+},{"crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/queue/index.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -21495,11 +22685,11 @@ Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/soundpubsub/index.js":[function(require,module,exports){
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-},{"./lib/soundPubSub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
+},{"./lib/soundPubSub":"/opt/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"/opt/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -21875,7 +23065,7 @@ function SoundPubSub(){
 
 exports.soundPubSub = new SoundPubSub();
 
-},{"queue":"/home/travis/build/PrivateSky/privatesky/modules/queue/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js":[function(require,module,exports){
+},{"queue":"/opt/privatesky/modules/queue/index.js"}],"/opt/privatesky/modules/ssapp-middleware/index.js":[function(require,module,exports){
 const Middleware = require("./lib/Middleware");
 let middlewareInstance = new Middleware();
 
@@ -21883,7 +23073,7 @@ exports.getMiddleware = function(){
     return middlewareInstance;
 };
 
-},{"./lib/Middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/Middleware.js"}],"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventRequest.js":[function(require,module,exports){
+},{"./lib/Middleware":"/opt/privatesky/modules/ssapp-middleware/lib/Middleware.js"}],"/opt/privatesky/modules/ssapp-middleware/lib/EventRequest.js":[function(require,module,exports){
 const unsupportedMethods = ["acceptsCharsets", "acceptsEncodings", "acceptsLanguages", "param", "is", "range"];
 const unsupportedProperties = ["app", "fresh", "ip", "ips", "signedCookies", "stale", "subdomains", "xhr"];
 
@@ -22015,7 +23205,7 @@ function EventRequest(event) {
 
 exports.EventRequest = EventRequest;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventResponse.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/ssapp-middleware/lib/EventResponse.js":[function(require,module,exports){
 const unsupportedMethods = ["append", "redirect", "location", "links", "jsonp", "render", "sendFile"];
 const unsupportedProperties = ["app", "headersSent", "locals"];
 // The following status codes require responseBody to be null
@@ -22204,7 +23394,7 @@ if (typeof FetchEvent !== "undefined") {
 }
 
 exports.EventResponse = EventResponse;
-},{"./HttpStatuses":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js"}],"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js":[function(require,module,exports){
+},{"./HttpStatuses":"/opt/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js"}],"/opt/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js":[function(require,module,exports){
 exports.httpStatuses = {
     "100": "Continue",
     "101": "Switching Protocols",
@@ -22271,7 +23461,7 @@ exports.httpStatuses = {
     "511": "Network Authentication Required"
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/Middleware.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/ssapp-middleware/lib/Middleware.js":[function(require,module,exports){
 const EventResponse = require("./EventResponse").EventResponse;
 const EventRequest = require("./EventRequest").EventRequest;
 
@@ -22581,7 +23771,7 @@ function Middleware() {
 module.exports = Middleware;
 
 
-},{"./EventRequest":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+},{"./EventRequest":"/opt/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/opt/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/opt/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 (function (global){(function (){
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
@@ -22688,7 +23878,7 @@ module.exports = BootEngine;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js":[function(require,module,exports){
 const { Readable } = require('stream');
 const util = require('util');
 
@@ -22730,7 +23920,7 @@ FileReadableStreamAdapter.prototype._read = function (size) {
 
 module.exports = FileReadableStreamAdapter;
 
-},{"stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js":[function(require,module,exports){
+},{"stream":"/opt/privatesky/node_modules/stream-browserify/index.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js":[function(require,module,exports){
 const FileReadableStreamAdapter = require("./FileReadableStreamAdapter");
 
 const IS_NODE_ENV = typeof $$ !== "undefined" && $$.environmentType && $$.environmentType === "nodejs";
@@ -22809,13 +23999,15 @@ Uploader.configureUploader = function (config, dossier, uploader) {
     return uploader;
 };
 
+
+
 Uploader.prototype.Error = {
-    UNKNOWN: -1,
-    NO_FILES: 10,
-    INVALID_FILE: 20,
-    INVALID_TYPE: 21,
-    MAX_SIZE_EXCEEDED: 22,
-    FILE_EXISTS: 30,
+    UNKNOWN:"UNKNOWN_UPLOAD_ERROR",
+    NO_FILES:"NO_FILES",
+    INVALID_FILE:"INVALID_FILE",
+    INVALID_TYPE:"INVALID_TYPE",
+    MAX_SIZE_EXCEEDED:"MAX_SIZE_EXCEEDED",
+    FILE_EXISTS:"FILE_EXISTS"
 };
 
 Uploader.prototype.configure = function (options) {
@@ -23100,12 +24292,10 @@ Uploader.prototype.upload = function (request, callback) {
             };
 
             if (err) {
-                if (err instanceof Error || typeof err === "string") {
-                    err = {
-                        message: err.message,
-                        code: this.Error.UNKNOWN,
-                    };
-                }
+                err = {
+                    message: JSON.stringify(err),
+                    code: this.Error.UNKNOWN,
+                };
 
                 filesUploaded.push({
                     file: srcFile,
@@ -23161,10 +24351,10 @@ Uploader.prototype.upload = function (request, callback) {
 
 module.exports = Uploader;
 
-},{"./FileReadableStreamAdapter":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js":[function(require,module,exports){
+},{"./FileReadableStreamAdapter":"/opt/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js"}],"/opt/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js":[function(require,module,exports){
 const MimeType = require("../util/MimeType");
 const securityPolicies = "/app/security.policies";
-const cache = require("opendsu").loadApi("cache").getCache("middlewareCache", 1000*60*60);
+const cache = require("opendsu").loadApi("cache").getCacheForVault("middlewareCache", 1000*60*60);
 
 const USER_DETAILS = "user-details.json";
 
@@ -23276,7 +24466,7 @@ function RawDossierHelper(rawDossier) {
 
         rawDossier.listMountedDossiers(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get the list of DSUs mounted at path <${path}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get the list of DSUs mounted at path <${path}>`, err));
             }
 
             let selectedDsu = result.find((dsu) => dsu.path === appName);
@@ -23295,7 +24485,7 @@ function RawDossierHelper(rawDossier) {
 
         rawDossier.readFile(USER_DETAILS, (err, fileContent) => {
             if(err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read file <${USER_DETAILS}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${USER_DETAILS}>`, err));
             }
             const dataSerialization = fileContent.toString();
             return callback(undefined, JSON.parse(dataSerialization));
@@ -23305,7 +24495,7 @@ function RawDossierHelper(rawDossier) {
 
 module.exports = RawDossierHelper;
 
-},{"../util/MimeType":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","opendsu":"opendsu"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js":[function(require,module,exports){
+},{"../util/MimeType":"/opt/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","opendsu":"opendsu"}],"/opt/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js":[function(require,module,exports){
 function SWBootScript(keySSI) {
 
     console.log("Booting host...");
@@ -23318,8 +24508,8 @@ function SWBootScript(keySSI) {
         const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
         bootter.boot((err, archive)=>{
             if(err){
-                console.log(err);
-                return callback(createOpenDSUErrorWrapper(`Failed to boot host`, err));
+                printOpenDSUError("Failing to boot DSu Environment", err);
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to boot host`, err));
             }
             // in fiecare csbReference vom gasi un obiect care va contine:
             // - un seed pentru csb-ul referentiat(ssapp)
@@ -23364,7 +24554,7 @@ module.exports = SWBootScript;
 
 
 
-},{"../../../powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","../../BootEngine":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":"/home/travis/build/PrivateSky/privatesky/modules/callflow/index.js","soundpubsub":"/home/travis/build/PrivateSky/privatesky/modules/soundpubsub/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js":[function(require,module,exports){
+},{"../../../powerCords/browser/ServiceWorkerPC":"/opt/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","../../BootEngine":"/opt/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":"/opt/privatesky/modules/callflow/index.js","soundpubsub":"/opt/privatesky/modules/soundpubsub/index.js"}],"/opt/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js":[function(require,module,exports){
 const extensionsMimeTypes = {
     "aac": {
         name: "audio/aac",
@@ -23640,7 +24830,7 @@ module.exports.getMimeTypeFromExtension = function (extension) {
     return defaultMimeType;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
 const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
     const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
@@ -23742,7 +24932,7 @@ function ServiceWorkerPC() {
 
 module.exports = ServiceWorkerPC;
 
-},{"../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
+},{"../../utils/SWChannelsManager":"/opt/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/opt/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/opt/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
 const maxQueueSize = 100;
 const TOKEN_PLACEHOLDER = "WEB_TOKEN_PLACEHOLDER";
 const queues = {};
@@ -23880,7 +25070,7 @@ module.exports.getChannelsManager = function(){
     return channelManagerInstance;
 }
 
-},{"../powerCords/browser/ServiceWorkerPC":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","swarmutils":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js":[function(require,module,exports){
+},{"../powerCords/browser/ServiceWorkerPC":"/opt/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","swarmutils":"/opt/privatesky/modules/swarmutils/index.js"}],"/opt/privatesky/modules/swarm-engine/utils/utilFunctions.js":[function(require,module,exports){
 const urlReg = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?([a-z0-9]+([\-.]{1}[a-z0-9]+)*\.[a-z]{2,5}|localhost)(:[0-9]{1,5})?(\/.*)?$/gi;
 const domainReg = /^([0-9a-zA-Z]*)\/agent\/([0-9a-zA-Z]*)$/gi;
 const httpUrlRegex = new RegExp(urlReg);
@@ -23966,7 +25156,7 @@ function handleOptionsRequest(req,res, next){
 
 module.exports = {prepareMessage, getChannelName, isUrl, isInMyHosts, handleOptionsRequest};
 
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/index.js":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
@@ -24005,17 +25195,20 @@ module.exports.createPskConsole = function () {
 module.exports.pingPongFork = require('./lib/pingpongFork');
 
 
-module.exports.convertToBuffer = function (uint8array) {
+module.exports.ensureIsBuffer = function (data) {
+    if ($$.Buffer.isBuffer(data)) {
+        return data;
+    }
     let buffer;
-    if (ArrayBuffer.isView(uint8array)) {
-        buffer = $$.Buffer.from(uint8array.buffer)
+    if (ArrayBuffer.isView(data)) {
+        buffer = $$.Buffer.from(data.buffer)
     } else {
-        buffer = $$.Buffer.from(uint8array);
+        buffer = $$.Buffer.from(data);
     }
     return buffer;
 }
 
-},{"./lib/Combos":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"./lib/Combos":"/opt/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/opt/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/opt/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/opt/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/opt/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/opt/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/opt/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/opt/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/opt/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/opt/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/opt/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"/opt/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -24041,7 +25234,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -24132,7 +25325,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -24200,7 +25393,7 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -24349,7 +25542,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -24399,7 +25592,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/opt/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -24455,7 +25648,7 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+},{"./OwM":"/opt/privatesky/modules/swarmutils/lib/OwM.js"}],"/opt/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
 (function (process){(function (){
 function replaceAll(str, search, replacement) {
     return str.split(search).join(replacement);
@@ -24645,7 +25838,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 (function (process){(function (){
 const PING = "PING";
 const PONG = "PONG";
@@ -24740,7 +25933,7 @@ module.exports.enableLifeLine = function(timeout){
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","child_process":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","child_process":"/opt/privatesky/node_modules/browserify/lib/_empty.js"}],"/opt/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 (function (process){(function (){
 var commands = {};
 var commands_help = {};
@@ -24814,7 +26007,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -24881,7 +26074,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 function UidGenerator(minBuffers, buffersSize) {
     const Queue = require("./Queue");
     var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
@@ -24983,7 +26176,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-},{"./Queue":"/home/travis/build/PrivateSky/privatesky/modules/swarmutils/lib/Queue.js","crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
+},{"./Queue":"/opt/privatesky/modules/swarmutils/lib/Queue.js","crypto":"/opt/privatesky/node_modules/crypto-browserify/index.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
 'use strict';
 
 const asn1 = exports;
@@ -24996,7 +26189,7 @@ asn1.constants = require('./asn1/constants');
 asn1.decoders = require('./asn1/decoders');
 asn1.encoders = require('./asn1/encoders');
 
-},{"./asn1/api":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/api.js","./asn1/base":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/index.js","./asn1/constants":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js","./asn1/decoders":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./asn1/encoders":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/api.js":[function(require,module,exports){
+},{"./asn1/api":"/opt/privatesky/node_modules/asn1.js/lib/asn1/api.js","./asn1/base":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/index.js","./asn1/constants":"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js","./asn1/decoders":"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./asn1/encoders":"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","bn.js":"/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/api.js":[function(require,module,exports){
 'use strict';
 
 const encoders = require('./encoders');
@@ -25055,7 +26248,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./decoders":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./encoders":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./decoders":"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./encoders":"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -25210,7 +26403,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
   return out;
 };
 
-},{"../base/reporter":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base/reporter":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/opt/privatesky/node_modules/safer-buffer/safer.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/index.js":[function(require,module,exports){
 'use strict';
 
 const base = exports;
@@ -25220,7 +26413,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","./node":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","./reporter":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","./node":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","./reporter":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/node.js":[function(require,module,exports){
 'use strict';
 
 const Reporter = require('../base/reporter').Reporter;
@@ -25860,7 +27053,7 @@ Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '()+,-./:=?]*$/.test(str);
 };
 
-},{"../base/buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/reporter":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base/buffer":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/reporter":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -25985,7 +27178,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js":[function(require,module,exports){
+},{"inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js":[function(require,module,exports){
 'use strict';
 
 // Helper
@@ -26045,7 +27238,7 @@ exports.tag = {
 };
 exports.tagByName = reverse(exports.tag);
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js":[function(require,module,exports){
 'use strict';
 
 const constants = exports;
@@ -26068,7 +27261,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -26405,7 +27598,7 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../base/buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/node":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../base/buffer":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/node":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","bn.js":"/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js":[function(require,module,exports){
 'use strict';
 
 const decoders = exports;
@@ -26413,7 +27606,7 @@ const decoders = exports;
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","./pem":"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -26466,7 +27659,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
   return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/opt/privatesky/node_modules/safer-buffer/safer.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -26763,7 +27956,7 @@ function encodeTag(tag, primitive, cls, reporter) {
   return res;
 }
 
-},{"../base/node":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../base/node":"/opt/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/opt/privatesky/node_modules/safer-buffer/safer.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js":[function(require,module,exports){
 'use strict';
 
 const encoders = exports;
@@ -26771,7 +27964,7 @@ const encoders = exports;
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","./pem":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","./pem":"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js"}],"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -26796,7 +27989,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"./der":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+},{"./der":"/opt/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -26849,7 +28042,11 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 
   var Buffer;
   try {
-    Buffer = require('buffer').Buffer;
+    if (typeof window !== 'undefined' && typeof window.Buffer !== 'undefined') {
+      Buffer = window.Buffer;
+    } else {
+      Buffer = require('buffer').Buffer;
+    }
   } catch (e) {
   }
 
@@ -26890,23 +28087,19 @@ PEMEncoder.prototype.encode = function encode(data, options) {
     var start = 0;
     if (number[0] === '-') {
       start++;
-    }
-
-    if (base === 16) {
-      this._parseHex(number, start);
-    } else {
-      this._parseBase(number, base, start);
-    }
-
-    if (number[0] === '-') {
       this.negative = 1;
     }
 
-    this.strip();
-
-    if (endian !== 'le') return;
-
-    this._initArray(this.toArray(), base, endian);
+    if (start < number.length) {
+      if (base === 16) {
+        this._parseHex(number, start, endian);
+      } else {
+        this._parseBase(number, base, start);
+        if (endian === 'le') {
+          this._initArray(this.toArray(), base, endian);
+        }
+      }
+    }
   };
 
   BN.prototype._initNumber = function _initNumber (number, base, endian) {
@@ -26982,31 +28175,29 @@ PEMEncoder.prototype.encode = function encode(data, options) {
     return this.strip();
   };
 
-  function parseHex (str, start, end) {
-    var r = 0;
-    var len = Math.min(str.length, end);
-    for (var i = start; i < len; i++) {
-      var c = str.charCodeAt(i) - 48;
+  function parseHex4Bits (string, index) {
+    var c = string.charCodeAt(index);
+    // 'A' - 'F'
+    if (c >= 65 && c <= 70) {
+      return c - 55;
+    // 'a' - 'f'
+    } else if (c >= 97 && c <= 102) {
+      return c - 87;
+    // '0' - '9'
+    } else {
+      return (c - 48) & 0xf;
+    }
+  }
 
-      r <<= 4;
-
-      // 'a' - 'f'
-      if (c >= 49 && c <= 54) {
-        r |= c - 49 + 0xa;
-
-      // 'A' - 'F'
-      } else if (c >= 17 && c <= 22) {
-        r |= c - 17 + 0xa;
-
-      // '0' - '9'
-      } else {
-        r |= c & 0xf;
-      }
+  function parseHexByte (string, lowerBound, index) {
+    var r = parseHex4Bits(string, index);
+    if (index - 1 >= lowerBound) {
+      r |= parseHex4Bits(string, index - 1) << 4;
     }
     return r;
   }
 
-  BN.prototype._parseHex = function _parseHex (number, start) {
+  BN.prototype._parseHex = function _parseHex (number, start, endian) {
     // Create possibly bigger array to ensure that it fits the number
     this.length = Math.ceil((number.length - start) / 6);
     this.words = new Array(this.length);
@@ -27014,25 +28205,38 @@ PEMEncoder.prototype.encode = function encode(data, options) {
       this.words[i] = 0;
     }
 
-    var j, w;
-    // Scan 24-bit chunks and add them to the number
+    // 24-bits chunks
     var off = 0;
-    for (i = number.length - 6, j = 0; i >= start; i -= 6) {
-      w = parseHex(number, i, i + 6);
-      this.words[j] |= (w << off) & 0x3ffffff;
-      // NOTE: `0x3fffff` is intentional here, 26bits max shift + 24bit hex limb
-      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
-      off += 24;
-      if (off >= 26) {
-        off -= 26;
-        j++;
+    var j = 0;
+
+    var w;
+    if (endian === 'be') {
+      for (i = number.length - 1; i >= start; i -= 2) {
+        w = parseHexByte(number, start, i) << off;
+        this.words[j] |= w & 0x3ffffff;
+        if (off >= 18) {
+          off -= 18;
+          j += 1;
+          this.words[j] |= w >>> 26;
+        } else {
+          off += 8;
+        }
+      }
+    } else {
+      var parseLength = number.length - start;
+      for (i = parseLength % 2 === 0 ? start + 1 : start; i < number.length; i += 2) {
+        w = parseHexByte(number, start, i) << off;
+        this.words[j] |= w & 0x3ffffff;
+        if (off >= 18) {
+          off -= 18;
+          j += 1;
+          this.words[j] |= w >>> 26;
+        } else {
+          off += 8;
+        }
       }
     }
-    if (i + 6 !== start) {
-      w = parseHex(number, start, i + 6);
-      this.words[j] |= (w << off) & 0x3ffffff;
-      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
-    }
+
     this.strip();
   };
 
@@ -27103,6 +28307,8 @@ PEMEncoder.prototype.encode = function encode(data, options) {
         this._iaddn(word);
       }
     }
+
+    this.strip();
   };
 
   BN.prototype.copy = function copy (dest) {
@@ -30231,7 +31437,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/assert/assert.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/assert/assert.js":[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -30742,7 +31948,7 @@ var objectKeys = Object.keys || function (obj) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"object-assign":"/home/travis/build/PrivateSky/privatesky/node_modules/object-assign/index.js","util/":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+},{"object-assign":"/opt/privatesky/node_modules/object-assign/index.js","util/":"/opt/privatesky/node_modules/assert/node_modules/util/util.js"}],"/opt/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -30767,14 +31973,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/util.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/assert/node_modules/util/util.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -31365,7 +32571,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/base64-js/index.js":[function(require,module,exports){
+},{"./support/isBuffer":"/opt/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js","_process":"/opt/privatesky/node_modules/process/browser.js","inherits":"/opt/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/base64-js/index.js":[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -31517,7 +32723,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -31570,7 +32776,11 @@ function fromByteArray (uint8) {
 
   var Buffer;
   try {
-    Buffer = require('buffer').Buffer;
+    if (typeof window !== 'undefined' && typeof window.Buffer !== 'undefined') {
+      Buffer = window.Buffer;
+    } else {
+      Buffer = require('buffer').Buffer;
+    }
   } catch (e) {
   }
 
@@ -31611,23 +32821,19 @@ function fromByteArray (uint8) {
     var start = 0;
     if (number[0] === '-') {
       start++;
-    }
-
-    if (base === 16) {
-      this._parseHex(number, start);
-    } else {
-      this._parseBase(number, base, start);
-    }
-
-    if (number[0] === '-') {
       this.negative = 1;
     }
 
-    this._strip();
-
-    if (endian !== 'le') return;
-
-    this._initArray(this.toArray(), base, endian);
+    if (start < number.length) {
+      if (base === 16) {
+        this._parseHex(number, start, endian);
+      } else {
+        this._parseBase(number, base, start);
+        if (endian === 'le') {
+          this._initArray(this.toArray(), base, endian);
+        }
+      }
+    }
   };
 
   BN.prototype._initNumber = function _initNumber (number, base, endian) {
@@ -31703,39 +32909,31 @@ function fromByteArray (uint8) {
     return this._strip();
   };
 
-  function parseHex (str, start, end) {
-    var r = 0;
-    var len = Math.min(str.length, end);
-    var z = 0;
-    for (var i = start; i < len; i++) {
-      var c = str.charCodeAt(i) - 48;
-
-      r <<= 4;
-
-      var b;
-
-      // 'a' - 'f'
-      if (c >= 49 && c <= 54) {
-        b = c - 49 + 0xa;
-
-      // 'A' - 'F'
-      } else if (c >= 17 && c <= 22) {
-        b = c - 17 + 0xa;
-
-      // '0' - '9'
-      } else {
-        b = c;
-      }
-
-      r |= b;
-      z |= b;
+  function parseHex4Bits (string, index) {
+    var c = string.charCodeAt(index);
+    // '0' - '9'
+    if (c >= 48 && c <= 57) {
+      return c - 48;
+    // 'A' - 'F'
+    } else if (c >= 65 && c <= 70) {
+      return c - 55;
+    // 'a' - 'f'
+    } else if (c >= 97 && c <= 102) {
+      return c - 87;
+    } else {
+      assert(false, 'Invalid character in ' + string);
     }
+  }
 
-    assert(!(z & 0xf0), 'Invalid character in ' + str);
+  function parseHexByte (string, lowerBound, index) {
+    var r = parseHex4Bits(string, index);
+    if (index - 1 >= lowerBound) {
+      r |= parseHex4Bits(string, index - 1) << 4;
+    }
     return r;
   }
 
-  BN.prototype._parseHex = function _parseHex (number, start) {
+  BN.prototype._parseHex = function _parseHex (number, start, endian) {
     // Create possibly bigger array to ensure that it fits the number
     this.length = Math.ceil((number.length - start) / 6);
     this.words = new Array(this.length);
@@ -31743,25 +32941,38 @@ function fromByteArray (uint8) {
       this.words[i] = 0;
     }
 
-    var j, w;
-    // Scan 24-bit chunks and add them to the number
+    // 24-bits chunks
     var off = 0;
-    for (i = number.length - 6, j = 0; i >= start; i -= 6) {
-      w = parseHex(number, i, i + 6);
-      this.words[j] |= (w << off) & 0x3ffffff;
-      // NOTE: `0x3fffff` is intentional here, 26bits max shift + 24bit hex limb
-      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
-      off += 24;
-      if (off >= 26) {
-        off -= 26;
-        j++;
+    var j = 0;
+
+    var w;
+    if (endian === 'be') {
+      for (i = number.length - 1; i >= start; i -= 2) {
+        w = parseHexByte(number, start, i) << off;
+        this.words[j] |= w & 0x3ffffff;
+        if (off >= 18) {
+          off -= 18;
+          j += 1;
+          this.words[j] |= w >>> 26;
+        } else {
+          off += 8;
+        }
+      }
+    } else {
+      var parseLength = number.length - start;
+      for (i = parseLength % 2 === 0 ? start + 1 : start; i < number.length; i += 2) {
+        w = parseHexByte(number, start, i) << off;
+        this.words[j] |= w & 0x3ffffff;
+        if (off >= 18) {
+          off -= 18;
+          j += 1;
+          this.words[j] |= w >>> 26;
+        } else {
+          off += 8;
+        }
       }
     }
-    if (i + 6 !== start) {
-      w = parseHex(number, start, i + 6);
-      this.words[j] |= (w << off) & 0x3ffffff;
-      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
-    }
+
     this._strip();
   };
 
@@ -31835,6 +33046,8 @@ function fromByteArray (uint8) {
         this._iaddn(word);
       }
     }
+
+    this._strip();
   };
 
   BN.prototype.copy = function copy (dest) {
@@ -35059,7 +36272,7 @@ function fromByteArray (uint8) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/brorand/index.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/brorand/index.js":[function(require,module,exports){
 var r;
 
 module.exports = function rand(len) {
@@ -35126,9 +36339,9 @@ if (typeof self === 'object') {
   }
 }
 
-},{"crypto":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js":[function(require,module,exports){
+},{"crypto":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/browser-resolve/empty.js":[function(require,module,exports){
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/aes.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-aes/aes.js":[function(require,module,exports){
 // based on the aes implimentation in triple sec
 // https://github.com/keybase/triplesec
 // which is in turn based on the one from crypto-js
@@ -35358,7 +36571,7 @@ AES.prototype.scrub = function () {
 
 module.exports.AES = AES
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/authCipher.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/authCipher.js":[function(require,module,exports){
 var aes = require('./aes')
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('cipher-base')
@@ -35477,7 +36690,7 @@ StreamCipher.prototype.setAAD = function setAAD (buf) {
 
 module.exports = StreamCipher
 
-},{"./aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/aes.js","./ghash":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/ghash.js","./incr32":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js","cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/browser.js":[function(require,module,exports){
+},{"./aes":"/opt/privatesky/node_modules/browserify-aes/aes.js","./ghash":"/opt/privatesky/node_modules/browserify-aes/ghash.js","./incr32":"/opt/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/opt/privatesky/node_modules/buffer-xor/index.js","cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/browser.js":[function(require,module,exports){
 var ciphers = require('./encrypter')
 var deciphers = require('./decrypter')
 var modes = require('./modes/list.json')
@@ -35492,7 +36705,7 @@ exports.createDecipher = exports.Decipher = deciphers.createDecipher
 exports.createDecipheriv = exports.Decipheriv = deciphers.createDecipheriv
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"./decrypter":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/decrypter.js","./encrypter":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/encrypter.js","./modes/list.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/list.json"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/decrypter.js":[function(require,module,exports){
+},{"./decrypter":"/opt/privatesky/node_modules/browserify-aes/decrypter.js","./encrypter":"/opt/privatesky/node_modules/browserify-aes/encrypter.js","./modes/list.json":"/opt/privatesky/node_modules/browserify-aes/modes/list.json"}],"/opt/privatesky/node_modules/browserify-aes/decrypter.js":[function(require,module,exports){
 var AuthCipher = require('./authCipher')
 var Buffer = require('safe-buffer').Buffer
 var MODES = require('./modes')
@@ -35618,7 +36831,7 @@ function createDecipher (suite, password) {
 exports.createDecipher = createDecipher
 exports.createDecipheriv = createDecipheriv
 
-},{"./aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/encrypter.js":[function(require,module,exports){
+},{"./aes":"/opt/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/opt/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/opt/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/opt/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/opt/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/encrypter.js":[function(require,module,exports){
 var MODES = require('./modes')
 var AuthCipher = require('./authCipher')
 var Buffer = require('safe-buffer').Buffer
@@ -35734,7 +36947,7 @@ function createCipher (suite, password) {
 exports.createCipheriv = createCipheriv
 exports.createCipher = createCipher
 
-},{"./aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/ghash.js":[function(require,module,exports){
+},{"./aes":"/opt/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/opt/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/opt/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/opt/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/opt/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/ghash.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var ZEROES = Buffer.alloc(16, 0)
 
@@ -35825,7 +37038,7 @@ GHASH.prototype.final = function (abl, bl) {
 
 module.exports = GHASH
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/incr32.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/incr32.js":[function(require,module,exports){
 function incr32 (iv) {
   var len = iv.length
   var item
@@ -35842,7 +37055,7 @@ function incr32 (iv) {
 }
 module.exports = incr32
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cbc.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-aes/modes/cbc.js":[function(require,module,exports){
 var xor = require('buffer-xor')
 
 exports.encrypt = function (self, block) {
@@ -35861,7 +37074,7 @@ exports.decrypt = function (self, block) {
   return xor(out, pad)
 }
 
-},{"buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb.js":[function(require,module,exports){
+},{"buffer-xor":"/opt/privatesky/node_modules/buffer-xor/index.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/cfb.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var xor = require('buffer-xor')
 
@@ -35896,7 +37109,7 @@ exports.encrypt = function (self, data, decrypt) {
   return out
 }
 
-},{"buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb1.js":[function(require,module,exports){
+},{"buffer-xor":"/opt/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/cfb1.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 function encryptByte (self, byteParam, decrypt) {
@@ -35940,7 +37153,7 @@ exports.encrypt = function (self, chunk, decrypt) {
   return out
 }
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb8.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/cfb8.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 function encryptByte (self, byteParam, decrypt) {
@@ -35967,7 +37180,7 @@ exports.encrypt = function (self, chunk, decrypt) {
   return out
 }
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ctr.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/ctr.js":[function(require,module,exports){
 var xor = require('buffer-xor')
 var Buffer = require('safe-buffer').Buffer
 var incr32 = require('../incr32')
@@ -35999,7 +37212,7 @@ exports.encrypt = function (self, chunk) {
   return xor(chunk, pad)
 }
 
-},{"../incr32":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ecb.js":[function(require,module,exports){
+},{"../incr32":"/opt/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/opt/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/ecb.js":[function(require,module,exports){
 exports.encrypt = function (self, block) {
   return self._cipher.encryptBlock(block)
 }
@@ -36008,7 +37221,7 @@ exports.decrypt = function (self, block) {
   return self._cipher.decryptBlock(block)
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-aes/modes/index.js":[function(require,module,exports){
 var modeModules = {
   ECB: require('./ecb'),
   CBC: require('./cbc'),
@@ -36028,7 +37241,7 @@ for (var key in modes) {
 
 module.exports = modes
 
-},{"./cbc":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cbc.js","./cfb":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb.js","./cfb1":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb1.js","./cfb8":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/cfb8.js","./ctr":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ctr.js","./ecb":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ecb.js","./list.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/list.json","./ofb":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ofb.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/list.json":[function(require,module,exports){
+},{"./cbc":"/opt/privatesky/node_modules/browserify-aes/modes/cbc.js","./cfb":"/opt/privatesky/node_modules/browserify-aes/modes/cfb.js","./cfb1":"/opt/privatesky/node_modules/browserify-aes/modes/cfb1.js","./cfb8":"/opt/privatesky/node_modules/browserify-aes/modes/cfb8.js","./ctr":"/opt/privatesky/node_modules/browserify-aes/modes/ctr.js","./ecb":"/opt/privatesky/node_modules/browserify-aes/modes/ecb.js","./list.json":"/opt/privatesky/node_modules/browserify-aes/modes/list.json","./ofb":"/opt/privatesky/node_modules/browserify-aes/modes/ofb.js"}],"/opt/privatesky/node_modules/browserify-aes/modes/list.json":[function(require,module,exports){
 module.exports={
   "aes-128-ecb": {
     "cipher": "AES",
@@ -36221,7 +37434,7 @@ module.exports={
   }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/ofb.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-aes/modes/ofb.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var xor = require('buffer-xor')
 
@@ -36242,7 +37455,7 @@ exports.encrypt = function (self, chunk) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","buffer-xor":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/streamCipher.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js","buffer-xor":"/opt/privatesky/node_modules/buffer-xor/index.js"}],"/opt/privatesky/node_modules/browserify-aes/streamCipher.js":[function(require,module,exports){
 var aes = require('./aes')
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('cipher-base')
@@ -36271,7 +37484,7 @@ StreamCipher.prototype._final = function () {
 
 module.exports = StreamCipher
 
-},{"./aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/aes.js","cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-cipher/browser.js":[function(require,module,exports){
+},{"./aes":"/opt/privatesky/node_modules/browserify-aes/aes.js","cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-cipher/browser.js":[function(require,module,exports){
 var DES = require('browserify-des')
 var aes = require('browserify-aes/browser')
 var aesModes = require('browserify-aes/modes')
@@ -36340,7 +37553,7 @@ exports.createDecipher = exports.Decipher = createDecipher
 exports.createDecipheriv = exports.Decipheriv = createDecipheriv
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"browserify-aes/browser":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/browser.js","browserify-aes/modes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/modes/index.js","browserify-des":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-des/index.js","browserify-des/modes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-des/modes.js","evp_bytestokey":"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-des/index.js":[function(require,module,exports){
+},{"browserify-aes/browser":"/opt/privatesky/node_modules/browserify-aes/browser.js","browserify-aes/modes":"/opt/privatesky/node_modules/browserify-aes/modes/index.js","browserify-des":"/opt/privatesky/node_modules/browserify-des/index.js","browserify-des/modes":"/opt/privatesky/node_modules/browserify-des/modes.js","evp_bytestokey":"/opt/privatesky/node_modules/evp_bytestokey/index.js"}],"/opt/privatesky/node_modules/browserify-des/index.js":[function(require,module,exports){
 var CipherBase = require('cipher-base')
 var des = require('des.js')
 var inherits = require('inherits')
@@ -36392,7 +37605,7 @@ DES.prototype._final = function () {
   return Buffer.from(this._des.final())
 }
 
-},{"cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","des.js":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-des/modes.js":[function(require,module,exports){
+},{"cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","des.js":"/opt/privatesky/node_modules/des.js/lib/des.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-des/modes.js":[function(require,module,exports){
 exports['des-ecb'] = {
   key: 8,
   iv: 0
@@ -36418,7 +37631,7 @@ exports['des-ede'] = {
   iv: 0
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-rsa/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var BN = require('bn.js')
 var randomBytes = require('randombytes')
@@ -36458,10 +37671,10 @@ module.exports = crt
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/algos.js":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/bn.js/lib/bn.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js"}],"/opt/privatesky/node_modules/browserify-sign/algos.js":[function(require,module,exports){
 module.exports = require('./browser/algorithms.json')
 
-},{"./browser/algorithms.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/algorithms.json"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/algorithms.json":[function(require,module,exports){
+},{"./browser/algorithms.json":"/opt/privatesky/node_modules/browserify-sign/browser/algorithms.json"}],"/opt/privatesky/node_modules/browserify-sign/browser/algorithms.json":[function(require,module,exports){
 module.exports={
   "sha224WithRSAEncryption": {
     "sign": "rsa",
@@ -36615,7 +37828,7 @@ module.exports={
   }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-sign/browser/curves.json":[function(require,module,exports){
 module.exports={
   "1.3.132.0.10": "secp256k1",
   "1.3.132.0.33": "p224",
@@ -36625,7 +37838,7 @@ module.exports={
   "1.3.132.0.35": "p521"
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-sign/browser/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var createHash = require('create-hash')
 var stream = require('readable-stream')
@@ -36719,7 +37932,7 @@ module.exports = {
   createVerify: createVerify
 }
 
-},{"./algorithms.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
+},{"./algorithms.json":"/opt/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/opt/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/opt/privatesky/node_modules/browserify-sign/browser/verify.js","create-hash":"/opt/privatesky/node_modules/create-hash/browser.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var Buffer = require('safe-buffer').Buffer
 var createHmac = require('create-hmac')
@@ -36864,7 +38077,7 @@ module.exports = sign
 module.exports.getKey = getKey
 module.exports.makeKey = makeKey
 
-},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js","create-hmac":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/browser.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
+},{"./curves.json":"/opt/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/opt/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/opt/privatesky/node_modules/browserify-rsa/index.js","create-hmac":"/opt/privatesky/node_modules/create-hmac/browser.js","elliptic":"/opt/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/opt/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var Buffer = require('safe-buffer').Buffer
 var BN = require('bn.js')
@@ -36950,7 +38163,7 @@ function checkValue (b, q) {
 
 module.exports = verify
 
-},{"./curves.json":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/bn.js/lib/bn.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+},{"./curves.json":"/opt/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/opt/privatesky/node_modules/bn.js/lib/bn.js","elliptic":"/opt/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/opt/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
 'use strict';
 
 function _inheritsLoose(subClass, superClass) { subClass.prototype = Object.create(superClass.prototype); subClass.prototype.constructor = subClass; subClass.__proto__ = superClass; }
@@ -37079,7 +38292,7 @@ createErrorType('ERR_UNKNOWN_ENCODING', function (arg) {
 createErrorType('ERR_STREAM_UNSHIFT_AFTER_END_EVENT', 'stream.unshift() after end event');
 module.exports.codes = codes;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -37222,7 +38435,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+},{"./_stream_readable":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","_process":"/opt/privatesky/node_modules/process/browser.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -37262,7 +38475,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_transform":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -38390,7 +39603,7 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","events":"/opt/privatesky/node_modules/events/events.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/opt/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -38592,7 +39805,7 @@ function done(stream, er, data) {
   if (stream._transformState.transforming) throw new ERR_TRANSFORM_ALREADY_TRANSFORMING();
   return stream.push(null);
 }
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -39293,7 +40506,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/opt/privatesky/node_modules/util-deprecate/browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -39504,7 +40717,7 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+},{"./end-of-stream":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
 'use strict';
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -39715,7 +40928,7 @@ function () {
 
   return BufferList;
 }();
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -39824,7 +41037,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
 'use strict';
@@ -39929,12 +41142,12 @@ function eos(stream, opts, callback) {
 }
 
 module.exports = eos;
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+},{"../../../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
 module.exports = function () {
   throw new Error('Readable.from is not available in the browser')
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
 // Ported from https://github.com/mafintosh/pump with
 // permission from the author, Mathias Buus (@mafintosh).
 'use strict';
@@ -40032,7 +41245,7 @@ function pipeline() {
 }
 
 module.exports = pipeline;
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+},{"../../../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
 'use strict';
 
 var ERR_INVALID_OPT_VALUE = require('../../../errors').codes.ERR_INVALID_OPT_VALUE;
@@ -40060,10 +41273,10 @@ function getHighWaterMark(state, options, duplexKey, isDuplex) {
 module.exports = {
   getHighWaterMark: getHighWaterMark
 };
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+},{"../../../errors":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+},{"events":"/opt/privatesky/node_modules/events/events.js"}],"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -40074,7 +41287,7 @@ exports.PassThrough = require('./lib/_stream_passthrough.js');
 exports.finished = require('./lib/internal/streams/end-of-stream.js');
 exports.pipeline = require('./lib/internal/streams/pipeline.js');
 
-},{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/opt/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
 (function (process,Buffer){(function (){
 'use strict';
 /* eslint camelcase: "off" */
@@ -40487,7 +41700,7 @@ Zlib.prototype._reset = function () {
 exports.Zlib = Zlib;
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","assert":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/assert.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","pako/lib/zlib/constants":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/constants.js","pako/lib/zlib/deflate.js":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/deflate.js","pako/lib/zlib/inflate.js":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inflate.js","pako/lib/zlib/zstream":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/zstream.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/index.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","assert":"/opt/privatesky/node_modules/assert/assert.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","pako/lib/zlib/constants":"/opt/privatesky/node_modules/pako/lib/zlib/constants.js","pako/lib/zlib/deflate.js":"/opt/privatesky/node_modules/pako/lib/zlib/deflate.js","pako/lib/zlib/inflate.js":"/opt/privatesky/node_modules/pako/lib/zlib/inflate.js","pako/lib/zlib/zstream":"/opt/privatesky/node_modules/pako/lib/zlib/zstream.js"}],"/opt/privatesky/node_modules/browserify-zlib/lib/index.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41100,9 +42313,9 @@ util.inherits(InflateRaw, Zlib);
 util.inherits(Unzip, Zlib);
 }).call(this)}).call(this,require('_process'))
 
-},{"./binding":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-zlib/lib/binding.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","assert":"/home/travis/build/PrivateSky/privatesky/node_modules/assert/assert.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/browserify/lib/_empty.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/buffer-xor/index.js":[function(require,module,exports){
+},{"./binding":"/opt/privatesky/node_modules/browserify-zlib/lib/binding.js","_process":"/opt/privatesky/node_modules/process/browser.js","assert":"/opt/privatesky/node_modules/assert/assert.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","stream":"/opt/privatesky/node_modules/stream-browserify/index.js","util":"/opt/privatesky/node_modules/util/util.js"}],"/opt/privatesky/node_modules/browserify/lib/_empty.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browser-resolve/empty.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/buffer-xor/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = function xor (a, b) {
   var length = Math.min(a.length, b.length)
@@ -41117,7 +42330,7 @@ module.exports = function xor (a, b) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js"}],"/opt/privatesky/node_modules/buffer/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -42899,7 +44112,7 @@ function numberIsNaN (obj) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"base64-js":"/home/travis/build/PrivateSky/privatesky/node_modules/base64-js/index.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","ieee754":"/home/travis/build/PrivateSky/privatesky/node_modules/ieee754/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/builtin-status-codes/browser.js":[function(require,module,exports){
+},{"base64-js":"/opt/privatesky/node_modules/base64-js/index.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","ieee754":"/opt/privatesky/node_modules/ieee754/index.js"}],"/opt/privatesky/node_modules/builtin-status-codes/browser.js":[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -42965,7 +44178,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/cipher-base/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('stream').Transform
 var StringDecoder = require('string_decoder').StringDecoder
@@ -43066,7 +44279,7 @@ CipherBase.prototype._toString = function (value, enc, fin) {
 
 module.exports = CipherBase
 
-},{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js","string_decoder":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
+},{"inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js","stream":"/opt/privatesky/node_modules/stream-browserify/index.js","string_decoder":"/opt/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/opt/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
 (function (Buffer){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -43178,7 +44391,7 @@ function objectToString(o) {
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
 
-},{"../../is-buffer/index.js":"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
+},{"../../is-buffer/index.js":"/opt/privatesky/node_modules/is-buffer/index.js"}],"/opt/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var elliptic = require('elliptic')
 var BN = require('bn.js')
@@ -43307,9 +44520,9 @@ function formatReturnValue (bn, enc, len) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","elliptic":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","elliptic":"/opt/privatesky/node_modules/elliptic/lib/elliptic.js"}],"/opt/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/create-hash/browser.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var MD5 = require('md5.js')
@@ -43341,14 +44554,14 @@ module.exports = function createHash (alg) {
   return new Hash(sha(alg))
 }
 
-},{"cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","md5.js":"/home/travis/build/PrivateSky/privatesky/node_modules/md5.js/index.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js":[function(require,module,exports){
+},{"cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","md5.js":"/opt/privatesky/node_modules/md5.js/index.js","ripemd160":"/opt/privatesky/node_modules/ripemd160/index.js","sha.js":"/opt/privatesky/node_modules/sha.js/index.js"}],"/opt/privatesky/node_modules/create-hash/md5.js":[function(require,module,exports){
 var MD5 = require('md5.js')
 
 module.exports = function (buffer) {
   return new MD5().update(buffer).digest()
 }
 
-},{"md5.js":"/home/travis/build/PrivateSky/privatesky/node_modules/md5.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/browser.js":[function(require,module,exports){
+},{"md5.js":"/opt/privatesky/node_modules/md5.js/index.js"}],"/opt/privatesky/node_modules/create-hmac/browser.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var Legacy = require('./legacy')
@@ -43412,7 +44625,7 @@ module.exports = function createHmac (alg, key) {
   return new Hmac(alg, key)
 }
 
-},{"./legacy":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/legacy.js","cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","create-hash/md5":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/legacy.js":[function(require,module,exports){
+},{"./legacy":"/opt/privatesky/node_modules/create-hmac/legacy.js","cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","create-hash/md5":"/opt/privatesky/node_modules/create-hash/md5.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","ripemd160":"/opt/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js","sha.js":"/opt/privatesky/node_modules/sha.js/index.js"}],"/opt/privatesky/node_modules/create-hmac/legacy.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var Buffer = require('safe-buffer').Buffer
@@ -43460,7 +44673,7 @@ Hmac.prototype._final = function () {
 }
 module.exports = Hmac
 
-},{"cipher-base":"/home/travis/build/PrivateSky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/crypto-browserify/index.js":[function(require,module,exports){
+},{"cipher-base":"/opt/privatesky/node_modules/cipher-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/crypto-browserify/index.js":[function(require,module,exports){
 'use strict'
 
 exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = require('randombytes')
@@ -43559,7 +44772,7 @@ exports.constants = {
   'POINT_CONVERSION_HYBRID': 6
 }
 
-},{"browserify-cipher":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-cipher/browser.js","browserify-sign":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/browser/index.js","browserify-sign/algos":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/algos.js","create-ecdh":"/home/travis/build/PrivateSky/privatesky/node_modules/create-ecdh/browser.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","create-hmac":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hmac/browser.js","diffie-hellman":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/browser.js","pbkdf2":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/browser.js","public-encrypt":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/browser.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js","randomfill":"/home/travis/build/PrivateSky/privatesky/node_modules/randomfill/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des.js":[function(require,module,exports){
+},{"browserify-cipher":"/opt/privatesky/node_modules/browserify-cipher/browser.js","browserify-sign":"/opt/privatesky/node_modules/browserify-sign/browser/index.js","browserify-sign/algos":"/opt/privatesky/node_modules/browserify-sign/algos.js","create-ecdh":"/opt/privatesky/node_modules/create-ecdh/browser.js","create-hash":"/opt/privatesky/node_modules/create-hash/browser.js","create-hmac":"/opt/privatesky/node_modules/create-hmac/browser.js","diffie-hellman":"/opt/privatesky/node_modules/diffie-hellman/browser.js","pbkdf2":"/opt/privatesky/node_modules/pbkdf2/browser.js","public-encrypt":"/opt/privatesky/node_modules/public-encrypt/browser.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js","randomfill":"/opt/privatesky/node_modules/randomfill/browser.js"}],"/opt/privatesky/node_modules/des.js/lib/des.js":[function(require,module,exports){
 'use strict';
 
 exports.utils = require('./des/utils');
@@ -43568,7 +44781,7 @@ exports.DES = require('./des/des');
 exports.CBC = require('./des/cbc');
 exports.EDE = require('./des/ede');
 
-},{"./des/cbc":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cbc.js","./des/cipher":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cipher.js","./des/des":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/des.js","./des/ede":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/ede.js","./des/utils":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cbc.js":[function(require,module,exports){
+},{"./des/cbc":"/opt/privatesky/node_modules/des.js/lib/des/cbc.js","./des/cipher":"/opt/privatesky/node_modules/des.js/lib/des/cipher.js","./des/des":"/opt/privatesky/node_modules/des.js/lib/des/des.js","./des/ede":"/opt/privatesky/node_modules/des.js/lib/des/ede.js","./des/utils":"/opt/privatesky/node_modules/des.js/lib/des/utils.js"}],"/opt/privatesky/node_modules/des.js/lib/des/cbc.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -43635,7 +44848,7 @@ proto._update = function _update(inp, inOff, out, outOff) {
   }
 };
 
-},{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cipher.js":[function(require,module,exports){
+},{"inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/des.js/lib/des/cipher.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -43778,7 +44991,7 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
   return this._unpad(out);
 };
 
-},{"minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/des.js":[function(require,module,exports){
+},{"minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/des.js/lib/des/des.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -43922,7 +45135,7 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
   utils.rip(l, r, out, off);
 };
 
-},{"./cipher":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cipher.js","./utils":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/utils.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/ede.js":[function(require,module,exports){
+},{"./cipher":"/opt/privatesky/node_modules/des.js/lib/des/cipher.js","./utils":"/opt/privatesky/node_modules/des.js/lib/des/utils.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/des.js/lib/des/ede.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -43978,7 +45191,7 @@ EDE.prototype._update = function _update(inp, inOff, out, outOff) {
 EDE.prototype._pad = DES.prototype._pad;
 EDE.prototype._unpad = DES.prototype._unpad;
 
-},{"./cipher":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/cipher.js","./des":"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/des.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/des.js/lib/des/utils.js":[function(require,module,exports){
+},{"./cipher":"/opt/privatesky/node_modules/des.js/lib/des/cipher.js","./des":"/opt/privatesky/node_modules/des.js/lib/des/des.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/des.js/lib/des/utils.js":[function(require,module,exports){
 'use strict';
 
 exports.readUInt32BE = function readUInt32BE(bytes, off) {
@@ -44236,7 +45449,7 @@ exports.padSplit = function padSplit(num, size, group) {
   return out.join(' ');
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/browser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/diffie-hellman/browser.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var generatePrime = require('./lib/generatePrime')
 var primes = require('./lib/primes.json')
@@ -44283,7 +45496,7 @@ exports.createDiffieHellman = exports.DiffieHellman = createDiffieHellman
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./lib/dh":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/dh.js","./lib/generatePrime":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","./lib/primes.json":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/primes.json","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/dh.js":[function(require,module,exports){
+},{"./lib/dh":"/opt/privatesky/node_modules/diffie-hellman/lib/dh.js","./lib/generatePrime":"/opt/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","./lib/primes.json":"/opt/privatesky/node_modules/diffie-hellman/lib/primes.json","buffer":"/opt/privatesky/node_modules/buffer/index.js"}],"/opt/privatesky/node_modules/diffie-hellman/lib/dh.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var BN = require('bn.js');
 var MillerRabin = require('miller-rabin');
@@ -44452,7 +45665,7 @@ function formatReturnValue(bn, enc) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./generatePrime":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","miller-rabin":"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js":[function(require,module,exports){
+},{"./generatePrime":"/opt/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","bn.js":"/opt/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","miller-rabin":"/opt/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js"}],"/opt/privatesky/node_modules/diffie-hellman/lib/generatePrime.js":[function(require,module,exports){
 var randomBytes = require('randombytes');
 module.exports = findPrime;
 findPrime.simpleSieve = simpleSieve;
@@ -44559,7 +45772,7 @@ function findPrime(bits, gen) {
 
 }
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","miller-rabin":"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/lib/primes.json":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","miller-rabin":"/opt/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js"}],"/opt/privatesky/node_modules/diffie-hellman/lib/primes.json":[function(require,module,exports){
 module.exports={
     "modp1": {
         "gen": "02",
@@ -44594,9 +45807,9 @@ module.exports={
         "prime": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a92108011a723c12a787e6d788719a10bdba5b2699c327186af4e23c1a946834b6150bda2583e9ca2ad44ce8dbbbc2db04de8ef92e8efc141fbecaa6287c59474e6bc05d99b2964fa090c3a2233ba186515be7ed1f612970cee2d7afb81bdd762170481cd0069127d5b05aa993b4ea988d8fddc186ffb7dc90a6c08f4df435c93402849236c3fab4d27c7026c1d4dcb2602646dec9751e763dba37bdf8ff9406ad9e530ee5db382f413001aeb06a53ed9027d831179727b0865a8918da3edbebcf9b14ed44ce6cbaced4bb1bdb7f1447e6cc254b332051512bd7af426fb8f401378cd2bf5983ca01c64b92ecf032ea15d1721d03f482d7ce6e74fef6d55e702f46980c82b5a84031900b1c9e59e7c97fbec7e8f323a97a7e36cc88be0f1d45b7ff585ac54bd407b22b4154aacc8f6d7ebf48e1d814cc5ed20f8037e0a79715eef29be32806a1d58bb7c5da76f550aa3d8a1fbff0eb19ccb1a313d55cda56c9ec2ef29632387fe8d76e3c0468043e8f663f4860ee12bf2d5b0b7474d6e694f91e6dbe115974a3926f12fee5e438777cb6a932df8cd8bec4d073b931ba3bc832b68d9dd300741fa7bf8afc47ed2576f6936ba424663aab639c5ae4f5683423b4742bf1c978238f16cbe39d652de3fdb8befc848ad922222e04a4037c0713eb57a81a23f0c73473fc646cea306b4bcbc8862f8385ddfa9d4b7fa2c087e879683303ed5bdd3a062b3cf5b3a278a66d2a13f83f44f82ddf310ee074ab6a364597e899a0255dc164f31cc50846851df9ab48195ded7ea1b1d510bd7ee74d73faf36bc31ecfa268359046f4eb879f924009438b481c6cd7889a002ed5ee382bc9190da6fc026e479558e4475677e9aa9e3050e2765694dfc81f56e880b96e7160c980dd98edd3dfffffffffffffffff"
     }
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic.js":[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
@@ -44611,7 +45824,7 @@ elliptic.curves = require('./elliptic/curves');
 elliptic.ec = require('./elliptic/ec');
 elliptic.eddsa = require('./elliptic/eddsa');
 
-},{"../package.json":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/package.json","./elliptic/curve":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./elliptic/curves":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","./elliptic/ec":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js","./elliptic/eddsa":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js","./elliptic/utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","brorand":"/home/travis/build/PrivateSky/privatesky/node_modules/brorand/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js":[function(require,module,exports){
+},{"../package.json":"/opt/privatesky/node_modules/elliptic/package.json","./elliptic/curve":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./elliptic/curves":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curves.js","./elliptic/ec":"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js","./elliptic/eddsa":"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js","./elliptic/utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","brorand":"/opt/privatesky/node_modules/brorand/index.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -44673,18 +45886,20 @@ BaseCurve.prototype._fixedNafMul = function _fixedNafMul(p, k) {
 
   // Translate into more windowed form
   var repr = [];
-  for (var j = 0; j < naf.length; j += doubles.step) {
-    var nafW = 0;
-    for (var k = j + doubles.step - 1; k >= j; k--)
-      nafW = (nafW << 1) + naf[k];
+  var j;
+  var nafW;
+  for (j = 0; j < naf.length; j += doubles.step) {
+    nafW = 0;
+    for (var l = j + doubles.step - 1; l >= j; l--)
+      nafW = (nafW << 1) + naf[l];
     repr.push(nafW);
   }
 
   var a = this.jpoint(null, null, null);
   var b = this.jpoint(null, null, null);
   for (var i = I; i > 0; i--) {
-    for (var j = 0; j < repr.length; j++) {
-      var nafW = repr[j];
+    for (j = 0; j < repr.length; j++) {
+      nafW = repr[j];
       if (nafW === i)
         b = b.mixedAdd(doubles.points[j]);
       else if (nafW === -i)
@@ -44710,11 +45925,11 @@ BaseCurve.prototype._wnafMul = function _wnafMul(p, k) {
   var acc = this.jpoint(null, null, null);
   for (var i = naf.length - 1; i >= 0; i--) {
     // Count zeroes
-    for (var k = 0; i >= 0 && naf[i] === 0; i--)
-      k++;
+    for (var l = 0; i >= 0 && naf[i] === 0; i--)
+      l++;
     if (i >= 0)
-      k++;
-    acc = acc.dblp(k);
+      l++;
+    acc = acc.dblp(l);
 
     if (i < 0)
       break;
@@ -44738,25 +45953,28 @@ BaseCurve.prototype._wnafMul = function _wnafMul(p, k) {
 };
 
 BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
-                                                       points,
-                                                       coeffs,
-                                                       len,
-                                                       jacobianResult) {
+  points,
+  coeffs,
+  len,
+  jacobianResult) {
   var wndWidth = this._wnafT1;
   var wnd = this._wnafT2;
   var naf = this._wnafT3;
 
   // Fill all arrays
   var max = 0;
-  for (var i = 0; i < len; i++) {
-    var p = points[i];
+  var i;
+  var j;
+  var p;
+  for (i = 0; i < len; i++) {
+    p = points[i];
     var nafPoints = p._getNAFPoints(defW);
     wndWidth[i] = nafPoints.wnd;
     wnd[i] = nafPoints.points;
   }
 
   // Comb small window NAFs
-  for (var i = len - 1; i >= 1; i -= 2) {
+  for (i = len - 1; i >= 1; i -= 2) {
     var a = i - 1;
     var b = i;
     if (wndWidth[a] !== 1 || wndWidth[b] !== 1) {
@@ -44771,7 +45989,7 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
       points[a], /* 1 */
       null, /* 3 */
       null, /* 5 */
-      points[b] /* 7 */
+      points[b], /* 7 */
     ];
 
     // Try to avoid Projective points, if possible
@@ -44795,14 +46013,14 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
       7, /* 0 1 */
       5, /* 1 -1 */
       1, /* 1 0 */
-      3  /* 1 1 */
+      3,  /* 1 1 */
     ];
 
     var jsf = getJSF(coeffs[a], coeffs[b]);
     max = Math.max(jsf[0].length, max);
     naf[a] = new Array(max);
     naf[b] = new Array(max);
-    for (var j = 0; j < max; j++) {
+    for (j = 0; j < max; j++) {
       var ja = jsf[0][j] | 0;
       var jb = jsf[1][j] | 0;
 
@@ -44814,12 +46032,12 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
 
   var acc = this.jpoint(null, null, null);
   var tmp = this._wnafT4;
-  for (var i = max; i >= 0; i--) {
+  for (i = max; i >= 0; i--) {
     var k = 0;
 
     while (i >= 0) {
       var zero = true;
-      for (var j = 0; j < len; j++) {
+      for (j = 0; j < len; j++) {
         tmp[j] = naf[j][i] | 0;
         if (tmp[j] !== 0)
           zero = false;
@@ -44835,9 +46053,9 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
     if (i < 0)
       break;
 
-    for (var j = 0; j < len; j++) {
+    for (j = 0; j < len; j++) {
       var z = tmp[j];
-      var p;
+      p;
       if (z === 0)
         continue;
       else if (z > 0)
@@ -44852,7 +46070,7 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
     }
   }
   // Zeroify references
-  for (var i = 0; i < len; i++)
+  for (i = 0; i < len; i++)
     wnd[i] = null;
 
   if (jacobianResult)
@@ -44890,7 +46108,7 @@ BaseCurve.prototype.decodePoint = function decodePoint(bytes, enc) {
       assert(bytes[bytes.length - 1] % 2 === 1);
 
     var res =  this.point(bytes.slice(1, 1 + len),
-                          bytes.slice(1 + len, 1 + 2 * len));
+      bytes.slice(1 + len, 1 + 2 * len));
 
     return res;
   } else if ((bytes[0] === 0x02 || bytes[0] === 0x03) &&
@@ -44911,7 +46129,7 @@ BasePoint.prototype._encode = function _encode(compact) {
   if (compact)
     return [ this.getY().isEven() ? 0x02 : 0x03 ].concat(x);
 
-  return [ 0x04 ].concat(x, this.getY().toArray('be', len)) ;
+  return [ 0x04 ].concat(x, this.getY().toArray('be', len));
 };
 
 BasePoint.prototype.encode = function encode(enc, compact) {
@@ -44925,7 +46143,7 @@ BasePoint.prototype.precompute = function precompute(power) {
   var precomputed = {
     doubles: null,
     naf: null,
-    beta: null
+    beta: null,
   };
   precomputed.naf = this._getNAFPoints(8);
   precomputed.doubles = this._getDoubles(4, power);
@@ -44959,7 +46177,7 @@ BasePoint.prototype._getDoubles = function _getDoubles(step, power) {
   }
   return {
     step: step,
-    points: doubles
+    points: doubles,
   };
 };
 
@@ -44974,7 +46192,7 @@ BasePoint.prototype._getNAFPoints = function _getNAFPoints(wnd) {
     res[i] = res[i - 1].add(dbl);
   return {
     wnd: wnd,
-    points: res
+    points: res,
   };
 };
 
@@ -44989,7 +46207,7 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -45213,9 +46431,12 @@ Point.prototype._projDbl = function _projDbl() {
   var nx;
   var ny;
   var nz;
+  var e;
+  var h;
+  var j;
   if (this.curve.twisted) {
     // E = a * C
-    var e = this.curve._mulA(c);
+    e = this.curve._mulA(c);
     // F = E + D
     var f = e.redAdd(d);
     if (this.zOne) {
@@ -45227,9 +46448,9 @@ Point.prototype._projDbl = function _projDbl() {
       nz = f.redSqr().redSub(f).redSub(f);
     } else {
       // H = Z1^2
-      var h = this.z.redSqr();
+      h = this.z.redSqr();
       // J = F - 2 * H
-      var j = f.redSub(h).redISub(h);
+      j = f.redSub(h).redISub(h);
       // X3 = (B-C-D)*J
       nx = b.redSub(c).redISub(d).redMul(j);
       // Y3 = F * (E - D)
@@ -45239,11 +46460,11 @@ Point.prototype._projDbl = function _projDbl() {
     }
   } else {
     // E = C + D
-    var e = c.redAdd(d);
+    e = c.redAdd(d);
     // H = (c * Z1)^2
-    var h = this.curve._mulC(this.z).redSqr();
+    h = this.curve._mulC(this.z).redSqr();
     // J = E - 2 * H
-    var j = e.redSub(h).redSub(h);
+    j = e.redSub(h).redSub(h);
     // X3 = c * (B - E) * J
     nx = this.curve._mulC(b.redISub(e)).redMul(j);
     // Y3 = c * E * (C - D)
@@ -45380,9 +46601,9 @@ Point.prototype.normalize = function normalize() {
 
 Point.prototype.neg = function neg() {
   return this.curve.point(this.x.redNeg(),
-                          this.y,
-                          this.z,
-                          this.t && this.t.redNeg());
+    this.y,
+    this.z,
+    this.t && this.t.redNeg());
 };
 
 Point.prototype.getX = function getX() {
@@ -45423,7 +46644,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js":[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -45433,7 +46654,7 @@ curve.short = require('./short');
 curve.mont = require('./mont');
 curve.edwards = require('./edwards');
 
-},{"./base":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","./edwards":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js","./mont":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js","./short":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js":[function(require,module,exports){
+},{"./base":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","./edwards":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js","./mont":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js","./short":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -45613,7 +46834,7 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -45676,7 +46897,7 @@ ShortCurve.prototype._getEndomorphism = function _getEndomorphism(conf) {
     basis = conf.basis.map(function(vec) {
       return {
         a: new BN(vec.a, 16),
-        b: new BN(vec.b, 16)
+        b: new BN(vec.b, 16),
       };
     });
   } else {
@@ -45686,7 +46907,7 @@ ShortCurve.prototype._getEndomorphism = function _getEndomorphism(conf) {
   return {
     beta: beta,
     lambda: lambda,
-    basis: basis
+    basis: basis,
   };
 };
 
@@ -45777,7 +46998,7 @@ ShortCurve.prototype._getEndoBasis = function _getEndoBasis(lambda) {
 
   return [
     { a: a1, b: b1 },
-    { a: a2, b: b2 }
+    { a: a2, b: b2 },
   ];
 };
 
@@ -45833,36 +47054,36 @@ ShortCurve.prototype.validate = function validate(point) {
 
 ShortCurve.prototype._endoWnafMulAdd =
     function _endoWnafMulAdd(points, coeffs, jacobianResult) {
-  var npoints = this._endoWnafT1;
-  var ncoeffs = this._endoWnafT2;
-  for (var i = 0; i < points.length; i++) {
-    var split = this._endoSplit(coeffs[i]);
-    var p = points[i];
-    var beta = p._getBeta();
+      var npoints = this._endoWnafT1;
+      var ncoeffs = this._endoWnafT2;
+      for (var i = 0; i < points.length; i++) {
+        var split = this._endoSplit(coeffs[i]);
+        var p = points[i];
+        var beta = p._getBeta();
 
-    if (split.k1.negative) {
-      split.k1.ineg();
-      p = p.neg(true);
-    }
-    if (split.k2.negative) {
-      split.k2.ineg();
-      beta = beta.neg(true);
-    }
+        if (split.k1.negative) {
+          split.k1.ineg();
+          p = p.neg(true);
+        }
+        if (split.k2.negative) {
+          split.k2.ineg();
+          beta = beta.neg(true);
+        }
 
-    npoints[i * 2] = p;
-    npoints[i * 2 + 1] = beta;
-    ncoeffs[i * 2] = split.k1;
-    ncoeffs[i * 2 + 1] = split.k2;
-  }
-  var res = this._wnafMulAdd(1, npoints, ncoeffs, i * 2, jacobianResult);
+        npoints[i * 2] = p;
+        npoints[i * 2 + 1] = beta;
+        ncoeffs[i * 2] = split.k1;
+        ncoeffs[i * 2 + 1] = split.k2;
+      }
+      var res = this._wnafMulAdd(1, npoints, ncoeffs, i * 2, jacobianResult);
 
-  // Clean-up references to points and coefficients
-  for (var j = 0; j < i * 2; j++) {
-    npoints[j] = null;
-    ncoeffs[j] = null;
-  }
-  return res;
-};
+      // Clean-up references to points and coefficients
+      for (var j = 0; j < i * 2; j++) {
+        npoints[j] = null;
+        ncoeffs[j] = null;
+      }
+      return res;
+    };
 
 function Point(curve, x, y, isRed) {
   Base.BasePoint.call(this, curve, 'affine');
@@ -45914,12 +47135,12 @@ Point.prototype._getBeta = function _getBeta() {
       beta: null,
       naf: pre.naf && {
         wnd: pre.naf.wnd,
-        points: pre.naf.points.map(endoMul)
+        points: pre.naf.points.map(endoMul),
       },
       doubles: pre.doubles && {
         step: pre.doubles.step,
-        points: pre.doubles.points.map(endoMul)
-      }
+        points: pre.doubles.points.map(endoMul),
+      },
     };
   }
   return beta;
@@ -45932,12 +47153,12 @@ Point.prototype.toJSON = function toJSON() {
   return [ this.x, this.y, this.precomputed && {
     doubles: this.precomputed.doubles && {
       step: this.precomputed.doubles.step,
-      points: this.precomputed.doubles.points.slice(1)
+      points: this.precomputed.doubles.points.slice(1),
     },
     naf: this.precomputed.naf && {
       wnd: this.precomputed.naf.wnd,
-      points: this.precomputed.naf.points.slice(1)
-    }
+      points: this.precomputed.naf.points.slice(1),
+    },
   } ];
 };
 
@@ -45957,12 +47178,12 @@ Point.fromJSON = function fromJSON(curve, obj, red) {
     beta: null,
     doubles: pre.doubles && {
       step: pre.doubles.step,
-      points: [ res ].concat(pre.doubles.points.map(obj2point))
+      points: [ res ].concat(pre.doubles.points.map(obj2point)),
     },
     naf: pre.naf && {
       wnd: pre.naf.wnd,
-      points: [ res ].concat(pre.naf.points.map(obj2point))
-    }
+      points: [ res ].concat(pre.naf.points.map(obj2point)),
+    },
   };
   return res;
 };
@@ -46084,12 +47305,12 @@ Point.prototype.neg = function neg(_precompute) {
     res.precomputed = {
       naf: pre.naf && {
         wnd: pre.naf.wnd,
-        points: pre.naf.points.map(negate)
+        points: pre.naf.points.map(negate),
       },
       doubles: pre.doubles && {
         step: pre.doubles.step,
-        points: pre.doubles.points.map(negate)
-      }
+        points: pre.doubles.points.map(negate),
+      },
     };
   }
   return res;
@@ -46226,9 +47447,10 @@ JPoint.prototype.dblp = function dblp(pow) {
   if (!pow)
     return this.dbl();
 
+  var i;
   if (this.curve.zeroA || this.curve.threeA) {
     var r = this;
-    for (var i = 0; i < pow; i++)
+    for (i = 0; i < pow; i++)
       r = r.dbl();
     return r;
   }
@@ -46245,7 +47467,7 @@ JPoint.prototype.dblp = function dblp(pow) {
 
   // Reuse results
   var jyd = jy.redAdd(jy);
-  for (var i = 0; i < pow; i++) {
+  for (i = 0; i < pow; i++) {
     var jx2 = jx.redSqr();
     var jyd2 = jyd.redSqr();
     var jyd4 = jyd2.redSqr();
@@ -46552,7 +47774,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curves.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/curves.js":[function(require,module,exports){
 'use strict';
 
 var curves = exports;
@@ -46588,10 +47810,10 @@ function defineCurve(name, options) {
       Object.defineProperty(curves, name, {
         configurable: true,
         enumerable: true,
-        value: curve
+        value: curve,
       });
       return curve;
-    }
+    },
   });
 }
 
@@ -46606,8 +47828,8 @@ defineCurve('p192', {
   gRed: false,
   g: [
     '188da80e b03090f6 7cbf20eb 43a18800 f4ff0afd 82ff1012',
-    '07192b95 ffc8da78 631011ed 6b24cdd5 73f977a1 1e794811'
-  ]
+    '07192b95 ffc8da78 631011ed 6b24cdd5 73f977a1 1e794811',
+  ],
 });
 
 defineCurve('p224', {
@@ -46621,8 +47843,8 @@ defineCurve('p224', {
   gRed: false,
   g: [
     'b70e0cbd 6bb4bf7f 321390b9 4a03c1d3 56c21122 343280d6 115c1d21',
-    'bd376388 b5f723fb 4c22dfe6 cd4375a0 5a074764 44d58199 85007e34'
-  ]
+    'bd376388 b5f723fb 4c22dfe6 cd4375a0 5a074764 44d58199 85007e34',
+  ],
 });
 
 defineCurve('p256', {
@@ -46636,8 +47858,8 @@ defineCurve('p256', {
   gRed: false,
   g: [
     '6b17d1f2 e12c4247 f8bce6e5 63a440f2 77037d81 2deb33a0 f4a13945 d898c296',
-    '4fe342e2 fe1a7f9b 8ee7eb4a 7c0f9e16 2bce3357 6b315ece cbb64068 37bf51f5'
-  ]
+    '4fe342e2 fe1a7f9b 8ee7eb4a 7c0f9e16 2bce3357 6b315ece cbb64068 37bf51f5',
+  ],
 });
 
 defineCurve('p384', {
@@ -46657,8 +47879,8 @@ defineCurve('p384', {
     'aa87ca22 be8b0537 8eb1c71e f320ad74 6e1d3b62 8ba79b98 59f741e0 82542a38 ' +
     '5502f25d bf55296c 3a545e38 72760ab7',
     '3617de4a 96262c6f 5d9e98bf 9292dc29 f8f41dbd 289a147c e9da3113 b5f0b8c0 ' +
-    '0a60b1ce 1d7e819d 7a431d7c 90ea0e5f'
-  ]
+    '0a60b1ce 1d7e819d 7a431d7c 90ea0e5f',
+  ],
 });
 
 defineCurve('p521', {
@@ -46684,8 +47906,8 @@ defineCurve('p521', {
     'a2ffa8de 3348b3c1 856a429b f97e7e31 c2e5bd66',
     '00000118 39296a78 9a3bc004 5c8a5fb4 2c7d1bd9 98f54449 ' +
     '579b4468 17afbd17 273e662c 97ee7299 5ef42640 c550b901 ' +
-    '3fad0761 353c7086 a272c240 88be9476 9fd16650'
-  ]
+    '3fad0761 353c7086 a272c240 88be9476 9fd16650',
+  ],
 });
 
 defineCurve('curve25519', {
@@ -46698,8 +47920,8 @@ defineCurve('curve25519', {
   hash: hash.sha256,
   gRed: false,
   g: [
-    '9'
-  ]
+    '9',
+  ],
 });
 
 defineCurve('ed25519', {
@@ -46717,8 +47939,8 @@ defineCurve('ed25519', {
     '216936d3cd6e53fec0a4e231fdd6dc5c692cc7609525a7b2c9562d608f25d51a',
 
     // 4/5
-    '6666666666666666666666666666666666666666666666666666666666666658'
-  ]
+    '6666666666666666666666666666666666666666666666666666666666666658',
+  ],
 });
 
 var pre;
@@ -46744,23 +47966,23 @@ defineCurve('secp256k1', {
   basis: [
     {
       a: '3086d221a7d46bcde86c90e49284eb15',
-      b: '-e4437ed6010e88286f547fa90abfe4c3'
+      b: '-e4437ed6010e88286f547fa90abfe4c3',
     },
     {
       a: '114ca50f7a8e2f3f657c1108d9d44cfd8',
-      b: '3086d221a7d46bcde86c90e49284eb15'
-    }
+      b: '3086d221a7d46bcde86c90e49284eb15',
+    },
   ],
 
   gRed: false,
   g: [
     '79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
     '483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8',
-    pre
-  ]
+    pre,
+  ],
 });
 
-},{"./curve":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./precomputed/secp256k1":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js","./utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","hash.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js":[function(require,module,exports){
+},{"./curve":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./precomputed/secp256k1":"/opt/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js","./utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","hash.js":"/opt/privatesky/node_modules/hash.js/lib/hash.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -46779,7 +48001,8 @@ function EC(options) {
 
   // Shortcut `elliptic.ec(curve-name)`
   if (typeof options === 'string') {
-    assert(curves.hasOwnProperty(options), 'Unknown curve ' + options);
+    assert(Object.prototype.hasOwnProperty.call(curves, options),
+      'Unknown curve ' + options);
 
     options = curves[options];
   }
@@ -46825,22 +48048,22 @@ EC.prototype.genKeyPair = function genKeyPair(options) {
     persEnc: options.persEnc || 'utf8',
     entropy: options.entropy || rand(this.hash.hmacStrength),
     entropyEnc: options.entropy && options.entropyEnc || 'utf8',
-    nonce: this.n.toArray()
+    nonce: this.n.toArray(),
   });
 
   var bytes = this.n.byteLength();
   var ns2 = this.n.sub(new BN(2));
-  do {
+  for (;;) {
     var priv = new BN(drbg.generate(bytes));
     if (priv.cmp(ns2) > 0)
       continue;
 
     priv.iaddn(1);
     return this.keyFromPrivate(priv);
-  } while (true);
+  }
 };
 
-EC.prototype._truncateToN = function truncateToN(msg, truncOnly) {
+EC.prototype._truncateToN = function _truncateToN(msg, truncOnly) {
   var delta = msg.byteLength() * 8 - this.n.bitLength();
   if (delta > 0)
     msg = msg.ushrn(delta);
@@ -46874,16 +48097,16 @@ EC.prototype.sign = function sign(msg, key, enc, options) {
     entropy: bkey,
     nonce: nonce,
     pers: options.pers,
-    persEnc: options.persEnc || 'utf8'
+    persEnc: options.persEnc || 'utf8',
   });
 
   // Number of bytes to generate
   var ns1 = this.n.sub(new BN(1));
 
-  for (var iter = 0; true; iter++) {
+  for (var iter = 0; ; iter++) {
     var k = options.k ?
-        options.k(iter) :
-        new BN(drbg.generate(this.n.byteLength()));
+      options.k(iter) :
+      new BN(drbg.generate(this.n.byteLength()));
     k = this._truncateToN(k, true);
     if (k.cmpn(1) <= 0 || k.cmp(ns1) >= 0)
       continue;
@@ -46932,9 +48155,10 @@ EC.prototype.verify = function verify(msg, signature, key, enc) {
   var sinv = s.invm(this.n);
   var u1 = sinv.mul(msg).umod(this.n);
   var u2 = sinv.mul(r).umod(this.n);
+  var p;
 
   if (!this.curve._maxwellTrick) {
-    var p = this.g.mulAdd(u1, key.getPublic(), u2);
+    p = this.g.mulAdd(u1, key.getPublic(), u2);
     if (p.isInfinity())
       return false;
 
@@ -46944,7 +48168,7 @@ EC.prototype.verify = function verify(msg, signature, key, enc) {
   // NOTE: Greg Maxwell's trick, inspired by:
   // https://git.io/vad3K
 
-  var p = this.g.jmulAdd(u1, key.getPublic(), u2);
+  p = this.g.jmulAdd(u1, key.getPublic(), u2);
   if (p.isInfinity())
     return false;
 
@@ -47003,7 +48227,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../curves":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js","./signature":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","brorand":"/home/travis/build/PrivateSky/privatesky/node_modules/brorand/index.js","hmac-drbg":"/home/travis/build/PrivateSky/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js":[function(require,module,exports){
+},{"../curves":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js","./signature":"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","brorand":"/opt/privatesky/node_modules/brorand/index.js","hmac-drbg":"/opt/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -47029,7 +48253,7 @@ KeyPair.fromPublic = function fromPublic(ec, pub, enc) {
 
   return new KeyPair(ec, {
     pub: pub,
-    pubEnc: enc
+    pubEnc: enc,
   });
 };
 
@@ -47039,7 +48263,7 @@ KeyPair.fromPrivate = function fromPrivate(ec, priv, enc) {
 
   return new KeyPair(ec, {
     priv: priv,
-    privEnc: enc
+    privEnc: enc,
   });
 };
 
@@ -47106,6 +48330,9 @@ KeyPair.prototype._importPublic = function _importPublic(key, enc) {
 
 // ECDH
 KeyPair.prototype.derive = function derive(pub) {
+  if(!pub.validate()) {
+    assert(pub.validate(), 'public point not validated');
+  }
   return pub.mul(this.priv).getX();
 };
 
@@ -47123,7 +48350,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -47291,7 +48518,7 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js":[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -47308,7 +48535,7 @@ function EDDSA(curve) {
   if (!(this instanceof EDDSA))
     return new EDDSA(curve);
 
-  var curve = curves[curve].curve;
+  curve = curves[curve].curve;
   this.curve = curve;
   this.g = curve.g;
   this.g.precompute(curve.n.bitLength() + 1);
@@ -47332,7 +48559,7 @@ EDDSA.prototype.sign = function sign(message, secret) {
   var R = this.g.mul(r);
   var Rencoded = this.encodePoint(R);
   var s_ = this.hashInt(Rencoded, key.pubBytes(), message)
-               .mul(key.priv());
+    .mul(key.priv());
   var S = r.add(s_).umod(this.curve.n);
   return this.makeSignature({ R: R, S: S, Rencoded: Rencoded });
 };
@@ -47411,7 +48638,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../curves":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js","./signature":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js","hash.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js":[function(require,module,exports){
+},{"../curves":"/opt/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js","./signature":"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js","hash.js":"/opt/privatesky/node_modules/hash.js/lib/hash.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -47508,7 +48735,7 @@ KeyPair.prototype.getPublic = function getPublic(enc) {
 
 module.exports = KeyPair;
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -47534,7 +48761,7 @@ function Signature(eddsa, sig) {
   if (Array.isArray(sig)) {
     sig = {
       R: sig.slice(0, eddsa.encodingLength),
-      S: sig.slice(eddsa.encodingLength)
+      S: sig.slice(eddsa.encodingLength),
     };
   }
 
@@ -47575,789 +48802,789 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js":[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
     points: [
       [
         'e60fce93b59e9ec53011aabc21c23e97b2a31369b87a5ae9c44ee89e2a6dec0a',
-        'f7e3507399e595929db99f34f57937101296891e44d23f0be1f32cce69616821'
+        'f7e3507399e595929db99f34f57937101296891e44d23f0be1f32cce69616821',
       ],
       [
         '8282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f51508',
-        '11f8a8098557dfe45e8256e830b60ace62d613ac2f7b17bed31b6eaff6e26caf'
+        '11f8a8098557dfe45e8256e830b60ace62d613ac2f7b17bed31b6eaff6e26caf',
       ],
       [
         '175e159f728b865a72f99cc6c6fc846de0b93833fd2222ed73fce5b551e5b739',
-        'd3506e0d9e3c79eba4ef97a51ff71f5eacb5955add24345c6efa6ffee9fed695'
+        'd3506e0d9e3c79eba4ef97a51ff71f5eacb5955add24345c6efa6ffee9fed695',
       ],
       [
         '363d90d447b00c9c99ceac05b6262ee053441c7e55552ffe526bad8f83ff4640',
-        '4e273adfc732221953b445397f3363145b9a89008199ecb62003c7f3bee9de9'
+        '4e273adfc732221953b445397f3363145b9a89008199ecb62003c7f3bee9de9',
       ],
       [
         '8b4b5f165df3c2be8c6244b5b745638843e4a781a15bcd1b69f79a55dffdf80c',
-        '4aad0a6f68d308b4b3fbd7813ab0da04f9e336546162ee56b3eff0c65fd4fd36'
+        '4aad0a6f68d308b4b3fbd7813ab0da04f9e336546162ee56b3eff0c65fd4fd36',
       ],
       [
         '723cbaa6e5db996d6bf771c00bd548c7b700dbffa6c0e77bcb6115925232fcda',
-        '96e867b5595cc498a921137488824d6e2660a0653779494801dc069d9eb39f5f'
+        '96e867b5595cc498a921137488824d6e2660a0653779494801dc069d9eb39f5f',
       ],
       [
         'eebfa4d493bebf98ba5feec812c2d3b50947961237a919839a533eca0e7dd7fa',
-        '5d9a8ca3970ef0f269ee7edaf178089d9ae4cdc3a711f712ddfd4fdae1de8999'
+        '5d9a8ca3970ef0f269ee7edaf178089d9ae4cdc3a711f712ddfd4fdae1de8999',
       ],
       [
         '100f44da696e71672791d0a09b7bde459f1215a29b3c03bfefd7835b39a48db0',
-        'cdd9e13192a00b772ec8f3300c090666b7ff4a18ff5195ac0fbd5cd62bc65a09'
+        'cdd9e13192a00b772ec8f3300c090666b7ff4a18ff5195ac0fbd5cd62bc65a09',
       ],
       [
         'e1031be262c7ed1b1dc9227a4a04c017a77f8d4464f3b3852c8acde6e534fd2d',
-        '9d7061928940405e6bb6a4176597535af292dd419e1ced79a44f18f29456a00d'
+        '9d7061928940405e6bb6a4176597535af292dd419e1ced79a44f18f29456a00d',
       ],
       [
         'feea6cae46d55b530ac2839f143bd7ec5cf8b266a41d6af52d5e688d9094696d',
-        'e57c6b6c97dce1bab06e4e12bf3ecd5c981c8957cc41442d3155debf18090088'
+        'e57c6b6c97dce1bab06e4e12bf3ecd5c981c8957cc41442d3155debf18090088',
       ],
       [
         'da67a91d91049cdcb367be4be6ffca3cfeed657d808583de33fa978bc1ec6cb1',
-        '9bacaa35481642bc41f463f7ec9780e5dec7adc508f740a17e9ea8e27a68be1d'
+        '9bacaa35481642bc41f463f7ec9780e5dec7adc508f740a17e9ea8e27a68be1d',
       ],
       [
         '53904faa0b334cdda6e000935ef22151ec08d0f7bb11069f57545ccc1a37b7c0',
-        '5bc087d0bc80106d88c9eccac20d3c1c13999981e14434699dcb096b022771c8'
+        '5bc087d0bc80106d88c9eccac20d3c1c13999981e14434699dcb096b022771c8',
       ],
       [
         '8e7bcd0bd35983a7719cca7764ca906779b53a043a9b8bcaeff959f43ad86047',
-        '10b7770b2a3da4b3940310420ca9514579e88e2e47fd68b3ea10047e8460372a'
+        '10b7770b2a3da4b3940310420ca9514579e88e2e47fd68b3ea10047e8460372a',
       ],
       [
         '385eed34c1cdff21e6d0818689b81bde71a7f4f18397e6690a841e1599c43862',
-        '283bebc3e8ea23f56701de19e9ebf4576b304eec2086dc8cc0458fe5542e5453'
+        '283bebc3e8ea23f56701de19e9ebf4576b304eec2086dc8cc0458fe5542e5453',
       ],
       [
         '6f9d9b803ecf191637c73a4413dfa180fddf84a5947fbc9c606ed86c3fac3a7',
-        '7c80c68e603059ba69b8e2a30e45c4d47ea4dd2f5c281002d86890603a842160'
+        '7c80c68e603059ba69b8e2a30e45c4d47ea4dd2f5c281002d86890603a842160',
       ],
       [
         '3322d401243c4e2582a2147c104d6ecbf774d163db0f5e5313b7e0e742d0e6bd',
-        '56e70797e9664ef5bfb019bc4ddaf9b72805f63ea2873af624f3a2e96c28b2a0'
+        '56e70797e9664ef5bfb019bc4ddaf9b72805f63ea2873af624f3a2e96c28b2a0',
       ],
       [
         '85672c7d2de0b7da2bd1770d89665868741b3f9af7643397721d74d28134ab83',
-        '7c481b9b5b43b2eb6374049bfa62c2e5e77f17fcc5298f44c8e3094f790313a6'
+        '7c481b9b5b43b2eb6374049bfa62c2e5e77f17fcc5298f44c8e3094f790313a6',
       ],
       [
         '948bf809b1988a46b06c9f1919413b10f9226c60f668832ffd959af60c82a0a',
-        '53a562856dcb6646dc6b74c5d1c3418c6d4dff08c97cd2bed4cb7f88d8c8e589'
+        '53a562856dcb6646dc6b74c5d1c3418c6d4dff08c97cd2bed4cb7f88d8c8e589',
       ],
       [
         '6260ce7f461801c34f067ce0f02873a8f1b0e44dfc69752accecd819f38fd8e8',
-        'bc2da82b6fa5b571a7f09049776a1ef7ecd292238051c198c1a84e95b2b4ae17'
+        'bc2da82b6fa5b571a7f09049776a1ef7ecd292238051c198c1a84e95b2b4ae17',
       ],
       [
         'e5037de0afc1d8d43d8348414bbf4103043ec8f575bfdc432953cc8d2037fa2d',
-        '4571534baa94d3b5f9f98d09fb990bddbd5f5b03ec481f10e0e5dc841d755bda'
+        '4571534baa94d3b5f9f98d09fb990bddbd5f5b03ec481f10e0e5dc841d755bda',
       ],
       [
         'e06372b0f4a207adf5ea905e8f1771b4e7e8dbd1c6a6c5b725866a0ae4fce725',
-        '7a908974bce18cfe12a27bb2ad5a488cd7484a7787104870b27034f94eee31dd'
+        '7a908974bce18cfe12a27bb2ad5a488cd7484a7787104870b27034f94eee31dd',
       ],
       [
         '213c7a715cd5d45358d0bbf9dc0ce02204b10bdde2a3f58540ad6908d0559754',
-        '4b6dad0b5ae462507013ad06245ba190bb4850f5f36a7eeddff2c27534b458f2'
+        '4b6dad0b5ae462507013ad06245ba190bb4850f5f36a7eeddff2c27534b458f2',
       ],
       [
         '4e7c272a7af4b34e8dbb9352a5419a87e2838c70adc62cddf0cc3a3b08fbd53c',
-        '17749c766c9d0b18e16fd09f6def681b530b9614bff7dd33e0b3941817dcaae6'
+        '17749c766c9d0b18e16fd09f6def681b530b9614bff7dd33e0b3941817dcaae6',
       ],
       [
         'fea74e3dbe778b1b10f238ad61686aa5c76e3db2be43057632427e2840fb27b6',
-        '6e0568db9b0b13297cf674deccb6af93126b596b973f7b77701d3db7f23cb96f'
+        '6e0568db9b0b13297cf674deccb6af93126b596b973f7b77701d3db7f23cb96f',
       ],
       [
         '76e64113f677cf0e10a2570d599968d31544e179b760432952c02a4417bdde39',
-        'c90ddf8dee4e95cf577066d70681f0d35e2a33d2b56d2032b4b1752d1901ac01'
+        'c90ddf8dee4e95cf577066d70681f0d35e2a33d2b56d2032b4b1752d1901ac01',
       ],
       [
         'c738c56b03b2abe1e8281baa743f8f9a8f7cc643df26cbee3ab150242bcbb891',
-        '893fb578951ad2537f718f2eacbfbbbb82314eef7880cfe917e735d9699a84c3'
+        '893fb578951ad2537f718f2eacbfbbbb82314eef7880cfe917e735d9699a84c3',
       ],
       [
         'd895626548b65b81e264c7637c972877d1d72e5f3a925014372e9f6588f6c14b',
-        'febfaa38f2bc7eae728ec60818c340eb03428d632bb067e179363ed75d7d991f'
+        'febfaa38f2bc7eae728ec60818c340eb03428d632bb067e179363ed75d7d991f',
       ],
       [
         'b8da94032a957518eb0f6433571e8761ceffc73693e84edd49150a564f676e03',
-        '2804dfa44805a1e4d7c99cc9762808b092cc584d95ff3b511488e4e74efdf6e7'
+        '2804dfa44805a1e4d7c99cc9762808b092cc584d95ff3b511488e4e74efdf6e7',
       ],
       [
         'e80fea14441fb33a7d8adab9475d7fab2019effb5156a792f1a11778e3c0df5d',
-        'eed1de7f638e00771e89768ca3ca94472d155e80af322ea9fcb4291b6ac9ec78'
+        'eed1de7f638e00771e89768ca3ca94472d155e80af322ea9fcb4291b6ac9ec78',
       ],
       [
         'a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070',
-        '7370f91cfb67e4f5081809fa25d40f9b1735dbf7c0a11a130c0d1a041e177ea1'
+        '7370f91cfb67e4f5081809fa25d40f9b1735dbf7c0a11a130c0d1a041e177ea1',
       ],
       [
         '90ad85b389d6b936463f9d0512678de208cc330b11307fffab7ac63e3fb04ed4',
-        'e507a3620a38261affdcbd9427222b839aefabe1582894d991d4d48cb6ef150'
+        'e507a3620a38261affdcbd9427222b839aefabe1582894d991d4d48cb6ef150',
       ],
       [
         '8f68b9d2f63b5f339239c1ad981f162ee88c5678723ea3351b7b444c9ec4c0da',
-        '662a9f2dba063986de1d90c2b6be215dbbea2cfe95510bfdf23cbf79501fff82'
+        '662a9f2dba063986de1d90c2b6be215dbbea2cfe95510bfdf23cbf79501fff82',
       ],
       [
         'e4f3fb0176af85d65ff99ff9198c36091f48e86503681e3e6686fd5053231e11',
-        '1e63633ad0ef4f1c1661a6d0ea02b7286cc7e74ec951d1c9822c38576feb73bc'
+        '1e63633ad0ef4f1c1661a6d0ea02b7286cc7e74ec951d1c9822c38576feb73bc',
       ],
       [
         '8c00fa9b18ebf331eb961537a45a4266c7034f2f0d4e1d0716fb6eae20eae29e',
-        'efa47267fea521a1a9dc343a3736c974c2fadafa81e36c54e7d2a4c66702414b'
+        'efa47267fea521a1a9dc343a3736c974c2fadafa81e36c54e7d2a4c66702414b',
       ],
       [
         'e7a26ce69dd4829f3e10cec0a9e98ed3143d084f308b92c0997fddfc60cb3e41',
-        '2a758e300fa7984b471b006a1aafbb18d0a6b2c0420e83e20e8a9421cf2cfd51'
+        '2a758e300fa7984b471b006a1aafbb18d0a6b2c0420e83e20e8a9421cf2cfd51',
       ],
       [
         'b6459e0ee3662ec8d23540c223bcbdc571cbcb967d79424f3cf29eb3de6b80ef',
-        '67c876d06f3e06de1dadf16e5661db3c4b3ae6d48e35b2ff30bf0b61a71ba45'
+        '67c876d06f3e06de1dadf16e5661db3c4b3ae6d48e35b2ff30bf0b61a71ba45',
       ],
       [
         'd68a80c8280bb840793234aa118f06231d6f1fc67e73c5a5deda0f5b496943e8',
-        'db8ba9fff4b586d00c4b1f9177b0e28b5b0e7b8f7845295a294c84266b133120'
+        'db8ba9fff4b586d00c4b1f9177b0e28b5b0e7b8f7845295a294c84266b133120',
       ],
       [
         '324aed7df65c804252dc0270907a30b09612aeb973449cea4095980fc28d3d5d',
-        '648a365774b61f2ff130c0c35aec1f4f19213b0c7e332843967224af96ab7c84'
+        '648a365774b61f2ff130c0c35aec1f4f19213b0c7e332843967224af96ab7c84',
       ],
       [
         '4df9c14919cde61f6d51dfdbe5fee5dceec4143ba8d1ca888e8bd373fd054c96',
-        '35ec51092d8728050974c23a1d85d4b5d506cdc288490192ebac06cad10d5d'
+        '35ec51092d8728050974c23a1d85d4b5d506cdc288490192ebac06cad10d5d',
       ],
       [
         '9c3919a84a474870faed8a9c1cc66021523489054d7f0308cbfc99c8ac1f98cd',
-        'ddb84f0f4a4ddd57584f044bf260e641905326f76c64c8e6be7e5e03d4fc599d'
+        'ddb84f0f4a4ddd57584f044bf260e641905326f76c64c8e6be7e5e03d4fc599d',
       ],
       [
         '6057170b1dd12fdf8de05f281d8e06bb91e1493a8b91d4cc5a21382120a959e5',
-        '9a1af0b26a6a4807add9a2daf71df262465152bc3ee24c65e899be932385a2a8'
+        '9a1af0b26a6a4807add9a2daf71df262465152bc3ee24c65e899be932385a2a8',
       ],
       [
         'a576df8e23a08411421439a4518da31880cef0fba7d4df12b1a6973eecb94266',
-        '40a6bf20e76640b2c92b97afe58cd82c432e10a7f514d9f3ee8be11ae1b28ec8'
+        '40a6bf20e76640b2c92b97afe58cd82c432e10a7f514d9f3ee8be11ae1b28ec8',
       ],
       [
         '7778a78c28dec3e30a05fe9629de8c38bb30d1f5cf9a3a208f763889be58ad71',
-        '34626d9ab5a5b22ff7098e12f2ff580087b38411ff24ac563b513fc1fd9f43ac'
+        '34626d9ab5a5b22ff7098e12f2ff580087b38411ff24ac563b513fc1fd9f43ac',
       ],
       [
         '928955ee637a84463729fd30e7afd2ed5f96274e5ad7e5cb09eda9c06d903ac',
-        'c25621003d3f42a827b78a13093a95eeac3d26efa8a8d83fc5180e935bcd091f'
+        'c25621003d3f42a827b78a13093a95eeac3d26efa8a8d83fc5180e935bcd091f',
       ],
       [
         '85d0fef3ec6db109399064f3a0e3b2855645b4a907ad354527aae75163d82751',
-        '1f03648413a38c0be29d496e582cf5663e8751e96877331582c237a24eb1f962'
+        '1f03648413a38c0be29d496e582cf5663e8751e96877331582c237a24eb1f962',
       ],
       [
         'ff2b0dce97eece97c1c9b6041798b85dfdfb6d8882da20308f5404824526087e',
-        '493d13fef524ba188af4c4dc54d07936c7b7ed6fb90e2ceb2c951e01f0c29907'
+        '493d13fef524ba188af4c4dc54d07936c7b7ed6fb90e2ceb2c951e01f0c29907',
       ],
       [
         '827fbbe4b1e880ea9ed2b2e6301b212b57f1ee148cd6dd28780e5e2cf856e241',
-        'c60f9c923c727b0b71bef2c67d1d12687ff7a63186903166d605b68baec293ec'
+        'c60f9c923c727b0b71bef2c67d1d12687ff7a63186903166d605b68baec293ec',
       ],
       [
         'eaa649f21f51bdbae7be4ae34ce6e5217a58fdce7f47f9aa7f3b58fa2120e2b3',
-        'be3279ed5bbbb03ac69a80f89879aa5a01a6b965f13f7e59d47a5305ba5ad93d'
+        'be3279ed5bbbb03ac69a80f89879aa5a01a6b965f13f7e59d47a5305ba5ad93d',
       ],
       [
         'e4a42d43c5cf169d9391df6decf42ee541b6d8f0c9a137401e23632dda34d24f',
-        '4d9f92e716d1c73526fc99ccfb8ad34ce886eedfa8d8e4f13a7f7131deba9414'
+        '4d9f92e716d1c73526fc99ccfb8ad34ce886eedfa8d8e4f13a7f7131deba9414',
       ],
       [
         '1ec80fef360cbdd954160fadab352b6b92b53576a88fea4947173b9d4300bf19',
-        'aeefe93756b5340d2f3a4958a7abbf5e0146e77f6295a07b671cdc1cc107cefd'
+        'aeefe93756b5340d2f3a4958a7abbf5e0146e77f6295a07b671cdc1cc107cefd',
       ],
       [
         '146a778c04670c2f91b00af4680dfa8bce3490717d58ba889ddb5928366642be',
-        'b318e0ec3354028add669827f9d4b2870aaa971d2f7e5ed1d0b297483d83efd0'
+        'b318e0ec3354028add669827f9d4b2870aaa971d2f7e5ed1d0b297483d83efd0',
       ],
       [
         'fa50c0f61d22e5f07e3acebb1aa07b128d0012209a28b9776d76a8793180eef9',
-        '6b84c6922397eba9b72cd2872281a68a5e683293a57a213b38cd8d7d3f4f2811'
+        '6b84c6922397eba9b72cd2872281a68a5e683293a57a213b38cd8d7d3f4f2811',
       ],
       [
         'da1d61d0ca721a11b1a5bf6b7d88e8421a288ab5d5bba5220e53d32b5f067ec2',
-        '8157f55a7c99306c79c0766161c91e2966a73899d279b48a655fba0f1ad836f1'
+        '8157f55a7c99306c79c0766161c91e2966a73899d279b48a655fba0f1ad836f1',
       ],
       [
         'a8e282ff0c9706907215ff98e8fd416615311de0446f1e062a73b0610d064e13',
-        '7f97355b8db81c09abfb7f3c5b2515888b679a3e50dd6bd6cef7c73111f4cc0c'
+        '7f97355b8db81c09abfb7f3c5b2515888b679a3e50dd6bd6cef7c73111f4cc0c',
       ],
       [
         '174a53b9c9a285872d39e56e6913cab15d59b1fa512508c022f382de8319497c',
-        'ccc9dc37abfc9c1657b4155f2c47f9e6646b3a1d8cb9854383da13ac079afa73'
+        'ccc9dc37abfc9c1657b4155f2c47f9e6646b3a1d8cb9854383da13ac079afa73',
       ],
       [
         '959396981943785c3d3e57edf5018cdbe039e730e4918b3d884fdff09475b7ba',
-        '2e7e552888c331dd8ba0386a4b9cd6849c653f64c8709385e9b8abf87524f2fd'
+        '2e7e552888c331dd8ba0386a4b9cd6849c653f64c8709385e9b8abf87524f2fd',
       ],
       [
         'd2a63a50ae401e56d645a1153b109a8fcca0a43d561fba2dbb51340c9d82b151',
-        'e82d86fb6443fcb7565aee58b2948220a70f750af484ca52d4142174dcf89405'
+        'e82d86fb6443fcb7565aee58b2948220a70f750af484ca52d4142174dcf89405',
       ],
       [
         '64587e2335471eb890ee7896d7cfdc866bacbdbd3839317b3436f9b45617e073',
-        'd99fcdd5bf6902e2ae96dd6447c299a185b90a39133aeab358299e5e9faf6589'
+        'd99fcdd5bf6902e2ae96dd6447c299a185b90a39133aeab358299e5e9faf6589',
       ],
       [
         '8481bde0e4e4d885b3a546d3e549de042f0aa6cea250e7fd358d6c86dd45e458',
-        '38ee7b8cba5404dd84a25bf39cecb2ca900a79c42b262e556d64b1b59779057e'
+        '38ee7b8cba5404dd84a25bf39cecb2ca900a79c42b262e556d64b1b59779057e',
       ],
       [
         '13464a57a78102aa62b6979ae817f4637ffcfed3c4b1ce30bcd6303f6caf666b',
-        '69be159004614580ef7e433453ccb0ca48f300a81d0942e13f495a907f6ecc27'
+        '69be159004614580ef7e433453ccb0ca48f300a81d0942e13f495a907f6ecc27',
       ],
       [
         'bc4a9df5b713fe2e9aef430bcc1dc97a0cd9ccede2f28588cada3a0d2d83f366',
-        'd3a81ca6e785c06383937adf4b798caa6e8a9fbfa547b16d758d666581f33c1'
+        'd3a81ca6e785c06383937adf4b798caa6e8a9fbfa547b16d758d666581f33c1',
       ],
       [
         '8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa',
-        '40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482'
+        '40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482',
       ],
       [
         '8ea9666139527a8c1dd94ce4f071fd23c8b350c5a4bb33748c4ba111faccae0',
-        '620efabbc8ee2782e24e7c0cfb95c5d735b783be9cf0f8e955af34a30e62b945'
+        '620efabbc8ee2782e24e7c0cfb95c5d735b783be9cf0f8e955af34a30e62b945',
       ],
       [
         'dd3625faef5ba06074669716bbd3788d89bdde815959968092f76cc4eb9a9787',
-        '7a188fa3520e30d461da2501045731ca941461982883395937f68d00c644a573'
+        '7a188fa3520e30d461da2501045731ca941461982883395937f68d00c644a573',
       ],
       [
         'f710d79d9eb962297e4f6232b40e8f7feb2bc63814614d692c12de752408221e',
-        'ea98e67232d3b3295d3b535532115ccac8612c721851617526ae47a9c77bfc82'
-      ]
-    ]
+        'ea98e67232d3b3295d3b535532115ccac8612c721851617526ae47a9c77bfc82',
+      ],
+    ],
   },
   naf: {
     wnd: 7,
     points: [
       [
         'f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9',
-        '388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672'
+        '388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672',
       ],
       [
         '2f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4',
-        'd8ac222636e5e3d6d4dba9dda6c9c426f788271bab0d6840dca87d3aa6ac62d6'
+        'd8ac222636e5e3d6d4dba9dda6c9c426f788271bab0d6840dca87d3aa6ac62d6',
       ],
       [
         '5cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc',
-        '6aebca40ba255960a3178d6d861a54dba813d0b813fde7b5a5082628087264da'
+        '6aebca40ba255960a3178d6d861a54dba813d0b813fde7b5a5082628087264da',
       ],
       [
         'acd484e2f0c7f65309ad178a9f559abde09796974c57e714c35f110dfc27ccbe',
-        'cc338921b0a7d9fd64380971763b61e9add888a4375f8e0f05cc262ac64f9c37'
+        'cc338921b0a7d9fd64380971763b61e9add888a4375f8e0f05cc262ac64f9c37',
       ],
       [
         '774ae7f858a9411e5ef4246b70c65aac5649980be5c17891bbec17895da008cb',
-        'd984a032eb6b5e190243dd56d7b7b365372db1e2dff9d6a8301d74c9c953c61b'
+        'd984a032eb6b5e190243dd56d7b7b365372db1e2dff9d6a8301d74c9c953c61b',
       ],
       [
         'f28773c2d975288bc7d1d205c3748651b075fbc6610e58cddeeddf8f19405aa8',
-        'ab0902e8d880a89758212eb65cdaf473a1a06da521fa91f29b5cb52db03ed81'
+        'ab0902e8d880a89758212eb65cdaf473a1a06da521fa91f29b5cb52db03ed81',
       ],
       [
         'd7924d4f7d43ea965a465ae3095ff41131e5946f3c85f79e44adbcf8e27e080e',
-        '581e2872a86c72a683842ec228cc6defea40af2bd896d3a5c504dc9ff6a26b58'
+        '581e2872a86c72a683842ec228cc6defea40af2bd896d3a5c504dc9ff6a26b58',
       ],
       [
         'defdea4cdb677750a420fee807eacf21eb9898ae79b9768766e4faa04a2d4a34',
-        '4211ab0694635168e997b0ead2a93daeced1f4a04a95c0f6cfb199f69e56eb77'
+        '4211ab0694635168e997b0ead2a93daeced1f4a04a95c0f6cfb199f69e56eb77',
       ],
       [
         '2b4ea0a797a443d293ef5cff444f4979f06acfebd7e86d277475656138385b6c',
-        '85e89bc037945d93b343083b5a1c86131a01f60c50269763b570c854e5c09b7a'
+        '85e89bc037945d93b343083b5a1c86131a01f60c50269763b570c854e5c09b7a',
       ],
       [
         '352bbf4a4cdd12564f93fa332ce333301d9ad40271f8107181340aef25be59d5',
-        '321eb4075348f534d59c18259dda3e1f4a1b3b2e71b1039c67bd3d8bcf81998c'
+        '321eb4075348f534d59c18259dda3e1f4a1b3b2e71b1039c67bd3d8bcf81998c',
       ],
       [
         '2fa2104d6b38d11b0230010559879124e42ab8dfeff5ff29dc9cdadd4ecacc3f',
-        '2de1068295dd865b64569335bd5dd80181d70ecfc882648423ba76b532b7d67'
+        '2de1068295dd865b64569335bd5dd80181d70ecfc882648423ba76b532b7d67',
       ],
       [
         '9248279b09b4d68dab21a9b066edda83263c3d84e09572e269ca0cd7f5453714',
-        '73016f7bf234aade5d1aa71bdea2b1ff3fc0de2a887912ffe54a32ce97cb3402'
+        '73016f7bf234aade5d1aa71bdea2b1ff3fc0de2a887912ffe54a32ce97cb3402',
       ],
       [
         'daed4f2be3a8bf278e70132fb0beb7522f570e144bf615c07e996d443dee8729',
-        'a69dce4a7d6c98e8d4a1aca87ef8d7003f83c230f3afa726ab40e52290be1c55'
+        'a69dce4a7d6c98e8d4a1aca87ef8d7003f83c230f3afa726ab40e52290be1c55',
       ],
       [
         'c44d12c7065d812e8acf28d7cbb19f9011ecd9e9fdf281b0e6a3b5e87d22e7db',
-        '2119a460ce326cdc76c45926c982fdac0e106e861edf61c5a039063f0e0e6482'
+        '2119a460ce326cdc76c45926c982fdac0e106e861edf61c5a039063f0e0e6482',
       ],
       [
         '6a245bf6dc698504c89a20cfded60853152b695336c28063b61c65cbd269e6b4',
-        'e022cf42c2bd4a708b3f5126f16a24ad8b33ba48d0423b6efd5e6348100d8a82'
+        'e022cf42c2bd4a708b3f5126f16a24ad8b33ba48d0423b6efd5e6348100d8a82',
       ],
       [
         '1697ffa6fd9de627c077e3d2fe541084ce13300b0bec1146f95ae57f0d0bd6a5',
-        'b9c398f186806f5d27561506e4557433a2cf15009e498ae7adee9d63d01b2396'
+        'b9c398f186806f5d27561506e4557433a2cf15009e498ae7adee9d63d01b2396',
       ],
       [
         '605bdb019981718b986d0f07e834cb0d9deb8360ffb7f61df982345ef27a7479',
-        '2972d2de4f8d20681a78d93ec96fe23c26bfae84fb14db43b01e1e9056b8c49'
+        '2972d2de4f8d20681a78d93ec96fe23c26bfae84fb14db43b01e1e9056b8c49',
       ],
       [
         '62d14dab4150bf497402fdc45a215e10dcb01c354959b10cfe31c7e9d87ff33d',
-        '80fc06bd8cc5b01098088a1950eed0db01aa132967ab472235f5642483b25eaf'
+        '80fc06bd8cc5b01098088a1950eed0db01aa132967ab472235f5642483b25eaf',
       ],
       [
         '80c60ad0040f27dade5b4b06c408e56b2c50e9f56b9b8b425e555c2f86308b6f',
-        '1c38303f1cc5c30f26e66bad7fe72f70a65eed4cbe7024eb1aa01f56430bd57a'
+        '1c38303f1cc5c30f26e66bad7fe72f70a65eed4cbe7024eb1aa01f56430bd57a',
       ],
       [
         '7a9375ad6167ad54aa74c6348cc54d344cc5dc9487d847049d5eabb0fa03c8fb',
-        'd0e3fa9eca8726909559e0d79269046bdc59ea10c70ce2b02d499ec224dc7f7'
+        'd0e3fa9eca8726909559e0d79269046bdc59ea10c70ce2b02d499ec224dc7f7',
       ],
       [
         'd528ecd9b696b54c907a9ed045447a79bb408ec39b68df504bb51f459bc3ffc9',
-        'eecf41253136e5f99966f21881fd656ebc4345405c520dbc063465b521409933'
+        'eecf41253136e5f99966f21881fd656ebc4345405c520dbc063465b521409933',
       ],
       [
         '49370a4b5f43412ea25f514e8ecdad05266115e4a7ecb1387231808f8b45963',
-        '758f3f41afd6ed428b3081b0512fd62a54c3f3afbb5b6764b653052a12949c9a'
+        '758f3f41afd6ed428b3081b0512fd62a54c3f3afbb5b6764b653052a12949c9a',
       ],
       [
         '77f230936ee88cbbd73df930d64702ef881d811e0e1498e2f1c13eb1fc345d74',
-        '958ef42a7886b6400a08266e9ba1b37896c95330d97077cbbe8eb3c7671c60d6'
+        '958ef42a7886b6400a08266e9ba1b37896c95330d97077cbbe8eb3c7671c60d6',
       ],
       [
         'f2dac991cc4ce4b9ea44887e5c7c0bce58c80074ab9d4dbaeb28531b7739f530',
-        'e0dedc9b3b2f8dad4da1f32dec2531df9eb5fbeb0598e4fd1a117dba703a3c37'
+        'e0dedc9b3b2f8dad4da1f32dec2531df9eb5fbeb0598e4fd1a117dba703a3c37',
       ],
       [
         '463b3d9f662621fb1b4be8fbbe2520125a216cdfc9dae3debcba4850c690d45b',
-        '5ed430d78c296c3543114306dd8622d7c622e27c970a1de31cb377b01af7307e'
+        '5ed430d78c296c3543114306dd8622d7c622e27c970a1de31cb377b01af7307e',
       ],
       [
         'f16f804244e46e2a09232d4aff3b59976b98fac14328a2d1a32496b49998f247',
-        'cedabd9b82203f7e13d206fcdf4e33d92a6c53c26e5cce26d6579962c4e31df6'
+        'cedabd9b82203f7e13d206fcdf4e33d92a6c53c26e5cce26d6579962c4e31df6',
       ],
       [
         'caf754272dc84563b0352b7a14311af55d245315ace27c65369e15f7151d41d1',
-        'cb474660ef35f5f2a41b643fa5e460575f4fa9b7962232a5c32f908318a04476'
+        'cb474660ef35f5f2a41b643fa5e460575f4fa9b7962232a5c32f908318a04476',
       ],
       [
         '2600ca4b282cb986f85d0f1709979d8b44a09c07cb86d7c124497bc86f082120',
-        '4119b88753c15bd6a693b03fcddbb45d5ac6be74ab5f0ef44b0be9475a7e4b40'
+        '4119b88753c15bd6a693b03fcddbb45d5ac6be74ab5f0ef44b0be9475a7e4b40',
       ],
       [
         '7635ca72d7e8432c338ec53cd12220bc01c48685e24f7dc8c602a7746998e435',
-        '91b649609489d613d1d5e590f78e6d74ecfc061d57048bad9e76f302c5b9c61'
+        '91b649609489d613d1d5e590f78e6d74ecfc061d57048bad9e76f302c5b9c61',
       ],
       [
         '754e3239f325570cdbbf4a87deee8a66b7f2b33479d468fbc1a50743bf56cc18',
-        '673fb86e5bda30fb3cd0ed304ea49a023ee33d0197a695d0c5d98093c536683'
+        '673fb86e5bda30fb3cd0ed304ea49a023ee33d0197a695d0c5d98093c536683',
       ],
       [
         'e3e6bd1071a1e96aff57859c82d570f0330800661d1c952f9fe2694691d9b9e8',
-        '59c9e0bba394e76f40c0aa58379a3cb6a5a2283993e90c4167002af4920e37f5'
+        '59c9e0bba394e76f40c0aa58379a3cb6a5a2283993e90c4167002af4920e37f5',
       ],
       [
         '186b483d056a033826ae73d88f732985c4ccb1f32ba35f4b4cc47fdcf04aa6eb',
-        '3b952d32c67cf77e2e17446e204180ab21fb8090895138b4a4a797f86e80888b'
+        '3b952d32c67cf77e2e17446e204180ab21fb8090895138b4a4a797f86e80888b',
       ],
       [
         'df9d70a6b9876ce544c98561f4be4f725442e6d2b737d9c91a8321724ce0963f',
-        '55eb2dafd84d6ccd5f862b785dc39d4ab157222720ef9da217b8c45cf2ba2417'
+        '55eb2dafd84d6ccd5f862b785dc39d4ab157222720ef9da217b8c45cf2ba2417',
       ],
       [
         '5edd5cc23c51e87a497ca815d5dce0f8ab52554f849ed8995de64c5f34ce7143',
-        'efae9c8dbc14130661e8cec030c89ad0c13c66c0d17a2905cdc706ab7399a868'
+        'efae9c8dbc14130661e8cec030c89ad0c13c66c0d17a2905cdc706ab7399a868',
       ],
       [
         '290798c2b6476830da12fe02287e9e777aa3fba1c355b17a722d362f84614fba',
-        'e38da76dcd440621988d00bcf79af25d5b29c094db2a23146d003afd41943e7a'
+        'e38da76dcd440621988d00bcf79af25d5b29c094db2a23146d003afd41943e7a',
       ],
       [
         'af3c423a95d9f5b3054754efa150ac39cd29552fe360257362dfdecef4053b45',
-        'f98a3fd831eb2b749a93b0e6f35cfb40c8cd5aa667a15581bc2feded498fd9c6'
+        'f98a3fd831eb2b749a93b0e6f35cfb40c8cd5aa667a15581bc2feded498fd9c6',
       ],
       [
         '766dbb24d134e745cccaa28c99bf274906bb66b26dcf98df8d2fed50d884249a',
-        '744b1152eacbe5e38dcc887980da38b897584a65fa06cedd2c924f97cbac5996'
+        '744b1152eacbe5e38dcc887980da38b897584a65fa06cedd2c924f97cbac5996',
       ],
       [
         '59dbf46f8c94759ba21277c33784f41645f7b44f6c596a58ce92e666191abe3e',
-        'c534ad44175fbc300f4ea6ce648309a042ce739a7919798cd85e216c4a307f6e'
+        'c534ad44175fbc300f4ea6ce648309a042ce739a7919798cd85e216c4a307f6e',
       ],
       [
         'f13ada95103c4537305e691e74e9a4a8dd647e711a95e73cb62dc6018cfd87b8',
-        'e13817b44ee14de663bf4bc808341f326949e21a6a75c2570778419bdaf5733d'
+        'e13817b44ee14de663bf4bc808341f326949e21a6a75c2570778419bdaf5733d',
       ],
       [
         '7754b4fa0e8aced06d4167a2c59cca4cda1869c06ebadfb6488550015a88522c',
-        '30e93e864e669d82224b967c3020b8fa8d1e4e350b6cbcc537a48b57841163a2'
+        '30e93e864e669d82224b967c3020b8fa8d1e4e350b6cbcc537a48b57841163a2',
       ],
       [
         '948dcadf5990e048aa3874d46abef9d701858f95de8041d2a6828c99e2262519',
-        'e491a42537f6e597d5d28a3224b1bc25df9154efbd2ef1d2cbba2cae5347d57e'
+        'e491a42537f6e597d5d28a3224b1bc25df9154efbd2ef1d2cbba2cae5347d57e',
       ],
       [
         '7962414450c76c1689c7b48f8202ec37fb224cf5ac0bfa1570328a8a3d7c77ab',
-        '100b610ec4ffb4760d5c1fc133ef6f6b12507a051f04ac5760afa5b29db83437'
+        '100b610ec4ffb4760d5c1fc133ef6f6b12507a051f04ac5760afa5b29db83437',
       ],
       [
         '3514087834964b54b15b160644d915485a16977225b8847bb0dd085137ec47ca',
-        'ef0afbb2056205448e1652c48e8127fc6039e77c15c2378b7e7d15a0de293311'
+        'ef0afbb2056205448e1652c48e8127fc6039e77c15c2378b7e7d15a0de293311',
       ],
       [
         'd3cc30ad6b483e4bc79ce2c9dd8bc54993e947eb8df787b442943d3f7b527eaf',
-        '8b378a22d827278d89c5e9be8f9508ae3c2ad46290358630afb34db04eede0a4'
+        '8b378a22d827278d89c5e9be8f9508ae3c2ad46290358630afb34db04eede0a4',
       ],
       [
         '1624d84780732860ce1c78fcbfefe08b2b29823db913f6493975ba0ff4847610',
-        '68651cf9b6da903e0914448c6cd9d4ca896878f5282be4c8cc06e2a404078575'
+        '68651cf9b6da903e0914448c6cd9d4ca896878f5282be4c8cc06e2a404078575',
       ],
       [
         '733ce80da955a8a26902c95633e62a985192474b5af207da6df7b4fd5fc61cd4',
-        'f5435a2bd2badf7d485a4d8b8db9fcce3e1ef8e0201e4578c54673bc1dc5ea1d'
+        'f5435a2bd2badf7d485a4d8b8db9fcce3e1ef8e0201e4578c54673bc1dc5ea1d',
       ],
       [
         '15d9441254945064cf1a1c33bbd3b49f8966c5092171e699ef258dfab81c045c',
-        'd56eb30b69463e7234f5137b73b84177434800bacebfc685fc37bbe9efe4070d'
+        'd56eb30b69463e7234f5137b73b84177434800bacebfc685fc37bbe9efe4070d',
       ],
       [
         'a1d0fcf2ec9de675b612136e5ce70d271c21417c9d2b8aaaac138599d0717940',
-        'edd77f50bcb5a3cab2e90737309667f2641462a54070f3d519212d39c197a629'
+        'edd77f50bcb5a3cab2e90737309667f2641462a54070f3d519212d39c197a629',
       ],
       [
         'e22fbe15c0af8ccc5780c0735f84dbe9a790badee8245c06c7ca37331cb36980',
-        'a855babad5cd60c88b430a69f53a1a7a38289154964799be43d06d77d31da06'
+        'a855babad5cd60c88b430a69f53a1a7a38289154964799be43d06d77d31da06',
       ],
       [
         '311091dd9860e8e20ee13473c1155f5f69635e394704eaa74009452246cfa9b3',
-        '66db656f87d1f04fffd1f04788c06830871ec5a64feee685bd80f0b1286d8374'
+        '66db656f87d1f04fffd1f04788c06830871ec5a64feee685bd80f0b1286d8374',
       ],
       [
         '34c1fd04d301be89b31c0442d3e6ac24883928b45a9340781867d4232ec2dbdf',
-        '9414685e97b1b5954bd46f730174136d57f1ceeb487443dc5321857ba73abee'
+        '9414685e97b1b5954bd46f730174136d57f1ceeb487443dc5321857ba73abee',
       ],
       [
         'f219ea5d6b54701c1c14de5b557eb42a8d13f3abbcd08affcc2a5e6b049b8d63',
-        '4cb95957e83d40b0f73af4544cccf6b1f4b08d3c07b27fb8d8c2962a400766d1'
+        '4cb95957e83d40b0f73af4544cccf6b1f4b08d3c07b27fb8d8c2962a400766d1',
       ],
       [
         'd7b8740f74a8fbaab1f683db8f45de26543a5490bca627087236912469a0b448',
-        'fa77968128d9c92ee1010f337ad4717eff15db5ed3c049b3411e0315eaa4593b'
+        'fa77968128d9c92ee1010f337ad4717eff15db5ed3c049b3411e0315eaa4593b',
       ],
       [
         '32d31c222f8f6f0ef86f7c98d3a3335ead5bcd32abdd94289fe4d3091aa824bf',
-        '5f3032f5892156e39ccd3d7915b9e1da2e6dac9e6f26e961118d14b8462e1661'
+        '5f3032f5892156e39ccd3d7915b9e1da2e6dac9e6f26e961118d14b8462e1661',
       ],
       [
         '7461f371914ab32671045a155d9831ea8793d77cd59592c4340f86cbc18347b5',
-        '8ec0ba238b96bec0cbdddcae0aa442542eee1ff50c986ea6b39847b3cc092ff6'
+        '8ec0ba238b96bec0cbdddcae0aa442542eee1ff50c986ea6b39847b3cc092ff6',
       ],
       [
         'ee079adb1df1860074356a25aa38206a6d716b2c3e67453d287698bad7b2b2d6',
-        '8dc2412aafe3be5c4c5f37e0ecc5f9f6a446989af04c4e25ebaac479ec1c8c1e'
+        '8dc2412aafe3be5c4c5f37e0ecc5f9f6a446989af04c4e25ebaac479ec1c8c1e',
       ],
       [
         '16ec93e447ec83f0467b18302ee620f7e65de331874c9dc72bfd8616ba9da6b5',
-        '5e4631150e62fb40d0e8c2a7ca5804a39d58186a50e497139626778e25b0674d'
+        '5e4631150e62fb40d0e8c2a7ca5804a39d58186a50e497139626778e25b0674d',
       ],
       [
         'eaa5f980c245f6f038978290afa70b6bd8855897f98b6aa485b96065d537bd99',
-        'f65f5d3e292c2e0819a528391c994624d784869d7e6ea67fb18041024edc07dc'
+        'f65f5d3e292c2e0819a528391c994624d784869d7e6ea67fb18041024edc07dc',
       ],
       [
         '78c9407544ac132692ee1910a02439958ae04877151342ea96c4b6b35a49f51',
-        'f3e0319169eb9b85d5404795539a5e68fa1fbd583c064d2462b675f194a3ddb4'
+        'f3e0319169eb9b85d5404795539a5e68fa1fbd583c064d2462b675f194a3ddb4',
       ],
       [
         '494f4be219a1a77016dcd838431aea0001cdc8ae7a6fc688726578d9702857a5',
-        '42242a969283a5f339ba7f075e36ba2af925ce30d767ed6e55f4b031880d562c'
+        '42242a969283a5f339ba7f075e36ba2af925ce30d767ed6e55f4b031880d562c',
       ],
       [
         'a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5',
-        '204b5d6f84822c307e4b4a7140737aec23fc63b65b35f86a10026dbd2d864e6b'
+        '204b5d6f84822c307e4b4a7140737aec23fc63b65b35f86a10026dbd2d864e6b',
       ],
       [
         'c41916365abb2b5d09192f5f2dbeafec208f020f12570a184dbadc3e58595997',
-        '4f14351d0087efa49d245b328984989d5caf9450f34bfc0ed16e96b58fa9913'
+        '4f14351d0087efa49d245b328984989d5caf9450f34bfc0ed16e96b58fa9913',
       ],
       [
         '841d6063a586fa475a724604da03bc5b92a2e0d2e0a36acfe4c73a5514742881',
-        '73867f59c0659e81904f9a1c7543698e62562d6744c169ce7a36de01a8d6154'
+        '73867f59c0659e81904f9a1c7543698e62562d6744c169ce7a36de01a8d6154',
       ],
       [
         '5e95bb399a6971d376026947f89bde2f282b33810928be4ded112ac4d70e20d5',
-        '39f23f366809085beebfc71181313775a99c9aed7d8ba38b161384c746012865'
+        '39f23f366809085beebfc71181313775a99c9aed7d8ba38b161384c746012865',
       ],
       [
         '36e4641a53948fd476c39f8a99fd974e5ec07564b5315d8bf99471bca0ef2f66',
-        'd2424b1b1abe4eb8164227b085c9aa9456ea13493fd563e06fd51cf5694c78fc'
+        'd2424b1b1abe4eb8164227b085c9aa9456ea13493fd563e06fd51cf5694c78fc',
       ],
       [
         '336581ea7bfbbb290c191a2f507a41cf5643842170e914faeab27c2c579f726',
-        'ead12168595fe1be99252129b6e56b3391f7ab1410cd1e0ef3dcdcabd2fda224'
+        'ead12168595fe1be99252129b6e56b3391f7ab1410cd1e0ef3dcdcabd2fda224',
       ],
       [
         '8ab89816dadfd6b6a1f2634fcf00ec8403781025ed6890c4849742706bd43ede',
-        '6fdcef09f2f6d0a044e654aef624136f503d459c3e89845858a47a9129cdd24e'
+        '6fdcef09f2f6d0a044e654aef624136f503d459c3e89845858a47a9129cdd24e',
       ],
       [
         '1e33f1a746c9c5778133344d9299fcaa20b0938e8acff2544bb40284b8c5fb94',
-        '60660257dd11b3aa9c8ed618d24edff2306d320f1d03010e33a7d2057f3b3b6'
+        '60660257dd11b3aa9c8ed618d24edff2306d320f1d03010e33a7d2057f3b3b6',
       ],
       [
         '85b7c1dcb3cec1b7ee7f30ded79dd20a0ed1f4cc18cbcfcfa410361fd8f08f31',
-        '3d98a9cdd026dd43f39048f25a8847f4fcafad1895d7a633c6fed3c35e999511'
+        '3d98a9cdd026dd43f39048f25a8847f4fcafad1895d7a633c6fed3c35e999511',
       ],
       [
         '29df9fbd8d9e46509275f4b125d6d45d7fbe9a3b878a7af872a2800661ac5f51',
-        'b4c4fe99c775a606e2d8862179139ffda61dc861c019e55cd2876eb2a27d84b'
+        'b4c4fe99c775a606e2d8862179139ffda61dc861c019e55cd2876eb2a27d84b',
       ],
       [
         'a0b1cae06b0a847a3fea6e671aaf8adfdfe58ca2f768105c8082b2e449fce252',
-        'ae434102edde0958ec4b19d917a6a28e6b72da1834aff0e650f049503a296cf2'
+        'ae434102edde0958ec4b19d917a6a28e6b72da1834aff0e650f049503a296cf2',
       ],
       [
         '4e8ceafb9b3e9a136dc7ff67e840295b499dfb3b2133e4ba113f2e4c0e121e5',
-        'cf2174118c8b6d7a4b48f6d534ce5c79422c086a63460502b827ce62a326683c'
+        'cf2174118c8b6d7a4b48f6d534ce5c79422c086a63460502b827ce62a326683c',
       ],
       [
         'd24a44e047e19b6f5afb81c7ca2f69080a5076689a010919f42725c2b789a33b',
-        '6fb8d5591b466f8fc63db50f1c0f1c69013f996887b8244d2cdec417afea8fa3'
+        '6fb8d5591b466f8fc63db50f1c0f1c69013f996887b8244d2cdec417afea8fa3',
       ],
       [
         'ea01606a7a6c9cdd249fdfcfacb99584001edd28abbab77b5104e98e8e3b35d4',
-        '322af4908c7312b0cfbfe369f7a7b3cdb7d4494bc2823700cfd652188a3ea98d'
+        '322af4908c7312b0cfbfe369f7a7b3cdb7d4494bc2823700cfd652188a3ea98d',
       ],
       [
         'af8addbf2b661c8a6c6328655eb96651252007d8c5ea31be4ad196de8ce2131f',
-        '6749e67c029b85f52a034eafd096836b2520818680e26ac8f3dfbcdb71749700'
+        '6749e67c029b85f52a034eafd096836b2520818680e26ac8f3dfbcdb71749700',
       ],
       [
         'e3ae1974566ca06cc516d47e0fb165a674a3dabcfca15e722f0e3450f45889',
-        '2aeabe7e4531510116217f07bf4d07300de97e4874f81f533420a72eeb0bd6a4'
+        '2aeabe7e4531510116217f07bf4d07300de97e4874f81f533420a72eeb0bd6a4',
       ],
       [
         '591ee355313d99721cf6993ffed1e3e301993ff3ed258802075ea8ced397e246',
-        'b0ea558a113c30bea60fc4775460c7901ff0b053d25ca2bdeee98f1a4be5d196'
+        'b0ea558a113c30bea60fc4775460c7901ff0b053d25ca2bdeee98f1a4be5d196',
       ],
       [
         '11396d55fda54c49f19aa97318d8da61fa8584e47b084945077cf03255b52984',
-        '998c74a8cd45ac01289d5833a7beb4744ff536b01b257be4c5767bea93ea57a4'
+        '998c74a8cd45ac01289d5833a7beb4744ff536b01b257be4c5767bea93ea57a4',
       ],
       [
         '3c5d2a1ba39c5a1790000738c9e0c40b8dcdfd5468754b6405540157e017aa7a',
-        'b2284279995a34e2f9d4de7396fc18b80f9b8b9fdd270f6661f79ca4c81bd257'
+        'b2284279995a34e2f9d4de7396fc18b80f9b8b9fdd270f6661f79ca4c81bd257',
       ],
       [
         'cc8704b8a60a0defa3a99a7299f2e9c3fbc395afb04ac078425ef8a1793cc030',
-        'bdd46039feed17881d1e0862db347f8cf395b74fc4bcdc4e940b74e3ac1f1b13'
+        'bdd46039feed17881d1e0862db347f8cf395b74fc4bcdc4e940b74e3ac1f1b13',
       ],
       [
         'c533e4f7ea8555aacd9777ac5cad29b97dd4defccc53ee7ea204119b2889b197',
-        '6f0a256bc5efdf429a2fb6242f1a43a2d9b925bb4a4b3a26bb8e0f45eb596096'
+        '6f0a256bc5efdf429a2fb6242f1a43a2d9b925bb4a4b3a26bb8e0f45eb596096',
       ],
       [
         'c14f8f2ccb27d6f109f6d08d03cc96a69ba8c34eec07bbcf566d48e33da6593',
-        'c359d6923bb398f7fd4473e16fe1c28475b740dd098075e6c0e8649113dc3a38'
+        'c359d6923bb398f7fd4473e16fe1c28475b740dd098075e6c0e8649113dc3a38',
       ],
       [
         'a6cbc3046bc6a450bac24789fa17115a4c9739ed75f8f21ce441f72e0b90e6ef',
-        '21ae7f4680e889bb130619e2c0f95a360ceb573c70603139862afd617fa9b9f'
+        '21ae7f4680e889bb130619e2c0f95a360ceb573c70603139862afd617fa9b9f',
       ],
       [
         '347d6d9a02c48927ebfb86c1359b1caf130a3c0267d11ce6344b39f99d43cc38',
-        '60ea7f61a353524d1c987f6ecec92f086d565ab687870cb12689ff1e31c74448'
+        '60ea7f61a353524d1c987f6ecec92f086d565ab687870cb12689ff1e31c74448',
       ],
       [
         'da6545d2181db8d983f7dcb375ef5866d47c67b1bf31c8cf855ef7437b72656a',
-        '49b96715ab6878a79e78f07ce5680c5d6673051b4935bd897fea824b77dc208a'
+        '49b96715ab6878a79e78f07ce5680c5d6673051b4935bd897fea824b77dc208a',
       ],
       [
         'c40747cc9d012cb1a13b8148309c6de7ec25d6945d657146b9d5994b8feb1111',
-        '5ca560753be2a12fc6de6caf2cb489565db936156b9514e1bb5e83037e0fa2d4'
+        '5ca560753be2a12fc6de6caf2cb489565db936156b9514e1bb5e83037e0fa2d4',
       ],
       [
         '4e42c8ec82c99798ccf3a610be870e78338c7f713348bd34c8203ef4037f3502',
-        '7571d74ee5e0fb92a7a8b33a07783341a5492144cc54bcc40a94473693606437'
+        '7571d74ee5e0fb92a7a8b33a07783341a5492144cc54bcc40a94473693606437',
       ],
       [
         '3775ab7089bc6af823aba2e1af70b236d251cadb0c86743287522a1b3b0dedea',
-        'be52d107bcfa09d8bcb9736a828cfa7fac8db17bf7a76a2c42ad961409018cf7'
+        'be52d107bcfa09d8bcb9736a828cfa7fac8db17bf7a76a2c42ad961409018cf7',
       ],
       [
         'cee31cbf7e34ec379d94fb814d3d775ad954595d1314ba8846959e3e82f74e26',
-        '8fd64a14c06b589c26b947ae2bcf6bfa0149ef0be14ed4d80f448a01c43b1c6d'
+        '8fd64a14c06b589c26b947ae2bcf6bfa0149ef0be14ed4d80f448a01c43b1c6d',
       ],
       [
         'b4f9eaea09b6917619f6ea6a4eb5464efddb58fd45b1ebefcdc1a01d08b47986',
-        '39e5c9925b5a54b07433a4f18c61726f8bb131c012ca542eb24a8ac07200682a'
+        '39e5c9925b5a54b07433a4f18c61726f8bb131c012ca542eb24a8ac07200682a',
       ],
       [
         'd4263dfc3d2df923a0179a48966d30ce84e2515afc3dccc1b77907792ebcc60e',
-        '62dfaf07a0f78feb30e30d6295853ce189e127760ad6cf7fae164e122a208d54'
+        '62dfaf07a0f78feb30e30d6295853ce189e127760ad6cf7fae164e122a208d54',
       ],
       [
         '48457524820fa65a4f8d35eb6930857c0032acc0a4a2de422233eeda897612c4',
-        '25a748ab367979d98733c38a1fa1c2e7dc6cc07db2d60a9ae7a76aaa49bd0f77'
+        '25a748ab367979d98733c38a1fa1c2e7dc6cc07db2d60a9ae7a76aaa49bd0f77',
       ],
       [
         'dfeeef1881101f2cb11644f3a2afdfc2045e19919152923f367a1767c11cceda',
-        'ecfb7056cf1de042f9420bab396793c0c390bde74b4bbdff16a83ae09a9a7517'
+        'ecfb7056cf1de042f9420bab396793c0c390bde74b4bbdff16a83ae09a9a7517',
       ],
       [
         '6d7ef6b17543f8373c573f44e1f389835d89bcbc6062ced36c82df83b8fae859',
-        'cd450ec335438986dfefa10c57fea9bcc521a0959b2d80bbf74b190dca712d10'
+        'cd450ec335438986dfefa10c57fea9bcc521a0959b2d80bbf74b190dca712d10',
       ],
       [
         'e75605d59102a5a2684500d3b991f2e3f3c88b93225547035af25af66e04541f',
-        'f5c54754a8f71ee540b9b48728473e314f729ac5308b06938360990e2bfad125'
+        'f5c54754a8f71ee540b9b48728473e314f729ac5308b06938360990e2bfad125',
       ],
       [
         'eb98660f4c4dfaa06a2be453d5020bc99a0c2e60abe388457dd43fefb1ed620c',
-        '6cb9a8876d9cb8520609af3add26cd20a0a7cd8a9411131ce85f44100099223e'
+        '6cb9a8876d9cb8520609af3add26cd20a0a7cd8a9411131ce85f44100099223e',
       ],
       [
         '13e87b027d8514d35939f2e6892b19922154596941888336dc3563e3b8dba942',
-        'fef5a3c68059a6dec5d624114bf1e91aac2b9da568d6abeb2570d55646b8adf1'
+        'fef5a3c68059a6dec5d624114bf1e91aac2b9da568d6abeb2570d55646b8adf1',
       ],
       [
         'ee163026e9fd6fe017c38f06a5be6fc125424b371ce2708e7bf4491691e5764a',
-        '1acb250f255dd61c43d94ccc670d0f58f49ae3fa15b96623e5430da0ad6c62b2'
+        '1acb250f255dd61c43d94ccc670d0f58f49ae3fa15b96623e5430da0ad6c62b2',
       ],
       [
         'b268f5ef9ad51e4d78de3a750c2dc89b1e626d43505867999932e5db33af3d80',
-        '5f310d4b3c99b9ebb19f77d41c1dee018cf0d34fd4191614003e945a1216e423'
+        '5f310d4b3c99b9ebb19f77d41c1dee018cf0d34fd4191614003e945a1216e423',
       ],
       [
         'ff07f3118a9df035e9fad85eb6c7bfe42b02f01ca99ceea3bf7ffdba93c4750d',
-        '438136d603e858a3a5c440c38eccbaddc1d2942114e2eddd4740d098ced1f0d8'
+        '438136d603e858a3a5c440c38eccbaddc1d2942114e2eddd4740d098ced1f0d8',
       ],
       [
         '8d8b9855c7c052a34146fd20ffb658bea4b9f69e0d825ebec16e8c3ce2b526a1',
-        'cdb559eedc2d79f926baf44fb84ea4d44bcf50fee51d7ceb30e2e7f463036758'
+        'cdb559eedc2d79f926baf44fb84ea4d44bcf50fee51d7ceb30e2e7f463036758',
       ],
       [
         '52db0b5384dfbf05bfa9d472d7ae26dfe4b851ceca91b1eba54263180da32b63',
-        'c3b997d050ee5d423ebaf66a6db9f57b3180c902875679de924b69d84a7b375'
+        'c3b997d050ee5d423ebaf66a6db9f57b3180c902875679de924b69d84a7b375',
       ],
       [
         'e62f9490d3d51da6395efd24e80919cc7d0f29c3f3fa48c6fff543becbd43352',
-        '6d89ad7ba4876b0b22c2ca280c682862f342c8591f1daf5170e07bfd9ccafa7d'
+        '6d89ad7ba4876b0b22c2ca280c682862f342c8591f1daf5170e07bfd9ccafa7d',
       ],
       [
         '7f30ea2476b399b4957509c88f77d0191afa2ff5cb7b14fd6d8e7d65aaab1193',
-        'ca5ef7d4b231c94c3b15389a5f6311e9daff7bb67b103e9880ef4bff637acaec'
+        'ca5ef7d4b231c94c3b15389a5f6311e9daff7bb67b103e9880ef4bff637acaec',
       ],
       [
         '5098ff1e1d9f14fb46a210fada6c903fef0fb7b4a1dd1d9ac60a0361800b7a00',
-        '9731141d81fc8f8084d37c6e7542006b3ee1b40d60dfe5362a5b132fd17ddc0'
+        '9731141d81fc8f8084d37c6e7542006b3ee1b40d60dfe5362a5b132fd17ddc0',
       ],
       [
         '32b78c7de9ee512a72895be6b9cbefa6e2f3c4ccce445c96b9f2c81e2778ad58',
-        'ee1849f513df71e32efc3896ee28260c73bb80547ae2275ba497237794c8753c'
+        'ee1849f513df71e32efc3896ee28260c73bb80547ae2275ba497237794c8753c',
       ],
       [
         'e2cb74fddc8e9fbcd076eef2a7c72b0ce37d50f08269dfc074b581550547a4f7',
-        'd3aa2ed71c9dd2247a62df062736eb0baddea9e36122d2be8641abcb005cc4a4'
+        'd3aa2ed71c9dd2247a62df062736eb0baddea9e36122d2be8641abcb005cc4a4',
       ],
       [
         '8438447566d4d7bedadc299496ab357426009a35f235cb141be0d99cd10ae3a8',
-        'c4e1020916980a4da5d01ac5e6ad330734ef0d7906631c4f2390426b2edd791f'
+        'c4e1020916980a4da5d01ac5e6ad330734ef0d7906631c4f2390426b2edd791f',
       ],
       [
         '4162d488b89402039b584c6fc6c308870587d9c46f660b878ab65c82c711d67e',
-        '67163e903236289f776f22c25fb8a3afc1732f2b84b4e95dbda47ae5a0852649'
+        '67163e903236289f776f22c25fb8a3afc1732f2b84b4e95dbda47ae5a0852649',
       ],
       [
         '3fad3fa84caf0f34f0f89bfd2dcf54fc175d767aec3e50684f3ba4a4bf5f683d',
-        'cd1bc7cb6cc407bb2f0ca647c718a730cf71872e7d0d2a53fa20efcdfe61826'
+        'cd1bc7cb6cc407bb2f0ca647c718a730cf71872e7d0d2a53fa20efcdfe61826',
       ],
       [
         '674f2600a3007a00568c1a7ce05d0816c1fb84bf1370798f1c69532faeb1a86b',
-        '299d21f9413f33b3edf43b257004580b70db57da0b182259e09eecc69e0d38a5'
+        '299d21f9413f33b3edf43b257004580b70db57da0b182259e09eecc69e0d38a5',
       ],
       [
         'd32f4da54ade74abb81b815ad1fb3b263d82d6c692714bcff87d29bd5ee9f08f',
-        'f9429e738b8e53b968e99016c059707782e14f4535359d582fc416910b3eea87'
+        'f9429e738b8e53b968e99016c059707782e14f4535359d582fc416910b3eea87',
       ],
       [
         '30e4e670435385556e593657135845d36fbb6931f72b08cb1ed954f1e3ce3ff6',
-        '462f9bce619898638499350113bbc9b10a878d35da70740dc695a559eb88db7b'
+        '462f9bce619898638499350113bbc9b10a878d35da70740dc695a559eb88db7b',
       ],
       [
         'be2062003c51cc3004682904330e4dee7f3dcd10b01e580bf1971b04d4cad297',
-        '62188bc49d61e5428573d48a74e1c655b1c61090905682a0d5558ed72dccb9bc'
+        '62188bc49d61e5428573d48a74e1c655b1c61090905682a0d5558ed72dccb9bc',
       ],
       [
         '93144423ace3451ed29e0fb9ac2af211cb6e84a601df5993c419859fff5df04a',
-        '7c10dfb164c3425f5c71a3f9d7992038f1065224f72bb9d1d902a6d13037b47c'
+        '7c10dfb164c3425f5c71a3f9d7992038f1065224f72bb9d1d902a6d13037b47c',
       ],
       [
         'b015f8044f5fcbdcf21ca26d6c34fb8197829205c7b7d2a7cb66418c157b112c',
-        'ab8c1e086d04e813744a655b2df8d5f83b3cdc6faa3088c1d3aea1454e3a1d5f'
+        'ab8c1e086d04e813744a655b2df8d5f83b3cdc6faa3088c1d3aea1454e3a1d5f',
       ],
       [
         'd5e9e1da649d97d89e4868117a465a3a4f8a18de57a140d36b3f2af341a21b52',
-        '4cb04437f391ed73111a13cc1d4dd0db1693465c2240480d8955e8592f27447a'
+        '4cb04437f391ed73111a13cc1d4dd0db1693465c2240480d8955e8592f27447a',
       ],
       [
         'd3ae41047dd7ca065dbf8ed77b992439983005cd72e16d6f996a5316d36966bb',
-        'bd1aeb21ad22ebb22a10f0303417c6d964f8cdd7df0aca614b10dc14d125ac46'
+        'bd1aeb21ad22ebb22a10f0303417c6d964f8cdd7df0aca614b10dc14d125ac46',
       ],
       [
         '463e2763d885f958fc66cdd22800f0a487197d0a82e377b49f80af87c897b065',
-        'bfefacdb0e5d0fd7df3a311a94de062b26b80c61fbc97508b79992671ef7ca7f'
+        'bfefacdb0e5d0fd7df3a311a94de062b26b80c61fbc97508b79992671ef7ca7f',
       ],
       [
         '7985fdfd127c0567c6f53ec1bb63ec3158e597c40bfe747c83cddfc910641917',
-        '603c12daf3d9862ef2b25fe1de289aed24ed291e0ec6708703a5bd567f32ed03'
+        '603c12daf3d9862ef2b25fe1de289aed24ed291e0ec6708703a5bd567f32ed03',
       ],
       [
         '74a1ad6b5f76e39db2dd249410eac7f99e74c59cb83d2d0ed5ff1543da7703e9',
-        'cc6157ef18c9c63cd6193d83631bbea0093e0968942e8c33d5737fd790e0db08'
+        'cc6157ef18c9c63cd6193d83631bbea0093e0968942e8c33d5737fd790e0db08',
       ],
       [
         '30682a50703375f602d416664ba19b7fc9bab42c72747463a71d0896b22f6da3',
-        '553e04f6b018b4fa6c8f39e7f311d3176290d0e0f19ca73f17714d9977a22ff8'
+        '553e04f6b018b4fa6c8f39e7f311d3176290d0e0f19ca73f17714d9977a22ff8',
       ],
       [
         '9e2158f0d7c0d5f26c3791efefa79597654e7a2b2464f52b1ee6c1347769ef57',
-        '712fcdd1b9053f09003a3481fa7762e9ffd7c8ef35a38509e2fbf2629008373'
+        '712fcdd1b9053f09003a3481fa7762e9ffd7c8ef35a38509e2fbf2629008373',
       ],
       [
         '176e26989a43c9cfeba4029c202538c28172e566e3c4fce7322857f3be327d66',
-        'ed8cc9d04b29eb877d270b4878dc43c19aefd31f4eee09ee7b47834c1fa4b1c3'
+        'ed8cc9d04b29eb877d270b4878dc43c19aefd31f4eee09ee7b47834c1fa4b1c3',
       ],
       [
         '75d46efea3771e6e68abb89a13ad747ecf1892393dfc4f1b7004788c50374da8',
-        '9852390a99507679fd0b86fd2b39a868d7efc22151346e1a3ca4726586a6bed8'
+        '9852390a99507679fd0b86fd2b39a868d7efc22151346e1a3ca4726586a6bed8',
       ],
       [
         '809a20c67d64900ffb698c4c825f6d5f2310fb0451c869345b7319f645605721',
-        '9e994980d9917e22b76b061927fa04143d096ccc54963e6a5ebfa5f3f8e286c1'
+        '9e994980d9917e22b76b061927fa04143d096ccc54963e6a5ebfa5f3f8e286c1',
       ],
       [
         '1b38903a43f7f114ed4500b4eac7083fdefece1cf29c63528d563446f972c180',
-        '4036edc931a60ae889353f77fd53de4a2708b26b6f5da72ad3394119daf408f9'
-      ]
-    ]
-  }
+        '4036edc931a60ae889353f77fd53de4a2708b26b6f5da72ad3394119daf408f9',
+      ],
+    ],
+  },
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/lib/elliptic/utils.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/elliptic/lib/elliptic/utils.js":[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -48404,15 +49631,15 @@ utils.getNAF = getNAF;
 function getJSF(k1, k2) {
   var jsf = [
     [],
-    []
+    [],
   ];
 
   k1 = k1.clone();
   k2 = k2.clone();
   var d1 = 0;
   var d2 = 0;
+  var m8;
   while (k1.cmpn(-d1) > 0 || k2.cmpn(-d2) > 0) {
-
     // First phase
     var m14 = (k1.andln(3) + d1) & 3;
     var m24 = (k2.andln(3) + d2) & 3;
@@ -48424,7 +49651,7 @@ function getJSF(k1, k2) {
     if ((m14 & 1) === 0) {
       u1 = 0;
     } else {
-      var m8 = (k1.andln(7) + d1) & 7;
+      m8 = (k1.andln(7) + d1) & 7;
       if ((m8 === 3 || m8 === 5) && m24 === 2)
         u1 = -m14;
       else
@@ -48436,7 +49663,7 @@ function getJSF(k1, k2) {
     if ((m24 & 1) === 0) {
       u2 = 0;
     } else {
-      var m8 = (k2.andln(7) + d2) & 7;
+      m8 = (k2.andln(7) + d2) & 7;
       if ((m8 === 3 || m8 === 5) && m14 === 2)
         u2 = -m24;
       else
@@ -48461,14 +49688,14 @@ function cachedProperty(obj, name, computer) {
   var key = '_' + name;
   obj.prototype[name] = function cachedProperty() {
     return this[key] !== undefined ? this[key] :
-           this[key] = computer.call(this);
+      this[key] = computer.call(this);
   };
 }
 utils.cachedProperty = cachedProperty;
 
 function parseBytes(bytes) {
   return typeof bytes === 'string' ? utils.toArray(bytes, 'hex') :
-                                     bytes;
+    bytes;
 }
 utils.parseBytes = parseBytes;
 
@@ -48478,14 +49705,14 @@ function intFromLE(bytes) {
 utils.intFromLE = intFromLE;
 
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/opt/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/opt/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
 module.exports={
   "_from": "elliptic@^6.5.3",
-  "_id": "elliptic@6.5.3",
+  "_id": "elliptic@6.5.4",
   "_inBundle": false,
-  "_integrity": "sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==",
+  "_integrity": "sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==",
   "_location": "/elliptic",
   "_phantomChildren": {},
   "_requested": {
@@ -48502,10 +49729,10 @@ module.exports={
     "/browserify-sign",
     "/create-ecdh"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.3.tgz",
-  "_shasum": "cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.4.tgz",
+  "_shasum": "da37cebd31e79a1367e941b592ed1fbebd58abbb",
   "_spec": "elliptic@^6.5.3",
-  "_where": "/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign",
+  "_where": "/opt/privatesky/node_modules/browserify-sign",
   "author": {
     "name": "Fedor Indutny",
     "email": "fedor@indutny.com"
@@ -48515,31 +49742,30 @@ module.exports={
   },
   "bundleDependencies": false,
   "dependencies": {
-    "bn.js": "^4.4.0",
-    "brorand": "^1.0.1",
+    "bn.js": "^4.11.9",
+    "brorand": "^1.1.0",
     "hash.js": "^1.0.0",
-    "hmac-drbg": "^1.0.0",
-    "inherits": "^2.0.1",
-    "minimalistic-assert": "^1.0.0",
-    "minimalistic-crypto-utils": "^1.0.0"
+    "hmac-drbg": "^1.0.1",
+    "inherits": "^2.0.4",
+    "minimalistic-assert": "^1.0.1",
+    "minimalistic-crypto-utils": "^1.0.1"
   },
   "deprecated": false,
   "description": "EC cryptography",
   "devDependencies": {
-    "brfs": "^1.4.3",
-    "coveralls": "^3.0.8",
-    "grunt": "^1.0.4",
-    "grunt-browserify": "^5.0.0",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-connect": "^1.0.0",
+    "brfs": "^2.0.2",
+    "coveralls": "^3.1.0",
+    "eslint": "^7.6.0",
+    "grunt": "^1.2.1",
+    "grunt-browserify": "^5.3.0",
+    "grunt-cli": "^1.3.2",
+    "grunt-contrib-connect": "^3.0.0",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^1.0.1",
-    "grunt-mocha-istanbul": "^3.0.1",
+    "grunt-contrib-uglify": "^5.0.0",
+    "grunt-mocha-istanbul": "^5.0.2",
     "grunt-saucelabs": "^9.0.1",
-    "istanbul": "^0.4.2",
-    "jscs": "^3.0.7",
-    "jshint": "^2.10.3",
-    "mocha": "^6.2.2"
+    "istanbul": "^0.4.5",
+    "mocha": "^8.0.1"
   },
   "files": [
     "lib"
@@ -48559,17 +49785,16 @@ module.exports={
     "url": "git+ssh://git@github.com/indutny/elliptic.git"
   },
   "scripts": {
-    "jscs": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js",
-    "jshint": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js",
-    "lint": "npm run jscs && npm run jshint",
+    "lint": "eslint lib test",
+    "lint:fix": "npm run lint -- --fix",
     "test": "npm run lint && npm run unit",
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
     "version": "grunt dist && git add dist/"
   },
-  "version": "6.5.3"
+  "version": "6.5.4"
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/events/events.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -49094,7 +50319,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/evp_bytestokey/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var MD5 = require('md5.js')
 
@@ -49141,7 +50366,7 @@ function EVP_BytesToKey (password, salt, keyBits, ivLen) {
 
 module.exports = EVP_BytesToKey
 
-},{"md5.js":"/home/travis/build/PrivateSky/privatesky/node_modules/md5.js/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/index.js":[function(require,module,exports){
+},{"md5.js":"/opt/privatesky/node_modules/md5.js/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/hash-base/index.js":[function(require,module,exports){
 'use strict'
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('readable-stream').Transform
@@ -49238,9 +50463,9 @@ HashBase.prototype._digest = function () {
 
 module.exports = HashBase
 
-},{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -49383,9 +50608,9 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
-},{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_readable":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","_process":"/opt/privatesky/node_modules/process/browser.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
+},{"./_stream_transform":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -50513,9 +51738,9 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","events":"/opt/privatesky/node_modules/events/events.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/opt/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
+},{"../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -51216,7 +52441,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/opt/privatesky/node_modules/util-deprecate/browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -51427,9 +52652,9 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"./end-of-stream":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -51538,19 +52763,19 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/opt/privatesky/node_modules/events/events.js"}],"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/opt/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash.js":[function(require,module,exports){
 var hash = exports;
 
 hash.utils = require('./hash/utils');
@@ -51567,7 +52792,7 @@ hash.sha384 = hash.sha.sha384;
 hash.sha512 = hash.sha.sha512;
 hash.ripemd160 = hash.ripemd.ripemd160;
 
-},{"./hash/common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js","./hash/hmac":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/hmac.js","./hash/ripemd":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/ripemd.js","./hash/sha":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha.js","./hash/utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js":[function(require,module,exports){
+},{"./hash/common":"/opt/privatesky/node_modules/hash.js/lib/hash/common.js","./hash/hmac":"/opt/privatesky/node_modules/hash.js/lib/hash/hmac.js","./hash/ripemd":"/opt/privatesky/node_modules/hash.js/lib/hash/ripemd.js","./hash/sha":"/opt/privatesky/node_modules/hash.js/lib/hash/sha.js","./hash/utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/common.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -51661,7 +52886,7 @@ BlockHash.prototype._pad = function pad() {
   return res;
 };
 
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/hmac.js":[function(require,module,exports){
+},{"./utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/hmac.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -51710,7 +52935,7 @@ Hmac.prototype.digest = function digest(enc) {
   return this.outer.digest(enc);
 };
 
-},{"./utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/ripemd.js":[function(require,module,exports){
+},{"./utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/ripemd.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -51858,7 +53083,7 @@ var sh = [
   8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11
 ];
 
-},{"./common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js","./utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha.js":[function(require,module,exports){
+},{"./common":"/opt/privatesky/node_modules/hash.js/lib/hash/common.js","./utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha.js":[function(require,module,exports){
 'use strict';
 
 exports.sha1 = require('./sha/1');
@@ -51867,7 +53092,7 @@ exports.sha256 = require('./sha/256');
 exports.sha384 = require('./sha/384');
 exports.sha512 = require('./sha/512');
 
-},{"./sha/1":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/1.js","./sha/224":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/224.js","./sha/256":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/256.js","./sha/384":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/384.js","./sha/512":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/1.js":[function(require,module,exports){
+},{"./sha/1":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/1.js","./sha/224":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/224.js","./sha/256":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/256.js","./sha/384":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/384.js","./sha/512":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/1.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -51943,7 +53168,7 @@ SHA1.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/common.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/224.js":[function(require,module,exports){
+},{"../common":"/opt/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/common.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/224.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -51975,7 +53200,7 @@ SHA224.prototype._digest = function digest(enc) {
 };
 
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","./256":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/256.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/256.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","./256":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/256.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/256.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -52082,7 +53307,7 @@ SHA256.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/common.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/384.js":[function(require,module,exports){
+},{"../common":"/opt/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/common.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/384.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -52119,7 +53344,7 @@ SHA384.prototype._digest = function digest(enc) {
     return utils.split32(this.h.slice(0, 12), 'big');
 };
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","./512":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/512.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","./512":"/opt/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/512.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -52451,7 +53676,7 @@ function g1_512_lo(xh, xl) {
   return r;
 }
 
-},{"../common":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/sha/common.js":[function(require,module,exports){
+},{"../common":"/opt/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/sha/common.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -52502,7 +53727,7 @@ function g1_256(x) {
 }
 exports.g1_256 = g1_256;
 
-},{"../utils":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash/utils.js":[function(require,module,exports){
+},{"../utils":"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/opt/privatesky/node_modules/hash.js/lib/hash/utils.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -52782,7 +54007,7 @@ function shr64_lo(ah, al, num) {
 }
 exports.shr64_lo = shr64_lo;
 
-},{"inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js":[function(require,module,exports){
+},{"inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js"}],"/opt/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js":[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -52897,7 +54122,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
   return utils.encode(res, enc);
 };
 
-},{"hash.js":"/home/travis/build/PrivateSky/privatesky/node_modules/hash.js/lib/hash.js","minimalistic-assert":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/https-browserify/index.js":[function(require,module,exports){
+},{"hash.js":"/opt/privatesky/node_modules/hash.js/lib/hash.js","minimalistic-assert":"/opt/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/opt/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/opt/privatesky/node_modules/https-browserify/index.js":[function(require,module,exports){
 var http = require('http')
 var url = require('url')
 
@@ -52930,7 +54155,7 @@ function validateParams (params) {
   return params
 }
 
-},{"http":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/ieee754/index.js":[function(require,module,exports){
+},{"http":"/opt/privatesky/node_modules/stream-http/index.js","url":"/opt/privatesky/node_modules/url/url.js"}],"/opt/privatesky/node_modules/ieee754/index.js":[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -53017,7 +54242,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -53046,7 +54271,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -53069,14 +54294,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/isarray/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/isarray/index.js":[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/md5.js/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/md5.js/index.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var HashBase = require('hash-base')
@@ -53224,7 +54449,7 @@ function fnI (a, b, c, d, m, k, s) {
 
 module.exports = MD5
 
-},{"hash-base":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/lib/mr.js":[function(require,module,exports){
+},{"hash-base":"/opt/privatesky/node_modules/hash-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/miller-rabin/lib/mr.js":[function(require,module,exports){
 var bn = require('bn.js');
 var brorand = require('brorand');
 
@@ -53341,9 +54566,9 @@ MillerRabin.prototype.getDivisor = function getDivisor(n, k) {
   return false;
 };
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js","brorand":"/home/travis/build/PrivateSky/privatesky/node_modules/brorand/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-assert/index.js":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js","brorand":"/opt/privatesky/node_modules/brorand/index.js"}],"/opt/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/minimalistic-assert/index.js":[function(require,module,exports){
 module.exports = assert;
 
 function assert(val, msg) {
@@ -53356,7 +54581,7 @@ assert.equal = function assertEqual(l, r, msg) {
     throw new Error(msg || ('Assertion failed: ' + l + ' != ' + r));
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js":[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -53416,7 +54641,7 @@ utils.encode = function encode(arr, enc) {
     return arr;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/object-assign/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/object-assign/index.js":[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -53508,7 +54733,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/utils/common.js":[function(require,module,exports){
 'use strict';
 
 
@@ -53615,7 +54840,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/adler32.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/adler32.js":[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -53668,7 +54893,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/constants.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/constants.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -53738,7 +54963,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/crc32.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/crc32.js":[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -53799,7 +55024,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/deflate.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/deflate.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -55675,7 +56900,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/crc32.js","./messages":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/messages.js","./trees":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/trees.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inffast.js":[function(require,module,exports){
+},{"../utils/common":"/opt/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/opt/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/opt/privatesky/node_modules/pako/lib/zlib/crc32.js","./messages":"/opt/privatesky/node_modules/pako/lib/zlib/messages.js","./trees":"/opt/privatesky/node_modules/pako/lib/zlib/trees.js"}],"/opt/privatesky/node_modules/pako/lib/zlib/inffast.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -56022,7 +57247,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inflate.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/inflate.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -57580,7 +58805,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/crc32.js","./inffast":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inffast.js","./inftrees":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inftrees.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/inftrees.js":[function(require,module,exports){
+},{"../utils/common":"/opt/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/opt/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/opt/privatesky/node_modules/pako/lib/zlib/crc32.js","./inffast":"/opt/privatesky/node_modules/pako/lib/zlib/inffast.js","./inftrees":"/opt/privatesky/node_modules/pako/lib/zlib/inftrees.js"}],"/opt/privatesky/node_modules/pako/lib/zlib/inftrees.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -57925,7 +59150,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/messages.js":[function(require,module,exports){
+},{"../utils/common":"/opt/privatesky/node_modules/pako/lib/utils/common.js"}],"/opt/privatesky/node_modules/pako/lib/zlib/messages.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -57959,7 +59184,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/trees.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pako/lib/zlib/trees.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -59183,7 +60408,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pako/lib/zlib/zstream.js":[function(require,module,exports){
+},{"../utils/common":"/opt/privatesky/node_modules/pako/lib/utils/common.js"}],"/opt/privatesky/node_modules/pako/lib/zlib/zstream.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -59232,7 +60457,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/aesid.json":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/parse-asn1/aesid.json":[function(require,module,exports){
 module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.2": "aes-128-cbc",
 "2.16.840.1.101.3.4.1.3": "aes-128-ofb",
@@ -59246,7 +60471,7 @@ module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.43": "aes-256-ofb",
 "2.16.840.1.101.3.4.1.44": "aes-256-cfb"
 }
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/asn1.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/parse-asn1/asn1.js":[function(require,module,exports){
 // from https://github.com/indutny/self-signed/blob/gh-pages/lib/asn1.js
 // Fedor, you are amazing.
 'use strict'
@@ -59370,7 +60595,7 @@ exports.signature = asn1.define('signature', function () {
   )
 })
 
-},{"./certificate":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/certificate.js","asn1.js":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/certificate.js":[function(require,module,exports){
+},{"./certificate":"/opt/privatesky/node_modules/parse-asn1/certificate.js","asn1.js":"/opt/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/opt/privatesky/node_modules/parse-asn1/certificate.js":[function(require,module,exports){
 // from https://github.com/Rantanen/node-dtls/blob/25a7dc861bda38cfeac93a723500eea4f0ac2e86/Certificate.js
 // thanks to @Rantanen
 
@@ -59461,7 +60686,7 @@ var X509Certificate = asn.define('X509Certificate', function () {
 
 module.exports = X509Certificate
 
-},{"asn1.js":"/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/fixProc.js":[function(require,module,exports){
+},{"asn1.js":"/opt/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/opt/privatesky/node_modules/parse-asn1/fixProc.js":[function(require,module,exports){
 // adapted from https://github.com/apatil/pemstrip
 var findProc = /Proc-Type: 4,ENCRYPTED[\n\r]+DEK-Info: AES-((?:128)|(?:192)|(?:256))-CBC,([0-9A-H]+)[\n\r]+([0-9A-z\n\r+/=]+)[\n\r]+/m
 var startRegex = /^-----BEGIN ((?:.*? KEY)|CERTIFICATE)-----/m
@@ -59494,7 +60719,7 @@ module.exports = function (okey, password) {
   }
 }
 
-},{"browserify-aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/browser.js","evp_bytestokey":"/home/travis/build/PrivateSky/privatesky/node_modules/evp_bytestokey/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js":[function(require,module,exports){
+},{"browserify-aes":"/opt/privatesky/node_modules/browserify-aes/browser.js","evp_bytestokey":"/opt/privatesky/node_modules/evp_bytestokey/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/parse-asn1/index.js":[function(require,module,exports){
 var asn1 = require('./asn1')
 var aesid = require('./aesid.json')
 var fixProc = require('./fixProc')
@@ -59603,7 +60828,7 @@ function decrypt (data, password) {
   return Buffer.concat(out)
 }
 
-},{"./aesid.json":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/aesid.json","./asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/asn1.js","./fixProc":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/fixProc.js","browserify-aes":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-aes/browser.js","pbkdf2":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/path-browserify/index.js":[function(require,module,exports){
+},{"./aesid.json":"/opt/privatesky/node_modules/parse-asn1/aesid.json","./asn1":"/opt/privatesky/node_modules/parse-asn1/asn1.js","./fixProc":"/opt/privatesky/node_modules/parse-asn1/fixProc.js","browserify-aes":"/opt/privatesky/node_modules/browserify-aes/browser.js","pbkdf2":"/opt/privatesky/node_modules/pbkdf2/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/path-browserify/index.js":[function(require,module,exports){
 (function (process){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
@@ -59910,11 +61135,11 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/browser.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/pbkdf2/browser.js":[function(require,module,exports){
 exports.pbkdf2 = require('./lib/async')
 exports.pbkdf2Sync = require('./lib/sync')
 
-},{"./lib/async":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
+},{"./lib/async":"/opt/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/opt/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/opt/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
 (function (process,global){(function (){
 var Buffer = require('safe-buffer').Buffer
 
@@ -60021,7 +61246,7 @@ module.exports = function (password, salt, iterations, keylen, digest, callback)
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
+},{"./default-encoding":"/opt/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/opt/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/opt/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/opt/privatesky/node_modules/pbkdf2/lib/to-buffer.js","_process":"/opt/privatesky/node_modules/process/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
 (function (process){(function (){
 var defaultEncoding
 /* istanbul ignore next */
@@ -60038,7 +61263,7 @@ module.exports = defaultEncoding
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
 var MAX_ALLOC = Math.pow(2, 30) - 1 // default in iojs
 
 module.exports = function (iterations, keylen) {
@@ -60059,7 +61284,7 @@ module.exports = function (iterations, keylen) {
   }
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
 var md5 = require('create-hash/md5')
 var RIPEMD160 = require('ripemd160')
 var sha = require('sha.js')
@@ -60166,7 +61391,7 @@ function pbkdf2 (password, salt, iterations, keylen, digest) {
 
 module.exports = pbkdf2
 
-},{"./default-encoding":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
+},{"./default-encoding":"/opt/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/opt/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/opt/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/opt/privatesky/node_modules/create-hash/md5.js","ripemd160":"/opt/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js","sha.js":"/opt/privatesky/node_modules/sha.js/index.js"}],"/opt/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 module.exports = function (thing, encoding, name) {
@@ -60181,7 +61406,7 @@ module.exports = function (thing, encoding, name) {
   }
 }
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -60231,7 +61456,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -60417,7 +61642,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/browser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/public-encrypt/browser.js":[function(require,module,exports){
 exports.publicEncrypt = require('./publicEncrypt')
 exports.privateDecrypt = require('./privateDecrypt')
 
@@ -60429,7 +61654,7 @@ exports.publicDecrypt = function publicDecrypt (key, buf) {
   return exports.privateDecrypt(key, buf, true)
 }
 
-},{"./privateDecrypt":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/privateDecrypt.js","./publicEncrypt":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/publicEncrypt.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/mgf.js":[function(require,module,exports){
+},{"./privateDecrypt":"/opt/privatesky/node_modules/public-encrypt/privateDecrypt.js","./publicEncrypt":"/opt/privatesky/node_modules/public-encrypt/publicEncrypt.js"}],"/opt/privatesky/node_modules/public-encrypt/mgf.js":[function(require,module,exports){
 var createHash = require('create-hash')
 var Buffer = require('safe-buffer').Buffer
 
@@ -60450,9 +61675,9 @@ function i2ops (c) {
   return out
 }
 
-},{"create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/privateDecrypt.js":[function(require,module,exports){
+},{"create-hash":"/opt/privatesky/node_modules/create-hash/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/public-encrypt/privateDecrypt.js":[function(require,module,exports){
 var parseKeys = require('parse-asn1')
 var mgf = require('./mgf')
 var xor = require('./xor')
@@ -60559,7 +61784,7 @@ function compare (a, b) {
   return dif
 }
 
-},{"./mgf":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/publicEncrypt.js":[function(require,module,exports){
+},{"./mgf":"/opt/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/opt/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/opt/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/opt/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/opt/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/opt/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/opt/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/public-encrypt/publicEncrypt.js":[function(require,module,exports){
 var parseKeys = require('parse-asn1')
 var randomBytes = require('randombytes')
 var createHash = require('create-hash')
@@ -60649,7 +61874,7 @@ function nonZero (len) {
   return out
 }
 
-},{"./mgf":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/travis/build/PrivateSky/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/travis/build/PrivateSky/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/travis/build/PrivateSky/privatesky/node_modules/parse-asn1/index.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/withPublic.js":[function(require,module,exports){
+},{"./mgf":"/opt/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/opt/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/opt/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/opt/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/opt/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/opt/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/opt/privatesky/node_modules/parse-asn1/index.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/public-encrypt/withPublic.js":[function(require,module,exports){
 var BN = require('bn.js')
 var Buffer = require('safe-buffer').Buffer
 
@@ -60663,7 +61888,7 @@ function withPublic (paddedMsg, key) {
 
 module.exports = withPublic
 
-},{"bn.js":"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/public-encrypt/xor.js":[function(require,module,exports){
+},{"bn.js":"/opt/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/public-encrypt/xor.js":[function(require,module,exports){
 module.exports = function xor (a, b) {
   var len = a.length
   var i = -1
@@ -60673,7 +61898,7 @@ module.exports = function xor (a, b) {
   return a
 }
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/punycode/punycode.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/punycode/punycode.js":[function(require,module,exports){
 (function (global){(function (){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -61211,7 +62436,7 @@ module.exports = function xor (a, b) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/decode.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/querystring-es3/decode.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61297,7 +62522,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/encode.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/querystring-es3/encode.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61384,13 +62609,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/index.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/querystring-es3/index.js":[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/decode.js","./encode":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/encode.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js":[function(require,module,exports){
+},{"./decode":"/opt/privatesky/node_modules/querystring-es3/decode.js","./encode":"/opt/privatesky/node_modules/querystring-es3/encode.js"}],"/opt/privatesky/node_modules/randombytes/browser.js":[function(require,module,exports){
 (function (process,global){(function (){
 'use strict'
 
@@ -61445,7 +62670,7 @@ function randomBytes (size, cb) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/randomfill/browser.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/randomfill/browser.js":[function(require,module,exports){
 (function (process,global){(function (){
 'use strict'
 
@@ -61558,10 +62783,10 @@ function randomFillSync (buf, offset, size) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","randombytes":"/home/travis/build/PrivateSky/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/duplex-browser.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","randombytes":"/opt/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/readable-stream/duplex-browser.js":[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
-},{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js"}],"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61693,7 +62918,7 @@ Duplex.prototype._destroy = function (err, cb) {
 
   pna.nextTick(cb, err);
 };
-},{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_writable.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+},{"./_stream_readable":"/opt/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/opt/privatesky/node_modules/readable-stream/lib/_stream_writable.js","core-util-is":"/opt/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/opt/privatesky/node_modules/process-nextick-args/index.js"}],"/opt/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61741,7 +62966,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_transform.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_transform":"/opt/privatesky/node_modules/readable-stream/lib/_stream_transform.js","core-util-is":"/opt/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -62764,7 +63989,7 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/BufferList":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","isarray":"/home/travis/build/PrivateSky/privatesky/node_modules/isarray/index.js","process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+},{"./_stream_duplex":"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/BufferList":"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js","./internal/streams/destroy":"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","core-util-is":"/opt/privatesky/node_modules/core-util-is/lib/util.js","events":"/opt/privatesky/node_modules/events/events.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","isarray":"/opt/privatesky/node_modules/isarray/index.js","process-nextick-args":"/opt/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/opt/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","string_decoder/":"/opt/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -62979,7 +64204,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"./_stream_duplex":"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","core-util-is":"/opt/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global,setImmediate){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -63670,7 +64895,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
 
-},{"./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","core-util-is":"/home/travis/build/PrivateSky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","timers":"/home/travis/build/PrivateSky/privatesky/node_modules/timers-browserify/main.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js":[function(require,module,exports){
+},{"./_stream_duplex":"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","core-util-is":"/opt/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/opt/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/opt/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","timers":"/opt/privatesky/node_modules/timers-browserify/main.js","util-deprecate":"/opt/privatesky/node_modules/util-deprecate/browser.js"}],"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js":[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -63750,7 +64975,7 @@ if (util && util.inspect && util.inspect.custom) {
     return this.constructor.name + ' ' + obj;
   };
 }
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -63825,9 +65050,9 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":"/home/travis/build/PrivateSky/privatesky/node_modules/process-nextick-args/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js":[function(require,module,exports){
+},{"process-nextick-args":"/opt/privatesky/node_modules/process-nextick-args/index.js"}],"/opt/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/opt/privatesky/node_modules/events/events.js"}],"/opt/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js":[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -63891,7 +65116,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js"}],"/opt/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -64188,10 +65413,10 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/passthrough.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/readable-stream/passthrough.js":[function(require,module,exports){
 module.exports = require('./readable').PassThrough
 
-},{"./readable":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+},{"./readable":"/opt/privatesky/node_modules/readable-stream/readable-browser.js"}],"/opt/privatesky/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -64200,13 +65425,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/transform.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/opt/privatesky/node_modules/readable-stream/transform.js":[function(require,module,exports){
 module.exports = require('./readable').Transform
 
-},{"./readable":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/writable-browser.js":[function(require,module,exports){
+},{"./readable":"/opt/privatesky/node_modules/readable-stream/readable-browser.js"}],"/opt/privatesky/node_modules/readable-stream/writable-browser.js":[function(require,module,exports){
 module.exports = require('./lib/_stream_writable.js');
 
-},{"./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/ripemd160/index.js":[function(require,module,exports){
+},{"./lib/_stream_writable.js":"/opt/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/opt/privatesky/node_modules/ripemd160/index.js":[function(require,module,exports){
 'use strict'
 var Buffer = require('buffer').Buffer
 var inherits = require('inherits')
@@ -64371,7 +65596,7 @@ function fn5 (a, b, c, d, e, m, k, s) {
 
 module.exports = RIPEMD160
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","hash-base":"/home/travis/build/PrivateSky/privatesky/node_modules/hash-base/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js","hash-base":"/opt/privatesky/node_modules/hash-base/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
@@ -64438,7 +65663,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/safer-buffer/safer.js":[function(require,module,exports){
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js"}],"/opt/privatesky/node_modules/safer-buffer/safer.js":[function(require,module,exports){
 (function (process){(function (){
 /* eslint-disable node/no-deprecated-api */
 
@@ -64520,7 +65745,7 @@ module.exports = safer
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/hash.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 // prototype class for hash functions
@@ -64603,7 +65828,7 @@ Hash.prototype._update = function () {
 
 module.exports = Hash
 
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/index.js":[function(require,module,exports){
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/index.js":[function(require,module,exports){
 var exports = module.exports = function SHA (algorithm) {
   algorithm = algorithm.toLowerCase()
 
@@ -64620,7 +65845,7 @@ exports.sha256 = require('./sha256')
 exports.sha384 = require('./sha384')
 exports.sha512 = require('./sha512')
 
-},{"./sha":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha.js","./sha1":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha1.js","./sha224":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha224.js","./sha256":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha256.js","./sha384":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha384.js","./sha512":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha512.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha.js":[function(require,module,exports){
+},{"./sha":"/opt/privatesky/node_modules/sha.js/sha.js","./sha1":"/opt/privatesky/node_modules/sha.js/sha1.js","./sha224":"/opt/privatesky/node_modules/sha.js/sha224.js","./sha256":"/opt/privatesky/node_modules/sha.js/sha256.js","./sha384":"/opt/privatesky/node_modules/sha.js/sha384.js","./sha512":"/opt/privatesky/node_modules/sha.js/sha512.js"}],"/opt/privatesky/node_modules/sha.js/sha.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-0, as defined
  * in FIPS PUB 180-1
@@ -64716,7 +65941,7 @@ Sha.prototype._hash = function () {
 
 module.exports = Sha
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha1.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/sha1.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -64817,7 +66042,7 @@ Sha1.prototype._hash = function () {
 
 module.exports = Sha1
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha224.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/sha224.js":[function(require,module,exports){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
  * in FIPS 180-2
@@ -64872,7 +66097,7 @@ Sha224.prototype._hash = function () {
 
 module.exports = Sha224
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","./sha256":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha256.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha256.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","./sha256":"/opt/privatesky/node_modules/sha.js/sha256.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/sha256.js":[function(require,module,exports){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
  * in FIPS 180-2
@@ -65009,7 +66234,7 @@ Sha256.prototype._hash = function () {
 
 module.exports = Sha256
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha384.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/sha384.js":[function(require,module,exports){
 var inherits = require('inherits')
 var SHA512 = require('./sha512')
 var Hash = require('./hash')
@@ -65068,7 +66293,7 @@ Sha384.prototype._hash = function () {
 
 module.exports = Sha384
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","./sha512":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha512.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/sha512.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","./sha512":"/opt/privatesky/node_modules/sha.js/sha512.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/sha.js/sha512.js":[function(require,module,exports){
 var inherits = require('inherits')
 var Hash = require('./hash')
 var Buffer = require('safe-buffer').Buffer
@@ -65330,7 +66555,7 @@ Sha512.prototype._hash = function () {
 
 module.exports = Sha512
 
-},{"./hash":"/home/travis/build/PrivateSky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-browserify/index.js":[function(require,module,exports){
+},{"./hash":"/opt/privatesky/node_modules/sha.js/hash.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/stream-browserify/index.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -65459,7 +66684,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream/duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/duplex-browser.js","readable-stream/passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/passthrough.js","readable-stream/readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/readable-browser.js","readable-stream/transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/transform.js","readable-stream/writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/writable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/index.js":[function(require,module,exports){
+},{"events":"/opt/privatesky/node_modules/events/events.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","readable-stream/duplex.js":"/opt/privatesky/node_modules/readable-stream/duplex-browser.js","readable-stream/passthrough.js":"/opt/privatesky/node_modules/readable-stream/passthrough.js","readable-stream/readable.js":"/opt/privatesky/node_modules/readable-stream/readable-browser.js","readable-stream/transform.js":"/opt/privatesky/node_modules/readable-stream/transform.js","readable-stream/writable.js":"/opt/privatesky/node_modules/readable-stream/writable-browser.js"}],"/opt/privatesky/node_modules/stream-http/index.js":[function(require,module,exports){
 (function (global){(function (){
 var ClientRequest = require('./lib/request')
 var response = require('./lib/response')
@@ -65548,7 +66773,7 @@ http.METHODS = [
 ]
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./lib/request":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/request.js","./lib/response":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/response.js","builtin-status-codes":"/home/travis/build/PrivateSky/privatesky/node_modules/builtin-status-codes/browser.js","url":"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js","xtend":"/home/travis/build/PrivateSky/privatesky/node_modules/xtend/immutable.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/capability.js":[function(require,module,exports){
+},{"./lib/request":"/opt/privatesky/node_modules/stream-http/lib/request.js","./lib/response":"/opt/privatesky/node_modules/stream-http/lib/response.js","builtin-status-codes":"/opt/privatesky/node_modules/builtin-status-codes/browser.js","url":"/opt/privatesky/node_modules/url/url.js","xtend":"/opt/privatesky/node_modules/xtend/immutable.js"}],"/opt/privatesky/node_modules/stream-http/lib/capability.js":[function(require,module,exports){
 (function (global){(function (){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
 
@@ -65612,7 +66837,7 @@ xhr = null // Help gc
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/request.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/stream-http/lib/request.js":[function(require,module,exports){
 (function (process,global,Buffer){(function (){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -65931,7 +67156,7 @@ var unsafeHeaders = [
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"./capability":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/capability.js","./response":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/response.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/response.js":[function(require,module,exports){
+},{"./capability":"/opt/privatesky/node_modules/stream-http/lib/capability.js","./response":"/opt/privatesky/node_modules/stream-http/lib/response.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/opt/privatesky/node_modules/stream-http/lib/response.js":[function(require,module,exports){
 (function (process,global,Buffer){(function (){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -66143,9 +67368,9 @@ IncomingMessage.prototype._onXHRProgress = function () {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"./capability":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/lib/capability.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"./capability":"/opt/privatesky/node_modules/stream-http/lib/capability.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -66288,9 +67513,9 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
-},{"./_stream_transform":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_readable":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","_process":"/opt/privatesky/node_modules/process/browser.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
+},{"./_stream_transform":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -67418,9 +68643,9 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","events":"/opt/privatesky/node_modules/events/events.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/opt/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
+},{"../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -68121,7 +69346,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/opt/privatesky/node_modules/process/browser.js","buffer":"/opt/privatesky/node_modules/buffer/index.js","inherits":"/opt/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/opt/privatesky/node_modules/util-deprecate/browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -68332,9 +69557,9 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
-},{"buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/buffer/index.js","util":"/home/travis/build/PrivateSky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"./end-of-stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
+},{"buffer":"/opt/privatesky/node_modules/buffer/index.js","util":"/opt/privatesky/node_modules/browser-resolve/empty.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -68443,21 +69668,21 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/travis/build/PrivateSky/privatesky/node_modules/events/events.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/travis/build/PrivateSky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js"][0].apply(exports,arguments)
-},{"safe-buffer":"/home/travis/build/PrivateSky/privatesky/node_modules/safe-buffer/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/timers-browserify/main.js":[function(require,module,exports){
+},{"_process":"/opt/privatesky/node_modules/process/browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
+},{"../../../errors":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/opt/privatesky/node_modules/events/events.js"}],"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/opt/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/opt/privatesky/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js"][0].apply(exports,arguments)
+},{"safe-buffer":"/opt/privatesky/node_modules/safe-buffer/index.js"}],"/opt/privatesky/node_modules/timers-browserify/main.js":[function(require,module,exports){
 (function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -68537,7 +69762,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 };
 }).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 
-},{"process/browser.js":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","timers":"/home/travis/build/PrivateSky/privatesky/node_modules/timers-browserify/main.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/url/url.js":[function(require,module,exports){
+},{"process/browser.js":"/opt/privatesky/node_modules/process/browser.js","timers":"/opt/privatesky/node_modules/timers-browserify/main.js"}],"/opt/privatesky/node_modules/url/url.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -69271,7 +70496,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":"/home/travis/build/PrivateSky/privatesky/node_modules/url/util.js","punycode":"/home/travis/build/PrivateSky/privatesky/node_modules/punycode/punycode.js","querystring":"/home/travis/build/PrivateSky/privatesky/node_modules/querystring-es3/index.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/url/util.js":[function(require,module,exports){
+},{"./util":"/opt/privatesky/node_modules/url/util.js","punycode":"/opt/privatesky/node_modules/punycode/punycode.js","querystring":"/opt/privatesky/node_modules/querystring-es3/index.js"}],"/opt/privatesky/node_modules/url/util.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -69289,7 +70514,7 @@ module.exports = {
   }
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/util-deprecate/browser.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/util-deprecate/browser.js":[function(require,module,exports){
 (function (global){(function (){
 
 /**
@@ -69361,11 +70586,11 @@ function config (name) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
-arguments[4]["/home/travis/build/PrivateSky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js"][0].apply(exports,arguments)
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/util/util.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
+arguments[4]["/opt/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js"][0].apply(exports,arguments)
+},{}],"/opt/privatesky/node_modules/util/util.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -69956,7 +71181,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":"/home/travis/build/PrivateSky/privatesky/node_modules/util/support/isBufferBrowser.js","_process":"/home/travis/build/PrivateSky/privatesky/node_modules/process/browser.js","inherits":"/home/travis/build/PrivateSky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js"}],"/home/travis/build/PrivateSky/privatesky/node_modules/vm-browserify/index.js":[function(require,module,exports){
+},{"./support/isBuffer":"/opt/privatesky/node_modules/util/support/isBufferBrowser.js","_process":"/opt/privatesky/node_modules/process/browser.js","inherits":"/opt/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js"}],"/opt/privatesky/node_modules/vm-browserify/index.js":[function(require,module,exports){
 var indexOf = function (xs, item) {
     if (xs.indexOf) return xs.indexOf(item);
     else for (var i = 0; i < xs.length; i++) {
@@ -70107,7 +71332,7 @@ exports.createContext = Script.createContext = function (context) {
     return copy;
 };
 
-},{}],"/home/travis/build/PrivateSky/privatesky/node_modules/xtend/immutable.js":[function(require,module,exports){
+},{}],"/opt/privatesky/node_modules/xtend/immutable.js":[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -70135,6 +71360,11 @@ html API space
 */
 
 let constants = require("./moduleConstants.js");
+
+
+
+
+
 switch ($$.environmentType) {
     case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
         if (typeof self !== "undefined") {
@@ -70161,8 +71391,7 @@ switch ($$.environmentType) {
 
 if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
     PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED = true;
-
-    let loadApi = function(apiSpaceName){
+    function loadApi(apiSpaceName){
         switch (apiSpaceName) {
             case "http":return require("./http"); break;
             case "crypto":return require("./crypto"); break;
@@ -70176,25 +71405,82 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "notifications":return require("./notifications"); break;
             case "resolver":return require("./resolver"); break;
             case "sc":return require("./sc"); break;
-            case "cache":return require("./cache/cachedStores"); break;
+            case "cache":return require("./cache"); break;
             case "config":return require("./config"); break;
             case "system":return require("./system"); break;
             case "db":return require("./db"); break;
+            case "error":return require("./error"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
 
+     function setGlobalVariable(name, value){
+        switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+                if (typeof self !== "undefined") {
+                    self[name] = value;
+                } else {
+                    reportUserRelevantError("self not defined in Service Workers");
+                }
+                break;
+            case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+                if (typeof window !== "undefined") {
+                    window[name] = value;
+                }else {
+                    reportUserRelevantError("window not defined in browser environment");
+                }
+                break;
+            case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            default:
+                if (typeof global !== "undefined") {
+                    global[name] = value;
+                } else {
+                    reportUserRelevantError("global not defined in nodejs environment");
+                }
+        }
+    };
+
+    function getGlobalVariable(name){
+        switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+                return self[name];
+            case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+                return window[name];
+            case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            default:
+                return global[name];
+        }
+    };
+
+    function globalVariableExists(name){
+        switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+                return typeof self[name] != "undefined";
+            case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+                return typeof window[name] != "undefined";
+            case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            default:
+                return typeof global[name] != "undefined";
+        }
+    };
+
     PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadApi = loadApi;
-    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadAPI = loadApi;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.loadAPI = loadApi; //upper case version just
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.globalVariableExists = setGlobalVariable;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.setGlobalVariable = setGlobalVariable;
+    PREVENT_DOUBLE_LOADING_OF_OPENDSU.getGlobalVariable = getGlobalVariable;
     PREVENT_DOUBLE_LOADING_OF_OPENDSU.constants = constants;
+    setGlobalVariable("setGlobalVariable",setGlobalVariable);
+    setGlobalVariable("getGlobalVariable",getGlobalVariable);
+    setGlobalVariable("globalVariableExists",globalVariableExists);
     require("./config/autoConfig");
-
 }
-
 module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
+
+
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bdns/index.js","./bricking":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/bricking/index.js","./cache/cachedStores":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/cache/cachedStores.js","./config":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/db/index.js","./dc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/dt/index.js","./http":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/sc/index.js","./system":"/home/travis/build/PrivateSky/privatesky/modules/opendsu/system/index.js"}],"swarm-engine/bootScripts/browser/sw":[function(require,module,exports){
+},{"./anchoring":"/opt/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","./bricking":"/opt/privatesky/modules/opendsu/bricking/index.js","./cache":"/opt/privatesky/modules/opendsu/cache/index.js","./config":"/opt/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/opt/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","./db":"/opt/privatesky/modules/opendsu/db/index.js","./dc":"/opt/privatesky/modules/opendsu/dc/index.js","./dt":"/opt/privatesky/modules/opendsu/dt/index.js","./error":"/opt/privatesky/modules/opendsu/error/index.js","./http":"/opt/privatesky/modules/opendsu/http/index.js","./keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/opt/privatesky/modules/opendsu/moduleConstants.js","./mq":"/opt/privatesky/modules/opendsu/mq/index.js","./notifications":"/opt/privatesky/modules/opendsu/notifications/index.js","./resolver":"/opt/privatesky/modules/opendsu/resolver/index.js","./sc":"/opt/privatesky/modules/opendsu/sc/index.js","./system":"/opt/privatesky/modules/opendsu/system/index.js"}],"swarm-engine/bootScripts/browser/sw":[function(require,module,exports){
 (function (global){(function (){
 const SWBootScript = require("./SWBootScript");
 const server = require("ssapp-middleware").getMiddleware();
@@ -70319,11 +71605,21 @@ self.addEventListener('message', function (event) {
     }
 });
 
+function allowedRequests(url){
+    let servedByApiHub = ["/bricking/","/anchor/","/bdns", "x-blockchain-domain-request"];
+    for(let i=0; i<servedByApiHub.length; i++){
+        if(url.includes(servedByApiHub[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
 self.addEventListener('fetch', (event) => {
     const requestedUrl = new URL(event.request.url);
 
     const isExternalRequest = requestedUrl.hostname !== self.location.hostname;
-    const mustAllowRequest = event.request.url.includes("x-blockchain-domain-request");
+    const mustAllowRequest = allowedRequests(event.request.url);
     if(isExternalRequest || mustAllowRequest) {
       return;
     }
@@ -70407,7 +71703,7 @@ function bootSWEnvironment(seed, callback) {
 
     bootScript.boot((err, _rawDossier) => {
         if(err){
-            return callback(createOpenDSUErrorWrapper(`Failed to boot SW environment>`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to boot SW environment>`, err));
         }
 
         global.rawDossier = _rawDossier;
@@ -70485,8 +71781,23 @@ function apiStandardHandler(req, res, next){
     next();
 }
 
+function defaultHandling(req,res, next){
+    console.log("Rejecting request", req.originalUrl);
+    res.status(403);
+    res.send("Rejected by the service worker middleware");
+    res.end();
+}
+
+function getSSIForMainDSU(req,res, next){
+    console.log("getSSIForMainDSU creation ssi", rawDossier.getCreationSSI());
+    res.status(200);
+    res.send(rawDossier.getCreationSSI());
+    res.end();
+}
+
 function initMiddleware(){
     server.get("/api", apiHandler);
+    server.get("/getSSIForMainDSU", getSSIForMainDSU);
     server.get("/api-standard/:method", apiStandardHandler);
 
     server.put("/create-channel/:channelName", createChannelHandler);
@@ -70502,8 +71813,10 @@ function initMiddleware(){
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/app", "/code"));
 
+    server.put("*",defaultHandling);
+    server.post("*",defaultHandling);
+    server.delete("*",defaultHandling);
 }
-
 
 function uploadHandler (req, res) {
     try {
@@ -70621,4 +71934,4 @@ function deleteHandler(req, res){
 }
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../../../utils/SWChannelsManager":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/utils/utilFunctions.js","../../Uploader":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js","../util/MimeType":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","./RawDossierHelper":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/travis/build/PrivateSky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","opendsu":"opendsu","ssapp-middleware":"/home/travis/build/PrivateSky/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/travis/build/PrivateSky/privatesky/builds/tmp/swBoot.js"])
+},{"../../../utils/SWChannelsManager":"/opt/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/opt/privatesky/modules/swarm-engine/utils/utilFunctions.js","../../Uploader":"/opt/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js","../util/MimeType":"/opt/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","./RawDossierHelper":"/opt/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/opt/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","opendsu":"opendsu","ssapp-middleware":"/opt/privatesky/modules/ssapp-middleware/index.js"}]},{},["/opt/privatesky/builds/tmp/swBoot.js"])
