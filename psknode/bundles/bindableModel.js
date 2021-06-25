@@ -1,10 +1,18 @@
-bindableModelRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/privatesky/builds/tmp/bindableModel.js":[function(require,module,exports){
-if(typeof window.process === "undefined"){
+bindableModelRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/runner/work/privatesky/privatesky/builds/tmp/bindableModel.js":[function(require,module,exports){
+(function (global){(function (){
+if (typeof window !== "undefined" && typeof window.process === "undefined") {
 	window.process = {};
 }
+
+if (typeof File === "undefined") {
+	global.File = function (){}
+}
+
 require("./bindableModel_intermediar");
 
-},{"./bindableModel_intermediar":"/opt/privatesky/builds/tmp/bindableModel_intermediar.js"}],"/opt/privatesky/builds/tmp/bindableModel_intermediar.js":[function(require,module,exports){
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./bindableModel_intermediar":"/home/runner/work/privatesky/privatesky/builds/tmp/bindableModel_intermediar.js"}],"/home/runner/work/privatesky/privatesky/builds/tmp/bindableModel_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.bindableModelLoadModules = function(){ 
 
@@ -34,17 +42,18 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"overwrite-require":"overwrite-require","psk-bindable-model":"psk-bindable-model","queue":"queue","soundpubsub":"soundpubsub"}],"/opt/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"overwrite-require":"overwrite-require","psk-bindable-model":"psk-bindable-model","queue":"queue","soundpubsub":"soundpubsub"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
+  WEB_WORKER_ENVIRONMENT_TYPE: 'web-worker',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
   ISOLATE_ENVIRONMENT_TYPE: 'isolate',
   THREAD_ENVIRONMENT_TYPE: 'thread',
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
 
@@ -367,7 +376,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer":false,"psklogger":false,"swarmutils":false}],"/opt/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":false}],"/home/runner/work/privatesky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js":[function(require,module,exports){
 const SoundPubSub = require("soundpubsub").soundPubSub;
 const CHAIN_CHANGED = 'chainChanged';
 const WILDCARD = "*";
@@ -415,9 +424,15 @@ class PskBindableModel {
         }
 
         function pushHandler(target, parentChain) {
-            return function() {
+            return function(...args) {
                 try {
-                    let arrayLength = Array.prototype.push.apply(target, arguments);
+                    let arrayLength = Array.prototype.push.apply(target, args);
+
+                    // we need to proxify the newly added elements
+                    for (let index = arrayLength - args.length; index < arrayLength; index++) {
+                        target[index] = proxify(target[index], extendChain(parentChain, index.toString()));
+                    }
+
                     let index = arrayLength - 1;
                     root.notify(extendChain(parentChain, index));
                     return arrayLength;
@@ -429,10 +444,29 @@ class PskBindableModel {
         }
 
         function arrayFnHandler(fn, target, parentChain) {
-            return function() {
+            return function(...args) {
                 try {
-                    let returnedValue = Array.prototype[fn].apply(target, arguments);
-                    if (ARRAY_CHANGE_METHODS.indexOf(fn) !== -1) {
+                    const isArrayChangingMethod = ARRAY_CHANGE_METHODS.indexOf(fn) !== -1;
+
+                    if(isArrayChangingMethod) {
+                        // we need to convert each proxified element of the array, since the elements can have their position changed
+                        target.forEach((element, index) => {
+                            if(typeof target[index] === "object") {
+                                target[index] = root.toObject(extendChain(parentChain, index.toString()));
+                            }
+                        });
+                    }
+
+                    let returnedValue = Array.prototype[fn].apply(target, args);
+
+                    if(isArrayChangingMethod) {
+                        // we need to proxify all the elements again
+                        for (let index = 0; index < target.length; index++) {
+                            target[index] = proxify(target[index], extendChain(parentChain, index.toString()));
+                        }
+                    }
+
+                    if (isArrayChangingMethod) {
                         root.notify(parentChain);
                     }
                     return returnedValue;
@@ -443,33 +477,22 @@ class PskBindableModel {
             }
         }
 
-        function makeArrayGetter(parentChain) {
-            return function(target, prop) {
-                const val = target[prop];
-                if (typeof val === 'function') {
-                    switch (prop) {
-                        case "push":
-                            return pushHandler(target, parentChain);
-                        default:
-                            return arrayFnHandler(prop, target, parentChain);
-                    }
-                }
-                return val;
-            }
-        }
 
         function proxify(obj, parentChain) {
 
-            if (typeof obj !== "object") {
+            if (typeof obj !== "object" || obj instanceof File) {
                 return obj;
             }
 
             let isRoot = !parentChain;
-            let notify, onChange, getChainValue, setChainValue;
+            let notify, onChange,offChange, getChainValue, setChainValue;
             if (isRoot) {
                 notify = function(changedChain) {
 
                     function getRelatedChains(changedChain) {
+                        if (typeof changedChain !== 'string') {
+                            changedChain = `${changedChain}`;
+                        }
                         let chainsRelatedSet = new Set();
                         chainsRelatedSet.add(WILDCARD);
                         let chainSequence = changedChain.split(CHAIN_SEPARATOR).map(el => el.trim());
@@ -495,10 +518,11 @@ class PskBindableModel {
 
                     let changedChains = getRelatedChains(changedChain);
 
-                    changedChains.forEach(changedChain => {
-                        SoundPubSub.publish(createChannelName(changedChain), {
+                    changedChains.forEach(chain => {
+                        SoundPubSub.publish(createChannelName(chain), {
                             type: CHAIN_CHANGED,
-                            chain: changedChain
+                            chain: chain,
+                            targetChain: changedChain
                         });
                     })
                 };
@@ -540,7 +564,59 @@ class PskBindableModel {
                     observedChains.add(chain);
                     SoundPubSub.subscribe(createChannelName(chain), callback);
                 }
+
+                offChange = function (chain, callback){
+                    if(observedChains.has(chain)){
+                        SoundPubSub.unsubscribe(createChannelName(chain), callback);
+                    }
+                }
             }
+
+            function makeArrayGetter(parentChain) {
+                const PROXY_ROOT_METHODS = [
+                    "toObject",
+                    "addExpression",
+                    "evaluateExpression",
+                    "hasExpression",
+                    "onChangeExpressionChain"
+                ];
+                return function(target, prop) {
+                    if (isRoot) {
+                        switch (prop) {
+                            case "onChange":
+                                return onChange;
+                            case "offChange":
+                                return offChange;
+                            case "notify":
+                                return notify;
+                            case "getChainValue":
+                                return getChainValue;
+                            case "setChainValue":
+                                return setChainValue;
+                            default:
+                                if(PROXY_ROOT_METHODS.includes(prop)) {
+                                    return target[prop];
+                                }
+                        }
+                    }
+
+                    if (prop === "__isProxy") {
+                        return true;
+                    }
+
+                    const val = target[prop];
+                    if (typeof val === 'function') {
+                        switch (prop) {
+                            case "push":
+                                return pushHandler(target, parentChain);
+                            default:
+                                return arrayFnHandler(prop, target, parentChain);
+                        }
+                    }
+                    return val;
+                }
+            }
+
             let setter = makeSetter(parentChain);
 
             let handler = {
@@ -561,6 +637,8 @@ class PskBindableModel {
                         switch (prop) {
                             case "onChange":
                                 return onChange;
+                            case "offChange":
+                                return offChange;
                             case "notify":
                                 return notify;
                             case "getChainValue":
@@ -570,12 +648,24 @@ class PskBindableModel {
                         }
                     }
 
+                    if (prop === "__isProxy") {
+                        return true;
+                    }
+
+                    if(obj instanceof Promise && typeof obj[prop] === "function") {
+                        return obj[prop].bind(obj);
+                    }
+
                     return obj[prop];
                 },
                 set: makeSetter(parentChain),
 
                 deleteProperty: function(oTarget, sKey) {
-                    delete oTarget[sKey];
+                    if (sKey in oTarget){
+                        delete oTarget[sKey]
+                        return true;
+                    }
+                    return false
                 },
 
                 ownKeys: function(oTarget) {
@@ -606,7 +696,7 @@ class PskBindableModel {
             };
 
             if (Array.isArray(obj)) {
-                handler.get = makeArrayGetter(parentChain);
+                handler.get = makeArrayGetter(parentChain || "");
             }
 
             //proxify inner objects
@@ -615,6 +705,10 @@ class PskBindableModel {
                     obj[prop] = proxify(obj[prop], extendChain(parentChain, prop));
                 }
             });
+
+            if(obj.__isProxy) {
+                return obj;
+            }
 
             return new Proxy(obj, handler);
         }
@@ -625,7 +719,7 @@ class PskBindableModel {
          * This function is returning the object representanion of the proxified model.
          * It accepts only one optional parameter, chain.
          * If no chain is provided, the root model becomes the source.
-         * 
+         *
          * @param {string | null} chain - (Optional) The chain inside the root model.
          * @returns {Object} - The object representanion of the proxified model
          */
@@ -736,7 +830,8 @@ class PskBindableModel {
 }
 
 module.exports = PskBindableModel;
-},{"soundpubsub":"soundpubsub"}],"/opt/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
+
+},{"soundpubsub":"soundpubsub"}],"/home/runner/work/privatesky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -1135,6 +1230,7 @@ function enableForEnvironment(envType){
         case moduleConstants.BROWSER_ENVIRONMENT_TYPE :
             global = window;
             break;
+        case moduleConstants.WEB_WORKER_ENVIRONMENT_TYPE:
         case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
             global = self;
             break;
@@ -1218,6 +1314,10 @@ function enableForEnvironment(envType){
     function requireFromCache(request) {
         const existingModule = $$.__runtimeModules[request];
         return existingModule;
+    }
+
+    $$.__registerModule = function (name, module) {
+        $$.__runtimeModules[name] = module;
     }
 
     function wrapStep(callbackName) {
@@ -1444,6 +1544,10 @@ function enableForEnvironment(envType){
                 makeBrowserRequire();
                 $$.require = require;
                 break;
+            case moduleConstants.WEB_WORKER_ENVIRONMENT_TYPE:
+                makeBrowserRequire();
+                $$.require = require;
+                break;
             case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
                 makeBrowserRequire();
                 $$.require = require;
@@ -1457,7 +1561,40 @@ function enableForEnvironment(envType){
         }
 
     }
-};
+
+    $$.promisify = function promisify(fn) {
+        return function (...args) {
+            return new Promise((resolve, reject) => {
+                fn(...args, (err, ...res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(...res);
+                    }
+                });
+            });
+        };
+    };
+
+    $$.makeSaneCallback = function makeSaneCallback(fn) {
+        let alreadyCalled = false;
+        let prevErr;
+        return (err, res, ...args) => {
+            if (alreadyCalled) {
+                if (err) {
+                    console.log('Sane callback error:', err);
+                }
+
+                throw new Error(`Callback called 2 times! Second call was stopped. Function code:\n${fn.toString()}\n` + (prevErr ? `Previous error stack ${prevErr.toString()}` : ''));
+            }
+            alreadyCalled = true;
+            if(err){
+                prevErr = err;
+            }
+            return fn(err, res, ...args);
+        };
+    };
+}
 
 
 
@@ -1468,9 +1605,9 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-bindable-model":[function(require,module,exports){
+},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-bindable-model":[function(require,module,exports){
 module.exports = require("./lib/PskBindableModel");
-},{"./lib/PskBindableModel":"/opt/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js"}],"queue":[function(require,module,exports){
+},{"./lib/PskBindableModel":"/home/runner/work/privatesky/privatesky/modules/psk-bindable-model/lib/PskBindableModel.js"}],"queue":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -1543,5 +1680,9 @@ module.exports = Queue;
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-},{"./lib/soundPubSub":"/opt/privatesky/modules/soundpubsub/lib/soundPubSub.js"}]},{},["/opt/privatesky/builds/tmp/bindableModel.js"])
+},{"./lib/soundPubSub":"/home/runner/work/privatesky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/bindableModel.js"])
+                    ;(function(global) {
+                        global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
+                    })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
+                
 export default bindableModelRequire('psk-bindable-model')

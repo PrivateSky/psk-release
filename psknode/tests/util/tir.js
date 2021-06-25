@@ -153,8 +153,7 @@ function whenAllFinished(array, handler, callback) {
     }
 }
 
-const Tir = function () {
-    const pskApiHub = require('apihub');
+const Tir = function () {    
     const pingPongFork = require('../../core/utils/pingpongFork');
     const openDSU = require('opendsu');
 
@@ -346,6 +345,9 @@ const Tir = function () {
 
         const virtualMQPort = getRandomPort();
         process.env.vmq_channel_storage = storageFolder;
+
+        // need the required here, in order to be able to set a custom server.json config before apihub is started (otherwise it can't be overwritten)
+        const pskApiHub = require('apihub');
         virtualMQNode = pskApiHub.createInstance(virtualMQPort, storageFolder, err => {
             if (err) {
 
@@ -367,34 +369,108 @@ const Tir = function () {
             const bdns = {
                 "default": {
                     "replicas": [],
+                    "notifications": [
+                        nodeUrl
+                    ],
                     "brickStorages": [
                         nodeUrl
                     ],
                     "anchoringServices": [
                         nodeUrl
+                    ],
+                    "contractServices": [
+                        nodeUrl
+                    ]
+                },
+                "test1": {
+                    "replicas": [],
+                    "notifications": [
+                        nodeUrl
+                    ],
+                    "brickStorages": [
+                        nodeUrl
+                    ],
+                    "anchoringServices": [
+                        nodeUrl
+                    ],
+                    "contractServices": [
+                        nodeUrl
+                    ]
+                },
+                "test2": {
+                    "replicas": [],
+                    "notifications": [
+                        nodeUrl
+                    ],
+                    "brickStorages": [
+                        nodeUrl
+                    ],
+                    "anchoringServices": [
+                        nodeUrl
+                    ],
+                    "contractServices": [
+                        nodeUrl
                     ]
                 }
             }
 
-            storeDBNS(storageFolder, bdns, (err)=>{
+             storeServerConfig(storageFolder, {}, (err) => {
                 if(err){
                     return callback(err);
                 }
-               /* if (!$$.securityContext) {
-                    $$.securityContext = require("psk-security-context").createSecurityContext();
-                }
 
-                $$.securityContext.generateIdentity((err, agentId) => {
-                    if (err) {
+                storeDBNS(storageFolder, bdns, (err)=>{
+                    if(err){
                         return callback(err);
-                    }*/
+                    }
+                /* if (!$$.securityContext) {
+                        $$.securityContext = require("psk-security-context").createSecurityContext();
+                    }
 
-                    callback(undefined, virtualMQPort);
-                /*});*/
+                    $$.securityContext.generateIdentity((err, agentId) => {
+                        if (err) {
+                            return callback(err);
+                        }*/
+
+                        callback(undefined, virtualMQPort);
+                        /*});*/
+                    });
             });
 
         });
     }
+
+    function storeServerConfig(storageFolder, content, callback){
+        let pathToConfigFolder = path.join(storageFolder, "external-volume/config");
+        if(process.env.PSK_CONFIG_LOCATION) {
+            // custom config has already been set, so don't override it with the default empty one
+            return callback();
+        }
+        process.env.PSK_CONFIG_LOCATION = pathToConfigFolder;
+        storeFile(pathToConfigFolder, "server.json", JSON.stringify(content), callback);
+    }
+
+    this.storeServerConfig = storeServerConfig;
+
+    function storeFile(storageFolder, filename, content, callback) {
+        const fsName = "fs";
+        const fs = require(fsName);
+
+        const pathName = "path";
+        const path = require(pathName);
+
+        console.log(`Storing file '${filename}' at ${storageFolder}...`)
+
+        fs.mkdir(storageFolder, { recursive: true }, (err) => {
+            if (err) {
+                return callback(err);
+            }
+            fs.writeFile(path.join(storageFolder, filename), content, callback);
+        });
+
+    }
+
+    this.storeFile = storeFile;
 
     function storeDBNS(rootFolder, content, callback){
         const fsName = "fs";
@@ -717,6 +793,30 @@ const Tir = function () {
     }
 
     this.buildConstitution = buildConstitution;
+
+    function runOctopusScript(scriptName, args, callback) {
+        const scriptPath = path.join(
+            process.env.PSK_ROOT_INSTALATION_FOLDER,
+            `./node_modules/octopus/scripts/${scriptName}.js`
+        );
+
+        const pskBundlesPath = "./psknode/bundles";
+
+        const child_process = require("child_process");
+        const forkedProcess = child_process.fork(scriptPath, [`--bundles=${pskBundlesPath}`, ...args], {
+            cwd: process.env.PSK_ROOT_INSTALATION_FOLDER
+        });
+
+        forkedProcess.on("exit", function (code) {
+            if (code !== 0) {
+                return callback(code);
+            }
+
+            callback(null);
+        });
+    }
+
+    this.runOctopusScript = runOctopusScript;
 };
 
 module.exports = new Tir();

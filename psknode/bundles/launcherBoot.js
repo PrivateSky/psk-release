@@ -1,11 +1,11 @@
-launcherBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/opt/privatesky/builds/tmp/launcherBoot.js":[function(require,module,exports){
+launcherBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/runner/work/privatesky/privatesky/builds/tmp/launcherBoot.js":[function(require,module,exports){
 if(typeof $$ === "undefined" || !$$.environmentType) {
 	const or = require('overwrite-require');
 	or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
 }
 
 require("./launcherBoot_intermediar");
-},{"./launcherBoot_intermediar":"/opt/privatesky/builds/tmp/launcherBoot_intermediar.js","overwrite-require":"overwrite-require"}],"/opt/privatesky/builds/tmp/launcherBoot_intermediar.js":[function(require,module,exports){
+},{"./launcherBoot_intermediar":"/home/runner/work/privatesky/privatesky/builds/tmp/launcherBoot_intermediar.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/builds/tmp/launcherBoot_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.launcherBootLoadModules = function(){ 
 
@@ -75,7 +75,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"bar":"bar","bar-fs-adapter":"bar-fs-adapter","dossier":"dossier","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","pskcrypto":"pskcrypto","swarm-engine/bootScripts/launcherBootScript":"swarm-engine/bootScripts/launcherBootScript","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/opt/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
+},{"bar":"bar","bar-fs-adapter":"bar-fs-adapter","dossier":"dossier","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","psk-http-client":"psk-http-client","psk-security-context":"psk-security-context","pskcrypto":"pskcrypto","swarm-engine/bootScripts/launcherBootScript":"swarm-engine/bootScripts/launcherBootScript","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -136,7 +136,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-},{"./PathAsyncIterator":"/opt/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/opt/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -261,7 +261,7 @@ function PathAsyncIterator(inputPath) {
 }
 
 module.exports = PathAsyncIterator;
-},{"swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
 'use strict'
 
 /**
@@ -308,7 +308,7 @@ function AnchorValidator(options) {
 }
 
 module.exports = AnchorValidator;
-},{}],"/opt/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 const Brick = require('./Brick');
 const stream = require('stream');
 const BrickStorageService = require('./BrickStorageService').Service;
@@ -322,6 +322,9 @@ function Archive(archiveConfigurator) {
     const swarmutils = require("swarmutils");
     const TaskCounter = swarmutils.TaskCounter;
     const pskPth = swarmutils.path;
+    const openDSU = require("opendsu");
+    const anchoring = openDSU.loadAPI("anchoring");
+    const notifications = openDSU.loadAPI("notifications");
 
     const mountedArchivesForBatchOperations = [];
 
@@ -329,7 +332,15 @@ function Archive(archiveConfigurator) {
     let brickStorageService;
     let manifestHandler;
     let batchOperationsInProgress = false;
-    let previousAnchoringDecisionFn;
+    let prevAnchoringDecisionFn;
+    let prevConflictResolutionFunction;
+
+    let publishAnchoringNotifications = false;
+    let publishOptions = null;
+
+    let autoSyncStatus = false;
+    let autoSyncOptions = null;
+    let dsuObsHandler = null;
 
     ////////////////////////////////////////////////////////////
     // Private methods
@@ -340,8 +351,7 @@ function Archive(archiveConfigurator) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
             }
 
-            let storageProvider = archiveConfigurator.getBootstrapingService();
-            brickStorageService = buildBrickStorageServiceInstance(keySSI, storageProvider);
+            brickStorageService = buildBrickStorageServiceInstance(keySSI);
             brickMapController = new BrickMapController({
                 config: archiveConfigurator,
                 brickStorageService,
@@ -358,11 +368,10 @@ function Archive(archiveConfigurator) {
      * @param {object} storageProvider
      * @return {BrickStorageService}
      */
-    function buildBrickStorageServiceInstance(keySSI, storageProvider) {
+    function buildBrickStorageServiceInstance(keySSI) {
         const instance = new BrickStorageService({
             cache: archiveConfigurator.getCache(),
             bufferSize: archiveConfigurator.getBufferSize(),
-            storageProvider: storageProvider,
             keySSI,
 
             brickFactoryFunction: (encrypt) => {
@@ -384,20 +393,6 @@ function Archive(archiveConfigurator) {
         return instance;
     }
 
-    const beginBatchInMountedArchive = (archive) => {
-        if (archive === this) {
-            return;
-        }
-
-        if (!archive.batchInProgress()) {
-            archive.beginBatch();
-        }
-
-        if (mountedArchivesForBatchOperations.indexOf(archive) === -1) {
-            mountedArchivesForBatchOperations.push(archive);
-        }
-    }
-
     const cancelBatchesInMountedArchives = (callback) => {
         const cancelBatch = (dossierContext) => {
             if (!dossierContext) {
@@ -416,7 +411,7 @@ function Archive(archiveConfigurator) {
         cancelBatch(mountedArchivesForBatchOperations.pop());
     }
 
-    const commitBatchesInMountedArchives = (callback) => {
+    const commitBatchesInMountedArchives = (onConflict, callback) => {
         const results = [];
 
         const commitBatch = (dossierContext) => {
@@ -424,7 +419,7 @@ function Archive(archiveConfigurator) {
                 return callback(undefined, results);
             }
 
-            dossierContext.archive.commitBatch((err, result) => {
+            dossierContext.archive.commitBatch(onConflict, (err, result) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to commit batch", err));
                 }
@@ -464,7 +459,18 @@ function Archive(archiveConfigurator) {
                 result.identifier = keySSI;
                 result.archive.beginBatch();
                 mountedArchivesForBatchOperations.push(result);
-                callback(undefined, result);
+
+                if (!publishAnchoringNotifications || publishOptions.ignoreMounts) {
+                    return callback(undefined, result);
+                }
+
+                result.archive.enableAnchoringNotifications(publishAnchoringNotifications, publishOptions, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err));
+                    }
+
+                    callback(undefined, result);
+                })
             });
         });
     };
@@ -493,9 +499,34 @@ function Archive(archiveConfigurator) {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load DSU", err));
             }
+
             brickMapController.load(callback);
         });
     };
+
+    /**
+     * @param {callback} callback
+     */
+    this.refresh = (callback) => {
+        this.load((err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load DSU", err));
+            }
+
+            // Restore auto sync settings if the archive was refreshed
+            this.enableAnchoringNotifications(publishAnchoringNotifications, publishOptions, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err));
+                }
+                this.enableAutoSync(autoSyncStatus, autoSyncOptions, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to enable auto sync for DSU", err));
+                    }
+                    callback();
+                });
+            });
+        });
+    }
 
     /**
      * @param {callback} function
@@ -507,12 +538,12 @@ function Archive(archiveConfigurator) {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get KeySSI", err));
             }
-            brickStorageService.versions(keySSI, (err, hashlinksArray) => {
+            anchoring.getAllVersions(keySSI, (err, hashlinksArray) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get the list of hashlinks", err));
                 }
 
-                return callback(undefined, hashlinksArray[hashlinksArray.length -1])
+                return callback(undefined, hashlinksArray[hashlinksArray.length - 1])
             })
         })
 
@@ -566,13 +597,28 @@ function Archive(archiveConfigurator) {
      * @param {callback} callback
      */
     const _writeFile = (barPath, data, options, callback) => {
+        if (typeof data === "function") {
+            callback = data;
+            data = undefined;
+            options = undefined;
+        }
         if (typeof options === "function") {
             callback = options;
             options = {
                 encrypt: true
-            }
+            };
         }
+        if (typeof options === "undefined") {
+            options = {
+                encrypt: true
+            };
+        }
+
         barPath = pskPth.normalize(barPath);
+
+        if (typeof data === "undefined") {
+            return _createFile(barPath, callback);
+        }
 
         brickStorageService.ingestData(data, options, (err, result) => {
             if (err) {
@@ -595,7 +641,7 @@ function Archive(archiveConfigurator) {
         try {
             bricksMeta = brickMapController.getBricksMeta(barPath);
         } catch (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path "+ barPath +" in brickmap", err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath + " in brickmap", err));
         }
 
         brickStorageService.createBufferFromBricks(bricksMeta, (err, buffer) => {
@@ -674,7 +720,7 @@ function Archive(archiveConfigurator) {
 
         const filesArray = files.slice();
 
-        const ingestionMethod = (!options.embedded) ? 'ingestFiles' :'createBrickFromFiles';
+        const ingestionMethod = (!options.embedded) ? 'ingestFiles' : 'createBrickFromFiles';
 
         brickStorageService[ingestionMethod](filesArray, options, (err, result) => {
             if (err) {
@@ -751,7 +797,7 @@ function Archive(archiveConfigurator) {
             barPath = pskPth.normalize(barPath);
             brickStorageService.ingestData(data, options, (err, result) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to append data to file "+ barPath, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to append data to file " + barPath, err));
                 }
 
                 brickMapController.appendToFile(barPath, result, callback);
@@ -772,8 +818,8 @@ function Archive(archiveConfigurator) {
     };
 
 
-    this.dsuLog = (message, callback) =>{
-        this.appendToFile("/dsu-metadata-log", message+"\n", {ignoreMissing:true}, callback);
+    this.dsuLog = (message, callback) => {
+        this.appendToFile("/dsu-metadata-log", message + "\n", {ignoreMissing: true}, callback);
     }
     /**
      * @param {string} fsFolderPath
@@ -791,7 +837,7 @@ function Archive(archiveConfigurator) {
         }
         barPath = pskPth.normalize(barPath);
 
-        const ingestionMethod = (!options.embedded) ? 'ingestFolder' :'createBrickFromFolder';
+        const ingestionMethod = (!options.embedded) ? 'ingestFolder' : 'createBrickFromFolder';
 
         brickStorageService[ingestionMethod](fsFolderPath, options, (err, result) => {
             if (err) {
@@ -981,56 +1027,8 @@ function Archive(archiveConfigurator) {
         brickMapController.createDirectory(barPath, callback);
     };
 
-    // @TODO: fix this
-    /**
-     * @param {EDFSBrickStorage} targetStorage
-     * @param {boolean} preserveKeys
-     * @param {callback} callback
-     */
-    const _clone = (targetStorage, preserveKeys = true, callback) => {
-        targetStorage.getBrickMap((err, targetBrickMap) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick map`, err));
-            }
-
-
-            const fileList = brickMapController.getFileList("/");
-            const bricksList = {};
-            for (const filepath of fileList) {
-                bricksList[filepath] = brickMapController.getBricksMeta(filepath);
-            }
-
-            brickStorageService.copyBricks(bricksList, {
-                dstStorage: targetStorage,
-                beforeCopyCallback: (brickId, brick) => {
-                    const transformParameters = brickMapController.getTransformParameters(brickId);
-                    if (transformParameters) {
-                        brick.setTransformParameters(transformParameters);
-                    }
-
-                    brick.setKeySSI(archiveConfigurator);
-                    if (!preserveKeys) {
-                        brick.createNewTransform();
-                    }
-
-                    return brick;
-                }
-            }, (err, result) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy bricks`, err));
-                }
-
-                for (const filepath in result) {
-                    const bricks = result[filepath];
-                    targetBrickMap.addFileEntry(filepath, bricks);
-                }
-
-                targetBrickMap.setEncryptionKey(archiveConfigurator.getMapEncryptionKey());
-                targetBrickMap.setKeySSI(archiveConfigurator);
-
-                targetStorage.putBrickMap(targetBrickMap, err => callback(err, archiveConfigurator.getSeed()));
-            });
-        });
+    const _createFile = (barPath, callback) => {
+        brickMapController.createEmptyFile(barPath, callback);
     };
 
     /**
@@ -1092,8 +1090,8 @@ function Archive(archiveConfigurator) {
     }
 
     this.getSSIForMount = (mountPoint, callback) => {
-        getManifest(  (err, manifestHandler) => {
-            if(err){
+        getManifest((err, manifestHandler) => {
+            if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load manifest for " + mountPoint, err));
             }
             manifestHandler.getArchiveIdentifier(mountPoint, callback);
@@ -1249,6 +1247,8 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
+
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1270,13 +1270,14 @@ function Archive(archiveConfigurator) {
     };
 
 
-
     this.delete = (path, options, callback) => {
         const defaultOpts = {ignoreMounts: false};
         if (typeof options === 'function') {
             callback = options;
             options = {};
         }
+        callback = $$.makeSaneCallback(callback);
+
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1320,6 +1321,7 @@ function Archive(archiveConfigurator) {
                 return callback(Error("Tried to rename in a readonly mounted RawDossier"));
             }
 
+            const relativeSrcPath = dossierContext.relativePath;
             this.getArchiveForPath(dstPath, (err, dstDossierContext) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${dstPath}`, err));
@@ -1330,7 +1332,7 @@ function Archive(archiveConfigurator) {
                 }
 
                 options.ignoreMounts = true;
-                dossierContext.archive.rename(dossierContext.relativePath, dstDossierContext.relativePath, options, callback);
+                dossierContext.archive.rename(relativeSrcPath, dstDossierContext.relativePath, options, callback);
             })
         });
     };
@@ -1527,6 +1529,42 @@ function Archive(archiveConfigurator) {
         });
     };
 
+    this.cloneFolder = (srcPath, destPath, options, callback) => {
+        const defaultOpts = {ignoreMounts: false};
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        if (options.ignoreMounts) {
+            brickMapController.cloneFolder(srcPath, destPath, callback);
+            return;
+        }
+
+        this.getArchiveForPath(srcPath, (err, dossierContext) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${srcPath}`, err));
+            }
+            if (dossierContext.readonly === true) {
+                return callback(Error("Tried to rename in a readonly mounted RawDossier"));
+            }
+
+            this.getArchiveForPath(destPath, (err, dstDossierContext) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${dstPath}`, err));
+                }
+
+                if (dstDossierContext.prefixPath !== dossierContext.prefixPath) {
+                    return callback(Error('Destination is invalid. Renaming must be done in the scope of the same dossier'));
+                }
+
+                options.ignoreMounts = true;
+                dossierContext.archive.cloneFolder(dossierContext.relativePath, dstDossierContext.relativePath, options, callback);
+            })
+        });
+    }
 
     this.mount = (path, archiveSSI, options, callback) => {
         if (typeof options === "function") {
@@ -1534,7 +1572,7 @@ function Archive(archiveConfigurator) {
             options = undefined;
         }
 
-        function internalMount(){
+        function internalMount() {
             _listFiles(path, (err, files) => {
                 if (!err && files.length > 0) {
                     return callback(Error("Tried to mount in a non-empty folder"));
@@ -1553,7 +1591,7 @@ function Archive(archiveConfigurator) {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
             }
-            if(result.relativePath === path){
+            if (result.relativePath === path) {
                 internalMount()
             } else {
                 result.archive.mount(result.relativePath, archiveSSI, options, callback)
@@ -1593,6 +1631,8 @@ function Archive(archiveConfigurator) {
         });
     };
 
+    this.listMountedDSUs = this.listMountedDossiers;
+
     this.hasUnanchoredChanges = () => {
         const changesExist = mountedArchivesForBatchOperations.reduce((acc, dossierContext) => {
             return acc || dossierContext.archive.hasUnanchoredChanges();
@@ -1610,7 +1650,25 @@ function Archive(archiveConfigurator) {
                 return getArchiveForBatchOperations(handler, path, callback);
             }
 
-            handler.getArchiveForPath(path, callback);
+
+            handler.getArchiveForPath(path, (err, result) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                }
+
+
+                if (result.archive === this || (!publishAnchoringNotifications || publishOptions.ignoreMounts)) {
+                    return callback(undefined, result);
+                }
+
+                result.archive.enableAnchoringNotifications(publishAnchoringNotifications, publishOptions, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err));
+                    }
+
+                    callback(undefined, result);
+                })
+            });
         });
     };
 
@@ -1628,7 +1686,7 @@ function Archive(archiveConfigurator) {
 
         // Save the previous decision function
         const anchoringStrategy = this.getAnchoringStrategy();
-        previousAnchoringDecisionFn = anchoringStrategy.getDecisionFunction();;
+        prevAnchoringDecisionFn = anchoringStrategy.getDecisionFunction();
 
         // Prevent anchoring after each operation
         anchoringStrategy.setDecisionFunction((brickMap, callback) => {
@@ -1645,23 +1703,47 @@ function Archive(archiveConfigurator) {
 
     /**
      * Anchor batch of changes
+     * @param {callback} onConflict If defined it will be called if a conflict occurs
      * @param {callback} callback
      */
-    this.commitBatch = (callback) => {
+    this.commitBatch = (onConflict, callback) => {
+        if (typeof callback === 'undefined') {
+            callback = onConflict;
+            onConflict = undefined;
+        }
         if (!batchOperationsInProgress) {
             return callback(new Error("No batch operations have been scheduled"))
         }
-        commitBatchesInMountedArchives((err) => {
+
+        let usesOnConflictCallback = false;
+
+        const anchoringStrategy = this.getAnchoringStrategy();
+        if (!anchoringStrategy.getConflictResolutionFunction() && typeof onConflict !== 'undefined') {
+            prevConflictResolutionFunction = anchoringStrategy.getConflictResolutionFunction();
+            // Set 'onConflict' callback
+            anchoringStrategy.setConflictResolutionFunction(onConflict);
+            usesOnConflictCallback = true;
+        }
+
+        commitBatchesInMountedArchives(onConflict, (err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to anchor`, err));
+            }
             this.doAnchoring((err, result) => {
                 batchOperationsInProgress = false;
-                this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
+                anchoringStrategy.setDecisionFunction(prevAnchoringDecisionFn);
+                if (usesOnConflictCallback) {
+                    // Restore the 'conflictResolutionFn'
+                    anchoringStrategy.setConflictResolutionFunction(prevConflictResolutionFunction);
+                }
 
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to anchor`, err));
                 }
-                this.init((err) => {
+
+                this.refresh((err) => {
                     if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to reload current DSU`, err));
                     }
                     callback(undefined, result);
                 })
@@ -1683,7 +1765,7 @@ function Archive(archiveConfigurator) {
             }
 
             batchOperationsInProgress = false;
-            this.getAnchoringStrategy().setDecisionFunction(previousAnchoringDecisionFn);
+            this.getAnchoringStrategy().setDecisionFunction(prevAnchoringDecisionFn);
             this.load((err) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load current DSU`, err));
@@ -1711,23 +1793,274 @@ function Archive(archiveConfigurator) {
         });
     }
 
-    this.start = (callback) => {
-        createBlockchain().start(callback);
-    };
-
-    const createBlockchain = () => {
-        const blockchainModule = require("blockchain");
-        const worldStateCache = blockchainModule.createWorldStateCache("bar", this);
-        const historyStorage = blockchainModule.createHistoryStorage("bar", this);
-        const consensusAlgorithm = blockchainModule.createConsensusAlgorithm("direct");
-        const signatureProvider = blockchainModule.createSignatureProvider("permissive");
-        return blockchainModule.createBlockchain(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, true);
+    /**
+     * @param {function} handler
+     */
+    this.setMergeConflictsHandler = (handler) => {
+        this.getAnchoringStrategy().setConflictResolutionFunction(handler);
     }
+
+    /**
+     * Toggle notifications publishing for new anchors
+     *
+     * @param {boolean} status When `true` the DSU will publish a notification
+     *                         after each successful anchoring
+     * @param {object} options
+     * @param {boolean} options.ignoreMounts Default `true`. If `false` enable publishing for all mount points
+     * @param {function} callback
+     */
+    this.enableAnchoringNotifications = (status, options, callback) => {
+        if (status === brickMapController.anchoringNotificationsEnabled()) {
+            return callback();
+        }
+        options = options || {};
+
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        const defaultOptions = {
+            ignoreMounts: true
+        };
+        options = {
+            ...defaultOptions,
+            ...options
+        };
+
+        const prevOptions = publishOptions;
+
+        publishAnchoringNotifications = status;
+        publishOptions = (status) ? options : null;
+
+        if (publishAnchoringNotifications && options.ignoreMounts) {
+            // No need to recurse in mount points
+            brickMapController.enableAnchoringNotifications(status);
+            return callback();
+        }
+
+        // If the notificatios were enabled with ignoring mount
+        // points there's no need to recurse in the mounted archives
+        if (!status && (!prevOptions || prevOptions.ignoreMounts)) {
+            brickMapController.enableAnchoringNotifications(status);
+            return callback();
+        }
+
+        let mountPoints = [];
+
+        // Recurse in all mount points and set the anchoring notifications settings
+        const propagateNotificationSettings = (manifest, callback) => {
+            if (!mountPoints.length) {
+                return callback();
+            }
+
+            const mountPoint = mountPoints.pop();
+
+            manifest.getArchiveForPath(mountPoint, (err, result) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${mountPoint}`, err));
+                }
+
+                result.archive.enableAnchoringNotifications(publishAnchoringNotifications, publishOptions, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err));
+                    }
+
+                    propagateNotificationSettings(manifest, callback);
+                })
+            });
+        }
+
+        getManifest((err, manifest) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+            }
+
+            mountPoints = manifest.getMountPoints();
+
+            propagateNotificationSettings(manifest, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Unable to toggle anchoring notifications publishing for mounted DSUs", err));
+                }
+
+                brickMapController.enableAnchoringNotifications(status);
+                callback();
+            })
+        });
+    }
+
+    /**
+     * Toggle subscribing to anchor notifications
+     * and auto merging upstream changes
+     *
+     * @param {boolean} status
+     * @param {object} options
+     * @param {function} options.onError((err) => {}) Error listener
+     * @param {function} options.onSync(() => {}) Sync listener
+     * @param {boolean} options.ignoreMounts Default `true`. If `false` enable auto sync for all mount points
+     * @param {function} callback
+     */
+    this.enableAutoSync = (status, options, callback) => {
+        options = options || {};
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        if (status === autoSyncStatus && dsuObsHandler) {
+            return callback();
+        }
+
+        const defaultOptions = {
+            onError: () => {},
+            onSync: () => {},
+            ignoreMounts: true
+        }
+
+        options = {
+            ...defaultOptions,
+            ...options
+        };
+
+        const subscribe = (options, callback) => {
+            archiveConfigurator.getKeySSI(undefined, (err, keySSI) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to retrieve keySSI", err));
+                }
+
+                dsuObsHandler = notifications.getObservableHandler(keySSI);
+                dsuObsHandler.on('error', (err) => {
+                    options.onError(err);
+                });
+
+                dsuObsHandler.on('message', async (message) => {
+                    if (!message.ok) {
+                        options.onError(new Error(`Unable to fetch notification. Code: ${message.statusCode}. Message: ${message.statusMessage}`));
+                        return;
+                    }
+
+                    try {
+                        message = await message.json();
+                        message = JSON.parse(message.message);
+                    } catch (e) {
+                        options.onError(e);
+                    }
+
+                    if (typeof message !== 'object' || message.event !== 'dsu:newAnchor') {
+                        // We're interested only in new anchors
+                        return;
+                    }
+
+                    if (brickMapController.getLastAnchoredHashLink().getAnchorId() === message.payload) {
+                        // Nothing to do: we're up to date
+                        return;
+                    }
+
+                    // Load and try to merge the latest changes
+                    brickMapController.mergeUpstreamChanges((err, result) => {
+                        if (err) {
+                            return options.onError(err);
+                        }
+                        options.onSync(result);
+                    })
+                })
+
+                callback();
+            })
+        };
+
+        const unsubscribe = (callback) => {
+            dsuObsHandler && notifications.unsubscribe(dsuObsHandler);
+            dsuObsHandler = null;
+            callback();
+        }
+
+        const prevOptions = autoSyncOptions;
+
+        autoSyncStatus = status;
+        autoSyncOptions = (status) ? options : null;
+
+        if (options.ignoreMounts) {
+            if (autoSyncStatus) {
+                return subscribe(autoSyncOptions, callback);
+            }
+
+            // When unsubscribing make sure that the previous
+            // subscription ignored mounts as well, else continue
+            // and unsubscribe recursively
+            if (!autoSyncStatus && (!prevOptions || prevOptions.ignoreMounts)) {
+                return unsubscribe(callback)
+            }
+        }
+
+        let mountPoints = [];
+
+        // Recurse in all mount points and set the auto sync settings
+        const propagateAutoSyncSettings = (manifest, callback) => {
+            if (!mountPoints.length) {
+                return callback();
+            }
+
+            const mountPoint = mountPoints.pop();
+
+            manifest.getArchiveForPath(mountPoint, (err, result) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${mountPoint}`, err));
+                }
+
+                result.archive.enableAutoSync(autoSyncStatus, autoSyncOptions, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle auto sync for mount point: ${mountPoint}`, err));
+                    }
+
+                    propagateAutoSyncSettings(manifest, callback);
+                })
+            });
+        }
+
+        getManifest((err, manifest) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
+            }
+
+            mountPoints = manifest.getMountPoints();
+
+            propagateAutoSyncSettings(manifest, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Unable to toggle auto sync for mounted DSUs", err));
+                }
+
+                autoSyncStatus ? subscribe(autoSyncOptions, callback)
+                               : unsubscribe(callback);
+            })
+        });
+    }
+
+    this.stat = (path, callback) => {
+        this.getArchiveForPath(path, (err, res) => {
+            if (err) {
+                callback(undefined, {type: undefined})
+            }
+
+            if (res.archive === this) {
+                let stats;
+                try {
+                    stats = brickMapController.stat(path);
+                } catch (e) {
+                    return callback(undefined, {type: undefined})
+                }
+
+                callback(undefined, stats);
+            } else {
+                res.archive.stat(res.relativePath, callback);
+            }
+        });
+    };
 }
 
 module.exports = Archive;
 
-},{"./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/opt/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/opt/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/opt/privatesky/modules/bar/lib/Manifest.js","blockchain":false,"path":false,"stream":false,"swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js","opendsu":"opendsu","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 
@@ -1746,14 +2079,6 @@ function ArchiveConfigurator() {
         }
         config.bufferSize = bufferSize;
     };
-
-    this.setBootstrapingService = (service) => {
-        config.bootstrapingService = service;
-    };
-
-    this.getBootstrapingService = () => {
-        return config.bootstrapingService;
-    }
 
     this.setKeySSI = (keySSI) => {
         config.keySSI = keySSI;
@@ -1932,7 +2257,7 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 
 module.exports = ArchiveConfigurator;
 
-},{}],"/opt/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -1978,14 +2303,11 @@ function Brick(options) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
-            crypto.hash(options.templateKeySSI, _transformedData, (err, _hash) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create hash`, err));
-                }
+            const hashFn = crypto.getCryptoFunctionForKeySSI(options.templateKeySSI, "hash");
+            const _hash = hashFn(_transformedData);
 
-                hashLink = keySSISpace.createHashLinkSSI(options.templateKeySSI.getDLDomain(), _hash, options.templateKeySSI.getVn());
-                callback(undefined, hashLink);
-            });
+            hashLink = keySSISpace.createHashLinkSSI(options.templateKeySSI.getBricksDomain(), _hash, options.templateKeySSI.getVn(), options.templateKeySSI.getHint());
+            callback(undefined, hashLink);
         });
     };
 
@@ -2119,13 +2441,13 @@ function Brick(options) {
         }
         const keySSISpace = require("opendsu").loadAPI("keyssi");
         if (options.encrypt && !options.brickMap) {
-            keySSI = keySSISpace.buildSymmetricalEncryptionSSI(options.templateKeySSI.getDLDomain(), undefined, '', options.templateKeySSI.getVn());
+            keySSI = keySSISpace.createTemplateSymmetricalEncryptionSSI(options.templateKeySSI.getDLDomain(), undefined, '', options.templateKeySSI.getVn());
         } else {
             if (options.brickMap && options.encrypt === false) {
-                keySSI = keySSISpace.buildTemplateSeedSSI(options.templateKeySSI.getDLDomain(), undefined, options.templateKeySSI.getControl(), options.templateKeySSI.getVn());
-            } else if(options.brickMap && options.encrypt){
+                keySSI = keySSISpace.createTemplateSeedSSI(options.templateKeySSI.getDLDomain(), undefined, options.templateKeySSI.getControlString(), options.templateKeySSI.getVn());
+            } else if (options.brickMap && options.encrypt) {
                 keySSI = options.templateKeySSI;
-            }else{
+            } else {
                 keySSI = undefined;
             }
         }
@@ -2136,7 +2458,7 @@ function Brick(options) {
 
 module.exports = Brick;
 
-},{"./brick-transforms":"/opt/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
+},{"./brick-transforms":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
 const BrickMapMixin = require('./BrickMapMixin');
 
 /**
@@ -2181,10 +2503,512 @@ const BrickMapMixin = require('./BrickMapMixin');
 function BrickMap(header) {
     Object.assign(this, BrickMapMixin);
     this.initialize(header);
+
+    /**
+     * Clone object/array
+     */
+    const clone = (obj) => {
+        const cloned = Object.keys(obj).reduce((acc, key) => {
+            if (typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+                acc[key] = clone(obj[key]);
+                return acc;
+            }
+
+            if (Array.isArray(obj[key])) {
+                acc[key] = [];
+                for (const i in obj[key]) {
+                    if (typeof obj[key][i] === 'object' || Array.isArray(obj[key][i])) {
+                        acc[key][i] = clone(obj[key][i]);
+                        continue;
+                    }
+
+                    acc[key][i] = obj[key][i];
+                }
+
+                return acc;
+            }
+
+            acc[key] = obj[key];
+            return acc;
+        }, {});
+        return cloned;
+    };
+
+    /**
+     * Compare two BrickMap paths for changes
+     */
+    const pathChanged = (src, dst) => {
+        if (this.nodeIsDirectory(src) !== this.nodeIsDirectory(dst)) {
+            return true;
+        }
+
+        // Compare directories
+        if (this.nodeIsDirectory(src)) {
+            const srcFiles = Object.keys(src.items).sort();
+            const dstFiles = Object.keys(dst.items).sort();
+
+            if (srcFiles.length !== dstFiles.length) {
+                return true;
+            }
+
+            const max = Math.max(srcFiles.length, dstFiles.length);
+
+            for (let i = 0; i < max; i++) {
+                const srcKey = srcFiles[i];
+                const dstKey = dstFiles[i];
+
+
+                if (srcKey !== dstKey) {
+                    return true;
+                }
+
+                if (pathChanged(src.items[srcKey], dst.items[dstKey])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Compare files
+        if (src.hashLinks.length !== dst.hashLinks.length) {
+            return true;
+        }
+
+        const max = Math.max(src.hashLinks.length, dst.hashLinks.length);
+        for (let i = 0; i < max; i++) {
+            const srcHashLink = src.hashLinks[i];
+            const dstHashLink = dst.hashLinks[i];
+
+            if (typeof srcHashLink !== typeof dstHashLink) {
+                return true;
+            }
+
+            const srcKeys = Object.keys(srcHashLink).sort();
+            const dstKeys = Object.keys(dstHashLink).sort();
+            const max = Math.max(srcKeys.length, dstKeys.length);
+
+            for (let i = 0; i < max; i++) {
+                if (srcKeys[i] !== dstKeys[i]) {
+                    return true;
+                }
+
+                if (srcHashLink[srcKeys[i]] !== dstHashLink[dstKeys[i]]) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
+
+    /**
+     * Merge `brickMap` items into
+     * this instance
+     * @param {BrickMap} brickMap
+     */
+    this.merge = function (brickMap) {
+        const changes = this.diff(brickMap);
+
+        if (!changes.hasItems()) {
+            return;
+        }
+
+        const merge = (target, source) => {
+            for (const key in source) {
+                if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    if (typeof target[key] !== 'object' || Array.isArray(target[key])) {
+                        target[key] = {};
+                    }
+                    merge(target[key], source[key]);
+                    continue;
+                }
+
+                if (Array.isArray(source[key])) {
+                    target[key] = [];
+                    for (let i = 0; i < source[key].length; i++) {
+                        if (typeof source[key][i] === 'object') {
+                            target[key][i] = {}
+                            merge(target[key][i], source[key][i])
+                            continue;
+                        }
+                        target[key][i] = source[key][i];
+                    }
+                    continue;
+                }
+
+                target[key] = source[key];
+            }
+        };
+        merge(this.header.items, changes.header.items);
+        this.updateMetadata('/', 'updatedAt', this.getTimestamp());
+    }
+
+    /**
+     * Return all items that changed in `brickMap`
+     * compared to our version
+     * @param {BrickMap} brickMap
+     */
+    this.diff = function (brickMap) {
+        const dst = brickMap.header.items;
+        const dstKeys = Object.keys(dst)
+                              .filter(item => item !== 'dsu-metadata-log')
+                              .sort();
+
+        const src = this.header.items;
+        const changes = {};
+        for (const key of dstKeys) {
+            // New items
+            if (typeof src[key] === 'undefined') {
+                changes[key] = clone(dst[key]);
+                continue;
+            }
+
+            // Existing items
+            if (pathChanged(src[key], dst[key])) {
+                changes[key] = clone(dst[key]);
+                continue;
+            }
+        }
+
+        const brickMapDiff = new this.constructor({
+            metadata: {
+                createdAt: this.getTimestamp()
+            },
+            items: changes
+        });
+        return brickMapDiff;
+    }
+
+    /**
+     * @param {object} operation
+     * @param {string} operation.op
+     * @param {string} operation.path
+     * @param {string} operation.timestamp UTC string timestamp
+     * @param {*} operation.data
+     * @throws {Error}
+     */
+    this.replayOperation = function (operation) {
+        const {op, path, timestamp, data} = operation;
+
+        switch (op) {
+            case 'add':
+                this.appendBricksToFile(path, data);
+                this.setMetadata(path, {
+                    updatedAt: timestamp
+                });
+                break;
+            case 'truncate':
+                this.emptyList(path);
+                this.updateMetadata(path, 'updatedAt', timestamp);
+                break;
+            case 'delete':
+                this.delete(path);
+                this.updateMetadata(path, 'deletedAt', timestamp);
+                break;
+            case 'copy':
+                const dstPath = data;
+                this.copy(path, dstPath);
+                this.updateMetadata(dstPath, 'createdAt', timestamp);
+                break;
+            case 'createFolder':
+                this.createFolder(path);
+                this.updateMetadata(path, 'createdAt', timestamp);
+                break;
+            case 'createFile':
+                this.createFile(path);
+                this.updateMetadata(path, 'createdAt', timestamp);
+                break;
+            default:
+                throw new Error(`Unknown operation <${operation}>`);
+        }
+    }
+
+    /**
+     * @param {BrickMap} brickMap
+     * @throws {Error}
+     */
+    this.applyDiff = function (brickMap) {
+        if (brickMap.constructor === BrickMap) {
+            // This is not a BrickMapDiff so we need to merge the changes from a regular BrickMap instance
+            this.merge(brickMap);
+            return;
+        }
+
+        const metadata = brickMap.getMetadata('/');
+        const operationsLog = metadata.log;
+
+        if (!Array.isArray(operationsLog)) {
+            throw new Error('Invalid BrickMapDiff. No replay log found');
+        }
+
+        if (!operationsLog.length) {
+            return;
+        }
+
+        for (const operation of operationsLog) {
+            this.replayOperation(operation, brickMap);
+        }
+        this.updateMetadata('/', 'updatedAt', this.getTimestamp());
+        this.header.metadata.prevDiffHashLink = metadata.prevDiffHashLink;
+    }
+
+    /**
+     * Check for same path conflicts
+     * @param {Array<BrickMapDiff>} localChangesList
+     * @return {object}
+     */
+    this.detectMergeConflicts = function (changes) {
+        const conflicts = changes.reduce((acc, changeSet) => {
+            const metadata = changeSet.getMetadata('/');
+            const operationsLog = metadata.log;
+
+            if (!Array.isArray(operationsLog)) {
+                return acc;
+            }
+
+            if (!operationsLog.length) {
+                return acc;
+            }
+
+            for (const operation of operationsLog) {
+                switch (operation.op) {
+                    case 'add':
+                    case 'createFolder':
+                    case 'createFile':
+                    case 'truncate':
+                        if (this.fileExists(operation.path)) {
+                            acc[operation.path] = {
+                                error: 'LOCAL_OVERWRITE',
+                                message: `Path ${operation.path} will overwrite a previously anchored file or directory`,
+                            }
+                        }
+                        break;
+
+                    case 'copy':
+                        if (this.fileDeleted(operation.path)) {
+                            acc[operation.path] = {
+                                error: 'REMOTE_DELETE',
+                                message: `Unable to copy ${operation.path} to ${operation.data}. Source was previously deleted`
+                            };
+                        }
+
+                        if (this.fileExists(operation.data)) {
+                            acc[operation.data] = {
+                                error: 'LOCAL_OVERWRITE',
+                                message: `Unable to copy ${operation.path} to ${operation.data}. The destination path will overwrite a previously anchored file or directory`,
+                            };
+                        }
+                        break;
+
+                    case 'delete':
+                        if (this.fileExists(operation.path)) {
+                            acc[operation.path] = {
+                                error: 'LOCAL_DELETE',
+                                message: `Unable to delete ${operation.path}. This will delete a previously anchored file.`
+                            }
+                        }
+                        break;
+
+                }
+            }
+
+            return acc;
+        }, {});
+
+        if (!Object.keys(conflicts).length) {
+            return;
+        }
+        return conflicts;
+    }
 }
 module.exports = BrickMap;
-},{"./BrickMapMixin":"/opt/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/opt/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
+
+},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
 'use strict';
+
+// HTTP error code returned by the anchoring middleware
+// when trying to anchor outdated changes
+const ALIAS_SYNC_ERR_CODE = 428;
+
+
+/**
+ * The current state of the BrickMapController
+ */
+function State() {
+    const brickMap = {
+        // The latest anchored BrickMap
+        anchored: undefined,
+        // The current BrickMap, cloned from `anchored`. Contains un-anchored changes
+        dirty: undefined,
+    };
+    const diffs = {
+        inAnchoring: [], // BrickMapDiff objects which are in the process of anchoring
+        new: [], // BrickMapDiff objects which haven't been scheduled for anchoring
+        current: undefined, // A reference to the current BrickMapDiff
+        latestHash: undefined // Used for chaining multiple BrickMapDiff objects
+    };
+    let lastAnchoredHashLink = undefined;
+
+    this.init = (anchoredBrickMap, latestHashLink, callback) => {
+        if (typeof latestHashLink === 'function') {
+            callback = latestHashLink;
+            latestHashLink = undefined;
+        }
+
+        brickMap.anchored = anchoredBrickMap;
+        this.cloneAnchoredBrickMap((err, clone) => {
+            if (err) {
+                return callback(err);
+            }
+            brickMap.dirty = clone;
+            lastAnchoredHashLink = latestHashLink;
+            diffs.latestHash = latestHashLink;
+            callback();
+        });
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.canBeAnchored = () => {
+        return this.hasNewDiffs() || this.hasDiffsForAnchoring();
+    }
+
+    /**
+     * @return {Array<BrickMapDiff>}
+     */
+    this.getDiffsForAnchoring = () => {
+        return diffs.inAnchoring;
+    }
+
+    /**
+     * @param {BrickMap} anchoredBrickMap
+     */
+    this.setAnchoredBrickMap = (anchoredBrickMap) => {
+        brickMap.anchored = anchoredBrickMap;
+    }
+
+    /**
+     * @return {BrickMap}
+     */
+    this.getAnchoredBrickMap = () => {
+        return brickMap.anchored;
+    }
+
+    /**
+     * @return {BrickMapDiff}
+     */
+    this.getCurrentDiff = () => {
+        return diffs.current;
+    }
+
+    /**
+     * @param {BrickMapDiff} diff
+     */
+    this.setCurrentDiff = (diff) => {
+        diffs.current = diff;
+    }
+
+    /**
+     * Returns the BrickMap containing un-anchored changes
+     * @return {BrickMap}
+     */
+    this.getDirtyBrickMap = () => {
+        return brickMap.dirty;
+    }
+
+    /**
+     * @param {BrickMap} dirtyBrickMap
+     */
+    this.setDirtyBrickMap = (dirtyBrickMap) => {
+        brickMap.dirty = dirtyBrickMap;
+    }
+
+    /**
+     * Returns the latest BrickMapDiff in the "new" list
+     * @return {BrickMapDiff}
+     */
+    this.getLastestNewDiff = () => {
+        const newDiffsLength = diffs.new.length;
+        return diffs.new[newDiffsLength - 1];
+    }
+
+    /**
+     * @param {BrickMapDiff} diff
+     */
+    this.pushNewDiff = (diff) => {
+        diffs.new.push(diff);
+    }
+
+    this.getLastAnchoredHashLink = () => {
+        return lastAnchoredHashLink;
+    }
+
+    this.setLastAnchoredHashLink = (hashLink) => {
+        lastAnchoredHashLink = hashLink;
+    }
+
+    this.getLatestDiffHashLink = () => {
+        return diffs.latestHash;
+    }
+
+    this.setLatestDiffHashLink = (hashLink) => {
+        diffs.latestHash = hashLink;
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.hasNewDiffs = () => {
+        return diffs.new.length > 0;
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.hasDiffsForAnchoring = () => {
+        return diffs.inAnchoring.length > 0;
+    }
+
+    /**
+     * Moves the BrickMapDiffs from the 'new' array to the 'inAnchoring' array
+     * @param {function} callback
+     */
+    this.prepareNewChangesForAnchoring = (callback) => {
+        if (!this.hasNewDiffs()) {
+            return callback();
+        }
+
+        const diff = diffs.new.shift();
+        diff.getHashLink((err, lastDiffHashLink) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get hashLink`, err));
+            }
+
+            diffs.latestHash = lastDiffHashLink;
+            diffs.inAnchoring.push(diff);
+            this.prepareNewChangesForAnchoring(callback);
+        });
+    }
+
+    this.rollback = (mergedDiffs) => {
+        diffs.inAnchoring.unshift(...mergedDiffs);
+    }
+
+    /**
+     * Clone the anchored brickmap
+     * @param {function} callback
+     */
+    this.cloneAnchoredBrickMap = (callback) => {
+        brickMap.anchored.clone((err, brickMap) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
+            }
+            callback(undefined, brickMap);
+        })
+    }
+}
 
 /**
  * BrickMap Proxy
@@ -2199,7 +3023,7 @@ module.exports = BrickMap;
  * "dirty" BrickMap and to the BrickMapDiff object (only this object will be anchored). Any
  * read operations will go directly to the "dirty" BrickMap.
  *
- * After anchoring any changes the valid BrickMap is updated with the changes stored in BrickMapDiff
+ * After anchoring any changes, the anchored BrickMap is updated with the changes stored in BrickMapDiff
  * thus being in sync with the "dirty" copy
  *
  * @param {object} options
@@ -2215,14 +3039,16 @@ function BrickMapController(options) {
     const BrickMapDiff = require('./BrickMapDiff');
     const BrickMapStrategyFactory = require('./BrickMapStrategy');
     const anchoringStatus = require('./constants').anchoringStatus;
-
-    const DEFAULT_BRICK_MAP_STRATEGY = "LatestVersion";
+    const openDSU = require("opendsu");
+    const bricking = openDSU.loadAPI("bricking");
+    const anchoring = openDSU.loadAPI("anchoring");
+    const notifications = openDSU.loadAPI("notifications");
     options = options || {};
 
     const config = options.config;
     const keySSI = options.keySSI;
     const brickStorageService = options.brickStorageService;
-    const keyssi = require("opendsu").loadApi("keyssi");
+    const keyssi = openDSU.loadApi("keyssi");
     if (!config) {
         throw new Error('An ArchiveConfigurator is required!');
     }
@@ -2231,34 +3057,18 @@ function BrickMapController(options) {
         throw new Error('BrickStorageService is required');
     }
 
-    // HTTP error code returned by the anchoring middleware
-    // when trying to anchor outdated changes
-    const ALIAS_SYNC_ERR_CODE = 428;
+    let anchoringInProgress = false;
+
+    let publishAnchoringNotifications = false;
+    let autoSync = false;
+    let dsuObsHandler;
+    let autoSyncOptions = {};
 
     let strategy = config.getBrickMapStrategy();
-
     let validator = new AnchorValidator({
         rules: config.getValidationRules()
     });
-
-    let anchoringInProgress = false;
-    let validBrickMap;
-    // A copy of the `validBrickMap`
-    // Considered "dirty" when it contains any changes which haven't been anchored
-    let dirtyBrickMap;
-
-    let currentDiffBrickMap;
-    // List of BrickMapDiff objects which haven't been scheduled for anchoring
-    let newDiffs = [];
-    // List of BrickMapDiff objects which are in the process of anchoring
-    let pendingAnchoringDiffs = [];
-
-    // The last anchored BrickMap hash
-    let lastValidHashLink;
-
-    // The hash of the latest created BrickMapDiff
-    // Used for chaining multiple BrickMapDiff objects
-    let lastDiffHash;
+    const state = new State();
 
 
     ////////////////////////////////////////////////////////////
@@ -2275,6 +3085,7 @@ function BrickMapController(options) {
         }
         strategy.setCache(config.getCache());
         strategy.setBrickMapController(this);
+        strategy.setBrickMapState(state);
         strategy.setValidator(validator);
 
         const brickMap = new BrickMap();
@@ -2283,45 +3094,62 @@ function BrickMapController(options) {
             if (typeof brickMap[propertyName] !== 'function' || propertyName === 'load') {
                 continue;
             }
-            this[propertyName] = createProxyMethod(propertyName);
+            // Proxy method calls to BrickMap through BrickMapController
+            const method = propertyName;
+            this[propertyName] = new Proxy(function () {
+            }, {
+                apply: (...args) => {
+                    const targetHandlerName = `${method}ProxyHandler`;
+
+                    if (typeof this[targetHandlerName] === 'function') {
+                        return this[targetHandlerName](...args.pop());
+                    }
+
+                    const dirtyBrickMap = state.getDirtyBrickMap();
+                    return dirtyBrickMap[method].apply(dirtyBrickMap, args.pop());
+                }
+            });
         }
     }
 
     /**
-     * Create a new instance of the DiffStrategy from DIDResolver
-     * @return {DiffStrategy}
+     * @return {BrickMapStrategyMixin}
      */
     const getDefaultStrategy = () => {
         const factory = new BrickMapStrategyFactory();
-        const strategy = factory.create(DEFAULT_BRICK_MAP_STRATEGY);
+        const strategy = factory.create();
 
         return strategy;
     }
 
-    /**j
-     * Create a proxy method for BrickMap::{method}
-     *
-     * If BrickMapController has a method named ${method}ProxyHandler
-     * the call to BrickMap::{method} is redirected to
-     * BrickMapController::{method}ProxyHandler
-     *
-     * @param {string} method
-     * @return {Proxy}
-     */
-    const createProxyMethod = (method) => {
-        const proxy = new Proxy(function () {
-        }, {
-            apply: (target, thisArg, argumentsList) => {
-                const targetHandlerName = `${method}ProxyHandler`;
+    const createBrickMapDiff = (data, callback) => {
+        if (typeof data === 'function') {
+            callback = data;
+            data = undefined;
+        }
 
-                if (typeof this[targetHandlerName] === 'function') {
-                    return this[targetHandlerName](...argumentsList);
+        const brickMapDiff = new BrickMapDiff(data);
+        if (typeof data !== 'undefined') {
+            return this.configureBrickMap(brickMapDiff, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
                 }
-                return dirtyBrickMap[method].apply(dirtyBrickMap, argumentsList);
+                callback(undefined, brickMapDiff);
+            });
+        }
+        brickMapDiff.initialize((err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to initialize brickMapDiff`, err));
             }
-        })
 
-        return proxy
+            brickMapDiff.setPrevDiffHashLink(state.getLatestDiffHashLink());
+            this.configureBrickMap(brickMapDiff, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
+                }
+                callback(undefined, brickMapDiff);
+            });
+        });
     }
 
     /**
@@ -2336,53 +3164,35 @@ function BrickMapController(options) {
      * @return {BrickMapDiff}
      */
     const getCurrentDiffBrickMap = (callback) => {
-        let brickMapDiff = newDiffs[newDiffs.length - 1];
+        let brickMapDiff = state.getLastestNewDiff();
         if (!brickMapDiff) {
-            brickMapDiff = new BrickMapDiff();
-            return brickMapDiff.initialize((err) => {
+            return createBrickMapDiff((err, brickMapDiff) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to initialize brickMapDiff`, err));
+                    return callback(err);
                 }
 
-
-                brickMapDiff.setPrevDiffHashLink(lastDiffHash);
-                this.configureBrickMap(brickMapDiff, (err) => {
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to configure brickMap`, err));
-                    }
-
-                    currentDiffBrickMap = brickMapDiff;
-                    newDiffs.push(brickMapDiff);
-                    callback(undefined, brickMapDiff);
-                });
-
-            });
+                state.setCurrentDiff(brickMapDiff);
+                state.pushNewDiff(brickMapDiff);
+                callback(undefined, brickMapDiff);
+            })
         }
 
-        currentDiffBrickMap = brickMapDiff;
-        setTimeout(() => {
-            callback(undefined, brickMapDiff);
-        })
+        state.setCurrentDiff(brickMapDiff);
+        callback(undefined, brickMapDiff);
     }
 
-    /**
-     * Move any new BrickMapDiff objects into the
-     * "pending for anchoring" state
-     */
-    const moveNewDiffsToPendingAnchoringState = (callback) => {
-        if (newDiffs.length === 0) {
-            return callback();
-        }
+    const notifySubscribers = (hashLink, callback) => {
+        const message = {
+            event: "dsu:newAnchor",
+            payload: hashLink.getAnchorId()
+        };
 
-        const diff = newDiffs.shift();
-        diff.getHashLink((err, _lastDiffHashLink) => {
+        notifications.publish(keySSI, message, 0, (err) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get hashLink`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish anchoring notification`, err));
             }
 
-            lastDiffHash = _lastDiffHashLink;
-            pendingAnchoringDiffs.push(diff);
-            moveNewDiffsToPendingAnchoringState(callback);
+            callback();
         });
     }
 
@@ -2407,9 +3217,26 @@ function BrickMapController(options) {
      */
     const endAnchoring = (listener, status, data) => {
         anchoringInProgress = false;
+
         if (status === anchoringStatus.OK) {
+            if (!publishAnchoringNotifications) {
+                return listener(undefined, data);
+            }
+
+            return notifySubscribers(data, (err) => {
+                if (err) {
+                    console.warn("Unable to publish anchoring notification");
+                    console.error(err);
+                }
+
+                return listener(undefined, data);
+            });
+        }
+
+        if (status === anchoringStatus.BRICKMAP_RECONCILIATION_HANDOFF) {
             return listener(undefined, data);
         }
+
         const error = data;
         error.type = status;
         listener(error);
@@ -2425,7 +3252,23 @@ function BrickMapController(options) {
      * @return {boolean}
      */
     const anchoringRequestExists = () => {
-        return pendingAnchoringDiffs.length > 0;
+        return state.hasDiffsForAnchoring();
+    }
+
+    /**
+     * Returns true if the anchoring service returned an 'out of sync' error
+     * @return {boolean}
+     */
+    const isAliasSyncError = (err) => {
+        let error = err;
+        do {
+            if (error.statusCode === ALIAS_SYNC_ERR_CODE) {
+                return true;
+            }
+
+            error = error.previousError;
+        } while (error && (error.previousError || error.statusCode));
+        return false;
     }
 
     ////////////////////////////////////////////////////////////
@@ -2436,49 +3279,26 @@ function BrickMapController(options) {
      * Create an empty BrickMap
      */
     this.init = (callback) => {
-        this.createNewBrickMap((err, _brickMap) => {
+        this.createBrickMap((err, brickMap) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create new brickMap`, err));
             }
 
-            validBrickMap = _brickMap;
-            validBrickMap.clone((err, _dirtyBrickMap) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone valid brickMap`, err));
-                }
-
-                dirtyBrickMap = _dirtyBrickMap;
-                callback();
-            });
+            state.init(brickMap, callback);
         });
     }
 
     /**
-     * Load an existing BrickMap using the BrickMapStrategy
+     * Load an existing BrickMap using the BrickMap strategy
      */
     this.load = (callback) => {
-        config.getKeySSI((err, keySSI) => {
+        strategy.load(keySSI, (err, brickMap) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
             }
 
-            strategy.load(keySSI, (err, brickMap) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
-                }
 
-                validBrickMap = brickMap;
-                brickMap.clone((err, _dirtyBrickMap) => {
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone brickMap`, err));
-                    }
-
-                    dirtyBrickMap = _dirtyBrickMap;
-                    lastValidHashLink = strategy.getLastHashLink();
-                    lastDiffHash = lastValidHashLink;
-                    callback();
-                });
-            });
+            state.init(brickMap, strategy.getLastHashLink(), callback);
         });
     }
 
@@ -2488,7 +3308,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.addFile = (path, bricksData, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'addFile', path, {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'addFile', path, {
             bricksData
         }, (err) => {
             if (err) {
@@ -2512,7 +3332,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.renameFile = (srcPath, dstPath, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'rename', srcPath, {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'rename', srcPath, {
             dstPath
         }, (err) => {
             if (err) {
@@ -2528,8 +3348,34 @@ function BrickMapController(options) {
                 } catch (e) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy`, e));
                 }
-
                 this.delete(srcPath);
+                this.attemptAnchoring(callback);
+            })
+        })
+    }
+    /**
+     * @param {string} srcPath
+     * @param {string} dstPath
+     * @param {callback} callback
+     */
+    this.cloneFolder = (srcPath, dstPath, callback) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'clone', srcPath, {
+            dstPath
+        }, (err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate copy operation`, err));
+            }
+
+            getCurrentDiffBrickMap((err, _brickMap) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                }
+                try {
+                    this.copy(srcPath, dstPath);
+                } catch (e) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to copy`, e));
+                }
+
                 this.attemptAnchoring(callback);
             })
         })
@@ -2541,7 +3387,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.appendToFile = (path, bricksData, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'appendToFile', path, {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'appendToFile', path, {
             bricksData
         }, (err) => {
             if (err) {
@@ -2565,7 +3411,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.addFiles = (path, filesBricksData, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'addFiles', path, {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'addFiles', path, {
             filesBricksData
         }, (err) => {
             if (err) {
@@ -2591,7 +3437,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.deleteFile = (path, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'deleteFile', path, (err) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'deleteFile', path, (err) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate deleteFile operation`, err));
             }
@@ -2616,7 +3462,7 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.createDirectory = (path, callback) => {
-        validator.validate('preWrite', dirtyBrickMap, 'createFolder', path, (err) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'createFolder', path, (err) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate createFolder operation`, err));
             }
@@ -2637,6 +3483,31 @@ function BrickMapController(options) {
     }
 
     /**
+     * @param {string} path
+     * @param {callback} callback
+     */
+    this.createEmptyFile = (path, callback) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'createFile', path, (err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate createFile operation`, err));
+            }
+
+            getCurrentDiffBrickMap((err, _brickMap) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                }
+
+                try {
+                    this.createFile(path);
+                } catch (e) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create file ${path}`, e));
+                }
+                this.attemptAnchoring(callback);
+            })
+        })
+    }
+
+    /**
      * Proxy for BatMap.addFileEntry()
      *
      * @param {string} path
@@ -2644,6 +3515,7 @@ function BrickMapController(options) {
      * @throws {Error}
      */
     this.addFileEntryProxyHandler = (path, bricks) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
         let truncateFileIfExists = false;
         if (!dirtyBrickMap.isEmpty(path)) {
             truncateFileIfExists = true;
@@ -2651,9 +3523,9 @@ function BrickMapController(options) {
 
         dirtyBrickMap.addFileEntry(path, bricks);
         if (truncateFileIfExists) {
-            currentDiffBrickMap.emptyList(path);
+            state.getCurrentDiff().emptyList(path);
         }
-        currentDiffBrickMap.addFileEntry(path, bricks);
+        state.getCurrentDiff().addFileEntry(path, bricks);
     }
 
     /**
@@ -2664,8 +3536,9 @@ function BrickMapController(options) {
      * @throws {Error}
      */
     this.appendBricksToFileProxyHandler = (path, bricks) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
         dirtyBrickMap.appendBricksToFile(path, bricks);
-        currentDiffBrickMap.appendBricksToFile(path, bricks);
+        state.getCurrentDiff().appendBricksToFile(path, bricks);
     }
 
     /**
@@ -2675,8 +3548,9 @@ function BrickMapController(options) {
      * @throws {Error}
      */
     this.deleteProxyHandler = (path) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
         dirtyBrickMap.delete(path);
-        currentDiffBrickMap.delete(path);
+        state.getCurrentDiff().delete(path);
     }
 
     /**
@@ -2687,8 +3561,9 @@ function BrickMapController(options) {
      * @throws {Error}
      */
     this.copyProxyHandler = (srcPath, dstPath) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
         dirtyBrickMap.copy(srcPath, dstPath);
-        currentDiffBrickMap.copy(srcPath, dstPath);
+        state.getCurrentDiff().copy(srcPath, dstPath);
     }
 
     /**
@@ -2697,43 +3572,20 @@ function BrickMapController(options) {
      * @param {string} path
      */
     this.createFolderProxyHandler = (path) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
         dirtyBrickMap.createFolder(path);
-        currentDiffBrickMap.createFolder(path);
-    }
-
-
-    /**
-     * @param {string} keySSI
-     * @param {callback} callback
-     */
-    this.versions = (keySSI, callback) => {
-        brickStorageService.versions(keySSI, callback);
+        state.getCurrentDiff().createFolder(path);
     }
 
     /**
-     * @param {string} keySSI
-     * @param {string} hashLinkSSI
-     * @param {string|undefined} lastHashLinkSSI
-     * @param {callback} callback
+     * Proxy for BrickMap.createFile()
+     *
+     * @param {string} path
      */
-    this.addVersion = (keySSI, hashLinkSSI, lastHashLinkSSI, callback) => {
-        brickStorageService.addVersion(keySSI, hashLinkSSI, lastHashLinkSSI, callback);
-    }
-
-    /**
-     * @param {Array<string>} hashLinkSSIs
-     * @param {callback} callback
-     */
-    this.getMultipleBricks = (hashLinkSSIs, callback) => {
-        brickStorageService.getMultipleBricks(hashLinkSSIs, callback);
-    }
-
-    /**
-     * @param {string} hashLinkSSI
-     * @param {callback} callback
-     */
-    this.getBrick = (hashLinkSSI, callback) => {
-        brickStorageService.getBrick(hashLinkSSI, callback);
+    this.createFileProxyHandler = (path) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
+        dirtyBrickMap.createFile(path);
+        state.getCurrentDiff().createFile(path);
     }
 
     /**
@@ -2742,7 +3594,7 @@ function BrickMapController(options) {
      * @param {BrickMap} brickMap
      * @param {callback} callback
      */
-    this.saveBrickMap = (keySSI, brickMap, callback) => {
+    this.saveBrickMap = (domain, brickMap, callback) => {
         const brickMapBrick = brickMap.toBrick();
         brickMapBrick.setKeySSI(brickMap.getBrickEncryptionKeySSI());
         brickMapBrick.getTransformedData((err, brickData) => {
@@ -2750,15 +3602,15 @@ function BrickMapController(options) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brickMap brick's transformed data`, err));
             }
 
-            brickStorageService.putBrick(keySSI, brickData, callback);
+            bricking.putBrick(domain, brickData, callback);
         });
     }
 
     /**
      * @param {Brick|undefined} brick
-     * @return {BrickMap}
+     * @param {function} callback
      */
-    this.createNewBrickMap = (brick, callback) => {
+    this.createBrickMap = (brick, callback) => {
         if (typeof brick === "function") {
             callback = brick;
             brick = undefined;
@@ -2769,17 +3621,11 @@ function BrickMapController(options) {
     }
 
     /**
-     * @return {BrickMap}
+     * @param {Brick|undefined} brick
+     * @return {function} callback
      */
-    this.getValidBrickMap = () => {
-        return validBrickMap;
-    }
-
-    /**
-     * @param {BrickMap}
-     */
-    this.setValidBrickMap = (brickMap) => {
-        validBrickMap = brickMap;
+    this.createBrickMapDiff = (brick, callback) => {
+        return createBrickMapDiff(brick, callback);
     }
 
     /**
@@ -2787,10 +3633,6 @@ function BrickMapController(options) {
      * @param callback
      */
     this.configureBrickMap = (brickMap, callback) => {
-        // if (config.getMapEncryptionKey()) {
-        //     brickMap.setEncryptionKey(config.getMapEncryptionKey());
-        // }
-
         if (!brickMap.getTemplateKeySSI()) {
             brickMap.setKeySSI(keySSI);
         }
@@ -2814,12 +3656,13 @@ function BrickMapController(options) {
      * @param {callback} callback
      */
     this.attemptAnchoring = (callback) => {
-        strategy.ifChangesShouldBeAnchored(dirtyBrickMap, (err, result) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
+        strategy.ifChangesShouldBeAnchored(dirtyBrickMap, (err, shouldBeAnchored) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to determine if changes should be anchored`, err));
             }
 
-            if (!result) {
+            if (!shouldBeAnchored) {
                 return callback();
             }
 
@@ -2839,50 +3682,56 @@ function BrickMapController(options) {
 
     /**
      * @param {callback} listener
+     * @param {BrickMap|undefined} brickMap
      */
-    this.anchorChanges = (listener) => {
-        // Move new BrickMapDiff's to the "pending anchoring" state
-        moveNewDiffsToPendingAnchoringState((err) => {
+    this.anchorChanges = (listener, brickMap) => {
+        if (anchoringInProgress || (!state.canBeAnchored() && !brickMap)) {
+            return listener();
+        }
+
+        anchoringInProgress = true;
+
+        // Use the strategy to compact/merge any BrickMapDiff objects into a single
+        // BrickMap instance
+        strategy.compactDiffs(brickMap, (err, result) => {
             if (err) {
-                return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
+                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to compact diffs`, err));
             }
 
-            if (!pendingAnchoringDiffs.length) {
-                return listener();
-            }
-
-            if (anchoringInProgress) {
-                return listener();
-            }
-
-            anchoringInProgress = true;
-
-            // Use the strategy to compact/merge any BrickMapDiff objects into a single
-            // diff object. Once this happens the "pendingAnchoringDiff" list is emptied
-            strategy.compactDiffs(pendingAnchoringDiffs, (err, brickMap) => {
+            const [brickMap, mergedDiffs] = result;
+            const bricksDomain = keySSI.getBricksDomain();
+            this.saveBrickMap(bricksDomain, brickMap, (err, hash) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to compact diffs`, err));
+                    state.rollback(mergedDiffs);
+                    return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
                 }
 
-                this.saveBrickMap(keySSI, brickMap, (err, hash) => {
+                const timestamp = Date.now();
+                const hashLink = keyssi.createHashLinkSSI(bricksDomain, hash, keySSI.getVn(), keySSI.getHint());
+                let dataToSign = timestamp;
+                if (state.getLastAnchoredHashLink()) {
+                    dataToSign = state.getLastAnchoredHashLink().getIdentifier() + timestamp;
+                }
+                dataToSign += keySSI.getAnchorId();
+                keySSI.sign(dataToSign, (err, signature) => {
                     if (err) {
-                        pendingAnchoringDiffs.unshift(brickMap);
-                        return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
+                        return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
                     }
 
-                    const hashLink = keyssi.createHashLinkSSI(keySSI.getBricksDomain(), hash, keySSI.getVn());
-                    // TODO: call strategy.signHash() and pass the signedHash
-                    this.addVersion(keySSI, hashLink, lastValidHashLink, (err) => {
+                    //signedHashLink should not contain any hint because is not trusted
+                    const signedHashLink = keyssi.createSignedHashLinkSSI(bricksDomain, hashLink.getHash(), timestamp, signature, keySSI.getVn());
+
+                    const updateAnchorCallback = (err) => {
                         if (err) {
-                            // In case of any errors, the compacted BrickMapDiff object
-                            // is put back into the "pending anchoring" state in case
+                            // In case of any errors, the compacted BrickMapDiff objects
+                            // are put back into the "pending anchoring" state in case
                             // we need to retry the anchoring process
-                            pendingAnchoringDiffs.unshift(brickMap);
+                            state.rollback(mergedDiffs);
 
                             // The anchoring middleware detected that we were trying
-                            // to anchor outdated changes. In order to finish anchoring
-                            // these changes the conflict must be first resolved
-                            if (err.statusCode === ALIAS_SYNC_ERR_CODE) {
+                            // to anchor outdated changes. In order to finish the anchoring
+                            // process the conflict must be first resolved
+                            if (isAliasSyncError(err)) {
                                 return this.handleAnchoringConflict(listener);
                             }
 
@@ -2890,14 +3739,13 @@ function BrickMapController(options) {
                         }
 
                         // After the alias is updated, the strategy is tasked
-                        // with updating the valid BrickMap with the new changes
-                        strategy.afterBrickMapAnchoring(brickMap, hashLink, (err, _hashLink) => {
+                        // with updating our anchored BrickMap with the new changes
+                        strategy.afterBrickMapAnchoring(brickMap, signedHashLink, (err, hashLink) => {
                             if (err) {
                                 return endAnchoring(listener, anchoringStatus.BRICKMAP_UPDATE_ERR, err);
                             }
 
-                            lastValidHashLink = _hashLink;
-                            endAnchoring(listener, anchoringStatus.OK, _hashLink);
+                            endAnchoring(listener, anchoringStatus.OK, hashLink);
 
                             if (anchoringRequestExists()) {
                                 // Another anchoring was requested during the time this one
@@ -2905,62 +3753,111 @@ function BrickMapController(options) {
                                 this.anchorChanges(listener);
                             }
                         });
-                    })
-                })
-            });
-
-        })
-    }
-
-    /**
-     * If an anchoring conflict occurs, reload the valid BrickMap
-     * in order to get the new changes and then try to merge our BrickMapDiff
-     *
-     * @param {callback} listener
-     */
-    this.handleAnchoringConflict = (listener) => {
-        strategy.load(keySSI, (err, brickMap) => {
-            if (err) {
-                return endAnchoring(listener, anchoringStatus.BRICKMAP_LOAD_ERR, err);
-            }
-            lastValidHashLink = strategy.getLastHashLink();
-
-            // Pick up any new BrickMapDiff's and add them to into the "pending anchoring" state
-            moveNewDiffsToPendingAnchoringState((err) => {
-                if (err) {
-                    return endAnchoring(listener, anchoringStatus.BRICKMAP_RECONCILE_ERR, err);
-                }
-
-                // Try and merge our changes
-                // Pass a reference to the `newDiffs` list in case some more changes occur
-                // during the "reconciliation" process and merge them before re-trying the
-                // anchoring process
-                strategy.reconcile(brickMap, pendingAnchoringDiffs, newDiffs, (err) => {
-                    if (err) {
-                        return endAnchoring(listener, anchoringStatus.BRICKMAP_RECONCILE_ERR, err);
                     }
 
-                    anchoringInProgress = false;
-                    this.anchorChanges(listener);
-                });
-            });
+                    const lastAnchoredHashLink = state.getLastAnchoredHashLink();
+                    if (!lastAnchoredHashLink) {
+                        anchoring.createAnchor(keySSI, (err) => {
+                            if (err) {
+                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
+                            }
+
+                            anchoring.appendToAnchor(keySSI, signedHashLink, '', updateAnchorCallback);
+                        });
+                    } else {
+                        anchoring.appendToAnchor(keySSI, signedHashLink, lastAnchoredHashLink, updateAnchorCallback);
+                    }
+                })
+            })
         });
     }
 
     /**
-     * The strategy will use this to update the dirtyBrickMap
-     * after an anchoring conflict has been resolved
-     * @param {BrickMap} brickMap
+     * If an anchoring conflict occurs, reload our anchored BrickMap
+     * in order to get the new changes and then try to merge our BrickMapDiff
+     * instances
+     *
+     * @param {callback} listener
      */
-    this.setDirtyBrickMap = (brickMap) => {
-        dirtyBrickMap = brickMap;
+    this.handleAnchoringConflict = (listener) => {
+        const currentAnchoredHashLinkSSI = strategy.getLastHashLink();
+        strategy.load(keySSI, (err, brickMap) => {
+            if (err) {
+                return endAnchoring(listener, anchoringStatus.BRICKMAP_LOAD_ERR, err);
+            }
+            state.setLastAnchoredHashLink(strategy.getLastHashLink());
+
+            // Try and merge our changes
+            strategy.reconcile(brickMap, currentAnchoredHashLinkSSI, (err, result) => {
+                if (err) {
+                    return endAnchoring(listener, anchoringStatus.BRICKMAP_RECONCILE_ERR, err);
+                }
+
+                anchoringInProgress = false;
+
+                if (!result.status) {
+                    return endAnchoring(listener, anchoringStatus.BRICKMAP_RECONCILIATION_HANDOFF)
+                }
+                this.anchorChanges(listener, result.brickMap);
+            });
+        });
     }
 
     /**
      * @return {boolean}
      */
     this.hasUnanchoredChanges = () => {
-        return newDiffs.length || anchoringRequestExists();
+        return state.hasNewDiffs() || anchoringRequestExists();
+    }
+
+    /**
+     * @return {object}
+     */
+    this.getState = () => {
+        return state;
+    }
+
+    this.getLastAnchoredHashLink = () => {
+        return state.getLastAnchoredHashLink();
+    }
+
+
+    /**
+     * Toggle notifications publishing for new anchors
+     * @param {boolean} status
+     */
+    this.enableAnchoringNotifications = (status) => {
+        publishAnchoringNotifications = status;
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.anchoringNotificationsEnabled = () => {
+        return publishAnchoringNotifications;
+    }
+
+    /**
+     * Load the latest BrickMaps then try and merge
+     * the latest changes
+     * @param {function} callback
+     */
+    this.mergeUpstreamChanges = (callback) => {
+        const currentAnchoredHashLinkSSI = strategy.getLastHashLink();
+        strategy.load(keySSI, (err, brickMap) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
+            }
+
+            strategy.merge(brickMap, currentAnchoredHashLinkSSI, (err, result) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to merge latest DSU changes`, err));
+                }
+
+
+                callback(undefined, result.status);
+            })
+        })
     }
 
     initialize();
@@ -2968,7 +3865,7 @@ function BrickMapController(options) {
 
 module.exports = BrickMapController;
 
-},{"./AnchorValidator":"/opt/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/opt/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
+},{"./AnchorValidator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapMixin = require('./BrickMapMixin');
@@ -2981,6 +3878,7 @@ const BrickMapMixin = require('./BrickMapMixin');
  */
 function BrickMapDiff(header) {
     Object.assign(this, BrickMapMixin);
+    this.initialize(header);
 
     this.initialize = function (header, callback) {
         if (typeof header === "function") {
@@ -3002,8 +3900,43 @@ function BrickMapDiff(header) {
         });
     }
 
+    /**
+     * @param {BrickMapDiff} brickMap
+     * @throws {Error}
+     */
+    this.applyDiff = function (brickMap) {
+        if (brickMap.constructor !== BrickMapDiff) {
+            throw new Error('Unable to merge: expected a BrickMapDiff instance')
+        }
+
+        const metadata = brickMap.getMetadata('/');
+        const operationsLog = metadata.log;
+
+        if (!Array.isArray(operationsLog)) {
+            throw new Error('Invalid BrickMapDiff. No replay log found');
+        }
+
+        if (!operationsLog.length) {
+            return;
+        }
+
+        for (const operation of operationsLog) {
+            const data = (typeof operation.data !== 'undefined') ? JSON.parse(JSON.stringify(operation.data))
+                                                                 : operation.data;
+            this.log(operation.op, operation.path, data);
+        }
+        this.updateMetadata('/', 'updatedAt', this.getTimestamp());
+    }
+
+    /**
+     * @return {boolean}
+     */
+    this.hasItems = function () {
+        return this.header.metadata.log.length > 0;
+    };
+
     this.setPrevDiffHashLink = function (hashLink) {
-        if (typeof hashLink === "undefined") {
+        if (typeof hashLink === 'undefined') {
             return;
         }
         this.header.metadata.prevDiffHashLink = hashLink.getIdentifier();
@@ -3063,10 +3996,17 @@ function BrickMapDiff(header) {
     this.createFolder = function (path) {
         this.log('createFolder', path);
     }
+
+    /**
+     * @param {string} path
+     */
+    this.createFile = function (path) {
+        this.log('createFile', path);
+    }
 }
 module.exports = BrickMapDiff;
 
-},{"./BrickMapMixin":"/opt/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/opt/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
 'use strict';
 
 const Brick = require("./Brick");
@@ -3101,6 +4041,13 @@ const BrickMapMixin = {
                 createdAt: this.getTimestamp()
             }
         }
+    },
+
+    /**
+     * @return {boolean}
+     */
+    hasItems: function () {
+        return Object.keys(this.header.items).length > 0;
     },
 
     /**
@@ -3169,6 +4116,10 @@ const BrickMapMixin = {
             nodeName = pathSegments.shift();
             if (nodeName === "") {
                 nodeName = pathSegments.shift();
+            }
+
+            if (parentNode.items[nodeName]) {
+                delete parentNode.items[nodeName].metadata.deletedAt;
             }
 
             if (!pathSegments.length) {
@@ -3383,13 +4334,7 @@ const BrickMapMixin = {
         this.deleteNode(childNode);
     },
 
-    /**
-     * Create an empty directory
-     *
-     * @param {string} barPath
-     * @throws {Error}
-     */
-    createFolder: function (barPath) {
+    createNode: function (barPath, options) {
         barPath = pskPath.normalize(barPath);
 
         if (barPath === '/') {
@@ -3409,16 +4354,26 @@ const BrickMapMixin = {
                 throw new Error('Unable to create a folder in a file');
             }
 
-            if (parentDir.items[dirName] !== 'undefined') {
+            if (typeof parentDir.items[dirName] !== 'undefined' && options.trailingNodeType === "parent") {
                 throw new Error('Unable to create folder. A file or folder already exists in that location.');
             }
         }
 
-        this.createNodesFromPath(barPath, {
-            trailingNodeType: 'parent'
-        });
+        this.createNodesFromPath(barPath, options);
+    },
+    /**
+     * Create an empty directory
+     *
+     * @param {string} barPath
+     * @throws {Error}
+     */
+    createFolder: function (barPath) {
+        this.createNode(barPath, {trailingNodeType: "parent"});
     },
 
+    createFile: function (barPath) {
+        this.createNode(barPath, {trailingNodeType: "child"});
+    },
     /**
      * @param {string} filePath
      * @return {Array<object>}
@@ -3493,6 +4448,24 @@ const BrickMapMixin = {
     },
 
     /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    fileExists: function (path) {
+        const node = this.getDeepestNode(path);
+        return node && !this.nodeIsDeleted(node);
+    },
+
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    fileDeleted: function (path) {
+        const node = this.getDeepestNode(path);
+        return node && this.nodeIsDeleted(node);
+    },
+
+    /**
      * @param {string} srcPath
      * @param {string} dstPath
      * @throws {Error}
@@ -3509,11 +4482,12 @@ const BrickMapMixin = {
         });
 
         if (this.nodeIsDirectory(srcNode)) {
-            dstNode.items = srcNode.items;
+            // Clone hashlinks
+            dstNode.items = JSON.parse(JSON.stringify(srcNode.items));
             return;
         }
 
-        dstNode.hashLinks = srcNode.hashLinks;
+        dstNode.hashLinks = JSON.parse(JSON.stringify(srcNode.hashLinks));
     },
 
 
@@ -3749,83 +4723,28 @@ const BrickMapMixin = {
         node.metadata[key] = value;
     },
 
-    /**
-     * @param {object} operation
-     * @param {string} operation.op
-     * @param {string} operation.path
-     * @param {string} operation.timestamp UTC string timestamp
-     * @param {*} operation.data
-     * @throws {Error}
-     */
-    replayOperation: function (operation) {
-        const {op, path, timestamp, data} = operation;
-
-        switch (op) {
-            case 'add':
-                this.appendBricksToFile(path, data);
-                this.setMetadata(path, {
-                    updatedAt: timestamp
-                });
-                break;
-            case 'truncate':
-                this.emptyList(path);
-                this.updateMetadata(path, 'updatedAt', timestamp);
-                break;
-            case 'delete':
-                this.delete(path);
-                this.updateMetadata(path, 'deletedAt', timestamp);
-                break;
-            case 'copy':
-                const dstPath = data;
-                this.copy(path, dstPath);
-                this.updateMetadata(dstPath, 'createdAt', timestamp);
-                break;
-            case 'createFolder':
-                this.createFolder(path);
-                this.updateMetadata(path, 'createdAt', timestamp);
-                break;
-            default:
-                throw new Error(`Unknown operation <${operation}>`);
-        }
-    },
-
-    /**
-     * @param {BrickMap} brickMap
-     * @throws {Error}
-     */
-    applyDiff: function (brickMap) {
-        const metadata = brickMap.getMetadata('/');
-        const operationsLog = metadata.log;
-
-        if (!Array.isArray(operationsLog)) {
-            throw new Error('Invalid BrickMapDiff. No replay log found');
-        }
-
-        if (!operationsLog.length) {
-            return;
-        }
-
-        for (const operation of operationsLog) {
-            this.replayOperation(operation, brickMap);
-        }
-        this.updateMetadata('/', 'updatedAt', this.getTimestamp());
-        this.header.metadata.prevDiffHashLink = metadata.prevDiffHashLink;
-    },
-
     getHashLink: function (callback) {
         const brick = this.toBrick();
         brick.setKeySSI(this.getBrickEncryptionKeySSI());
         brick.getHashLink(callback);
+    },
+
+    stat: function (path) {
+        const node = this.getDeepestNode(path);
+        if (this.nodeIsDirectory(node)) {
+            return {type: "directory"}
+        }else{
+            return {type: "file"}
+        }
     }
-
-
 }
 
 module.exports = BrickMapMixin;
 
-},{"./Brick":"/opt/privatesky/modules/bar/lib/Brick.js","swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
+},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
     brickMapController: null,
+    brickMapState: null,
     anchoringEventListener: null,
     conflictResolutionFunction: null,
     decisionFunction: null,
@@ -3869,29 +4788,43 @@ const BrickMapStrategyMixin = {
     },
 
     /**
-     * @param {callback} callback
+     * @param {object} state The BrickMap state
+     */
+    setBrickMapState: function (state) {
+        this.brickMapState = state;
+    },
+
+    /**
+     * @param {function} callback
      */
     setConflictResolutionFunction: function (fn) {
         this.conflictResolutionFunction = fn;
     },
 
     /**
+     * @return {function}
+     */
+    getConflictResolutionFunction: function () {
+        return this.conflictResolutionFunction;
+    },
+
+    /**
      *
-     * @param {callback} listener
+     * @param {function} listener
      */
     setAnchoringEventListener: function (listener) {
         this.anchoringEventListener = listener;
     },
 
     /**
-     * @param {callback} fn 
+     * @param {function} fn
      */
     setSigningFunction: function (fn) {
         this.signingFunction = fn;
     },
 
     /**
-     * @param {callback} fn 
+     * @param {function} fn
      */
     setDecisionFunction: function (fn) {
         this.decisionFunction = fn;
@@ -3957,7 +4890,7 @@ const BrickMapStrategyMixin = {
     /**
      *
      * @param {BrickMap} brickMap
-     * @param {callback} callback
+     * @param {function} callback
      */
     ifChangesShouldBeAnchored: function (brickMap, callback) {
         if (typeof this.decisionFunction === 'function') {
@@ -3991,8 +4924,142 @@ const BrickMapStrategyMixin = {
     },
 
     /**
-     * @param {callback} defaultListener
-     * @return {callback}
+     * Merge diffs into a single BrickMap object
+     * Handles the case when the list of diffs contains
+     * whole BrickMap objects
+     *
+     * @param {BrickMap} brickMap
+     * @param {Array<BrickMapDiff>} diffs
+     * @return {BrickMap}
+     */
+    mergeDiffs: function (brickMap, diffs) {
+        if (!brickMap && (!Array.isArray(diffs) || !diffs.length)) {
+            throw new Error('A target and a list of diffs is required');
+        }
+
+        const mergedDiffs = [];
+
+        while (diffs.length) {
+            const brickMapDiff = diffs.shift();
+            mergedDiffs.push(brickMapDiff);
+            brickMap.applyDiff(brickMapDiff);
+        }
+
+        return [brickMap, mergedDiffs];
+    },
+
+    /* Detect any merge conflicts
+     * @param {BrickMap} theirBrickMap The latest anchored BrickMap
+     * @param {BrickMap} ourBrickMap Our anchored brickmap
+     * @param {KeySSI} ourHashLinkSSI
+     */
+    detectMergeConflicts: function (theirBrickMap, ourBrickMap, ourHashLinkSSI) {
+        // Detect the upstream changeset
+        /* @var {BrickMap} */
+        const theirChanges = ourBrickMap.diff(theirBrickMap);
+
+        // Check if any of our changes conflict with upstream changeset
+        const filesInConflict = theirChanges.detectMergeConflicts(this.brickMapState.getDiffsForAnchoring());
+
+        let conflicts;
+
+        // Call the conflict resolution function if it is defined, or return with error
+        if (filesInConflict) {
+            conflicts = {
+                files: filesInConflict,
+                ourHashLinkSSI: ourHashLinkSSI.getIdentifier(),
+                theirHashLinkSSI: this.brickMapState.getLastAnchoredHashLink().getIdentifier()
+            };
+        }
+        return conflicts;
+    },
+
+    /**
+     * Detect merge conflicts and if any, call the conflict resolution function
+     * or call the callback with an error
+     * @param {BrickMap} theirBrickMap The latest anchored BrickMap
+     * @param {BrickMap} ourBrickMap Our anchored brickmap
+     * @param {KeySSI} ourHashLinkSSI
+     * @param {function} callback
+     * @return {boolean} True if merge conflicts were detected, False otherwise
+     */
+    mergeConflictsHandled: function (theirBrickMap, ourBrickMap, ourHashLinkSSI, callback) {
+        const mergeConflicts = this.detectMergeConflicts(theirBrickMap, ourBrickMap, ourHashLinkSSI);
+
+        if (!mergeConflicts) {
+            return false;
+        }
+
+        // Call the conflict resolution function if it is defined, or return with error
+        if (typeof this.conflictResolutionFunction === 'function') {
+            this.conflictResolutionFunction(mergeConflicts, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, {
+                    status: false
+                });
+            });
+            return true;
+        }
+
+        const conflictError = new Error('Anchoring conflict error');
+        conflictError.conflicts = mergeConflicts;
+        callback(conflictError);
+        return true;
+    },
+
+    /**
+     * Merge remote changes. This method is used when subscring to remote changes
+     * on this DSU
+     * @param {BrickMap} theirBrickMap The latest anchored BrickMap
+     * @param {KeySSI} ourHashLinkSSI
+     * @param {function} callback
+     */
+    merge: function (theirBrickMap, ourHashLinkSSI, callback) {
+        const state = this.brickMapState;
+
+        const ourAnchoredBrickMap = state.getAnchoredBrickMap();
+        state.prepareNewChangesForAnchoring((err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (this.mergeConflictsHandled(theirBrickMap, ourAnchoredBrickMap, ourHashLinkSSI, callback)) {
+                return;
+            }
+
+            theirBrickMap.clone((err, brickMap) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
+                }
+                const dirtyBrickMap = theirBrickMap;
+
+                // No conflicts detected, merge changes
+                try {
+                    const diffsForAnchoring = [...state.getDiffsForAnchoring()];
+                    if (diffsForAnchoring.length) {
+                        this.mergeDiffs(dirtyBrickMap, diffsForAnchoring);
+                    }
+                } catch (e) {
+                    return callback(e);
+                }
+
+                state.setDirtyBrickMap(dirtyBrickMap);
+                state.setAnchoredBrickMap(brickMap);
+                state.setLastAnchoredHashLink(this.getLastHashLink());
+                return callback(undefined, {
+                    status: true
+                });
+            })
+        });
+    },
+
+
+    /**
+     * @param {function} defaultListener
+     * @return {function}
      */
     getAnchoringEventListener: function (defaultListener) {
         let anchoringEventListener = this.anchoringEventListener;
@@ -4006,10 +5073,11 @@ const BrickMapStrategyMixin = {
 
 module.exports = BrickMapStrategyMixin;
 
-},{}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../../lib/BrickMapDiff');
+const BrickMap = require('../BrickMap');
 const BrickMapStrategyMixin = require('./BrickMapStrategyMixin');
 /**
  * @param {object} options
@@ -4024,18 +5092,21 @@ const BrickMapStrategyMixin = require('./BrickMapStrategyMixin');
 function DiffStrategy(options) {
     options = options || {};
     Object.assign(this, BrickMapStrategyMixin);
-
+    const openDSU = require("opendsu")
+    const anchoring = openDSU.loadAPI("anchoring");
+    const bricking = openDSU.loadAPI("bricking");
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
 
+
     /**
      *
-     * @param {Array<BrickMapDiff} brickMapDiffs
+     * @param {Array<BrickMapDiff>} brickMapDiffs
      * @param {callback} callback
      */
     const createBrickMapFromDiffs = (brickMapDiffs, callback) => {
-        this.brickMapController.createNewBrickMap((err, brickMap) => {
+        this.brickMapController.createBrickMap((err, brickMap) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
             }
@@ -4049,6 +5120,7 @@ function DiffStrategy(options) {
             }
 
             callback(undefined, brickMap);
+
         });
     }
 
@@ -4074,9 +5146,9 @@ function DiffStrategy(options) {
             }
 
             const brick = _bricks.shift();
-            this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
+            this.brickMapController.createBrickMapDiff(brick, (err, brickMap) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create diffs from bricks`, err));
                 }
 
                 diffs.push(brickMap);
@@ -4114,7 +5186,7 @@ function DiffStrategy(options) {
             });
         });
         taskCounter.increment(hashLinks.length);
-        this.brickMapController.getMultipleBricks(hashLinks, (err, brickData) => {
+        bricking.getMultipleBricks(hashLinks, (err, brickData) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
@@ -4160,7 +5232,7 @@ function DiffStrategy(options) {
     ////////////////////////////////////////////////////////////
 
     this.load = (keySSI, callback) => {
-        this.brickMapController.versions(keySSI, (err, hashLinks) => {
+        anchoring.getAllVersions(keySSI, (err, hashLinks) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${keySSI.getAnchorId()}`, err));
             }
@@ -4176,21 +5248,46 @@ function DiffStrategy(options) {
 
     /**
      * Compact a list of BrickMapDiff objects
-     * into a single BrickMapDiff object
+     * into a single BrickMap object
      *
-     * @param {Array<BrickMapDiff} diffsList
+     * @param {BrickMap|undefined} dstBrickMap
      * @return {BrickMapDiff}
      */
-    this.compactDiffs = (diffsList, callback) => {
-        const brickMap = diffsList.shift();
-
-        while (diffsList.length) {
-            const brickMapDiff = diffsList.shift();
-
-            brickMap.applyDiff(brickMapDiff);
+    this.compactDiffs = (dstBrickMap, callback) => {
+        if (typeof dstBrickMap === 'function') {
+            callback = dstBrickMap;
+            dstBrickMap = undefined;
         }
+        this.brickMapState.prepareNewChangesForAnchoring((err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to prepare diffs for anchoring`, err));
+            }
 
-        callback(undefined, brickMap);
+            const mergedDiffs = (dstBrickMap, callback) => {
+                const diffsForAnchoring = this.brickMapState.getDiffsForAnchoring();
+                let result;
+                let error;
+                try {
+                    result = this.mergeDiffs(dstBrickMap, diffsForAnchoring);
+                } catch (e) {
+                    error = e;
+                }
+                callback(error, result);
+            }
+
+            if (!dstBrickMap) {
+                return this.brickMapController.createBrickMapDiff((err, dstBrickMap) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create empty BrickMapDiff`, err));
+                    }
+
+                    mergedDiffs(dstBrickMap, callback);
+                })
+
+            }
+
+            mergedDiffs(dstBrickMap, callback);
+        })
     }
 
     /**
@@ -4202,71 +5299,81 @@ function DiffStrategy(options) {
      * @param {callback} callback
      */
     this.afterBrickMapAnchoring = (diff, diffHash, callback) => {
-        const validBrickMap = this.brickMapController.getValidBrickMap();
+        const anchoredBrickMap = this.brickMapState.getAnchoredBrickMap();
         try {
-            validBrickMap.applyDiff(diff);
+            anchoredBrickMap.applyDiff(diff);
         } catch (e) {
             return callback(e);
         }
         this.lastHashLink = diffHash;
+        this.lastAnchorTimestamp = new Date().getTime();
+        this.brickMapState.setLastAnchoredHashLink(diffHash);
         callback(undefined, diffHash);
     }
 
-    /**
-     * Call the `conflictResolutionFn` if it exists
-     * @param {object} conflictInfo
-     * @param {BrickMap} conflictInfo.brickMap The up to date valid BrickMap
-     * @param {Array<BrickMapDiff} conflictInfo.pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
-     * @param {Array<BrickMapDiff} conflictInfo.newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
-     * @param {callback} callback
-     */
-    this.handleConflict = (conflictInfo, callback) => {
-        if (typeof this.conflictResolutionFn !== 'function') {
-            return callback(conflictInfo.error);
-        }
-
-        this.conflictResolutionFn(this.brickMapController, {
-            validBrickMap: conflictInfo.brickMap,
-            pendingAnchoringDiffs: conflictInfo.pendingAnchoringDiffs,
-            newDiffs: conflictInfo.newDiffs,
-            error: conflictInfo.error
-        }, callback);
-    }
 
     /**
      * Try and fix an anchoring conflict
      *
      * Merge any "pending anchoring" BrickMapDiff objects in a clone
-     * of the valid brickMap. If merging fails, call the 'conflictResolutionFn'
+     * of our anchored BrickMap. If merging fails, call the 'conflictResolutionFn'
      * in order to fix the conflict. If merging succeeds, update the "dirtyBrickMap"
      *
-     * @param {BrickMap} brickMap The up to date valid BrickMap
-     * @param {Array<BrickMapDiff} pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
-     * @param {Array<BrickMapDiff} newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
-     * @param {callback} callback
+     * If no 'conflictResolutionFn' function was defined
+     * The callback will be called with the following error:
+     *
+     *  error: Error {
+     *      message: 'Anchoring conflict error',
+     *      conflicts: {
+     *          files: {
+     *              '/file/path/in/conflict': {
+     *                  error: 'LOCAL_OVERWRITE|REMOTE_DELETE|LOCAL_DELETE', // type of conflict
+     *                  message: '[User friendly error message]'
+     *              },
+     *              ...
+     *          },
+     *          theirHashLinkSSI: '...', // HashLinkSSI of the latest anchored BrickMap
+     *          ourHashLinkSSI: '...' // The HashLinkSSI of our version
+     *      }
+     *  }
+     *
+     *  Where conflicts.*.error:
+     *      LOCAL_OVERWRITE - Our changes will overwrite a newly anchored file/directory
+     *      REMOTE_DELETE - The file path we're trying to anchor has been deleted
+     *      LOCAL_DELETE - Our changes will delete a newly anchored file/directory
+     *
+     * If a 'conflictResolutionFn' is defined it will be called with the following arguments:
+     *  conflicts - The conflicts object described above
+     *  callback
+     *
+     * @param {BrickMap} theirBrickMap The latest anchored BrickMap
+     * @param {KeySSI} ourHashLinkSSI
+     * @param {function} callback
      */
-    this.reconcile = (brickMap, pendingAnchoringDiffs, newDiffs, callback) => {
-        // Try and apply the changes on a brickMap copy
-        brickMap.clone((err, brickMapCopy) => {
+    this.reconcile = (theirBrickMap, ourHashLinkSSI, callback) => {
+        const state = this.brickMapState;
+
+        const ourAnchoredBrickMap = state.getAnchoredBrickMap();
+        state.prepareNewChangesForAnchoring((err) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
+                return callback(err);
             }
 
+            if (this.mergeConflictsHandled(theirBrickMap, ourAnchoredBrickMap, ourHashLinkSSI, callback)) {
+                return;
+            }
+
+            // We only need to update the dirty brick map
+            // The BrickMapController will compact our diffs and try to anchor them again
             try {
-                for (let i = 0; i < pendingAnchoringDiffs; i++) {
-                    brickMapCopy.applyDiff(pendingAnchoringDiffs[i]);
-                }
+                this.mergeDiffs(theirBrickMap, [...state.getDiffsForAnchoring()]);
+                state.setDirtyBrickMap(theirBrickMap);
             } catch (e) {
-                return this.handleConflict({
-                    brickMap,
-                    pendingAnchoringDiffs,
-                    newDiffs,
-                    error: e
-                }, callback);
+                return callback(e);
             }
-
-            this.brickMapController.setDirtyBrickMap(brickMapCopy);
-            callback();
+            callback(undefined, {
+                status: true
+            });
         });
     }
 
@@ -4275,7 +5382,7 @@ function DiffStrategy(options) {
 
 module.exports = DiffStrategy;
 
-},{"../../lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../BrickMapDiff');
@@ -4285,16 +5392,18 @@ const Brick = require("../../lib/Brick");
 
 /**
  * @param {object} options
- * @param {callback} options.decisionFn Callback which will decide when to effectively anchor changes
+ * @param {function} options.decisionFn Callback which will decide when to effectively anchor changes
  *                                                              If empty, the changes will be anchored after each operation
- * @param {callback} options.anchoringCb A callback which is called when the strategy anchors the changes
- * @param {callback} options.signingFn  A function which will sign the new alias
- * @param {callback} callback
+ * @param {function} options.anchoringCb A callback which is called when the strategy anchors the changes
+ * @param {function} options.signingFn  A function which will sign the new alias
+ * @param {function} callback
  */
 function LatestVersionStrategy(options) {
     options = options || {};
     Object.assign(this, BrickMapStrategyMixin);
-
+    const openDSU = require("opendsu");
+    const anchoring = openDSU.loadAPI("anchoring");
+    const bricking = openDSU.loadAPI("bricking");
     ////////////////////////////////////////////////////////////
     // Private methods
     ////////////////////////////////////////////////////////////
@@ -4317,13 +5426,11 @@ function LatestVersionStrategy(options) {
         const brickMaps = [];
         const __createBrickMapsRecursively = (_bricks) => {
             if (_bricks.length === 0) {
-                return setTimeout(() => {
-                    callback(undefined, brickMaps);
-                }, 0)
+                return callback(undefined, brickMaps);
             }
 
             const brick = _bricks.shift();
-            this.brickMapController.createNewBrickMap(brick, (err, brickMap) => {
+            this.brickMapController.createBrickMap(brick, (err, brickMap) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create a new BrickMap`, err));
                 }
@@ -4341,15 +5448,13 @@ function LatestVersionStrategy(options) {
      * or from Brick storage
      *
      * @param {Array<string>} hashes
-     * @param {callback} callback
+     * @param {function} callback
      */
     const createBrickMapsFromHistory = (hashes, callback) => {
         const cacheKey = createBricksCacheKey(hashes);
         if (this.hasInCache(cacheKey)) {
             const brickMaps = this.getFromCache(cacheKey);
-            return setTimeout(() => {
-                callback(undefined, brickMaps);
-            }, 0)
+            return callback(undefined, brickMaps);
         }
 
         const TaskCounter = require("swarmutils").TaskCounter;
@@ -4365,7 +5470,7 @@ function LatestVersionStrategy(options) {
             });
         });
         taskCounter.increment(hashes.length);
-        this.brickMapController.getMultipleBricks(hashes, (err, brickData) => {
+        bricking.getMultipleBricks(hashes, (err, brickData) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve multiple bricks`, err));
             }
@@ -4386,10 +5491,11 @@ function LatestVersionStrategy(options) {
      * history
      *
      * @param {Array<string>} hashes
-     * @param {callback} callback
+     * @param {function} callback
      */
     const getLatestVersion = (hashes, callback) => {
         this.lastHashLink = hashes[hashes.length - 1];
+
         createBrickMapsFromHistory([this.lastHashLink], (err, brickMaps) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create BrickMaps from history`, err));
@@ -4412,11 +5518,10 @@ function LatestVersionStrategy(options) {
     ////////////////////////////////////////////////////////////
 
     this.load = (keySSI, callback) => {
-        this.brickMapController.versions(keySSI, (err, versionHashes) => {
+        anchoring.getAllVersions(keySSI, (err, versionHashes) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
             }
-
             if (!versionHashes.length) {
                 return callback(new Error(`No data found for alias <${keySSI.getAnchorId()}>`));
             }
@@ -4430,23 +5535,38 @@ function LatestVersionStrategy(options) {
      * Compact a list of BrickMapDiff objects
      * into a single BrickMap object
      *
-     * @param {Array<BrickMapDiff>} diffsList
+     * @param {BrickMap|undefined} dstBrickMap
      * @return {BrickMapDiff}
      */
-    this.compactDiffs = (diffsList, callback) => {
-        if (diffsList[0].constructor === BrickMap) {
-            const brickMap = this.mergeDiffs(diffsList);
-            return setTimeout(() => {
-                callback(undefined, brickMap);
-            }, 0)
+    this.compactDiffs = (dstBrickMap, callback) => {
+        if (typeof dstBrickMap === 'function') {
+            callback = dstBrickMap;
+            dstBrickMap = undefined;
         }
-
-        this.brickMapController.getValidBrickMap().clone((err, validBrickMapClone) => {
+        this.brickMapState.prepareNewChangesForAnchoring((err) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone valid BrickMap`, err));
+                return callback(err);
             }
-            const brickMap = this.mergeDiffs(validBrickMapClone, diffsList);
-            callback(undefined, brickMap);
+
+            const mergeDiffs = (err, dst) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let result;
+                try {
+                    result = this.mergeDiffs(dst, this.brickMapState.getDiffsForAnchoring());
+                } catch (e) {
+                    return callback(e);
+                }
+                callback(undefined, result);
+            }
+
+            if (!dstBrickMap) {
+                return this.brickMapState.cloneAnchoredBrickMap(mergeDiffs);
+            }
+
+            mergeDiffs(undefined, dstBrickMap);
         })
     }
 
@@ -4456,156 +5576,119 @@ function LatestVersionStrategy(options) {
      *
      * @param {BrickMap} diff
      * @param {string} brickMapHashLink
-     * @param {callback} callback
+     * @param {function} callback
      */
     this.afterBrickMapAnchoring = (brickMap, brickMapHashLink, callback) => {
-        //console.log('==============', JSON.stringify(brickMap.header, undefined, 2));
-        this.brickMapController.setValidBrickMap(brickMap)
         this.lastHashLink = brickMapHashLink;
         this.lastAnchorTimestamp = new Date().getTime();
-
-        setTimeout(() => {
-            callback(undefined, brickMapHashLink);
-        }, 0)
-    }
-
-    /**
-     * Call the `conflictResolutionFn` if it exists
-     * @param {object} conflictInfo
-     * @param {BrickMap} conflictInfo.brickMap The up to date valid BrickMap
-     * @param {Array<BrickMapDiff} conflictInfo.pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
-     * @param {Array<BrickMapDiff} conflictInfo.newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
-     * @param {callback} callback
-     */
-    this.handleConflict = (conflictInfo, callback) => {
-        if (typeof this.conflictResolutionFn !== 'function') {
-            return setTimeout(() => {
-                // This function must use the conflictInfo object to fix
-                // the merging conflicts, apply the new changes from the pendingAnchoringDiffs and newDiffs and update the valid bar map and the dirty bar map clone
-                // using the brickMapController, then call the callback to resume the anchoring process
-
-                // If fixing the conflict fails, the `callback` must be called with an error
-                // to abort the anchoring process.
-                console.log(conflictInfo);
-                //callback(conflictInfo.error);
-            }, 0)
-        }
-
-        this.conflictResolutionFn(this.brickMapController, {
-            validBrickMap: conflictInfo.brickMap,
-            pendingAnchoringDiffs: conflictInfo.pendingAnchoringDiffs,
-            newDiffs: conflictInfo.newDiffs,
-            error: conflictInfo.error
-        }, callback);
+        this.brickMapState.setAnchoredBrickMap(brickMap);
+        this.brickMapState.setLastAnchoredHashLink(brickMapHashLink);
+        callback(undefined, brickMapHashLink);
     }
 
     /**
      * Try and fix an anchoring conflict
      *
      * Merge any "pending anchoring" BrickMapDiff objects in a clone
-     * of the valid brickMap. If merging fails, call the 'conflictResolutionFn'
+     * of our anchored BrickMap. If merging fails, call the 'conflictResolutionFn'
      * in order to fix the conflict. If merging succeeds, update the "dirtyBrickMap"
      *
-     * @param {BrickMap} brickMap The up to date valid BrickMap
-     * @param {Array<BrickMapDiff} pendingAnchoringDiffs A list of BrickMapDiff that were requested for anchoring or failed to anchor
-     * @param {Array<BrickMapDiff} newDiffs A list of BrickMapDiff objects that haven't been scheduled for anchoring
-     * @param {callback} callback
-     */
-    this.reconcile = (brickMap, pendingAnchoringDiffs, newDiffs, callback) => {
-        // Try and apply the changes on a brickMap copy
-        brickMap.clone((err, brickMapCopy) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to clone BrickMap`, err));
-            }
-
-            try {
-                // create a copy of the pending diffs array because the merge function
-                // empties the array, and we need it intact in case conflict resolution
-                // is needed
-                const pendingAnchoringDiffsCopy = pendingAnchoringDiffs.map((diff) => diff);
-                brickMapCopy = this.mergeDiffs(brickMapCopy, pendingAnchoringDiffs);
-            } catch (e) {
-                return this.handleConflict({
-                    brickMap,
-                    pendingAnchoringDiffs,
-                    newDiffs,
-                    error: e
-                }, callback);
-            }
-
-            this.brickMapController.setDirtyBrickMap(brickMapCopy);
-            callback();
-        });
-    };
-
-    /**
-     * Merge diffs into a single BrickMap object
-     * Handles the case when the list of diffs contains
-     * whole BrickMap objects
+     * If no 'conflictResolutionFn' function was defined
+     * The callback will be called with the following error:
      *
-     * @param {BrickMap|Array<BrickMapMixin>} brickMap
-     * @param {Array<BrickMapMixin>|undefined} diffs
-     * @return {BrickMap}
+     *  error: Error {
+     *      message: 'Anchoring conflict error',
+     *      conflicts: {
+     *          files: {
+     *              '/file/path/in/conflict': {
+     *                  error: 'LOCAL_OVERWRITE|REMOTE_DELETE|LOCAL_DELETE', // type of conflict
+     *                  message: '[User friendly error message]'
+     *              },
+     *              ...
+     *          },
+     *          theirHashLinkSSI: '...', // HashLinkSSI of the latest anchored BrickMap
+     *          ourHashLinkSSI: '...' // The HashLinkSSI of our version
+     *      }
+     *  }
+     *
+     *  Where conflicts.*.error:
+     *      LOCAL_OVERWRITE - Our changes will overwrite a newly anchored file/directory
+     *      REMOTE_DELETE - The file path we're trying to anchor has been deleted
+     *      LOCAL_DELETE - Our changes will delete a newly anchored file/directory
+     *
+     * If a 'conflictResolutionFn' is defined it will be called with the following arguments:
+     *  conflicts - The conflicts object described above
+     *  callback
+     *
+     * @param {BrickMap} theirBrickMap The latest anchored BrickMap
+     * @param {KeySSI} ourHashLinkSSI
+     * @param {function} callback
      */
-    this.mergeDiffs = (brickMap, diffs) => {
-        if (typeof diffs === 'undefined') {
-            diffs = brickMap;
-            brickMap = undefined;
-        }
+    this.reconcile = (theirBrickMap, ourHashLinkSSI, callback) => {
+        const state = this.brickMapState;
 
-        if (!Array.isArray(diffs)) {
-            diffs = [diffs];
-        }
-
-        if (!brickMap && (!Array.isArray(diffs) || diffs.length < 2)) {
-            throw new Error('A target and a list of diffs is required');
-        }
-
-        if (!brickMap) {
-            brickMap = diffs.shift();
-        }
-
-        if (brickMap.constructor !== BrickMap) {
-            throw new Error('The target brick map instance is invalid');
-        }
-
-        while (diffs.length) {
-            const brickMapDiff = diffs.shift();
-
-            // If the diff is a whole BrickMap object
-            // use it as a target for the next diffs
-            // and discard the previous history because
-            // it will already have all the previous changes
-            if (brickMapDiff.constructor === BrickMap) {
-                brickMap = brickMapDiff;
-                continue;
+        state.cloneAnchoredBrickMap((err, ourAnchoredBrickMap) => {
+            if (err) {
+                return callback(err);
             }
 
-            brickMap.applyDiff(brickMapDiff);
-        }
+            state.prepareNewChangesForAnchoring((err) => {
+                if (err) {
+                    return callback(err);
+                }
 
-        return brickMap;
+                if (this.mergeConflictsHandled(theirBrickMap, ourAnchoredBrickMap, ourHashLinkSSI, callback)) {
+                    return;
+                }
+
+                // No conflicts detected, merge changes
+                let ourChanges;
+                let mergedDiffs;
+                try {
+                    const diffsForAnchoring = state.getDiffsForAnchoring();
+
+                    if (diffsForAnchoring.length) {
+                        [ourChanges, mergedDiffs] = this.mergeDiffs(ourAnchoredBrickMap, diffsForAnchoring);
+                        theirBrickMap.merge(ourChanges);
+                    }
+
+                    // Their BrickMap now has our changes
+                    // and becomes ours
+                    state.setDirtyBrickMap(theirBrickMap);
+                } catch (e) {
+                    state.rollback(mergedDiffs)
+                    return callback(e);
+                }
+                return callback(undefined, {
+                    status: true,
+                    brickMap: theirBrickMap
+                });
+            });
+        })
     };
+
 
     this.initialize(options);
 }
 
 module.exports = LatestVersionStrategy;
 
-},{"../../lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js":[function(require,module,exports){
 module.exports = {
     DIFF: 'Diff',
-    LATEST_VERSION: 'LatestVersion'
+    LATEST_VERSION: 'LatestVersion',
+    DEFAULT_BRICK_MAP_STRATEGY: 'LatestVersion'
+    //DEFAULT_BRICK_MAP_STRATEGY: 'Diff'
 }
 
-},{}],"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
 /**
  * @param {object} options
  */
-function Factory(options) {
+function BrickMapStrategyFactory(options) {
     const DiffStrategy = require('./DiffStrategy');
     const LastestVersionStrategy = require('./LatestVersionStrategy');
-
+    const builtInStrategies = require("./builtinBrickMapStrategies");
     options = options || {};
 
     const factories = {};
@@ -4615,7 +5698,7 @@ function Factory(options) {
     ////////////////////////////////////////////////////////////
 
     const initialize = () => {
-        const builtinStrategies = require("./bultinBrickMapStrategies");
+        const builtinStrategies = require("./builtinBrickMapStrategies");
         this.registerStrategy(builtinStrategies.DIFF, this.createDiffStrategy);
         this.registerStrategy(builtinStrategies.LATEST_VERSION, this.createLatestVersionStrategy);
     }
@@ -4638,6 +5721,9 @@ function Factory(options) {
      * @return {BrickMapStrategyMixin}
      */
     this.create = (strategyName, options) => {
+        if (typeof strategyName === "undefined") {
+            strategyName = builtInStrategies.DEFAULT_BRICK_MAP_STRATEGY;
+        }
         const factory = factories[strategyName];
         options = options || {};
         return factory(options);
@@ -4662,9 +5748,9 @@ function Factory(options) {
     initialize();
 }
 
-module.exports = Factory;
+module.exports = BrickMapStrategyFactory;
 
-},{"./DiffStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./bultinBrickMapStrategies":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/bultinBrickMapStrategies.js"}],"/opt/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
+},{"./DiffStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./builtinBrickMapStrategies":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 'use strict';
 
 
@@ -4691,27 +5777,27 @@ function Service(options) {
     options = options || {};
     this.cache = options.cache;
     this.bufferSize = parseInt(options.bufferSize, 10);
-    this.storageProvider = options.storageProvider;
     this.brickFactoryFunction = options.brickFactoryFunction;
     this.fsAdapter = options.fsAdapter;
     this.brickDataExtractorCallback = options.brickDataExtractorCallback;
     this.keySSI = options.keySSI;
 
-    const SSIKeys = require("opendsu").loadApi("keyssi");
+    const openDSU = require("opendsu");
+    const SSIKeys = openDSU.loadApi("keyssi");
+    const bricking = openDSU.loadApi("bricking");
+    const anchoring = openDSU.loadApi("anchoring");
 
     if (isNaN(this.bufferSize) || this.bufferSize < 1) {
         throw new Error('$$.Buffer size is required');
-    }
-
-    if (!this.storageProvider) {
-        throw new Error('Storage provider is required');
     }
 
     if (typeof this.brickFactoryFunction !== 'function') {
         throw new Error('A brick factory function is required');
     }
 
-    if (!this.fsAdapter && $$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE) {
+    if (!this.fsAdapter && $$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE &&
+        $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE &&
+        $$.environmentType !== envTypes.WEB_WORKER_ENVIRONMENT_TYPE) {
         throw new Error('A file system adapter is required');
     }
 
@@ -4724,11 +5810,8 @@ function Service(options) {
      * @return {HashLinkSSI}
      */
     const stripHintFromHashLinkSSI = (hlSSI) => {
-        return SSIKeys.createHashLinkSSI(
-            hlSSI.getDLDomain(),
-            hlSSI.getSpecificString(),
-            hlSSI.getVn()
-        ).getIdentifier();
+        //TODO: remove the stripHintFromHashLinkSSI and use direct
+        return hlSSI.getNoHintIdentifier();
     };
 
     /**
@@ -4778,7 +5861,7 @@ function Service(options) {
                             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
                         }
 
-                        self.putBrick(self.keySSI, brickData, (err, digest) => {
+                        bricking.putBrick(self.keySSI.getBricksDomain(), brickData, (err, digest) => {
                             if (err) {
                                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                             }
@@ -4835,7 +5918,7 @@ function Service(options) {
             readableStream.getBrick = function (brickIndex) {
                 const brickMeta = bricksMeta[brickIndex];
                 const hlSSI = SSIKeys.parse(brickMeta.hashLink);
-                self.getBrick(hlSSI, (err, brick) => {
+                bricking.getBrick(hlSSI, (err, brick) => {
                     if (err) {
                         this.destroy(err);
                         return;
@@ -4942,26 +6025,26 @@ function Service(options) {
             return callback(undefined, data);
         }
 
-        this.getBrick(hlSSI, (err, brickData) => {
+        bricking.getBrick(hlSSI, (err, brickData) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick data`, err));
             }
 
             function checkBrickDataIntegrity(brickData, callback) {
                 brickData = utils.ensureIsBuffer(brickData);
-                crypto.hash(hlSSI, brickData, (err, _brickHash) => {
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to compute brick hash`, err));
-                    }
+                const hashFn = crypto.getCryptoFunctionForKeySSI(hlSSI, "hash");
+                const _brickHash = hashFn(brickData);
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to compute brick hash`, err));
+                }
 
-                    const brickHash = hlSSI.getHash();
+                const brickHash = hlSSI.getHash();
 
-                    if (brickHash !== _brickHash) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Got invalid data for brick ${brickHash}`, Error("Possible brick data corruption")));
-                    }
+                if (brickHash !== _brickHash) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Got invalid data for brick ${brickHash}`, Error("Possible brick data corruption")));
+                }
 
-                    callback();
-                });
+                callback();
             }
 
             checkBrickDataIntegrity(brickData, (err) => {
@@ -5025,7 +6108,7 @@ function Service(options) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get transformed data`, err));
             }
 
-            this.putBrick(this.keySSI, brickData, (err, digest) => {
+            bricking.putBrick(this.keySSI.getBricksDomain(), brickData, (err, digest) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick`, err));
                 }
@@ -5162,7 +6245,6 @@ function Service(options) {
                 const fileHLSSI = SSIKeys.createHashLinkSSI(
                     brickHLSSI.getDLDomain(),
                     brickHLSSI.getSpecificString(),
-                    brickHLSSI.getControl(),
                     brickHLSSI.getVn(),
                     fileHLSSIHint
                 );
@@ -5721,60 +6803,18 @@ function Service(options) {
             this.fsAdapter.readBlockFromFile(filePath, 0, size - 1, callback);
         });
     };
-
-    /**
-     * @param {string} keySSI
-     * @param {callback} callback
-     */
-    this.versions = (keySSI, callback) => {
-        this.storageProvider.versions(keySSI, callback);
-    }
-
-    /**
-     * @param {string} keySSI
-     * @param {string} value
-     * @param {string|undefined} lastValue
-     * @param {callback} callback
-     */
-    this.addVersion = (keySSI, hashLinkSSI, lastHashLinkSSI, callback) => {
-        this.storageProvider.addVersion(keySSI, hashLinkSSI, lastHashLinkSSI, callback);
-    }
-
-    /**
-     * @param {string} hashLinkSSI
-     * @param {callback} callback
-     */
-    this.getBrick = (hashLinkSSI, callback) => {
-        let args = [hashLinkSSI, callback];
-        this.storageProvider.getBrick(...args);
-    }
-
-    this.getMultipleBricks = (hashLinkSSIs, callback) => {
-        let args = [hashLinkSSIs, callback];
-        this.storageProvider.getMultipleBricks(...args);
-    }
-
-    /**
-     * @param {string} brickId
-     * @param {Brick} brick
-     * @param {callback} callback
-     */
-    this.putBrick = (keySSI, brick, callback) => {
-        let args = [keySSI, brick, callback];
-        this.storageProvider.putBrick(...args);
-    }
 }
 
 module.exports = Service;
 
-},{"../../utils/isStream":"/opt/privatesky/modules/bar/utils/isStream.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false,"swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
     Service: require('./Service')
 };
 
-},{"./Service":"/opt/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/opt/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
+},{"./Service":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
 function Manifest(archive, callback) {
@@ -5938,7 +6978,7 @@ module.exports.getManifest = function getManifest(archive, callback) {
 };
 
 
-},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/opt/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
 const zlib = require("zlib");
 
 function CompressionTransformation(config) {
@@ -5992,22 +7032,36 @@ function CompressionTransformation(config) {
 module.exports = CompressionTransformation;
 
 
-},{"zlib":false}],"/opt/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
+},{"zlib":false}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 
 function EncryptionTransformation() {
     this.do = (keySSI, data, callback) => {
-        crypto.encrypt(keySSI, data, callback);
+        const encrypt = crypto.getCryptoFunctionForKeySSI(keySSI, "encryption");
+        let encryptedData;
+        try {
+            encryptedData = encrypt(data, keySSI.getEncryptionKey());
+        } catch (e) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to encrypt data`, e));
+        }
+        callback(undefined, encryptedData);
     };
 
     this.undo = (keySSI, data, callback) => {
-        crypto.decrypt(keySSI, data, callback);
+        const decrypt = crypto.getCryptoFunctionForKeySSI(keySSI, "decryption");
+        let plainData;
+        try {
+            plainData = decrypt(data, keySSI.getEncryptionKey());
+        } catch (e) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to decrypt data`, e));
+        }
+        callback(undefined, plainData);
     };
 }
 
 module.exports = EncryptionTransformation;
-},{"opendsu":"opendsu"}],"/opt/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
 const CompressionTransformation = require("./CompressionTransformation");
 const EncryptionTransformation = require("./EncryptionTransformation");
 
@@ -6022,7 +7076,7 @@ module.exports = {
 };
 
 
-},{"./CompressionTransformation":"/opt/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/opt/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/opt/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
+},{"./CompressionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -6032,10 +7086,12 @@ module.exports = {
         ANCHOR_VERSION_ERR: -2,
         BRICKMAP_UPDATE_ERR: -3,
         BRICKMAP_LOAD_ERR: -4,
-        BRICKMAP_RECONCILE_ERR: -5
+        BRICKMAP_RECONCILE_ERR: -5,
+        BRICKMAP_RECONCILIATION_HANDOFF: -6
     }
 }
-},{}],"/opt/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
 const Brick = require("../Brick");
 const util = require("../../utils/utilities");
 const pathModule = "path";
@@ -6170,7 +7226,7 @@ function FileBrickMap(header) {
 
 module.exports = FileBrickMap;
 
-},{"../../utils/utilities":"/opt/privatesky/modules/bar/utils/utilities.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js"}],"/opt/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
@@ -6389,7 +7445,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/utilities":"/opt/privatesky/modules/bar/utils/utilities.js","../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/opt/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/opt/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
 const BrickMap = require("../BrickMap");
 const Brick = require("../Brick");
 
@@ -6489,7 +7545,7 @@ module.exports = {
     }
 };
 
-},{"../Brick":"/opt/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","fs":false,"path":false}],"/opt/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{"../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -6521,7 +7577,7 @@ module.exports = {
     isDuplex
 };
 
-},{}],"/opt/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
 const OFFSET_SIZE = 8;
 
 function getBrickMapOffsetSize() {
@@ -6540,157 +7596,358 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":false}],"/opt/privatesky/modules/dossier/lib/RawDossier.js":[function(require,module,exports){
+},{"fs":false}],"/home/runner/work/privatesky/privatesky/modules/dossier/lib/RawDossier.js":[function(require,module,exports){
 function RawDossier(bar) {
     Object.assign(this, bar);
 }
 
 module.exports = RawDossier;
 
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js":[function(require,module,exports){
-'use strict';
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
+function CryptoAlgorithmsMixin(target) {
+    target = target || {};
+    const crypto = require("pskcrypto");
 
-function RequestsChain() {
-    const chain = [];
-
-    /**
-     * Check if error fatal
-     * If this returns true, the chain should break
-     * @param {object} err
-     * @return {boolean}
-     */
-    const isFatalError = (err) => {
-        return true;
+    target.hash = (data) => {
+        return target.encoding(crypto.hash('sha256', data));
     }
 
-    /**
-     * @param {object} handler
-     * @param {string} method
-     * @param {Array} args
-     */
-    this.add = (handler, method, args) => {
-        chain.push([handler, method, args]);
+    target.keyDerivation = (password, iterations) => {
+        return crypto.deriveKey('aes-256-gcm', password, iterations);
     }
 
-    /**
-     * @param {callback} callback
-     */
-    const executeChain = (callback) => {
-        if (chain.length === 0) {
-            return callback('No endpoint provided. Check EDFS documentation!')
+    target.encryptionKeyGeneration = () => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        return pskEncryption.generateEncryptionKey();
+    }
+
+    target.encryption = (plainData, encryptionKey, options) => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        return pskEncryption.encrypt(plainData, encryptionKey, options);
+    }
+
+    target.decryption = (encryptedData, decryptionKey, authTagLength, options) => {
+        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
+        const utils = require("swarmutils");
+        if (!$$.Buffer.isBuffer(decryptionKey) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
+            decryptionKey = utils.ensureIsBuffer(decryptionKey);
         }
-        const chainLink = chain.shift();
-        const handler = chainLink[0];
-        const method = chainLink[1];
-        const args = chainLink[2].slice();
-
-        const next = (err, result) => {
-            if (err) {
-                if (isFatalError(err)) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
-                }
-
-                if (!chain.length) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute requests chain`, err));
-                }
-
-                return executeChain(callback);
-            }
-
-            return callback(undefined, result);
-        };
-
-        args.push(next);
-        handler[method].apply(handler, args);
+        if (!$$.Buffer.isBuffer(encryptedData) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
+            encryptedData = utils.ensureIsBuffer(encryptedData);
+        }
+        return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
     }
 
-    /**
-     * @param {callback} callback
-     */
-    this.execute = function (callback) {
-        executeChain(callback);
-    }
-}
-
-module.exports = RequestsChain;
-
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js":[function(require,module,exports){
-'use strict';
-
-const RequestsChain = require('./RequestsChain');
-const BRICK_STORAGE = 'brickStorage';
-const ANCHOR_SERVICE = 'anchorService';
-
-/**
- *
- * @param options.endpoints - array of objects that contain an endpoint and the endpoint's type
- * @constructor
- */
-
-function BootstrapingService(options) {
-    const openDSU = require("opendsu");
-    const services = {
-        'brickStorage': openDSU.loadApi("bricking"),
-        'anchorService': openDSU.loadApi("anchoring")
+    target.encoding = (data) => {
+        return crypto.pskBase58Encode(data);
     }
 
-    ////////////////////////////////////////////////////////////
-    // Private methods
-    ////////////////////////////////////////////////////////////
+    target.decoding = (data) => {
+        return crypto.pskBase58Decode(data);
+    }
 
+    target.keyPairGenerator = () => {
+        return crypto.createKeyPairGenerator();
+    }
 
-    /**
-     * @param {string} method
-     * @param {Array<object>} endpointsPool
-     * @param {string} favEndpoint
-     * @param {...} args
-     * @return {RequestChain}
-     */
-    const createRequestsChain = (method, serviceName, ...args) => {
-        const requestsChain = new RequestsChain();
-        const service = services[serviceName];
-
-        requestsChain.add(service, method, args);
-
-        return requestsChain;
+    target.convertPublicKey = (rawPublicKey, options) => {
+        const keyGenerator = crypto.createKeyPairGenerator();
+        return keyGenerator.convertPublicKey(rawPublicKey, options);
     };
 
-    ////////////////////////////////////////////////////////////
-    // Public methods
-    ////////////////////////////////////////////////////////////
-    this.getBrick = (hashLinkSSI, callback) => {
-        const requestsChain = createRequestsChain('getBrick', BRICK_STORAGE, hashLinkSSI);
-        requestsChain.execute(callback);
+    target.verify = (data, publicKey, signature) => {
+        return crypto.verify('sha256', data, publicKey, signature);
     }
 
-    this.getMultipleBricks = (hashLinkSSIs, callback) => {
-        const requestsChain = createRequestsChain('getMultipleBricks', BRICK_STORAGE, hashLinkSSIs);
-        requestsChain.execute(callback);
+    target.ecies_encryption = (receiverPublicKey, message) => {
+        return crypto.ecies_encrypt(receiverPublicKey, message, target.getConfigForIES())
+    };
+
+    target.ecies_decryption = (receiverPrivateKey, encEnvelope) => {
+        return crypto.ecies_decrypt(receiverPrivateKey, encEnvelope, target.getConfigForIES());
+    };
+
+    target.ecies_encryption_ds = (senderKeyPair, receiverPublicKey, message) => {
+        return crypto.ecies_encrypt_ds(senderKeyPair, receiverPublicKey, message, target.getConfigForIES())
+    };
+
+    target.ecies_decryption_ds = (receiverPrivateKey, encEnvelope) => {
+        return crypto.ecies_decrypt_ds(receiverPrivateKey, encEnvelope, target.getConfigForIES());
+    };
+
+    target.ecies_encryption_kmac = (senderKeyPair, receiverPublicKey, message) => {
+        return crypto.ecies_encrypt_kmac(senderKeyPair, receiverPublicKey, message, target.getConfigForIES())
+    };
+
+    target.ecies_decryption_kmac = (receiverPrivateKey, encEnvelope) => {
+        return crypto.ecies_decrypt_kmac(receiverPrivateKey, encEnvelope, target.getConfigForIES());
+    };
+
+    let config = {
+        curveName: 'secp256k1',
+        encodingFormat: 'base64',
+        macAlgorithmName: 'sha256',
+        macKeySize: 16,
+        hashFunctionName: 'sha256',
+        hashSize: 32,
+        signAlgorithmName: 'sha256',
+        symmetricCipherName: 'aes-128-cbc',
+        symmetricCipherKeySize: 16,
+        ivSize: 16
+    };
+
+    target.getConfigForIES = () => {
+        return config;
+    };
+
+    target.setConfigForIES = (_config)=>{
+        config = _config;
     }
 
-    this.putBrick = (keySSI, brick, callback) => {
-        const requestsChain = createRequestsChain('putBrick', BRICK_STORAGE, keySSI, brick);
-        requestsChain.execute(callback);
+    return target;
+}
+
+module.exports = CryptoAlgorithmsMixin;
+
+},{"pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
+const SSITypes = require("../KeySSIs/SSITypes");
+const CryptoFunctionTypes = require("./CryptoFunctionTypes");
+const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
+const SeedSSICryptoAlgorithms = require("./SeedSSICryptoAlgorithms");
+const cryptoInterfaces = {};
+
+const registerCryptoInterface = (keySSIType, vn, cryptoInterface)=>{
+    if (typeof cryptoInterfaces[keySSIType] !== "undefined" && typeof cryptoInterfaces[keySSIType][vn] !== "undefined") {
+        throw Error(`A crypto interface for Key SSI ${keySSIType} is already registered for version ${vn}`);
     }
 
-    this.versions = (keySSI, callback) => {
-        const requestsChain = createRequestsChain('versions', ANCHOR_SERVICE, keySSI);
-        requestsChain.execute(callback);
-
+    if (typeof cryptoInterfaces[keySSIType] === "undefined") {
+        cryptoInterfaces[keySSIType] = {};
     }
 
-    this.addVersion = (keySSI, hashLinkSSI, lastHashLinkSSI, callback) => {
-        const requestsChain = createRequestsChain('addVersion', ANCHOR_SERVICE, keySSI, hashLinkSSI, lastHashLinkSSI);
-        requestsChain.execute(callback);
+    cryptoInterfaces[keySSIType][vn] = cryptoInterface;
+};
+
+const getCryptoFunction = (keySSI, algorithmType) => {
+    let cryptoFunction;
+    try {
+        cryptoFunction = cryptoInterfaces[keySSI.getTypeName()][keySSI.getVn()][algorithmType];
+    } catch (e) {
+        throw Error(`Algorithm type <${algorithmType}> not recognized for <${keySSI.getIdentifier(true)}>`);
+    }
+
+    if (typeof cryptoFunction === "undefined") {
+        throw Error(`Algorithm type <${algorithmType}> not recognized for <${keySSI.getIdentifier(true)}>`);
+    }
+    return cryptoFunction;
+};
+
+function CryptoAlgorithmsRegistry() {
+}
+module.exports = new CryptoAlgorithmsRegistry();
+CryptoAlgorithmsRegistry.prototype.getHashFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.HASH);
+};
+
+CryptoAlgorithmsRegistry.prototype.getKeyDerivationFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_DERIVATION);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncryptionFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncryptionKeyGenerationFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION_KEY_GENERATION);
+};
+
+CryptoAlgorithmsRegistry.prototype.getDecryptionFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECRYPTION);
+};
+
+CryptoAlgorithmsRegistry.prototype.getEncodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCODING);
+};
+
+CryptoAlgorithmsRegistry.prototype.getDecodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECODING);
+};
+
+CryptoAlgorithmsRegistry.prototype.getKeyPairGenerator = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_PAIR_GENERATOR);
+};
+
+CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.SIGN);
+};
+
+CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.VERIFY);
+};
+
+CryptoAlgorithmsRegistry.prototype.getDerivePublicKeyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.DERIVE_PUBLIC_KEY);
+};
+
+CryptoAlgorithmsRegistry.prototype.getConvertPublicKeyFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.CONVERT_PUBLIC_KEY);
+};
+
+CryptoAlgorithmsRegistry.prototype.getCryptoFunction = getCryptoFunction;
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface = registerCryptoInterface;
+
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SEED_SSI, 'v0',  new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.WALLET_SSI, 'v0', new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SREAD_SSI, 'v0',  new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SZERO_ACCESS_SSI, 'v0', new CryptoAlgorithmsMixin());
+
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.PASSWORD_SSI, 'v0', new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.ARRAY_SSI, 'v0',  new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.CONST_SSI, 'v0', new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.CONSTANT_ZERO_ACCESS_SSI, 'v0',new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.HASH_LINK_SSI, 'v0',  new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, 'v0',new CryptoAlgorithmsMixin());
+
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.TOKEN_SSI, 'v0',  new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.OWNERSHIP_SSI, 'v0', new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.OWNERSHIP_READ_SSI, 'v0', new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.TRANSFER_SSI, 'v0',  new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.ZERO_ACCESS_TOKEN_SSI, 'v0', new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SIGNED_HASH_LINK_SSI, 'v0',  new CryptoAlgorithmsMixin());
+
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.CONSENSUS_SSI, 'v0',  new CryptoAlgorithmsMixin());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.PUBLIC_KEY_SSI, 'v0',  new CryptoAlgorithmsMixin());
+
+
+},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./SeedSSICryptoAlgorithms":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js":[function(require,module,exports){
+module.exports = {
+    HASH: "hash",
+    ENCRYPTION: "encryption",
+    DECRYPTION: "decryption",
+    ECIES_ENCRYPTION: "ecies_encryption",
+    ECIES_DECRYPTION: "ecies_decryption",
+    ECIES_ENCRYPTION_KMAC: "ecies_encryption_kmac",
+    ECIES_DECRYPTION_KMAC: "ecies_decryption_kmac",
+    ECIES_ENCRYPTION_DS: "ecies_encryption_ds",
+    ECIES_DECRYPTION_DS: "ecies_decryption_ds",
+    ENCRYPTION_KEY_GENERATION: "encryptionKeyGeneration",
+    KEY_DERIVATION: "keyDerivation",
+    ENCODING: "encoding",
+    DECODING: "decoding",
+    SIGN: "sign",
+    VERIFY: "verify",
+    DERIVE_PUBLIC_KEY: "derivePublicKey",
+    CONVERT_PUBLIC_KEY: "convertPublicKey",
+    KEY_PAIR_GENERATOR: "keyPairGenerator",
+    GET_IES_CONFIG: "getConfigForIES",
+    SET_IES_CONFIG: "setConfigForIES",
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js":[function(require,module,exports){
+function SeedSSICryptoAlgorithms() {
+    const crypto = require("pskcrypto");
+    const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
+    CryptoAlgorithmsMixin(this);
+    const self = this;
+
+    self.sign = (data, privateKey) => {
+        const keyGenerator = crypto.createKeyPairGenerator();
+        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+        return crypto.sign('sha256', data, keyGenerator.getPemKeys(privateKey, rawPublicKey).privateKey);
+    }
+
+    self.derivePublicKey =  (privateKey, format) => {
+        if (typeof format === "undefined") {
+            format = "pem";
+        }
+        const keyGenerator = crypto.createKeyPairGenerator();
+        let publicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
+        switch(format){
+            case "raw":
+                return publicKey;
+            case "pem":
+                return keyGenerator.getPemKeys(privateKey, publicKey).publicKey;
+            default:
+                throw Error("Invalid format name");
+        }
     }
 }
 
-module.exports = BootstrapingService;
+module.exports = SeedSSICryptoAlgorithms;
 
-},{"./RequestsChain":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/RequestsChain.js","opendsu":"opendsu"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+},{"./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function ConsensusDSUFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = undefined;
+        }
+
+        if (typeof options === "undefined") {
+            options = {};
+        }
+
+        if(typeof options.useSSIAsIdentifier === "undefined" || !options.useSSIAsIdentifier){
+            throw Error("Creating a DSU using keySSI from the ConsensusSSI family not allowed. Use the resolver.createDSUForExisting method instead.");
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.load(keySSI, options, callback);
+    };
+}
+
+module.exports = ConsensusDSUFactory;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -6753,10 +8010,9 @@ function ConstDSUFactory(options) {
 
 module.exports = ConstDSUFactory;
 
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -6764,11 +8020,8 @@ const cache = require('psk-cache').factory();
 function DSUFactory(options) {
     const barModule = require('bar');
     const fsAdapter = require('bar-fs-adapter');
-
-    const DEFAULT_BRICK_MAP_STRATEGY = "LatestVersion";
-
+    const MAX_BRICK_SIZE = 1000000;
     options = options || {};
-    this.bootstrapingService = options.bootstrapingService;
     this.keySSIFactory = options.keySSIFactory;
     this.brickMapStrategyFactory = options.brickMapStrategyFactory;
 
@@ -6813,17 +8066,15 @@ function DSUFactory(options) {
         const archiveConfigurator = new ArchiveConfigurator();
         archiveConfigurator.setCache(cache);
         const envTypes = require("overwrite-require").constants;
-        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE && $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE){
+        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE &&
+            $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE &&
+            $$.environmentType !== envTypes.WEB_WORKER_ENVIRONMENT_TYPE){
             archiveConfigurator.setFsAdapter("FsAdapter");
         }
-        archiveConfigurator.setBufferSize(1000000);
+        archiveConfigurator.setBufferSize(MAX_BRICK_SIZE);
         archiveConfigurator.setKeySSI(keySSI);
-        archiveConfigurator.setBootstrapingService(this.bootstrapingService);
         let brickMapStrategyName = options.brickMapStrategy;
         let anchoringOptions = options.anchoringOptions;
-        if (!brickMapStrategyName) {
-            brickMapStrategyName = DEFAULT_BRICK_MAP_STRATEGY;
-        }
         let brickMapStrategy;
         try {
             brickMapStrategy = createBrickMapStrategy(brickMapStrategyName, anchoringOptions);
@@ -6869,6 +8120,7 @@ function DSUFactory(options) {
         const KeySSIFactory = require("../KeySSIs/KeySSIFactory");
         const keySSI = KeySSIFactory.createType(templateKeySSI.getTypeName());
         keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, templateKeySSI.getHint(), callback);
+        // keySSI.initialize(templateKeySSI.getDLDomain(), templateKeySSI.getSpecificString(), templateKeySSI.getControlString(), templateKeySSI.getVn(), templateKeySSI.getHint(), callback);
     }
 
     ////////////////////////////////////////////////////////////
@@ -6955,10 +8207,79 @@ function DSUFactory(options) {
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
+ * @param {KeySSIFactory} options.keySSIFactory
+ * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
+ */
+function OwnershipDSUFactory(options) {
+    options = options || {};
+    this.barFactory = options.barFactory;
+
+    /**
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.create = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = undefined;
+        }
+
+        if (typeof options === "undefined") {
+            options = {};
+        }
+
+        if(typeof options.useSSIAsIdentifier === "undefined" || !options.useSSIAsIdentifier){
+            throw Error("Creating a DSU using keySSI from the OwnershipSSI family not allowed. Use the resolver.createDSUForExisting method instead.");
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.create(keySSI, options, callback);
+    };
+
+    /**
+     * @param {string} keySSI
+     * @param {object} options
+     * @param {string} options.brickMapStrategy 'Diff', 'Versioned' or any strategy registered with the factory
+     * @param {object} options.anchoringOptions Anchoring options to pass to bar map strategy
+     * @param {callback} options.anchoringOptions.decisionFn Callback which will decide when to effectively anchor changes
+     *                                                              If empty, the changes will be anchored after each operation
+     * @param {callback} options.anchoringOptions.conflictResolutionFn Callback which will handle anchoring conflicts
+     *                                                              The default strategy is to reload the BrickMap and then apply the new changes
+     * @param {callback} options.anchoringOptions.anchoringEventListener An event listener which is called when the strategy anchors the changes
+     * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
+     * @param {object} options.validationRules
+     * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {callback} callback
+     */
+    this.load = (keySSI, options, callback) => {
+        if (typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+
+        // enable options.validationRules.preWrite to stop content update
+        this.barFactory.load(keySSI, options, callback);
+    };
+}
+
+module.exports = OwnershipDSUFactory;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+/**
+ * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -6978,6 +8299,7 @@ function WalletFactory(options) {
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
      * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {object} options.walletKeySSI - KeySSI of the wallet to be mounted in constDSUWallet
      * @param {callback} callback
      */
     this.create = (keySSI, options, callback) => {
@@ -6994,7 +8316,7 @@ function WalletFactory(options) {
         options = defaultOpts;
 
         let createWritableDSU = () => {
-            let templateSSI = require("opendsu").loadApi("keyssi").buildTemplateSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
+            let templateSSI = require("opendsu").loadApi("keyssi").createTemplateSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
             this.dsuFactory.create(templateSSI, (err, writableDSU) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
@@ -7013,10 +8335,8 @@ function WalletFactory(options) {
             }));
         }
 
-
-
         let createConstDSU = () => {
-            this.dsuFactory.create(keySSI, options, (err, constWallet) => {
+                this.dsuFactory.create(keySSI, options, (err, constWallet) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
                 }
@@ -7031,21 +8351,35 @@ function WalletFactory(options) {
 
 
         let mountWritableWallet = () => {
-            writableWallet.getKeySSIAsString((err,seedSSI) =>{
+            writableWallet.getKeySSIAsString((err, seedSSI) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get seedSSI",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get seedSSI", err));
                 }
                 constDSUWallet.mount(WALLET_MOUNT_POINT, seedSSI, (err => {
                     if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet",err));
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to mount writable SSI in wallet", err));
                     }
                     callback(undefined, constDSUWallet);
                 }));
             });
         }
 
-        createWritableDSU();
+        if (options.walletKeySSI) {
+            this.dsuFactory.load(options.walletKeySSI, (err, dsu) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet ------->>>>>>", err));
+                }
+                writableWallet = dsu;
+                createConstDSU();
+            });
+        } else {
+            createWritableDSU();
+        }
+
     };
+
+
+
 
     /**
      * @param {string} keySSI
@@ -7116,12 +8450,11 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{"opendsu":"opendsu"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
 const SSITypes = require("../KeySSIs/SSITypes");
 /**
  * @param {object} options
- * @param {BootstrapingService} options.bootstrapingService
  * @param {KeySSIFactory} options.keySSIFactory
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  */
@@ -7130,13 +8463,8 @@ const factories = {};
 function Registry(options) {
     options = options || {};
 
-    const bootstrapingService = options.bootstrapingService;
     const keySSIFactory = options.keySSIFactory;
     const brickMapStrategyFactory = options.brickMapStrategyFactory
-
-    if (!bootstrapingService) {
-        throw new Error('BootstrapingService is required');
-    }
 
     if (!keySSIFactory) {
         throw new Error('A KeySSI factory is required');
@@ -7151,7 +8479,6 @@ function Registry(options) {
      */
     const initialize = () => {
         const barFactory = new BarFactory({
-            bootstrapingService,
             keySSIFactory,
             brickMapStrategyFactory
         });
@@ -7165,6 +8492,15 @@ function Registry(options) {
         const constDSUFactory = new ConstDSUFactory({barFactory});
         this.registerDSUType(SSITypes.CONST_SSI, constDSUFactory);
         this.registerDSUType(SSITypes.ARRAY_SSI, constDSUFactory);
+
+        const OwnershipDSUFactory = require("./OwnershipDSUFactory");
+        const ownershipDSUFactory = new OwnershipDSUFactory({barFactory})
+        this.registerDSUType(SSITypes.OWNERSHIP_SSI, ownershipDSUFactory);
+        this.registerDSUType(SSITypes.OWNERSHIP_READ_SSI, ownershipDSUFactory);
+
+        const ConsensusDSUFactory = require("./ConsensusDSUFactory");
+        const consensusDSUFactory = new ConsensusDSUFactory({barFactory});
+        this.registerDSUType(SSITypes.CONSENSUS_SSI, consensusDSUFactory);
     }
 
     ////////////////////////////////////////////////////////////
@@ -7250,7 +8586,7 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 
 module.exports = Registry;
 
-},{"../KeySSIs/SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstDSUFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./WalletFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConsensusDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js","./ConstDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./OwnershipDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js","./WalletFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
@@ -7268,6 +8604,7 @@ module.exports = function(archive){
 
 			switch($$.environmentType){
 				case or.constants.BROWSER_ENVIRONMENT_TYPE:
+				case or.constants.WEB_WORKER_ENVIRONMENT_TYPE:
 				case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
 					apiCode = new TextDecoder("utf-8").decode(apiCode);
 					break;
@@ -7310,22 +8647,13 @@ module.exports = function(archive){
 	return archive;
 }
 
-},{"overwrite-require":"overwrite-require"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
-const defaultBootStrapingService = require("./BootstrapingService");
+},{"overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 /**
- * @param {BoostrapingService} options.bootstrapingService
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  * @param {DSUFactory} options.dsuFactory
  */
 function KeySSIResolver(options) {
     options = options || {};
-
-    const bootstrapingService = options.bootstrapingService || defaultBootStrapingService;
-
-    if (!bootstrapingService) {
-        throw new Error('BootstrapingService is required');
-    }
-
     const brickMapStrategyFactory = options.brickMapStrategyFactory;
 
     const dsuFactory = options.dsuFactory;
@@ -7399,13 +8727,6 @@ function KeySSIResolver(options) {
     }
 
     /**
-     * @return {BootstrapingService}
-     */
-    this.getBootstrapingService = () => {
-        return bootstrapingService;
-    }
-
-    /**
      * @return {BrickMapStrategyFactory}
      */
     this.getBrickMapStrategyFactory = () => {
@@ -7415,11 +8736,11 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{"./BootstrapingService":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
 function ArraySSI(identifier) {
     const SSITypes = require("../SSITypes");
     const KeySSIMixin = require("../KeySSIMixin");
-    const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+    const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
     KeySSIMixin(this);
     const self = this;
@@ -7428,7 +8749,11 @@ function ArraySSI(identifier) {
         self.autoLoad(identifier);
     }
 
-     self.initialize = (dlDomain, arr, vn, hint) => {
+    self.getTypeName = function () {
+        return SSITypes.ARRAY_SSI;
+    }
+
+    self.initialize = (dlDomain, arr, vn, hint) => {
         if (typeof vn === "undefined") {
             vn = 'v0';
         }
@@ -7439,7 +8764,7 @@ function ArraySSI(identifier) {
     self.derive = () => {
         const ConstSSI = require("./ConstSSI");
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControl(), self.getVn(), self.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControlString(), self.getVn(), self.getHint());
         return constSSI;
     };
 
@@ -7455,7 +8780,8 @@ function createArraySSI(identifier) {
 module.exports = {
     createArraySSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -7466,8 +8792,12 @@ function CZaSSI(identifier) {
         self.autoLoad(identifier);
     }
 
+    self.getTypeName = function () {
+        return SSITypes.CONSTANT_ZERO_ACCESS_SSI;
+    }
+
     self.initialize = (dlDomain, hpk, vn, hint) => {
-        self.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, subtypeSpecificString, hpk, vn, hint);
+        self.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
     };
 
     self.derive = () => {
@@ -7482,21 +8812,27 @@ function createCZaSSI(identifier) {
 module.exports = {
     createCZaSSI
 };
-},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const CZaSSI = require("./CZaSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function ConstSSI(identifier){
+function ConstSSI(identifier) {
     KeySSIMixin(this);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
     }
 
-    self.initialize = (dlDomain, subtypeSpecificString, vn, hint) => {
-        self.load(SSITypes.CONST_SSI, dlDomain, subtypeSpecificString, vn, hint);
+    self.getTypeName = function () {
+        return SSITypes.CONST_SSI;
+    }
+
+    self.initialize = (dlDomain, constString, vn, hint) => {
+        const key = cryptoRegistry.getKeyDerivationFunction(self)(constString, 1000);
+        self.load(SSITypes.CONST_SSI, dlDomain, cryptoRegistry.getEncodingFunction(self)(key), "", vn, hint);
     };
 
     self.getEncryptionKey = () => {
@@ -7506,7 +8842,7 @@ function ConstSSI(identifier){
     self.derive = () => {
         const cZaSSI = CZaSSI.createCZaSSI();
         const subtypeKey = cryptoRegistry.getHashFunction(self)(self.getEncryptionKey());
-        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControl(), self.getVn(), self.getHint());
+        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControlString(), self.getVn(), self.getHint());
         return cZaSSI;
     };
 }
@@ -7518,11 +8854,12 @@ function createConstSSI(identifier) {
 module.exports = {
     createConstSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ConstSSI = require("./ConstSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function PasswordSSI(identifier){
     KeySSIMixin(this);
@@ -7539,7 +8876,7 @@ function PasswordSSI(identifier){
 
     self.derive = () => {
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSubtypeSpecificString(), self.getControl(), self.getVn(), self.getHint());
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSubtypeSpecificString(), self.getControlString(), self.getVn(), self.getHint());
         return constSSI;
     };
 
@@ -7555,236 +8892,107 @@ function createPasswordSSI(identifier) {
 module.exports = {
     createPasswordSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
-const crypto = require("pskcrypto");
-const SSITypes = require("./SSITypes");
-const CryptoFunctionTypes = require("./CryptoFunctionTypes");
-const algorithms = {};
-const defaultAlgorithms = {
-    hash: (data) => {
-        return defaultAlgorithms.encoding(crypto.hash('sha256', data));
-    },
-    keyDerivation: (password, iterations) => {
-        return crypto.deriveKey('aes-256-gcm', password, iterations);
-    },
-    encryptionKeyGeneration: () => {
-        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
-        return pskEncryption.generateEncryptionKey();
-    },
-    encryption: (plainData, encryptionKey, options) => {
-        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
-        return pskEncryption.encrypt(plainData, encryptionKey, options);
-    },
-    decryption: (encryptedData, decryptionKey, authTagLength, options) => {
-        const pskEncryption = crypto.createPskEncryption('aes-256-gcm');
-        const utils = require("swarmutils");
-        if (!$$.Buffer.isBuffer(decryptionKey) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
-            decryptionKey = utils.ensureIsBuffer(decryptionKey);
-        }
-        if (!$$.Buffer.isBuffer(encryptedData) && (decryptionKey instanceof ArrayBuffer || ArrayBuffer.isView(decryptionKey))) {
-            encryptedData = utils.ensureIsBuffer(encryptedData);
-        }
-        return pskEncryption.decrypt(encryptedData, decryptionKey, 16, options);
-    },
-    encoding: (data) => {
-        return crypto.pskBase58Encode(data);
-    },
-    decoding: (data) => {
-        return crypto.pskBase58Decode(data);
-    },
-    keyPairGenerator: () => {
-        return crypto.createKeyPairGenerator();
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function ConsensusSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
     }
 
-};
-
-function CryptoAlgorithmsRegistry() {
+    self.initialize = (dlDomain, contractName, vn, hint) => {
+        self.load(SSITypes.CONSENSUS_SSI, dlDomain, contractName, undefined, vn, hint);
+    };
 }
 
-
-const registerCryptoFunction = (keySSIType, vn, algorithmType, cryptoFunction) => {
-    if (typeof algorithms[keySSIType] !== "undefined" && typeof algorithms[vn] !== "undefined" && typeof algorithms[vn][algorithmType] !== "undefined") {
-        throw Error(`A ${algorithmType} is already registered for version ${vn}`);
-    }
-
-    if (typeof algorithms[keySSIType] === "undefined") {
-        algorithms[keySSIType] = {};
-    }
-
-    if (typeof algorithms[keySSIType][vn] === "undefined") {
-        algorithms[keySSIType][vn] = defaultAlgorithms;
-    }
-    algorithms[keySSIType][vn][algorithmType] = cryptoFunction;
-};
-
-const getCryptoFunction = (keySSI, algorithmType) => {
-    let cryptoFunction;
-    try {
-        cryptoFunction = algorithms[keySSI.getTypeName()][keySSI.getVn()][algorithmType];
-    } catch (e) {
-        cryptoFunction = defaultAlgorithms[algorithmType];
-    }
-
-    if (typeof cryptoFunction === "undefined") {
-        throw Error(`Algorithm type <${algorithmType}> not recognized for <${keySSI.getIdentifier(true)}>`);
-    }
-    return cryptoFunction;
-};
-
-
-CryptoAlgorithmsRegistry.prototype.registerHashFunction = (keySSIType, vn, hashFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.HASH, hashFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getHashFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.HASH);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerKeyDerivationFunction = (keySSIType, vn, keyDerivationFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.KEY_DERIVATION, keyDerivationFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getKeyDerivationFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_DERIVATION);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerEncryptionFunction = (keySSIType, vn, encryptionFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCRYPTION, encryptionFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getEncryptionFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerEncryptionKeyGenerationFunction = (keySSIType, vn, keyGeneratorFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCRYPTION_KEY_GENERATION, keyGeneratorFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getEncryptionKeyGenerationFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCRYPTION_KEY_GENERATION);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerDecryptionFunction = (keySSIType, vn, decryptionFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DECRYPTION, decryptionFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getDecryptionFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECRYPTION);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerEncodingFunction = (keySSIType, vn, encodingFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.ENCODING, encodingFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getEncodingFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.ENCODING);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerDecodingFunction = (keySSIType, vn, decodingFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DECODING, decodingFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getDecodingFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.DECODING);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerKeyPairGenerator = (keySSIType, vn, keyPairGenerator) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.KEY_PAIR_GENERATOR, keyPairGenerator);
-};
-
-CryptoAlgorithmsRegistry.prototype.getKeyPairGenerator = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_PAIR_GENERATOR);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerSignFunction = (keySSIType, vn, signFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.SIGN, signFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getSignFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.SIGN);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerVerifyFunction = (keySSIType, vn, verifyFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.VERIFY, verifyFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getVerifyFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.VERIFY);
-};
-
-CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction = (keySSIType, vn, deriveFunction) => {
-    registerCryptoFunction(keySSIType, vn, CryptoFunctionTypes.DERIVE_PUBLIC_KEY, deriveFunction);
-};
-
-CryptoAlgorithmsRegistry.prototype.getDerivePublicKeyFunction = (keySSI) => {
-    return getCryptoFunction(keySSI, CryptoFunctionTypes.DERIVE_PUBLIC_KEY);
-};
-
-
-CryptoAlgorithmsRegistry.prototype.getCryptoFunction = getCryptoFunction;
-
-module.exports = new CryptoAlgorithmsRegistry();
-
-
-
-/* Initialisation */
-
-
-let defaultKeySSISign = (data, privateKey) => {
-    const keyGenerator = crypto.createKeyPairGenerator();
-    const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-    return crypto.sign('sha256', data, keyGenerator.getPemKeys(privateKey, rawPublicKey).privateKey);
+function createConsensusSSI(identifier) {
+    return new ConsensusSSI(identifier);
 }
 
-let defaultKeySSIVerify = (data, publicKey, signature) => {
-    return crypto.verify('sha256', data, publicKey, signature);
-}
-
-let defaultKeySSIDerivePublicKey =  (privateKey, format) => {
-    if (typeof format === "undefined") {
-        format = "pem";
-    }
-    const keyGenerator = crypto.createKeyPairGenerator();
-    let publicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-    switch(format){
-        case "raw":
-            return publicKey;
-        case "pem":
-            return keyGenerator.getPemKeys(privateKey, publicKey).publicKey;
-        default:
-            throw Error("Invalid format name");
-    }
-}
-
-
-CryptoAlgorithmsRegistry.prototype.registerSignFunction(SSITypes.SEED_SSI, "v0", defaultKeySSISign);
-CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIVerify);
-CryptoAlgorithmsRegistry.prototype.registerDerivePublicKeyFunction(SSITypes.SEED_SSI, "v0", defaultKeySSIDerivePublicKey);
-
-CryptoAlgorithmsRegistry.prototype.registerVerifyFunction(SSITypes.SREAD_SSI, "v0", defaultKeySSIVerify);
-
-
-},{"./CryptoFunctionTypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js","./SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js":[function(require,module,exports){
 module.exports = {
-    HASH: "hash",
-    ENCRYPTION: "encryption",
-    DECRYPTION: "decryption",
-    ENCRYPTION_KEY_GENERATION: "encryptionKeyGeneration",
-    KEY_DERIVATION: "keyDerivation",
-    ENCODING: "encoding",
-    DECODING: "decoding",
-    SIGN: "sign",
-    VERIFY: "verify",
-    DERIVE_PUBLIC_KEY: "derivePublicKey",
-    KEY_PAIR_GENERATOR: "keyPairGenerator"
+    createConsensusSSI,
 };
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
 
 module.exports = DSURepresentationNames;
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const { createHashLinkSSI } = require("../OtherKeySSIs/HashLinkSSI");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const SSITypes = require("../SSITypes");
+
+function SignedHashLinkSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.SIGNED_HASH_LINK_SSI;
+    }
+
+    self.initialize = (dlDomain, hashLink, timestamp, signature, vn, hint) => {
+        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}/${signature.signature}/${signature.publicKey}`, vn, hint);
+    };
+
+    self.canBeVerified = () => {
+        return true;
+    };
+
+    self.getHash = () => {
+        const specificString = self.getSpecificString();
+        if (typeof specificString !== "string") {
+            console.trace("Specific string is not string", specificString.toString());
+        }
+        return specificString;
+    };
+
+    self.derive = () => {
+        const hashLinkSSI = createHashLinkSSI();
+        hashLinkSSI.load(SSITypes.HASH_LINK_SSI, self.getDLDomain(), self.getHash(), "", self.getVn(), self.getHint());
+        return hashLinkSSI;
+    };
+
+    self.getTimestamp = function (){
+        let control = self.getControlString();
+        return control.split("/")[0];
+    }
+
+    self.getSignature = function (){
+        let control = self.getControlString();
+        let splitControl = control.split("/");
+        let signature = splitControl[1];
+        let publicKey = splitControl[2];
+        return {signature, publicKey};
+    }
+
+    self.getPublicKeyHash = function () {
+        const {publicKey} = self.getSignature();
+        const decodedPublicKey = cryptoRegistry.getDecodingFunction(self)(publicKey);
+        return cryptoRegistry.getHashFunction(self)(decodedPublicKey);
+    };
+}
+
+function createSignedHashLinkSSI(identifier) {
+    return new SignedHashLinkSSI(identifier);
+}
+
+module.exports = {
+    createSignedHashLinkSSI
+};
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -7800,6 +9008,16 @@ const createConstSSI = require("./ConstSSIs/ConstSSI").createConstSSI;
 const createCZaSSI = require("./ConstSSIs/CZaSSI").createCZaSSI;
 const createHashLinkSSI = require("./OtherKeySSIs/HashLinkSSI").createHashLinkSSI;
 const createSymmetricalEncryptionSSI = require("./OtherKeySSIs/SymmetricalEncryptionSSI").createSymmetricalEncryptionSSI;
+
+const createTokenSSI = require("./TokenSSIs/TokenSSI").createTokenSSI;
+const createOwnershipSSI = require("./OwnershipSSIs/OwnershipSSI").createOwnershipSSI;
+const createOReadSSI = require("./OwnershipSSIs/OReadSSI").createOReadSSI;
+const createZATSSI = require("./OwnershipSSIs/ZATSSI").createZATSSI;
+const createTransferSSI = require("./TransferSSIs/TransferSSI").createTransferSSI;
+const createSignedHashLinkSSI = require("./HashLinkSSIs/SignedHashLinkSSI").createSignedHashLinkSSI;
+
+const createConsensusSSI = require("./ContractSSIs/ConsensusSSI").createConsensusSSI;
+const createPublicKeySSI = require("./OtherKeySSIs/PublicKeySSI").createPublicKeySSI;
 
 const SSITypes = require("./SSITypes");
 
@@ -7829,11 +9047,27 @@ KeySSIFactory.prototype.create = (identifier, options) => {
     const KeySSIMixin = require("./KeySSIMixin");
     let keySSI = {}
     KeySSIMixin(keySSI);
-    keySSI.autoLoad(identifier);
+
+    try{
+        keySSI.autoLoad(identifier);
+    }catch (e) {
+        throw createOpenDSUErrorWrapper(`Invalid format for keySSI ${identifier}`, e);
+    }
 
     const typeName = keySSI.getTypeName();
 
-    keySSI = registry[typeName].functionFactory(identifier);
+    return KeySSIFactory.prototype.createByType(typeName, identifier, options);
+};
+
+KeySSIFactory.prototype.createByType = (typeName, identifier, options) => {
+    if (typeof identifier === "undefined") {
+        throw Error("An SSI should be provided");
+    }
+
+    if (typeof registry[typeName] === "undefined") {
+        throw Error(`The type ${typeName} is not a registered KeySSI type`);
+    }
+    const keySSI = registry[typeName].functionFactory(identifier);
     keySSI.options = options;
     return keySSI;
 };
@@ -7860,9 +9094,9 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
     let derivedKeySSI;
     try {
-        derivedKeySSI = getDerivedType(keySSI, otherType);
+        derivedKeySSI = getDerivedKeySSI(keySSI, otherType);
     } catch (err){
-        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI <${keySSI.getIdentifier(true)}>`, err));
+        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI`, err));
     }
 
     callback(undefined, derivedKeySSI);
@@ -7876,7 +9110,29 @@ KeySSIFactory.prototype.getAnchorType = (keySSI) => {
     return localKeySSI;
 };
 
-const getDerivedType = (keySSI, derivedTypeName) => {
+KeySSIFactory.prototype.getRootKeySSITypeName = (keySSI) => {
+    if (typeof keySSI === "object") {
+        return KeySSIFactory.prototype.getRootKeySSITypeName(keySSI.getTypeName())
+    }
+    else if (typeof keySSI === "string") {
+        let found = 0
+        for (let parentKey in registry) {
+            if (registry[parentKey].derivedType === keySSI) {
+                found++
+                return KeySSIFactory.prototype.getRootKeySSITypeName(parentKey)
+            }
+        }
+
+        if (!found || found > 1) {
+            return typeof keySSI === "object" ? keySSI.getTypeName() : keySSI
+        }
+    }
+    else {
+        return false
+    }
+}
+
+const getDerivedKeySSI = (keySSI, derivedTypeName) => {
     let localKeySSI = keySSI;
     let currentEntry = registry[localKeySSI.getTypeName()];
     while (typeof currentEntry.derivedType !== "undefined") {
@@ -7896,7 +9152,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.READ_SSI, 'v0', SSITypes.PUBLIC
 KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_SSI, 'v0', SSITypes.ZERO_ACCESS_SSI, createPublicSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.ZERO_ACCESS_SSI, 'v0', undefined, createZaSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SEED_SSI, 'v0', SSITypes.SREAD_SSI, createSeedSSI);
-KeySSIFactory.prototype.registerFactory(SSITypes.WALLET_SSI, 'v0', SSITypes.SREAD_SSI, createWalletSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.WALLET_SSI, 'v0', SSITypes.CONST_SSI, createWalletSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SREAD_SSI, 'v0', SSITypes.SZERO_ACCESS_SSI, createSReadSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SZERO_ACCESS_SSI, 'v0', undefined, createSZaSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.PASSWORD_SSI, 'v0', SSITypes.CONST_SSI, createPasswordSSI);
@@ -7906,32 +9162,45 @@ KeySSIFactory.prototype.registerFactory(SSITypes.CONSTANT_ZERO_ACCESS_SSI, 'v0',
 KeySSIFactory.prototype.registerFactory(SSITypes.HASH_LINK_SSI, 'v0', undefined, createHashLinkSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, 'v0', undefined, createSymmetricalEncryptionSSI);
 
+KeySSIFactory.prototype.registerFactory(SSITypes.TOKEN_SSI, 'v0', undefined, createTokenSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.OWNERSHIP_SSI, 'v0', SSITypes.OWNERSHIP_READ_SSI, createOwnershipSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.OWNERSHIP_READ_SSI, 'v0', SSITypes.ZERO_ACCESS_TOKEN_SSI, createOReadSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.ZERO_ACCESS_TOKEN_SSI, 'v0', undefined, createZATSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.TRANSFER_SSI, 'v0', undefined, createTransferSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.SIGNED_HASH_LINK_SSI, 'v0', SSITypes.HASH_LINK_SSI, createSignedHashLinkSSI);
+
+KeySSIFactory.prototype.registerFactory(SSITypes.CONSENSUS_SSI, 'v0', undefined, createConsensusSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_KEY_SSI, 'v0', undefined, createPublicKeySSI);
+
 module.exports = new KeySSIFactory();
-},{"./ConstSSIs/ArraySSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
-const cryptoRegistry = require("./CryptoAlgorithmsRegistry");
-const { BRICKS_DOMAIN_KEY } = require('opendsu').constants
+
+},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const CryptoFunctionTypes = require("../CryptoAlgorithms/CryptoFunctionTypes");
+const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 
-const MAX_KEYSSI_LENGHT = 2048
+const MAX_KEYSSI_LENGTH = 2048
 
-function keySSIMixin(target){
+function keySSIMixin(target) {
     let _prefix = "ssi";
     let _subtype;
     let _dlDomain;
     let _subtypeSpecificString;
-    let _control;
+    let _controlString;
     let _vn = "v0";
     let _hint;
     let _hintObject = {};
+    let _dsa = false;
+    let _securityContext = false;
 
     const _createHintObject = (hint = _hint) => {
         try {
             _hintObject = JSON.parse(hint)
-        }
-        catch (error) {
+        } catch (error) {
             //console.error('Parsing of hint failed, hint:', hint)
             _hintObject = {
-                value:hint
+                value: hint
             }
         }
     }
@@ -7941,22 +9210,22 @@ function keySSIMixin(target){
     }
 
     target.autoLoad = function (identifier) {
-        if(typeof identifier === "undefined"){
+        if (typeof identifier === "undefined") {
             return;
         }
 
-        if(typeof identifier !== "string"){
+        if (typeof identifier !== "string") {
             throw new Error("The identifier should be string");
         }
 
         target.validateKeySSICharLength();
 
         let originalId = identifier;
-        if(identifier.indexOf(":") === -1){
+        if (identifier.indexOf(":") === -1) {
             identifier = pskCrypto.pskBase58Decode(identifier).toString();
         }
 
-        if(identifier.indexOf(":") === -1){
+        if (identifier.indexOf(":") === -1) {
             throw new Error(`Wrong format of SSI. ${originalId} ${identifier}`);
         }
 
@@ -7965,7 +9234,7 @@ function keySSIMixin(target){
         _subtype = segments.shift();
         _dlDomain = segments.shift();
         _subtypeSpecificString = segments.shift();
-        _control = segments.shift();
+        _controlString = segments.shift();
         let version = segments.shift();
         if (version !== '') {
             _vn = version;
@@ -7980,20 +9249,16 @@ function keySSIMixin(target){
     }
 
     target.validateKeySSICharLength = () => {
-        if (target.getIdentifier() > MAX_KEYSSI_LENGHT) {
-            throw new Error(`The identifier length exceed maximum char length ${MAX_KEYSSI_LENGHT}`);
+        if (target.getIdentifier() > MAX_KEYSSI_LENGTH) {
+            throw new Error(`The identifier length exceed maximum char length ${MAX_KEYSSI_LENGTH}`);
         }
     }
 
     target.load = function (subtype, dlDomain, subtypeSpecificString, control, vn, hint) {
-        if ($$.Buffer.isBuffer(subtypeSpecificString)) {
-            throw Error("Invalid subtypeSpecificString");
-        }
-
         _subtype = subtype;
         _dlDomain = dlDomain;
         _subtypeSpecificString = subtypeSpecificString;
-        _control = control;
+        _controlString = control;
         _vn = vn || "v0";
         _hint = hint;
 
@@ -8014,9 +9279,14 @@ function keySSIMixin(target){
         KeySSIFactory.getRelatedType(target, ssiType, callback);
     }
 
+    target.getRootKeySSITypeName = function () {
+        const KeySSIFactory = require("./KeySSIFactory");
+        return KeySSIFactory.getRootKeySSITypeName(target);
+    }
+
     target.getAnchorId = function () {
         const keySSIFactory = require("./KeySSIFactory");
-        return keySSIFactory.getAnchorType(target).getIdentifier();
+        return keySSIFactory.getAnchorType(target).getNoHintIdentifier();
     }
 
     target.getSpecificString = function () {
@@ -8036,8 +9306,8 @@ function keySSIMixin(target){
         return _dlDomain;
     }
 
-    target.getControl = function () {
-        return _control;
+    target.getControlString = function () {
+        return _controlString;
     }
 
     target.getHint = function () {
@@ -8053,9 +9323,13 @@ function keySSIMixin(target){
         return DSURepresentationNames[_subtype];
     }
 
+    target.getNoHintIdentifier = function (plain) {
+        let identifier = `${_prefix}:${target.getTypeName()}:${_dlDomain}:${_subtypeSpecificString}:${_controlString}:${_vn}`;
+        return plain ? identifier : pskCrypto.pskBase58Encode(identifier);
+    }
+
     target.getIdentifier = function (plain) {
-        // const key = cryptoRegistry.getEncodingFunction(target)(_subtypeSpecificString);
-        let id = `${_prefix}:${target.getTypeName()}:${_dlDomain}:${_subtypeSpecificString}:${_control}:${_vn}`;
+        let id = target.getNoHintIdentifier(true);
 
         if (typeof _hint !== "undefined") {
             id += ":" + _hint;
@@ -8064,15 +9338,15 @@ function keySSIMixin(target){
         return plain ? id : pskCrypto.pskBase58Encode(id);
     }
 
-    target.getBricksDomain = function() {
+    target.getBricksDomain = function () {
         return _hintObject[BRICKS_DOMAIN_KEY] ? _hintObject[BRICKS_DOMAIN_KEY] : _dlDomain;
     }
 
-    target.clone = function(){
+    target.clone = function () {
         let clone = {};
         clone.prototype = target.prototype;
         for (let attr in target) {
-            if (target.hasOwnProperty(attr)){
+            if (target.hasOwnProperty(attr)) {
                 clone[attr] = target[attr];
             }
         }
@@ -8080,13 +9354,57 @@ function keySSIMixin(target){
         return clone;
     }
 
-    target.cast = function(newType) {
-        target.load(newType, _dlDomain, _subtypeSpecificString, _control, _vn, _hint);
+    target.cast = function (newType) {
+        target.getTypeName = () => {
+            return newType;
+        };
+        target.load(newType, _dlDomain, _subtypeSpecificString, _controlString, _vn, _hint);
+    }
+
+    target.canSign = () => {
+        return _dsa
+    }
+
+    target.setCanSign = (dsa) => {
+        _dsa = dsa
+    }
+
+    target.canBeVerified = () => {
+        return false;
+    };
+
+    target.sign = (dataToSign, callback) => {
+        const sc = require("opendsu").loadAPI("sc").getSecurityContext();
+        sc.sign(target, dataToSign, callback);
+    };
+
+    target.verify = (data, digitalProof) => {
+        if (typeof digitalProof === "string") {
+            try {
+                digitalProof = JSON.parse(digitalProof);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper("Failed to parse string signature", e);
+            }
+        }
+        const convertPublicKey = cryptoRegistry.getConvertPublicKeyFunction(target);
+        const decode = cryptoRegistry.getDecodingFunction(target);
+        const decodedPublicKey = decode(digitalProof.publicKey);
+
+        const pemPublicKey = convertPublicKey(decodedPublicKey);
+        const signature = decode(digitalProof.signature);
+        const verify = cryptoRegistry.getVerifyFunction(target);
+
+        return verify(data, pemPublicKey, signature);
+    };
+
+    target.toJSON = function () {
+        return target.getIdentifier();
     }
 }
 
 module.exports = keySSIMixin;
-},{"./CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+
+},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -8098,8 +9416,12 @@ function HashLinkSSI(identifier) {
         self.autoLoad(identifier);
     }
 
-    self.initialize = (dlDomain, hash, vn) => {
-        self.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn);
+    self.getTypeName = function () {
+        return SSITypes.HASH_LINK_SSI;
+    }
+
+    self.initialize = (dlDomain, hash, vn, hint) => {
+        self.load(SSITypes.HASH_LINK_SSI, dlDomain, hash, '', vn, hint);
     };
 
     self.getHash = () => {
@@ -8122,10 +9444,60 @@ function createHashLinkSSI(identifier) {
 module.exports = {
     createHashLinkSSI
 };
-},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+
+function PublicKeySSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.PUBLIC_KEY_SSI;
+    }
+
+    self.initialize = (compatibleFamilyName, publicKey, vn) => {
+        publicKey = cryptoRegistry.getEncodingFunction(self)(publicKey);
+        self.load(SSITypes.PUBLIC_KEY_SSI, '', compatibleFamilyName, publicKey, vn);
+    };
+
+    self.getPublicKey = (format) => {
+        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getControlString());
+        if (format !== "raw") {
+            publicKey = cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, {outputFormat: format});
+        }
+
+        return publicKey;
+    };
+
+    self.generateCompatiblePowerfulKeySSI = (callback) => {
+        const keySSIFactory = require("../KeySSIFactory");
+        const powerfulSSI = keySSIFactory.createType(self.getSpecificString());
+        powerfulSSI.initialize(self.getDLDomain(), undefined, undefined, self.getVn(), callback);
+    }
+    self.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createPublicKeySSI(identifier) {
+    return new PublicKeySSI(identifier);
+}
+
+module.exports = {
+    createPublicKeySSI
+};
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SymmetricalEncryptionSSI(identifier) {
     KeySSIMixin(this);
@@ -8167,7 +9539,8 @@ function createSymmetricalEncryptionSSI(identifier) {
 module.exports = {
     createSymmetricalEncryptionSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
 const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
@@ -8192,7 +9565,274 @@ module.exports = {
     createWalletSSI
 }
 
-},{"../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const ZATSSI = require("./ZATSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+
+function OReadSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.OWNERSHIP_READ_SSI;
+    }
+
+    self.initialize = (dlDomain, hashPrivateKey, hashPublicKeyLevelAndToken, vn, hint) => {
+        self.load(SSITypes.OWNERSHIP_READ_SSI, dlDomain, hashPrivateKey, hashPublicKeyLevelAndToken, vn, hint);
+    };
+
+    self.derive = () => {
+        const zatSSI = ZATSSI.createZATSSI();
+        const token = self.getToken();
+        const hashPublicKey = self.getHashPublicKey();
+        zatSSI.load(
+            SSITypes.ZERO_ACCESS_TOKEN_SSI,
+            self.getDLDomain(),
+            token,
+            hashPublicKey,
+            self.getVn(),
+            self.getHint()
+        );
+        return zatSSI;
+    };
+
+    self.getEncryptionKey = () => {
+        return cryptoRegistry.getDecodingFunction(self)(self.getHashPublicKey());
+    };
+
+    const getControlParts = function () {
+        let control = self.getControlString();
+        if (control == null) {
+            throw Error("Operation requested on an invalid OwnershipSSI. Initialise first");
+        }
+        return control.split("/");
+    };
+
+    self.getHashPublicKey = function () {
+        let token = getControlParts()[0];
+        return token;
+    };
+
+    self.getLevel = function () {
+        let level = getControlParts()[1];
+        return level;
+    };
+
+    self.getToken = function () {
+        let token = getControlParts()[2];
+        return token;
+    };
+}
+
+function createOReadSSI(identifier) {
+    return new OReadSSI(identifier);
+}
+
+module.exports = {
+    createOReadSSI
+};
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const OReadSSI = require("./OReadSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+
+function OwnershipSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.OWNERSHIP_SSI;
+    }
+
+    self.setCanSign(true);
+
+    self.initialize = function (dlDomain, privateKey, levelAndToken, vn, hint, callback) {
+        if (typeof privateKey === "function") {
+            callback = privateKey;
+            privateKey = undefined;
+        }
+        if (typeof levelAndToken === "function") {
+            callback = levelAndToken;
+            levelAndToken = undefined;
+        }
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = "v0";
+        }
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
+
+        if (typeof privateKey === "undefined") {
+            cryptoRegistry
+                .getKeyPairGenerator(self)()
+                .generateKeyPair((err, publicKey, privateKey) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(
+                            createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err)
+                        );
+                    }
+                    privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+                    self.load(SSITypes.OWNERSHIP_SSI, dlDomain, privateKey, levelAndToken, vn, hint);
+                    if (callback) {
+                        callback(undefined, self);
+                    }
+                });
+        } else {
+            self.load(SSITypes.OWNERSHIP_SSI, dlDomain, privateKey, levelAndToken, vn, hint);
+            if (callback) {
+                callback(undefined, self);
+            }
+        }
+        self.initialize = function () {
+            throw Error("KeySSI already initialized");
+        };
+    };
+
+    self.derive = function () {
+        const oReadSSI = OReadSSI.createOReadSSI();
+        const privateKey = self.getPrivateKey();
+        const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
+        const publicKeyHash = cryptoRegistry.getHashFunction(self)(publicKey);
+        const levelAndToken = self.getControlString();
+
+        const oReadSpecificString = cryptoRegistry.getHashFunction(self)(privateKey);
+        const oReadControl = `${publicKeyHash}/${levelAndToken}`;
+        oReadSSI.load(
+            SSITypes.OWNERSHIP_READ_SSI,
+            self.getDLDomain(),
+            oReadSpecificString,
+            oReadControl,
+            self.getVn(),
+            self.getHint()
+        );
+        return oReadSSI;
+    };
+
+    self.getPrivateKey = function (format) {
+        let validSpecificString = self.getSpecificString();
+        if (validSpecificString === undefined) {
+            throw Error("Operation requested on an invalid OwnershipSSI. Initialise first");
+        }
+        let privateKey = validSpecificString;
+        if (typeof privateKey === "string") {
+            privateKey = cryptoRegistry.getDecodingFunction(self)(privateKey);
+        }
+        if (format === "pem") {
+            const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
+            privateKey = pemKeys.privateKey;
+        }
+        return privateKey;
+    };
+
+    self.sign = function (dataToSign, callback) {
+        const privateKey = self.getPrivateKey();
+        const sign = cryptoRegistry.getSignFunction(self);
+        const encode = cryptoRegistry.getEncodingFunction(self);
+        const digitalProof = {};
+        digitalProof.signature = encode(sign(dataToSign, privateKey));
+        digitalProof.publicKey = encode(self.getPublicKey("raw"));
+
+        callback(undefined, digitalProof);
+    }
+
+
+    self.getPrivateKeyHash = function () {
+        return cryptoRegistry.getHashFunction(self)(self.getPrivateKey());
+    };
+
+    self.getPublicKey = function (format) {
+        return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
+    };
+
+    self.getPublicKeyHash = function () {
+        // const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), "raw");
+        const publicKey = self.getPublicKey("raw");
+        const publicKeyHash = cryptoRegistry.getHashFunction(self)(publicKey);
+        return publicKeyHash;
+    };
+
+    self.getEncryptionKey = function () {
+        return self.derive().getEncryptionKey();
+    };
+
+    const getControlParts = function () {
+        let control = self.getControlString();
+        if (control == null) {
+            throw Error("Operation requested on an invalid OwnershipSSI. Initialise first");
+        }
+        return control.split("/");
+    };
+
+    self.getLevel = function () {
+        let level = getControlParts()[0];
+        return level;
+    };
+
+    self.getToken = function () {
+        let token = getControlParts()[1];
+        return token;
+    };
+
+    self.getAnchorId = function () {
+        return self.getToken();
+    };
+}
+
+function createOwnershipSSI(identifier) {
+    return new OwnershipSSI(identifier);
+}
+
+module.exports = {
+    createOwnershipSSI
+};
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function ZATSSI(identifier) {
+    const self = this;
+    KeySSIMixin(self);
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.ZERO_ACCESS_TOKEN_SSI;
+    }
+
+    self.initialize = (dlDomain, token, hashInitialOwnerPublicKey, vn, hint) => {
+        self.load(SSITypes.ZERO_ACCESS_TOKEN_SSI, dlDomain, token, hashInitialOwnerPublicKey, vn, hint);
+    };
+
+    self.derive = () => {
+        throw Error("Not implemented");
+    };
+}
+
+function createZATSSI(identifier) {
+    return new ZATSSI(identifier);
+}
+
+module.exports = {
+    createZATSSI
+};
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -8209,13 +9849,22 @@ module.exports = {
     ARRAY_SSI: "array",
     HASH_LINK_SSI: "hl",
     WALLET_SSI: "wallet",
-    SYMMETRICAL_ENCRYPTION_SSI: "se"
+    SYMMETRICAL_ENCRYPTION_SSI: "se",
+    TOKEN_SSI: "token",
+    OWNERSHIP_SSI: "own",
+    OWNERSHIP_READ_SSI: "oread",
+    ZERO_ACCESS_TOKEN_SSI: "zat",
+    TRANSFER_SSI: "transfer",
+    SIGNED_HASH_LINK_SSI: "shl",
+    CONSENSUS_SSI: "consensus",
+    PUBLIC_KEY_SSI: "pk"
 };
-},{}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ReadSSI = require("./ReadSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function AnchorSSI(identifier) {
     KeySSIMixin(this);
@@ -8227,7 +9876,7 @@ function AnchorSSI(identifier) {
     this.derive = () => {
         const readSSI = ReadSSI.createReadSSI();
         const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
-        readSSI.load(SSITypes.READ_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        readSSI.load(SSITypes.READ_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
         return readSSI;
     };
 }
@@ -8239,11 +9888,12 @@ function createAnchorSSI(identifier) {
 module.exports = {
     createAnchorSSI
 }
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZaSSI = require("./ZaSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function PublicSSI(identifier) {
     KeySSIMixin(this);
@@ -8255,7 +9905,7 @@ function PublicSSI(identifier) {
     this.derive = () => {
         const zaSSI = ZaSSI.createZaSSI();
         const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey())
-        zaSSI.initialize(SSITypes.ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        zaSSI.initialize(SSITypes.ZERO_ACCESS_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
         return zaSSI;
     };
 }
@@ -8267,11 +9917,12 @@ function createPublicSSI(identifier) {
 module.exports = {
     createPublicSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const PublicSSI = require("./PublicSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function ReadSSI(identifier) {
     KeySSIMixin(this);
@@ -8283,7 +9934,7 @@ function ReadSSI(identifier) {
     this.derive = () => {
         const publicSSI = PublicSSI.createPublicSSI();
         const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
-        publicSSI.load(SSITypes.PUBLIC_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        publicSSI.load(SSITypes.PUBLIC_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
         return publicSSI;
     };
 }
@@ -8295,11 +9946,12 @@ function createReadSSI(identifier) {
 module.exports = {
     createReadSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const AnchorSSI = require("./AnchorSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SecretSSI(identifier) {
     KeySSIMixin(this);
@@ -8311,7 +9963,7 @@ function SecretSSI(identifier) {
     this.derive = () => {
         const anchorSSI = AnchorSSI.createAnchorSSI();
         const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey())
-        anchorSSI.load(SSITypes.ANCHOR_SSI, this.getDLDomain(), subtypeKey, this.getControl(), this.getVn(), this.getHint());
+        anchorSSI.load(SSITypes.ANCHOR_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
         return anchorSSI;
     };
 }
@@ -8322,7 +9974,8 @@ function createSecretSSI (identifier){
 module.exports = {
     createSecretSSI
 }
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 function ZaSSI(identifier) {
     KeySSIMixin(this);
@@ -8343,11 +9996,11 @@ function createZaSSI(identifier) {
 module.exports = {
     createZaSSI
 };
-},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SReadSSI(identifier) {
     KeySSIMixin(this);
@@ -8357,6 +10010,10 @@ function SReadSSI(identifier) {
         self.autoLoad(identifier);
     }
 
+    self.getTypeName = function () {
+        return SSITypes.SREAD_SSI;
+    }
+
     self.initialize = (dlDomain, vn, hint) => {
         self.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
     };
@@ -8364,13 +10021,13 @@ function SReadSSI(identifier) {
     self.derive = () => {
         const sZaSSI = SZaSSI.createSZaSSI();
         const subtypeKey = '';
-        const subtypeControl = self.getControl();
+        const subtypeControl = self.getControlString();
         sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, subtypeControl, self.getVn(), self.getHint());
         return sZaSSI;
     };
 
     self.getEncryptionKey = () => {
-        return cryptoRegistry.getDecodingFunction(self)(self.getControl());
+        return cryptoRegistry.getDecodingFunction(self)(self.getControlString());
     };
 }
 
@@ -8381,7 +10038,8 @@ function createSReadSSI(identifier) {
 module.exports = {
     createSReadSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -8391,6 +10049,10 @@ function SZaSSI(identifier) {
 
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.SZERO_ACCESS_SSI;
     }
 
     self.initialize = (dlDomain, hpk, vn, hint) => {
@@ -8409,11 +10071,12 @@ function createSZaSSI(identifier) {
 module.exports = {
     createSZaSSI
 };
-},{"../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SReadSSI = require("./SReadSSI");
 const SSITypes = require("../SSITypes");
-const cryptoRegistry = require("../CryptoAlgorithmsRegistry");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SeedSSI(identifier) {
     KeySSIMixin(this);
@@ -8421,6 +10084,12 @@ function SeedSSI(identifier) {
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
     }
+
+    self.getTypeName = function () {
+        return SSITypes.SEED_SSI;
+    }
+
+    self.setCanSign(true);
 
     self.initialize = function (dlDomain, privateKey, control, vn, hint, callback) {
         if (typeof privateKey === "function") {
@@ -8447,17 +10116,18 @@ function SeedSSI(identifier) {
                 }
                 privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
                 self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
-                if(callback) {
+                if (callback) {
                     callback(undefined, self);
                 }
             });
         } else {
+            privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
             self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
-            if(callback) {
+            if (callback) {
                 callback(undefined, self);
             }
         }
-        self.initialize = function (){
+        self.initialize = function () {
             throw Error("KeySSI already initialized");
         }
     };
@@ -8474,7 +10144,7 @@ function SeedSSI(identifier) {
 
     self.getPrivateKey = function (format) {
         let validSpecificString = self.getSpecificString();
-        if(validSpecificString === undefined){
+        if (validSpecificString === undefined) {
             throw Error("Operation requested on an invalid SeedSSI. Initialise first")
         }
         let privateKey = cryptoRegistry.getDecodingFunction(self)(validSpecificString);
@@ -8485,6 +10155,17 @@ function SeedSSI(identifier) {
         return privateKey;
     }
 
+    self.sign = function (dataToSign, callback) {
+        const privateKey = self.getPrivateKey();
+        const sign = cryptoRegistry.getSignFunction(self);
+        const encode = cryptoRegistry.getEncodingFunction(self);
+        const digitalProof = {};
+        digitalProof.signature = encode(sign(dataToSign, privateKey));
+        digitalProof.publicKey = encode(self.getPublicKey("raw"));
+
+        callback(undefined, digitalProof);
+    }
+
     self.getPublicKey = function (format) {
         return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
     }
@@ -8492,6 +10173,15 @@ function SeedSSI(identifier) {
     self.getEncryptionKey = function () {
         return self.derive().getEncryptionKey();
     };
+
+    self.getKeyPair = function (){
+        const keyPair = {
+            privateKey: self.getPrivateKey("pem"),
+            publicKey: self.getPublicKey("pem")
+        }
+
+        return keyPair;
+    }
 }
 
 function createSeedSSI(identifier) {
@@ -8501,7 +10191,203 @@ function createSeedSSI(identifier) {
 module.exports = {
     createSeedSSI
 };
-},{"../CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/opt/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function TokenSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.TOKEN_SSI;
+    }
+
+    self.initialize = function (dlDomain, amount, hashInitialOwnerPublicKey, vn, hint, callback) {
+        if (typeof amount === "function") {
+            callback = amount;
+            amount = undefined;
+        }
+        if (typeof hashInitialOwnerPublicKey === "function") {
+            callback = hashInitialOwnerPublicKey;
+            hashInitialOwnerPublicKey = undefined;
+        }
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = "v0";
+        }
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
+
+        self.load(SSITypes.TOKEN_SSI, dlDomain, amount, hashInitialOwnerPublicKey, vn, hint);
+        if (callback) {
+            callback(undefined, self);
+        }
+
+        self.initialize = function () {
+            throw Error("KeySSI already initialized");
+        };
+    };
+
+    self.takeOwnership = function (ownershipSSI, callback) {
+        // will give token ownership to another generated ownershipSSI
+        throw Error("Not implemented");
+        // callback(err, newOwnershipSSI);
+    };
+
+    self.giveOwnership = function (ownershipSSI, oReadSSI, callback) {
+        // will give token ownership to another specified oReadSSI
+        throw Error("Not implemented");
+        // callback(err, transferSSI);
+    };
+}
+
+function createTokenSSI(identifier) {
+    return new TokenSSI(identifier);
+}
+
+module.exports = {
+    createTokenSSI
+};
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SSITypes = require("../SSITypes");
+
+function TransferSSI(identifier) {
+    KeySSIMixin(this);
+    const self = this;
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.TRANSFER_SSI;
+    }
+
+    self.initialize = function (dlDomain, hashNewPublicKey, timestamp, signature, vn, hint, callback) {
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = "v0";
+        }
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
+
+        self.load(SSITypes.TRANSFER_SSI, dlDomain, hashNewPublicKey, `${timestamp}/${signature.signature}/${signature.publicKey}`, vn, hint);
+
+        if (callback) {
+            callback(undefined, self);
+        }
+
+        self.initialize = function () {
+            throw Error("KeySSI already initialized");
+        };
+    };
+
+    self.getPublicKeyHash = function () {
+        return self.getSpecificString();
+    };
+
+    self.getTimestamp = function (){
+        let control = self.getControlString();
+        return control.split("/")[0];
+    }
+
+    self.getSignature = function (){
+        let control = self.getControlString();
+        let splitControl = control.split("/");
+        let signature = splitControl[1];
+        let publicKey = splitControl[2];
+        return {signature, publicKey};
+    }
+}
+
+function createTransferSSI(identifier) {
+    return new TransferSSI(identifier);
+}
+
+module.exports = {
+    createTransferSSI
+};
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
+
+function validateHashLinks(keySSI, hashLinks, callback) {
+    const validatedHashLinks = [];
+    let lastSSI;
+    let lastTransferSSI;
+    for (let i = 0; i < hashLinks.length; i++) {
+        const newSSI = hashLinks[i];
+        if (!verifySignature(keySSI, newSSI, lastSSI)) {
+            return callback(Error("Failed to verify signature"));
+        }
+
+        if (!validateAnchoredSSI(lastTransferSSI, newSSI)) {
+            return callback(Error("Failed to validate SSIs"));
+        }
+
+        if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
+            lastTransferSSI = newSSI;
+        } else {
+            validatedHashLinks.push(newSSI);
+            lastSSI = newSSI;
+        }
+    }
+    callback(undefined, validatedHashLinks);
+}
+
+
+function validateAnchoredSSI(lastTransferSSI, currentSSI) {
+    if (!lastTransferSSI) {
+        return true;
+    }
+    if (lastTransferSSI.getPublicKeyHash() !== currentSSI.getPublicKeyHash()) {
+        return false;
+    }
+
+    return true;
+}
+
+function verifySignature(keySSI, newSSI, lastSSI) {
+    if (!keySSI.canSign()) {
+        return true;
+    }
+    if (!newSSI.canBeVerified()) {
+        return true;
+    }
+    const timestamp = newSSI.getTimestamp();
+    const signature = newSSI.getSignature();
+    let dataToVerify = timestamp;
+    if (lastSSI) {
+        dataToVerify = lastSSI.getIdentifier() + dataToVerify;
+    }
+
+    if (newSSI.getTypeName() === constants.KEY_SSIS.SIGNED_HASH_LINK_SSI) {
+        dataToVerify += keySSI.getAnchorId();
+        return keySSI.verify(dataToVerify, signature)
+    }
+    if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
+        dataToVerify += newSSI.getSpecificString();
+        return keySSI.verify(dataToVerify, signature);
+    }
+
+    return false;
+}
+
+module.exports = {
+    validateHashLinks,
+};
+
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const keySSISpace = openDSU.loadApi("keyssi");
 const cachedStores = require("../cache/");
@@ -8518,7 +10404,10 @@ function addVersion(anchorId, newHashLinkId, callback) {
             hashLinkIds = [];
         }
 
-        hashLinkIds.push(newHashLinkId);
+        // when the anchor is first created, no version is created yet
+        if(newHashLinkId) {
+            hashLinkIds.push(newHashLinkId);
+        }
         cache.put(anchorId, hashLinkIds, callback);
     });
 }
@@ -8542,38 +10431,38 @@ module.exports = {
     addVersion,
     versions
 }
-},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
 const bdns = require("../bdns");
 const keyssi = require("../keyssi");
 const crypto = require("../crypto");
-const sc = require("../sc");
 const {fetch, doPut} = require("../http");
 const constants = require("../moduleConstants");
 const promiseRunner = require("../utils/promise-runner");
 const cachedAnchoring = require("./cachedAnchoring");
 const config = require("../config");
+const {validateHashLinks} = require("./anchoring-utils");
 
 const isValidVaultCache = () => {
     return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
 }
 /**
  * Get versions
- * @param {keySSI} powerfulKeySSI
+ * @param {keySSI} keySSI
  * @param {string} authToken
  * @param {function} callback
  */
-const versions = (powerfulKeySSI, authToken, callback) => {
+const versions = (keySSI, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
-    
-    const dlDomain = powerfulKeySSI.getDLDomain();
-    const anchorId = powerfulKeySSI.getAnchorId();
+
+    const dlDomain = keySSI.getDLDomain();
+    const anchorId = keySSI.getAnchorId();
 
     if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-         return cachedAnchoring.versions(anchorId, callback);
-     }
+        return cachedAnchoring.versions(anchorId, callback);
+    }
 
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
@@ -8587,15 +10476,17 @@ const versions = (powerfulKeySSI, authToken, callback) => {
 
         //TODO: security issue (which response we trust)
         const fetchAnchor = (service) => {
-            return fetch(`${service}/anchor/${dlDomain}/versions/${anchorId}`)
+            return fetch(`${service}/anchor/${dlDomain}/get-all-versions/${anchorId}`)
                 .then((response) => {
                     return response.json().then((hlStrings) => {
                         const hashLinks = hlStrings.map((hlString) => {
                             return keyssi.parse(hlString);
                         });
 
+                        const validatedHashLinks = $$.promisify(validateHashLinks)(keySSI, hashLinks);
+
                         // cache.put(anchorId, hlStrings);
-                        return hashLinks;
+                        return validatedHashLinks;
                     });
                 });
         };
@@ -8606,17 +10497,25 @@ const versions = (powerfulKeySSI, authToken, callback) => {
 
 /**
  * Add new version
- * @param {keySSI} powerfulKeySSI
- * @param {hashLinkSSI} newHashLinkSSI
- * @param {hashLinkSSI} lastHashLinkSSI
+ * @param {keySSI} SSICapableOfSigning
+ * @param {hashLinkSSI} newSSI
+ * @param {hashLinkSSI} lastSSI
  * @param {string} zkpValue
  * @param {string} digitalProof
  * @param {function} callback
  */
-const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, callback) => {
-    if (typeof lastHashLinkSSI === "function") {
-        callback = lastHashLinkSSI;
-        lastHashLinkSSI = undefined;
+const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) => {
+    if (typeof newSSI === "function") {
+        callback = newSSI;
+        newSSI = undefined;
+        lastSSI = undefined;
+        zkpValue = '';
+    }
+
+    if (typeof lastSSI === "function") {
+        callback = lastSSI;
+        lastSSI = undefined;
+        zkpValue = '';
     }
 
     if (typeof zkpValue === "function") {
@@ -8624,11 +10523,11 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
         zkpValue = '';
     }
 
-    const dlDomain = powerfulKeySSI.getDLDomain();
-    const anchorId = powerfulKeySSI.getAnchorId();
+    const dlDomain = SSICapableOfSigning.getDLDomain();
+    const anchorId = SSICapableOfSigning.getAnchorId();
 
     if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedAnchoring.addVersion(anchorId, newHashLinkSSI.getIdentifier(), callback);
+        return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
     }
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
@@ -8641,13 +10540,11 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
         }
 
         const hashLinkIds = {
-            last: lastHashLinkSSI ? lastHashLinkSSI.getIdentifier() : null,
-            new: newHashLinkSSI.getIdentifier()
+            last: lastSSI ? lastSSI.getIdentifier() : null,
+            new: newSSI ? newSSI.getIdentifier(): null
         };
-        createDigitalProof(powerfulKeySSI, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create digital proof`, err));
-            }
+
+        createDigitalProof(SSICapableOfSigning, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
             const body = {
                 hashLinkIds,
                 digitalProof,
@@ -8656,7 +10553,8 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
 
             const addAnchor = (service) => {
                 return new Promise((resolve, reject) => {
-                    const putResult = doPut(`${service}/anchor/${dlDomain}/add/${anchorId}`, JSON.stringify(body), (err, data) => {
+                    const anchorAction = newSSI ? "append-to-anchor" : "create-anchor";
+                    const putResult = doPut(`${service}/anchor/${dlDomain}/${anchorAction}/${anchorId}`, JSON.stringify(body), (err, data) => {
                         if (err) {
                             return reject({
                                 statusCode: err.statusCode,
@@ -8664,7 +10562,7 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
                             });
                         }
 
-                        require("opendsu").loadApi("resolver").invalidateDSUCache(powerfulKeySSI);
+                        require("opendsu").loadApi("resolver").invalidateDSUCache(SSICapableOfSigning);
                         return resolve(data);
                     });
                     if (putResult) {
@@ -8678,62 +10576,82 @@ const addVersion = (powerfulKeySSI, newHashLinkSSI, lastHashLinkSSI, zkpValue, c
     });
 };
 
-function createDigitalProof(powerfulKeySSI, newHashLinkIdentifier, lastHashLinkIdentifier, zkp, callback) {
-    let anchorId = powerfulKeySSI.getAnchorId();
-    let dataToSign = anchorId + newHashLinkIdentifier + zkp;
-    if (lastHashLinkIdentifier) {
-        dataToSign += lastHashLinkIdentifier;
+function createDigitalProof(SSICapableOfSigning, newSSIIdentifier, lastSSIIdentifier, zkp, callback) {
+     // when the anchor is first created, no version is created yet
+    if(!newSSIIdentifier) {
+        newSSIIdentifier = "";
     }
 
-    let ssiType = powerfulKeySSI.getTypeName();
-    switch(ssiType){
-        case constants.KEY_SSIS.SEED_SSI:
-            crypto.sign(powerfulKeySSI, dataToSign, (err, signature) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
-                }
-                const digitalProof = {
-                    signature: crypto.encodeBase58(signature),
-                    publicKey: crypto.encodeBase58(powerfulKeySSI.getPublicKey("raw"))
-                };
-                return callback(undefined, digitalProof);
-            });
-            break;
-
-        case constants.KEY_SSIS.CONST_SSI:
-        case constants.KEY_SSIS.ARRAY_SSI:
-        case constants.KEY_SSIS.WALLET_SSI:
-            return callback(undefined, {signature:"",publicKey:""})
-        default:
-            const securityContext = sc.createSecurityContext();
-            const keySSI = securityContext.getKeySSI(powerfulKeySSI);
-            securityContext.sign(powerfulKeySSI, dataToSign, (err, signature) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
-                }
-
-                return callback(undefined, {signature, publicKey: keySSI.getPublicKey()})
-            });
+    let anchorId = SSICapableOfSigning.getAnchorId();
+    let dataToSign = anchorId + newSSIIdentifier + zkp;
+    if (lastSSIIdentifier) {
+        dataToSign += lastSSIIdentifier;
     }
+
+    if (SSICapableOfSigning.canSign() === true) {
+        return SSICapableOfSigning.sign(dataToSign, callback);
+    }
+
+    callback(undefined, {signature: "", publicKey: ""});
 }
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
     // TODO: to be implemented
 }
 
-module.exports = {
-    addVersion,
-    versions
+
+const callContractMethod = (domain, method, ...args) => {
+    const callback = args.pop();
+    const contracts = require("opendsu").loadApi("contracts");
+    contracts.callContractMethod(domain, "anchoring", method, args, callback);
 }
-},{"../bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","../config":"/opt/privatesky/modules/opendsu/config/index.js","../crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","../http":"/opt/privatesky/modules/opendsu/http/index.js","../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../sc":"/opt/privatesky/modules/opendsu/sc/index.js","../utils/promise-runner":"/opt/privatesky/modules/opendsu/utils/promise-runner.js","./cachedAnchoring":"/opt/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+
+const createAnchor = (dsuKeySSI, callback) => {
+    addVersion(dsuKeySSI, callback)
+}
+
+const createNFT = (nftKeySSI, callback) => {
+    addVersion(nftKeySSI, callback)
+}
+
+const appendToAnchor = (dsuKeySSI, newShlSSI, previousShlSSI, zkpValue, callback) => {
+    addVersion(dsuKeySSI, newShlSSI, previousShlSSI, zkpValue, callback)
+}
+
+const transferTokenOwnership = (nftKeySSI, ownershipSSI, callback) => {
+    // TODO: to be implemented
+    callContractMethod(domain, "transferTokenOwnership", ...args);
+}
+
+const getAllVersions = (keySSI, authToken, callback) => {
+    versions(keySSI, authToken, callback);
+}
+
+const getLatestVersion = (domain, ...args) => {
+    // TODO: to be implemented
+    callContractMethod(domain, "getLatestVersion", ...args);
+}
+
+module.exports = {
+    createAnchor,
+    createNFT,
+    appendToAnchor,
+    transferTokenOwnership,
+    getAllVersions,
+    getLatestVersion
+}
+
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
+
 function BDNS() {
     PendingCallMixin(this);
     let bdnsCache;
     const http = require("opendsu").loadApi("http");
     let isInitialized = false;
+
     let retrieveHosts = () => {
         const url = `${getBaseURL()}/bdns#x-blockchain-domain-request`;
         http.fetch(url)
@@ -8741,9 +10659,7 @@ function BDNS() {
                 return response.json()
             }).then((bdnsHosts) => {
             bdnsHosts = JSON.stringify(bdnsHosts);
-            let baseURL =  require("../utils/getBaseURL")
-
-            bdnsHosts = bdnsHosts.replace(/\$ORIGIN/g, baseURL);
+            bdnsHosts = bdnsHosts.replace(/\$ORIGIN/g, getBaseURL());
             bdnsCache = JSON.parse(bdnsHosts);
             isInitialized = true;
             this.executePendingCalls();
@@ -8751,6 +10667,33 @@ function BDNS() {
     };
 
     retrieveHosts();
+
+    const getSection = (dlDomain, section, callback) => {
+        function load_or_default() {
+            if (typeof dlDomain === "undefined") {
+                return callback(Error(`The provided domain is undefined`));
+            }
+
+            if(typeof bdnsCache[dlDomain] === "undefined"){
+                return callback(Error(`The provided domain ${dlDomain} is not configured`));
+            }
+
+            return bdnsCache[dlDomain][section] ? bdnsCache[dlDomain][section] : [getBaseURL()];
+        }
+
+        if (!isInitialized) {
+            return this.addPendingCall(() => {
+                if (dlDomain === undefined) {
+                    return callback(new Error("The domain is not defined"));
+                }
+                callback(undefined, load_or_default());
+            })
+        }
+        if (dlDomain === undefined) {
+            return callback(new Error("The domain is not defined"));
+        }
+        callback(undefined, load_or_default());
+    }
 
     this.getRawInfo = (dlDomain, callback) => {
         if (!isInitialized) {
@@ -8762,41 +10705,28 @@ function BDNS() {
     };
 
     this.getBrickStorages = (dlDomain, callback) => {
-        if (!isInitialized) {
-            return this.addPendingCall(() => {
-                if (dlDomain === undefined){
-                    callback(new Error("The domain is not defined"));
-                }
-                callback(undefined, bdnsCache[dlDomain].brickStorages);
-            })
-        }
-        if (dlDomain === undefined){
-            callback(new Error("The domain is not defined"));
-        }
-        callback(undefined, bdnsCache[dlDomain].brickStorages);
+        getSection(dlDomain, "brickStorages", callback);
     };
 
     this.getAnchoringServices = (dlDomain, callback) => {
-        if (!isInitialized) {
-            return this.addPendingCall(() => {
-                callback(undefined, bdnsCache[dlDomain].anchoringServices);
-            })
-        }
-        if(dlDomain !== undefined){
-            callback(undefined, bdnsCache[dlDomain].anchoringServices);
-        } else {
-            callback(new Error("undefined domain does not exist"));
-        }
+        getSection(dlDomain, "anchoringServices", callback);
+    };
+
+    this.getContractServices = (dlDomain, callback) => {
+        getSection(dlDomain, "contractServices", callback);
     };
 
     this.getReplicas = (dlDomain, callback) => {
-        if (!isInitialized) {
-            return this.addPendingCall(() => {
-                callback(undefined, bdnsCache[dlDomain].replicas);
-            })
-        }
-        callback(undefined, bdnsCache[dlDomain].replicas);
+        getSection(dlDomain, "replicas", callback);
     };
+
+    this.getNotificationEndpoints = (dlDomain, callback) => {
+        getSection(dlDomain, "notifications", callback);
+    }
+
+    this.getMQEndpoints = (dlDomain, callback) => {
+        getSection(dlDomain, "mqEndpoints", callback);
+    }
 
     this.addRawInfo = (dlDomain, rawInfo) => {
         console.warn("This function is obsolete. Doing nothing");
@@ -8815,13 +10745,277 @@ function BDNS() {
     };
 
     this.setBDNSHosts = (bdnsHosts) => {
+        isInitialized = true;
         bdnsCache = bdnsHosts;
     }
 }
 
 
 module.exports = new BDNS();
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/opt/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js":[function(require,module,exports){
+(function (global){(function (){
+function BootEngine(getKeySSI) {
+    if (typeof getKeySSI !== "function") {
+        throw new Error("getSeed missing or not a function");
+    }
+    getKeySSI = promisify(getKeySSI);
+
+    const openDSU = require("opendsu");
+    const { constants } = openDSU;
+    const resolver = openDSU.loadApi("resolver");
+    const pskPath = require("swarmutils").path;
+
+    const evalBundles = async (bundles, ignore) => {
+        const listFiles = promisify(this.rawDossier.listFiles);
+        const readFile = promisify(this.rawDossier.readFile);
+
+        let fileList = await listFiles(constants.CONSTITUTION_FOLDER);
+        fileList = bundles
+            .filter((bundle) => fileList.includes(bundle) || fileList.includes(`/${bundle}`))
+            .map((bundle) => pskPath.join(constants.CONSTITUTION_FOLDER, bundle));
+
+        if (fileList.length !== bundles.length) {
+            const message = `Some bundles missing. Expected to have ${JSON.stringify(
+                bundles
+            )} but got only ${JSON.stringify(fileList)}`;
+            if (!ignore) {
+                throw new Error(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        for (let i = 0; i < fileList.length; i++) {
+            var fileContent = await readFile(fileList[i]);
+            try {
+                eval(fileContent.toString());
+            } catch (e) {
+                console.log("Failed to eval file", fileList[i], e);
+            }
+        }
+    };
+
+    this.boot = function (callback) {
+        const __boot = async () => {
+            const keySSI = await getKeySSI();
+            const loadRawDossier = promisify(resolver.loadDSU);
+            try {
+                this.rawDossier = await loadRawDossier(keySSI);
+                global.rawDossier = this.rawDossier;
+            } catch (err) {
+                console.log(err);
+                return callback(err);
+            }
+
+            const listFiles = promisify(this.rawDossier.listFiles);
+            const readFile = promisify(this.rawDossier.readFile);
+
+            let isBootFilePresent;
+            let bootConfig;
+            try {
+                let allFiles = await listFiles(constants.CODE_FOLDER);
+                console.log("allFiles", allFiles);
+                isBootFilePresent = allFiles.some((file) => file === constants.BOOT_CONFIG_FILE);
+                if (isBootFilePresent) {
+                    const bootConfigFile = `${constants.CODE_FOLDER}/${constants.BOOT_CONFIG_FILE}`;
+                    let bootConfigfileContent = await readFile(bootConfigFile);
+                    bootConfig = JSON.parse(bootConfigfileContent.toString());
+                }
+            } catch (error) {
+                console.error("Cannot check boot config file", error);
+                return callback(error);
+            }
+
+            if (!isBootFilePresent || !bootConfig) {
+                return;
+            }
+
+            const { runtimeBundles, constitutionBundles } = bootConfig;
+
+            if (typeof runtimeBundles !== "undefined" && !Array.isArray(runtimeBundles)) {
+                return callback(new Error("runtimeBundles is not array"));
+            }
+
+            if (typeof constitutionBundles !== "undefined" && !Array.isArray(constitutionBundles)) {
+                return callback(new Error("constitutionBundles is not array"));
+            }
+
+            try {
+                await evalBundles(runtimeBundles);
+            } catch (err) {
+                if (err.type !== "PSKIgnorableError") {
+                    console.log(err);
+                    return callback(err);
+                }
+            }
+
+            if (typeof constitutionBundles !== "undefined") {
+                try {
+                    await evalBundles(constitutionBundles, true);
+                } catch (err) {
+                    console.log(err);
+                    return callback(err);
+                }
+            }
+        };
+
+        __boot()
+            .then(() => callback(undefined, this.rawDossier))
+            .catch(callback);
+    };
+}
+
+function promisify(fn) {
+    return function (...args) {
+        return new Promise((resolve, reject) => {
+            fn(...args, (err, ...res) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                } else {
+                    resolve(...res);
+                }
+            });
+        });
+    };
+}
+
+module.exports = BootEngine;
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js":[function(require,module,exports){
+function boot(keySSI) {
+    const worker_threads = "worker_threads";
+    const { parentPort } = require(worker_threads);
+    const { handleMessage } = require("./boot-utils.js");
+
+    parentPort.on("message", (message) => {
+        handleMessage(message, (error, result) => {
+            parentPort.postMessage({ error, result });
+        });
+    });
+
+    process.on("uncaughtException", (err) => {
+        console.error("[worker] unchaughtException inside worker", err);
+        setTimeout(() => {
+            process.exit(1);
+        }, 100);
+    });
+
+    function getKeySSI(callback) {
+        callback(null, keySSI);
+    }
+
+    const BootEngine = require("./BootEngine.js");
+
+    console.log(`[worker] booting DSU for keySSI ${keySSI}...`);
+
+    const booter = new BootEngine(getKeySSI);
+
+    booter.boot((error) => {
+        if (error) {
+            parentPort.postMessage({ error });
+            throw error;
+        }
+
+        console.log("[worker] ready");
+        parentPort.postMessage("ready");
+    });
+}
+
+module.exports = boot;
+
+},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js":[function(require,module,exports){
+function boot(keySSI) {
+    const { handleMessage } = require("./boot-utils.js");
+
+    onmessage = (message) => {
+        handleMessage(message.data, (error, result) => {
+            postMessage({ error, result });
+        });
+    };
+
+    function getKeySSI(callback) {
+        callback(null, keySSI);
+    }
+
+    const BootEngine = require("./BootEngine.js");
+
+    console.log(`[worker] booting DSU for keySSI ${keySSI}...`);
+
+    const booter = new BootEngine(getKeySSI);
+
+    booter.boot((error) => {
+        if (error) {
+            postMessage({ error });
+            throw error;
+        }
+
+        console.log("[worker] ready");
+        postMessage("ready");
+    });
+}
+
+module.exports = boot;
+
+},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js":[function(require,module,exports){
+function handleMessage(message, onHandleMessage) {
+    // console.log("[worker] Received message", message);
+
+    const { fn, api, args } = message;
+    const callback = (error, result) => {
+        console.log(`[worker] finished work ${message}`, error, result);
+
+         // in order to ensure result serializability we JSON.stringify it if isn't a Buffer
+         if (!$$.Buffer.isBuffer(result)) {
+            result = JSON.stringify(result);
+        }
+
+        onHandleMessage(error, result);
+    };
+    try {
+        const dsuArgs = [...args, callback];
+
+        if (api) {
+            // need to call the DSU's api.js method
+            this.rawDossier.call(api, ...dsuArgs);
+            return;
+        }
+
+        if (fn) {
+            this.rawDossier[fn].apply(this.rawDossier, dsuArgs);
+            return;
+        }
+
+        callback(new Error(`Received unknown task: ${JSON.stringify(message)}`));
+    } catch (error) {
+        onHandleMessage(error);
+    }
+}
+
+module.exports = {
+    handleMessage,
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js":[function(require,module,exports){
+let { ENVIRONMENT_TYPES } = require("../moduleConstants.js");
+
+function getBootScript() {
+    switch ($$.environmentType) {
+        case ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
+            return require("./WorkerBootScript");
+        case ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            return require("./NodeBootScript");
+        default:
+            throw new Error(`Current environment ${$$.environmentType} doesn't support opendsu boot script!`);
+    }
+}
+
+module.exports = getBootScript();
+
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./NodeBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js","./WorkerBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -8830,18 +11024,15 @@ const storeName = "bricks";
 
 function putBrick(brick, callback) {
     const cache = cachedStores.getCacheForVault(storeName);
-    crypto.hash(keySSISpace.buildTemplateSeedSSI("vault"), brick, (err, brickHash) => {
+    const hash = crypto.getCryptoFunctionForKeySSI(keySSISpace.createTemplateSeedSSI("vault"), "hash");
+    const brickHash = hash(brick);
+
+    cache.put(brickHash, brick, (err, hash) => {
         if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create brick hash`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
         }
 
-        cache.put(brickHash, brick, (err, hash) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to put brick data in cache`, err));
-            }
-
-            callback(undefined, hash);
-        });
+        callback(undefined, hash);
     });
 }
 
@@ -8857,10 +11048,24 @@ function getBrick(brickHash, callback) {
 }
 
 function getMultipleBricks(brickHashes, callback) {
-    brickHashes.forEach(brickHash => {
-        getBrick(brickHash, callback);
-    });
-
+    // The bricks need to be returned in the same order they were requested
+    let brickPromise = Promise.resolve();
+    for (const hl of brickHashes) {
+        // TODO: FIX ME
+        // This is a HACK. It should cover 99% of the cases
+        // but it might still fail if the brick data transfer
+        // is delayed due to network issues and the next iteration
+        // resolves faster. The correct solution involves changing
+        // multiple layers
+        brickPromise = brickPromise.then(() => {
+            return new Promise((resolve) => {
+                getBrick(hl, (err, brick) => {
+                    callback(err, brick);
+                    resolve();
+                });
+            })
+        })
+    }
 }
 
 module.exports = {
@@ -8868,7 +11073,8 @@ module.exports = {
     getBrick,
     getMultipleBricks
 }
-},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
+
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
@@ -8923,7 +11129,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
                 return callback('No storage provided');
             }
 
-            const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricking/${dlDomain}/get-brick/${brickHash}/${dlDomain}`));
+            const queries = brickStorageArray.map((storage) => fetch(`${storage}/bricking/${dlDomain}/get-brick/${brickHash}`));
 
             Promise.all(queries).then((responses) => {
                 responses[0].arrayBuffer().then((data) => {
@@ -8959,7 +11165,25 @@ const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
     if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
         return cachedBricking.getMultipleBricks(bricksHashes, callback);
     }
-    hashLinkSSIList.forEach(hashLinkSSI => getBrick(hashLinkSSI, authToken, callback));
+
+    // The bricks need to be returned in the same order they were requested
+    let brickPromise = Promise.resolve();
+    for (const hl of hashLinkSSIList) {
+        // TODO: FIX ME
+        // This is a HACK. It should cover 99% of the cases
+        // but it might still fail if the brick data transfer
+        // is delayed due to network issues and the next iteration
+        // resolves faster. The correct solution involves changing
+        // multiple layers
+        brickPromise = brickPromise.then(() => {
+            return new Promise((resolve) => {
+                getBrick(hl, authToken, (err, brick) => {
+                    callback(err, brick);
+                    resolve();
+                });
+            })
+        })
+    }
 };
 
 
@@ -8971,25 +11195,24 @@ const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
  * @param {function} callback
  * @returns {string} brickhash
  */
-const putBrick = (keySSI, brick, authToken, callback) => {
+const putBrick = (domain, brick, authToken, callback) => {
     if (typeof authToken === 'function') {
         callback = authToken;
         authToken = undefined;
     }
 
-    const dlDomain = keySSI.getBricksDomain();
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+    if (domain === constants.DOMAINS.VAULT && isValidVaultCache()) {
         return cachedBricking.putBrick(brick, callback);
     }
 
-    bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
+    bdns.getBrickStorages(domain, (err, brickStorageArray) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
         }
         const setBrick = (storage) => {
             return new Promise((resolve, reject) => {
-                const putResult = doPut(`${storage}/bricking/${dlDomain}/put-brick/${dlDomain}`, brick, (err, data) => {
+                const putResult = doPut(`${storage}/bricking/${domain}/put-brick`, brick, (err, data) => {
                     if (err) {
                         return reject(err);
                     }
@@ -9029,7 +11252,7 @@ const putBrick = (keySSI, brick, authToken, callback) => {
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-},{"../cache/":"/opt/privatesky/modules/opendsu/cache/index.js","../config":"/opt/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/opt/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/opt/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -9109,7 +11332,7 @@ function FSCache(folderName) {
 
 
 module.exports.FSCache = FSCache;
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/opt/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -9230,7 +11453,7 @@ function IndexedDBCache(storeName, lifetime) {
 
 
 module.exports.IndexedDBCache  = IndexedDBCache;
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
 
 const constants = require("../moduleConstants");
 
@@ -9263,7 +11486,7 @@ function MemoryCache() {
 
 
 module.exports.MemoryCache = MemoryCache;
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js"}],"/opt/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -9303,7 +11526,7 @@ module.exports = {
     getCacheForVault,
     getMemoryCache
 }
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/opt/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/opt/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/opt/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
 const config = require("./index");
 const constants = require("../moduleConstants");
 const system = require("../system");
@@ -9313,6 +11536,7 @@ const errorModule = require("../error");
 system.setEnvironmentVariable(constants.BDNS_ROOT_HOSTS, `${getBaseURL()}/bdns#x-blockchain-domain-request`);
 switch ($$.environmentType) {
     case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+    case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
         config.set(constants.CACHE.VAULT_TYPE, constants.CACHE.INDEXED_DB);
         break;
     case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
@@ -9339,7 +11563,7 @@ setGlobalVariable("printOpenDSUError", errorModule.printOpenDSUError);
 
 
 
-},{"../error":"/opt/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../system":"/opt/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/opt/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/opt/privatesky/modules/opendsu/config/index.js"}],"/opt/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+},{"../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
 
 module.exports = function(environment){
         const config = require("./index.js");
@@ -9356,7 +11580,7 @@ module.exports = function(environment){
         }
         console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
 }
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/opt/privatesky/modules/opendsu/config/index.js"}],"/opt/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
 const config = {};
 function set(key, value) {
     config[key] = value;
@@ -9383,19 +11607,278 @@ module.exports = {
 };
 
 
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/opt/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/opt/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
+const getBaseURL = require("../utils/getBaseURL");
+
+const {
+    DomainNotSupportedError,
+    getSafeCommandBody,
+    getNoncedCommandBody,
+    getContractEndpointUrl,
+    callContractEndpoint,
+    callContractEndpointUsingBdns,
+} = require("./utils");
+
+async function sendCommand(method, contractEndpointPrefix, domain, commandBody, callback) {
+    if (typeof commandBody === "function") {
+        callback = commandBody;
+        commandBody = null;
+    }
+
+    callback = $$.makeSaneCallback(callback);
+
+    try {
+        try {
+            // try to send the command to the current apihub endpoint
+            const currentApihubUrl = getContractEndpointUrl(getBaseURL(), domain, contractEndpointPrefix);
+            const response = await callContractEndpoint(currentApihubUrl, method, domain, commandBody);
+            callback(null, response);
+        } catch (error) {
+            // if the current apihub endpoint doesn't handle the current domain, then send the command using BDNS
+            if (error instanceof DomainNotSupportedError) {
+                callContractEndpointUsingBdns(method, contractEndpointPrefix, domain, commandBody, callback);
+                return;
+            }
+            throw error;
+        }
+    } catch (error) {
+        OpenDSUSafeCallback(callback)(
+            createOpenDSUErrorWrapper(`Failed to execute domain contract method: ${JSON.stringify(commandBody)}`, error)
+        );
+    }
+}
+
+function generateSafeCommand(domain, contractName, methodName, params, callback) {
+    if (typeof params === "function") {
+        callback = params;
+        params = null;
+    }
+
+    try {
+        const commandBody = getSafeCommandBody(domain, contractName, methodName, params);
+        sendCommand("POST", "safe-command", domain, commandBody, callback);
+    } catch (error) {
+        callback(error);
+    }
+}
+
+async function generateNoncedCommand(signerDID, domain, contractName, methodName, params, timestamp, callback) {
+    if (typeof timestamp === "function") {
+        callback = timestamp;
+
+        // check if the param before provided callback is either the timestamp or the params, since both are optional
+        if (typeof params === "number") {
+            timestamp = params;
+            params = null;
+        } else {
+            timestamp = null;
+        }
+    }
+
+    if (typeof params === "function") {
+        callback = params;
+        params = null;
+        timestamp = null;
+    }
+    if (!signerDID) {
+        return callback("signerDID not provided");
+    }
+
+    if (!timestamp) {
+        timestamp = Date.now();
+    }
+
+    try {
+        if (typeof signerDID === "string") {
+            // signerDID contains the identifier, so we need to load the DID
+            const w3cDID = require("opendsu").loadAPI("w3cdid");
+            signerDID = await $$.promisify(w3cDID.resolveDID)(signerDID);
+        }
+
+        const latestBlockInfo = await $$.promisify(sendCommand)("GET", "latest-block-info", domain);
+        const { number: blockNumber } = latestBlockInfo;
+
+        const commandBody = getNoncedCommandBody(domain, contractName, methodName, params, blockNumber, timestamp, signerDID);
+        sendCommand("POST", "nonced-command", domain, commandBody, callback);
+    } catch (error) {
+        callback(error);
+    }
+}
+
+module.exports = {
+    generateSafeCommand,
+    generateNoncedCommand,
+};
+
+},{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
+const { fetch, doPost } = require("../http");
+const promiseRunner = require("../utils/promise-runner");
+
+class DomainNotSupportedError extends Error {
+    constructor(domain, url) {
+        super(`Domain '${domain}' not supported for calling URL ${url}`);
+        this.name = "DomainNotSupportedError";
+    }
+}
+
+function getCommandHash(command) {
+    const { domain, contractName, methodName, params, type, blockNumber, timestamp } = command;
+
+    const objectToHash = {
+        domain,
+        contractName,
+        methodName,
+        params,
+    };
+
+    if (type === "nonced") {
+        objectToHash.blockNumber = blockNumber;
+        objectToHash.timestamp = timestamp;
+    }
+
+    const crypto = require("opendsu").loadApi("crypto");
+    const hash = crypto.sha256(objectToHash);
+
+    return hash;
+}
+
+function getSafeCommandBody(domain, contractName, methodName, params) {
+    if (!domain || typeof domain !== "string") {
+        throw `Invalid domain specified: ${domain}!`;
+    }
+    if (!contractName || typeof contractName !== "string") {
+        throw `Invalid contractName specified: ${contractName}!`;
+    }
+    if (!methodName || typeof methodName !== "string") {
+        throw `Invalid methodName specified: ${methodName}!`;
+    }
+
+    if (params) {
+        if (!Array.isArray(params)) {
+            throw `Invalid params specified (must be a list): ${params}!`;
+        }
+    }
+
+    return {
+        domain,
+        contractName,
+        methodName,
+        params,
+        type: "safe",
+    };
+}
+
+function getNoncedCommandBody(domain, contract, method, params, blockNumber, timestamp, signerDID) {
+    if (!signerDID) {
+        // params field is optional
+        signerDID = timestamp;
+        timestamp = blockNumber;
+        blockNumber = params;
+        params = null;
+    }
+
+    const commandBody = getSafeCommandBody(domain, contract, method, params);
+    commandBody.type = "nonced";
+    commandBody.blockNumber = blockNumber;
+    commandBody.timestamp = timestamp;
+    commandBody.signerDID = signerDID.getIdentifier();
+
+    const hash = getCommandHash(commandBody);
+    const signature = signerDID.sign(hash);
+
+    commandBody.requesterSignature = signature;
+
+    return commandBody;
+}
+
+function getContractEndpointUrl(baseUrl, domain, contractEndpointPrefix) {
+    return `${baseUrl}/contracts/${domain}/${contractEndpointPrefix}`;
+}
+
+async function callContractEndpoint(url, method, domain, body) {
+    let response;
+    if (method === "GET") {
+        response = await fetch(url);
+        if (response.statusCode === 404) {
+            throw new DomainNotSupportedError(domain, url);
+        }
+
+        response = await response.json();
+    } else {
+        try {
+            response = await $$.promisify(doPost)(url, body);
+        } catch (error) {
+            if (error.statusCode === 404) {
+                throw new DomainNotSupportedError(domain, url);
+            }
+            throw error;
+        }
+    }
+
+    if (response) {
+        try {
+            response = JSON.parse(response);
+        } catch (error) {
+            // the response isn't a JSON so we keep it as it is
+        }
+
+        if (response.optimisticResult) {
+            try {
+                response.optimisticResult = JSON.parse(response.optimisticResult);
+            } catch (error) {
+                // the response isn't a JSON so we keep it as it is
+            }
+        }
+    }
+
+    return response;
+}
+
+async function callContractEndpointUsingBdns(method, contractEndpointPrefix, domain, commandBody, callback) {
+    let contractServicesArray = [];
+    try {
+        const bdns = require("opendsu").loadApi("bdns");
+        contractServicesArray = await $$.promisify(bdns.getContractServices)(domain);
+    } catch (error) {
+        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get contract services from bdns'`, error));
+    }
+
+    if (!contractServicesArray.length) {
+        return callback("No contract service provided");
+    }
+    const runContractMethod = async (service) => {
+        const url = getContractEndpointUrl(service, domain, contractEndpointPrefix);
+        const response = await callContractEndpoint(url, method, domain, commandBody);
+        return response;
+    };
+
+    promiseRunner.runOneSuccessful(contractServicesArray, runContractMethod, callback, new Error("get Contract Service"));
+}
+
+module.exports = {
+    DomainNotSupportedError,
+    getSafeCommandBody,
+    getNoncedCommandBody,
+    getContractEndpointUrl,
+    callContractEndpoint,
+    callContractEndpointUsingBdns,
+};
+
+},{"../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
+const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 const SSITypes = keySSIResolver.SSITypes;
+const CryptoFunctionTypes = keySSIResolver.CryptoFunctionTypes;
 const jwtUtils = require("./jwt");
 
 const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 templateSeedSSI.load(SSITypes.SEED_SSI, "default");
 
-const { JWT_ERRORS } = jwtUtils;
+const {JWT_ERRORS} = jwtUtils;
 
-const getCryptoFunctionForKeySSI = (keySSI, cryptoFunctionType)=>{
+const getCryptoFunctionForKeySSI = (keySSI, cryptoFunctionType) => {
     return cryptoRegistry.getCryptoFunction(keySSI, cryptoFunctionType);
 }
 const hash = (keySSI, data, callback) => {
@@ -9412,27 +11895,32 @@ const hashSync = (keySSI, data) => {
     return hash(data);
 }
 
-const encrypt = (keySSI, buffer, callback) => {
-    console.log("This function is obsolete");
-    const encrypt = cryptoRegistry.getEncryptionFunction(keySSI);
-    callback(undefined, encrypt(buffer, keySSI.getEncryptionKey()));
+const encrypt = (data, encryptionKey) => {
+    const pskEncryption = crypto.createPskEncryption("aes-256-gcm");
+    return pskEncryption.encrypt(data, encryptionKey);
 };
 
-const decrypt = (keySSI, encryptedBuffer, callback) => {
-    console.log("This function is obsolete");
-    const decrypt = cryptoRegistry.getDecryptionFunction(keySSI);
-    let decryptedBuffer;
-    try {
-        decryptedBuffer = decrypt(encryptedBuffer, keySSI.getEncryptionKey());
-    } catch (e) {
-        return callback(e);
-    }
-    callback(undefined, decryptedBuffer);
+const decrypt = (data, encryptionKey) => {
+    const pskEncryption = crypto.createPskEncryption("aes-256-gcm");
+    return pskEncryption.decrypt(data, encryptionKey);
 };
+
+const ecies_encrypt_ds = (senderKeySSI, receiverKeySSI, data) => {
+    const ecies_encrypt_ds = getCryptoFunctionForKeySSI(senderKeySSI, CryptoFunctionTypes.ECIES_ENCRYPTION_DS);
+    return ecies_encrypt_ds(senderKeySSI.getKeyPair(), receiverKeySSI.getPublicKey("raw"), data);
+};
+
+const ecies_decrypt_ds = (receiverKeySSI, data) => {
+    const ecies_decrypt_ds = getCryptoFunctionForKeySSI(receiverKeySSI, CryptoFunctionTypes.ECIES_DECRYPTION_DS);
+    return ecies_decrypt_ds(receiverKeySSI.getPrivateKey(), data);
+};
+
+const deriveEncryptionKey = (password) => {
+    return crypto.deriveKey(password);
+}
 
 const convertDerSignatureToASN1 = (derSignature) => {
     return require('pskcrypto').decodeDerToASN1ETH(derSignature);
-
 };
 
 const convertASN1SignatureToDer = (ans1Signature) => {
@@ -9487,11 +11975,35 @@ const generateRandom = (length) => {
 }
 
 const encodeBase58 = (data) => {
-    return encode(templateSeedSSI, data);
+    const encodeFn = getCryptoFunctionForKeySSI(templateSeedSSI, "encoding");
+    return encodeFn(data);
 };
+
 const decodeBase58 = (data) => {
-    return decode(templateSeedSSI, data);
+    const decodeFn = getCryptoFunctionForKeySSI(templateSeedSSI, "decoding");
+    return decodeFn(data);
 };
+
+
+/**
+ *
+ * @param rawPublicKey
+ * @param outputFormat - pem or der
+ */
+const convertPublicKey = (rawPublicKey, outputFormat, curveName) => {
+    const ecGenerator = crypto.createKeyPairGenerator();
+    return ecGenerator.convertPublicKey(rawPublicKey, {outputFormat, namedCurve: curveName});
+};
+
+/**
+ *
+ * @param rawPrivateKey
+ * @param outputFormat - pem or der
+ */
+const convertPrivateKey = (rawPrivateKey, outputFormat) => {
+    const ecGenerator = crypto.createKeyPairGenerator();
+    return ecGenerator.convertPrivateKey(rawPrivateKey, {outputFormat});
+}
 
 const createJWT = (seedSSI, scope, credentials, options, callback) => {
     jwtUtils.createJWT(
@@ -9500,7 +12012,6 @@ const createJWT = (seedSSI, scope, credentials, options, callback) => {
             scope,
             credentials,
             options,
-            hash,
             sign,
         },
         callback
@@ -9512,7 +12023,6 @@ const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
         {
             jwt,
             rootOfTrustVerificationStrategy,
-            hash,
             verifySignature,
         },
         callback
@@ -9520,7 +12030,7 @@ const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
 };
 
 const createCredential = (issuerSeedSSI, credentialSubjectSReadSSI, callback) => {
-    createJWT(issuerSeedSSI, "", null, { subject: credentialSubjectSReadSSI }, callback);
+    createJWT(issuerSeedSSI, "", null, {subject: credentialSubjectSReadSSI}, callback);
 };
 
 const createAuthToken = (holderSeedSSI, scope, credential, callback) => {
@@ -9535,8 +12045,8 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
     if (!listOfIssuers || !listOfIssuers.length) return callback(JWT_ERRORS.EMPTY_LIST_OF_ISSUERS_PROVIDED);
 
     // checks every credentials from the JWT's body to see if it has at least one JWT issues by one of listOfIssuers for the current subject
-    const rootOfTrustVerificationStrategy = ({ body }, verificationCallback) => {
-        const { sub: subject, credentials } = body;
+    const rootOfTrustVerificationStrategy = ({body}, verificationCallback) => {
+        const {sub: subject, credentials} = body;
         // the JWT doesn't have credentials specified so we cannot check for valid authorizarion
         if (!credentials) return verificationCallback(null, false);
 
@@ -9546,7 +12056,7 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
             return new Promise((resolve) => {
                 verifyJWT(
                     credential,
-                    ({ body }, credentialVerificationCallback) => {
+                    ({body}, credentialVerificationCallback) => {
                         // check if credential was issued for the JWT that we are verifying the authorization for
                         const credentialSubject = jwtUtils.getReadableSSI(body.sub);
                         const isCredentialIssuedForSubject = !!credentialSubject && credentialSubject === currentSubject;
@@ -9590,7 +12100,6 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
 };
 
 
-
 function createBloomFilter(options) {
     const BloomFilter = require("psk-dbf");
     return new BloomFilter(options);
@@ -9623,9 +12132,14 @@ module.exports = {
     parseJWTSegments: jwtUtils.parseJWTSegments,
     createBloomFilter,
     JWT_ERRORS,
+    deriveEncryptionKey,
+    convertPrivateKey,
+    convertPublicKey,
+    ecies_encrypt_ds,
+    ecies_decrypt_ds
 };
 
-},{"./jwt":"/opt/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/opt/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -9657,6 +12171,7 @@ templateSeedSSI.load(SSITypes.SEED_SSI, "default");
 function encodeBase58(data) {
     return cryptoRegistry.getEncodingFunction(templateSeedSSI)(data).toString();
 };
+
 function decodeBase58(data, keepBuffer) {
     const decodedValue = cryptoRegistry.getDecodingFunction(templateSeedSSI)(data);
     if (keepBuffer) {
@@ -9689,7 +12204,7 @@ function getReadableSSI(ssi) {
     return readableSSI;
 }
 
-function createJWT({ seedSSI, scope, credentials, options, hash, sign }, callback) {
+function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
     if (typeof seedSSI === "string") {
         const keyssiSpace = require('opendsu').loadApi("keyssi");
         try {
@@ -9700,7 +12215,7 @@ function createJWT({ seedSSI, scope, credentials, options, hash, sign }, callbac
     }
     const sReadSSI = seedSSI.derive();
 
-    let { subject, valability, ...optionsRest } = options || {};
+    let {subject, valability, ...optionsRest} = options || {};
     valability = valability || JWT_VALABILITY_SECONDS;
 
     if (subject) {
@@ -9742,17 +12257,14 @@ function createJWT({ seedSSI, scope, credentials, options, hash, sign }, callbac
     const segments = [encodeBase58(JSON.stringify(header)), encodeBase58(JSON.stringify(body))];
 
     const jwtToSign = segments.join(".");
+    const hashFn = require("../crypto").getCryptoFunctionForKeySSI(seedSSI, "hash");
+    const hashResult = hashFn(jwtToSign);
+    sign(seedSSI, hashResult, (signError, signResult) => {
+        if (signError || !signResult) return callback(signError);
+        const encodedSignResult = encodeBase58(signResult);
 
-    hash(seedSSI, jwtToSign, (hashError, hashResult) => {
-        if (hashError) return callback(hashError);
-
-        sign(seedSSI, hashResult, (signError, signResult) => {
-            if (signError || !signResult) return callback(signError);
-            const encodedSignResult = encodeBase58(signResult);
-
-            const jwt = `${jwtToSign}.${encodedSignResult}`;
-            callback(null, jwt);
-        });
+        const jwt = `${jwtToSign}.${encodedSignResult}`;
+        callback(null, jwt);
     });
 }
 
@@ -9785,7 +12297,7 @@ function parseJWTSegments(jwt, callback) {
         return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
     }
 
-    return callback(null, { header, body, signature, signatureInput });
+    return callback(null, {header, body, signature, signatureInput});
 }
 
 function isJwtExpired(body) {
@@ -9797,7 +12309,7 @@ function isJwtNotActive(body) {
 }
 
 function verifyJWTContent(jwtContent, callback) {
-    const { header, body } = jwtContent;
+    const {header, body} = jwtContent;
 
     if (header.typ !== HEADER_TYPE) return callback(JWT_ERRORS.INVALID_JWT_HEADER_TYPE);
     if (!body.iss) return callback(JWT_ERRORS.INVALID_JWT_ISSUER);
@@ -9809,35 +12321,33 @@ function verifyJWTContent(jwtContent, callback) {
     callback(null);
 }
 
-const verifyJWT = ({ jwt, rootOfTrustVerificationStrategy, verifySignature, hash }, callback) => {
+const verifyJWT = ({jwt, rootOfTrustVerificationStrategy, verifySignature}, callback) => {
     parseJWTSegments(jwt, (parseError, jwtContent) => {
         if (parseError) return callback(parseError);
 
         verifyJWTContent(jwtContent, (verifyError) => {
             if (verifyError) return callback(verifyError);
 
-            const { header, body, signatureInput, signature } = jwtContent;
-            const { iss: sReadSSIString, publicKey } = body;
+            const {header, body, signatureInput, signature} = jwtContent;
+            const {iss: sReadSSIString, publicKey} = body;
 
             const sReadSSI = keySSIFactory.create(sReadSSIString);
+            const hashFn = require("../crypto").getCryptoFunctionForKeySSI(sReadSSI, "hash");
+            const hash = hashFn(signatureInput);
+            verifySignature(sReadSSI, hash, signature, publicKey, (verifyError, verifyResult) => {
+                if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
 
-            hash(sReadSSI, signatureInput, (error, hash) => {
-                if (error) return callback(error);
-                verifySignature(sReadSSI, hash, signature, publicKey, (verifyError, verifyResult) => {
-                    if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+                if (typeof rootOfTrustVerificationStrategy === "function") {
+                    rootOfTrustVerificationStrategy({header, body}, (verificationError, verificationResult) => {
+                        if (verificationError || !verificationResult) {
+                            return callback(JWT_ERRORS.ROOT_OF_TRUST_VERIFICATION_FAILED);
+                        }
+                        callback(null, true);
+                    });
+                    return;
+                }
 
-                    if (typeof rootOfTrustVerificationStrategy === "function") {
-                        rootOfTrustVerificationStrategy({ header, body }, (verificationError, verificationResult) => {
-                            if (verificationError || !verificationResult) {
-                                return callback(JWT_ERRORS.ROOT_OF_TRUST_VERIFICATION_FAILED);
-                            }
-                            callback(null, true);
-                        });
-                        return;
-                    }
-
-                    callback(null, true);
-                });
+                callback(null, true);
             });
         });
     });
@@ -9851,98 +12361,171 @@ module.exports = {
     JWT_ERRORS,
 };
 
-},{"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/db/BasicDB.js":[function(require,module,exports){
+},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
+module.exports.TimestampMergingStrategy = function(){
+
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js":[function(require,module,exports){
 /*
     An OpenDSU  BasicDB is a simple noSQL database
     The DB is used with a concept of "table" and rows (records) that have multiple versions
     The support for multiple versions is offered by getVersions function and by automatically managing 2 fields in the records:
-         - the "__version" field
-         - the "__previousRecord" field  pointing to the previous version of the record
+         - the "__version" field representing the height of the graph
+         - the "__previousRecord" field pointing to the previous version of the record
+         - the "__changeId" is unique id, is used to quickly determine the unique id of parent node/s for future conflict solving
+         - the "__timestamp" is a timestamp, number of milliseconds elapsed since January 1, 1970 00:00:00 UTC.
 
-    As you can see, nothing is ever realy updated, even the deletion is done by marking the record with the field "deleted"
+    As you can see, nothing is ever really updated, even the deletion is done by marking the record with the field "deleted"
  */
 
-const ObservableMixin  = require("../utils/ObservableMixin");
+const ObservableMixin = require("../../utils/ObservableMixin");
+let bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
-function BasicDB(storageStrategy){
+/*
+const crypto = require("crypto"); TODO: if required use from pskcrypto to have a single and portable point in all code
+
+function uid(bytes = 32) {
+    // node
+    if (process) {
+        return crypto.randomBytes(bytes).toString('base64')
+    }
+    // browser
+    else {
+        if (!crypto || !crypto.getRandomValues) {
+            throw new Error('crypto.getRandomValues not supported by the browser.')
+        }
+        return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(bytes))))
+    }
+}  */
+
+
+function BasicDB(storageStrategy) {
     let self = this;
     ObservableMixin(this);
+
+    storageStrategy.on("initialised", () => {
+        this.finishInitialisation();
+        this.dispatchEvent("initialised");
+    });
+
+    this.addIndex = function (tableName, fieldName, forceReindex, callback) {
+        if (typeof forceReindex === "function") {
+            callback = forceReindex;
+            forceReindex = false;
+        }
+
+        if (typeof forceReindex === "undefined") {
+            forceReindex = false;
+        }
+
+        storageStrategy.addIndex(tableName, fieldName, forceReindex, callback);
+    }
     /*
-        Get the whole content of the table and asynchorunsly return an array with all the  records satisfying the condition tested by the filterFunction
+        Get the whole content of the table and asynchronously return an array with all the  records satisfying the condition tested by the filterFunction
      */
-    this.filter = function(tableName, filterFunction, callback){
-        storageStrategy.filterTable(tableName, filterFunction, callback);
+    this.filter = function (tableName, query, sort, limit, callback) {
+        storageStrategy.filter(tableName, query, sort, limit, callback);
     };
 
     this.query = this.filter;
 
-    function getDefaultCallback(message, tableName, key){
-        return function (err,res){
-            if(err){
-                console.log(message,err);
-            }else {
-                console.log(message,`in table ${tableName} for key ${key} at version ${res.__version}`);
+    function getDefaultCallback(message, tableName, key) {
+        return function (err, res) {
+            if (err) {
+                reportUserRelevantError(message + ` with errors in table ${tableName} for key ${key}`, err);
+            } else {
+                console.log(message, `in table ${tableName} for key ${key}`);
             }
-
         }
     }
 
     /*
-      Insert a record, return error if already exists
+      Insert a record, return an error if an record with thew same key already exists
     */
-    this.insertRecord = function(tableName, key, record, callback){
-        callback = callback?callback:getDefaultCallback("Inserting a record",tableName, key);
-        record.__version = 0;
-        storageStrategy.insertRecord(tableName,key, record, callback);
+    this.insertRecord = function (tableName, key, record, callback) {
+        callback = callback ? callback : getDefaultCallback("Inserting a record", tableName, key);
+
+        self.getRecord(tableName, key, function (err, res) {
+            if (!err || res) {
+                //newRecord = Object.assign(newRecord, {__version:-1});
+                return callback(createOpenDSUErrorWrapper("Failed to insert over an existing record", new Error("Trying to insert into existing record")));
+            }
+            const sharedDSUMetadata = {}
+            sharedDSUMetadata.__version = 0;
+            sharedDSUMetadata.pk = key;
+            //sharedDSUMetadata.__changeId = uid();
+            sharedDSUMetadata.__timestamp = Date.now();
+            storageStrategy.insertRecord(tableName, key, Object.assign(sharedDSUMetadata, record), (err, res) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to insert record with key ${key} in table ${tableName} `, err));
+                }
+
+                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                callback(undefined, res);
+            });
+        });
     };
 
-    /*
-        Update a record, does not return an error if does not exists
-     */
-    this.updateRecord = function(tableName, key, record, callback){
-        callback = callback?callback:getDefaultCallback("Updating a record", tableName, key);
 
-        function doVersionIncAndUpdate(){
-            record.__version++;
-            if(record.__version == 0){
-                storageStrategy.insertRecord(tableName, key, record, callback);
+    /*
+        Update a record, return an error if does not exists (does not do an insert)
+     */
+    this.updateRecord = function (tableName, key, newRecord, callback) {
+        callback = callback ? callback : getDefaultCallback("Updating a record", tableName, key);
+        let currentRecord;
+
+        function doVersionIncAndUpdate(currentRecord, callback) {
+            newRecord.__version++;
+            newRecord.__timestamp = Date.now();
+            //newRecord.__changeId = uid();
+
+            if (newRecord.__version == 0) {
+                storageStrategy.insertRecord(tableName, key, newRecord, callback);
             } else {
-                storageStrategy.updateRecord(tableName, key, record, callback);
+                storageStrategy.updateRecord(tableName, key, newRecord, currentRecord, callback);
             }
         }
 
-        if(record.__version === undefined){
-            self.getRecord(tableName,key, function(err,res){
-                if(err || !res){
-                    res = {__version:-1};
+        self.getRecord(tableName, key, function (err, res) {
+            if (err || !res) {
+                //newRecord = Object.assign(newRecord, {__version:-1});
+                return callback(createOpenDSUErrorWrapper("Failed to update a record that does not exist", err));
+            }
+            if (res) {
+                currentRecord = res;
+                newRecord.__version = currentRecord.__version;
+                newRecord.pk = key;
+            }
+            doVersionIncAndUpdate(currentRecord, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to update record with key ${key} in table ${tableName} `, err));
                 }
-                record.__version = res.__version;
-                doVersionIncAndUpdate();
+
+                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                callback(undefined, newRecord);
             });
-        } else {
-            doVersionIncAndUpdate()
-        }
-    };
+        });
+    }
 
     /*
         Get a single row from a table
      */
-    this.getRecord = function(tableName, key, callback){
-        storageStrategy.getRecord(tableName, key, function(err,res){
-            if(err || res.__deleted){
-                return callback( createOpenDSUErrorWrapper(`Missing record in table ${tableName} and key ${key}`, err));
+    this.getRecord = function (tableName, key, callback) {
+        storageStrategy.getRecord(tableName, key, function (err, res) {
+            if (err || res.__deleted) {
+                return callback(createOpenDSUErrorWrapper(`Missing record in table ${tableName} and key ${key}`, err));
             }
-            callback(undefined,res);
+            callback(undefined, res);
         });
     };
 
     /*
       Get the history of a record, including the deleted versions
    */
-    this.getHistory = function(tableName, key, callback){
-        storageStrategy.getRecord(tableName, key, function(err,res){
-            if(err){
-                return callback( createOpenDSUErrorWrapper(`No history for table ${tableName} and key ${key}`, err));
+    this.getHistory = function (tableName, key, callback) {
+        storageStrategy.getRecord(tableName, key, function (err, res) {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`No history for table ${tableName} and key ${key}`, err));
             }
             callback(undefined, self.getRecordVersions(res));
         });
@@ -9951,349 +12534,1452 @@ function BasicDB(storageStrategy){
     /*
       Delete a record
      */
-    this.deleteRecord = function(tableName, key, callback){
-        self.getRecord(tableName, key, function(err, record){
+    this.deleteRecord = function (tableName, key, callback) {
+        self.getRecord(tableName, key, function (err, record) {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Could not retrieve record with key ${key} does not exist ${tableName} `, err));
+            }
+
+            const currentRecord = JSON.parse(JSON.stringify(record));
             record.__version++;
+            record.__timestamp = Date.now();
             record.__deleted = true;
-            storageStrategy.updateRecord(tableName, key, record, callback);
+            storageStrategy.updateRecord(tableName, key, record, currentRecord, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to update with key ${key} in table ${tableName} `, err));
+                }
+
+                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                callback();
+            });
         })
     };
 
-    this.getRecordVersions = function(record){
+    this.getRecordVersions = function (record) {
         let arrRes = []
-        while(record){
+        while (record) {
             arrRes.unshift(record);
             record = record.__previousRecord;
         }
         return arrRes;
     }
+
+    this.getIndexedFields = function (tableName, callback) {
+        storageStrategy.getIndexedFields(tableName, callback);
+    }
+
+    this.writeKey = function (key, value, callback) {
+        storageStrategy.writeKey(key, value, callback);
+    };
+
+    this.readKey = function (key, callback) {
+        storageStrategy.readKey(key, callback);
+    }
+    this.beginBatch = () => {
+        storageStrategy.beginBatch()
+    }
+
+    this.cancelBatch = (callback) => {
+        storageStrategy.cancelBatch(callback)
+    }
+
+    this.commitBatch = (callback) => {
+        storageStrategy.commitBatch(callback)
+    }
+
+
+    bindAutoPendingFunctions(this, ["on", "off"]);
+    //============================================================
+    // To not add others property on this object below this call =
+    //============================================================
 }
 
 module.exports = BasicDB;
-},{"../utils/ObservableMixin":"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/opt/privatesky/modules/opendsu/db/BigFileStorageStrategy.js":[function(require,module,exports){
 
-    function BigFileStorageStrategy(loadFunction, storeFunction, afterInitialisation){
-    let volatileMemory = {
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
+module.exports = {
+    ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
+        let resolver = require("../../resolver");
+        let keySSIApis = require("../../keyssi");
+        let constants = require("../../moduleConstants");
 
-    }
-    if(loadFunction){
-        loadFunction( (err, data) => {
-            if(err){
-                console.log(err.message);
-            } else {
-                volatileMemory = JSON.parse(data);
-                console.log("BigFileStorageStrategy loading state:",volatileMemory);
+        let doStorageDSUInitialisation = registerMandatoryCallback(
+            function (dsu, sharableSSI) {
+                callback(undefined, dsu, sharableSSI);
+            }, 10000);
+
+        resolver.loadDSU(keySSI, (err, dsuInstance) => {
+            if ((err || !dsuInstance) && keySSI.getTypeName() === constants.KEY_SSIS.SEED_SSI) {
+                return  createSeedDSU();
             }
-            if(afterInitialisation) afterInitialisation();
+
+            waitForWritableSSI(dsuInstance);
         });
-    } else {
-        if(afterInitialisation) afterInitialisation();
-    }
-    function autoStore(){
-        if(storeFunction){
-            let storedState = JSON.stringify(volatileMemory);
-            storeFunction(storedState, function(err, res){
-                if(err){
-                    reportUserRelevantError(createOpenDSUErrorWrapper("Failed to autostore db file", err));
+
+        function createSeedDSU() {
+            let writableDSU;
+
+            function createWritableDSU() {
+                let writableSSI = keySSIApis.createTemplateKeySSI(constants.KEY_SSIS.SEED_SSI, keySSI.getDLDomain());
+                resolver.createDSU(writableSSI, function (err, res) {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper("Failed to create writable DSU while initialising shared database " + dbName, err));
+                    }
+                    writableDSU = res;
+                    createWrapperDSU();
+                });
+            }
+
+            function createWrapperDSU() {
+                resolver.createDSUForExistingSSI(keySSI, function (err, res) {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper("Failed to create wrapper DSU while initialising shared database " + dbName, err));
+                    }
+                    res.beginBatch();
+                    res.mount("/data", writableDSU.getCreationSSI(), function (err, resSSI) {
+                        if (err) {
+                            return callback(createOpenDSUErrorWrapper("Failed to mount writable DSU in wrapper DSU while initialising shared database " + dbName, err));
+                        }
+                        res.commitBatch((err) => {
+                            if (err) {
+                                return callback(createOpenDSUErrorWrapper("Failed to anchor batch", err));
+                            }
+                            doStorageDSUInitialisation(writableDSU, keySSI.derive());
+                        });
+                    });
+                });
+            }
+
+            reportUserRelevantWarning("Creating a new shared database");
+            createWritableDSU();
+        }
+
+        function waitForWritableSSI(dsuInstance) {
+            dsuInstance.getArchiveForPath("/data/dsu-metadata-log", (err, result) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to load writable DSU " + dbName, err));
                 }
-                console.log("BigFileStorageStrategy storing state:",storedState, volatileMemory);
+
+                const keyssiAPI = require("opendsu").loadAPI("keyssi");
+                const writableSSI = keyssiAPI.parse(result.archive.getCreationSSI());
+                if (writableSSI.getTypeName() === "sread") {
+                    console.log("Delaying the loading of DSU based on the fact that current stare not reflecting a DB dsu type structure");
+                    return setTimeout(() => {
+                        dsuInstance.load(waitForWritableSSI);
+                    }, 1000);
+                }
+
+                doStorageDSUInitialisation(result.archive, keySSI);
+                reportUserRelevantWarning("Loading a shared database");
             });
         }
+
+    },
+    ensure_MultiUserDB_DSU_Initialisation: function (keySSI, dbName, userId, callback) {
+    }
+}
+
+},{"../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+let util = require("./impl/DSUDBUtil")
+
+
+function getBasicDB(storageStrategy, conflictSolvingStrategy){
+    let BasicDB = require("./impl/BasicDB");
+    return new BasicDB(storageStrategy, conflictSolvingStrategy);
+}
+
+function getMultiUserDB(keySSI, dbName){
+    throw "Not implemented yet";
+    let storageStrategy = require("./storageStrategies/MultiUserStorageStrategy");
+    let conflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy");
+}
+
+let getSharedDB = function(keySSI, dbName){
+    let SingleDSUStorageStrategy = require("./storageStrategies/SingleDSUStorageStrategy").SingleDSUStorageStrategy;
+    let storageStrategy = new SingleDSUStorageStrategy();
+    let ConflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy").TimestampMergingStrategy;
+    let db = getBasicDB(storageStrategy, new ConflictStrategy());
+
+    util.ensure_WalletDB_DSU_Initialisation(keySSI, dbName, function(err, _storageDSU, sharableSSI){
+        if (err) {
+            return OpenDSUSafeCallback()(createOpenDSUErrorWrapper("Failed to initialise WalletDB_DSU " + dbName, err));
+        }
+        storageStrategy.initialise(_storageDSU, dbName);
+        console.log("Finishing initialisation");
+
+        db.getShareableSSI = function(){
+                return sharableSSI;
+        };
+    })
+
+    return db;
+};
+
+module.exports = {
+    getBasicDB,
+    getWalletDB: getSharedDB,
+    getMultiUserDB,
+    getSharedDB
+}
+
+},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+
+function MultiUserStorageStrategy(){
+
+
+    this.initialise = function(_storageDSU, _dbName, _onInitialisationDone){
+        storageDSU              = _storageDSU;
+        afterInitialisation     = _afterInitialisation;
+        dbName                  = _dbName;
     }
 
-    function getTable(tableName){
-        let table = volatileMemory[tableName];
-        if(!table){
-            table = volatileMemory[tableName] = {};
+
+}
+module.exports = MultiUserStorageStrategy;
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
+function Query(queryArray){
+    let conditions = [];
+
+    function queryParser(query) {
+        query.forEach(fieldQuery => {
+            const splitQuery = fieldQuery.split(" ");
+            if (splitQuery.length < 3) {
+                throw Error(`Invalid query format. A query's format is <field> <operator> <value>`);
+            }
+            const operatorKeys = Object.keys(operators);
+            const operatorIndex = splitQuery.findIndex(operator => {
+                return operatorKeys.findIndex(el => el === operator) !== -1;
+            });
+
+            if (operatorIndex === -1) {
+                throw Error(`The provided query does not contain a valid operator.`);
+            }
+
+            const field = splitQuery.slice(0, operatorIndex).join(" ");
+            const operator = splitQuery[operatorIndex];
+            const value = splitQuery.slice(operatorIndex + 1).join(" ");
+
+            conditions.push([field, operator, value]);
+        });
+
+    }
+
+    this.filterValuesForIndex = (valueArray)=> {
+        let conds = conditions.filter(cond => cond[0] === this.getIndexName());
+        return valueArray.filter(val => {
+            for (let i = 0; i < conds.length; i++) {
+                if (!operators[conds[i][1]](val, conds[i][2])) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    this.filter = (sortedValues, getNextRecordForValue, limit, callback) => {
+        let conds = conditions.filter(cond => cond[0] !== this.getIndexName());
+        let filteredRecords = [];
+
+        function getNextRecord(currentIndex){
+            if (currentIndex === sortedValues.length) {
+                return callback(undefined, filteredRecords);
+            }
+            getNextRecordForValue(sortedValues[currentIndex], (err, record) => {
+                if (record === null) {
+                    getNextRecord(currentIndex + 1);
+                }else{
+                    processRecord(record);
+                    if (currentIndex === sortedValues.length || filteredRecords.length === limit) {
+                        return callback(undefined, filteredRecords);
+                    }
+                    getNextRecord(currentIndex);
+                }
+            });
         }
-        return table;
+
+        function processRecord(record) {
+            for (let i = 0; i < conds.length; i++) {
+                if (!operators[conds[i][1]](record[conds[i][0]], conds[i][2])) {
+                    return;
+                }
+            }
+            filteredRecords.push(record);
+        }
+
+        getNextRecord(0);
+    };
+
+    this.sortValues = (values, sortType) => {
+        let compareFn;
+        try {
+            compareFn = getCompareFunction(sortType);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to get compare function`, e);
+        }
+
+        values.sort(compareFn);
+    };
+
+    this.getIndexName = () => {
+        return conditions[0][0];
+    };
+
+    const operators = {
+        "<": function (x, y) {
+            return x < y
+        },
+        "<=": function (x, y) {
+            return x <= y
+        },
+        ">": function (x, y) {
+            return x > y
+        },
+        ">=": function (x, y) {
+            return x >= y
+        },
+        "==": function (x, y) {
+            return x == y
+        },
+        "like": function (str, regex) {
+            if (typeof regex === "string") {
+                let splitRegex = regex.split("/");
+                if (splitRegex[0] === '') {
+                    splitRegex = splitRegex.slice(1);
+                }
+                let flag = undefined;
+                if (splitRegex.length > 1) {
+                    flag = splitRegex.pop();
+                }
+                if (flag === '') {
+                    flag = undefined;
+                }
+                regex = new RegExp(splitRegex.join('/'), flag);
+            }
+            // return regex.test(str);
+            return str.match(regex);
+        }
+    };
+
+    function getCompareFunction(sortOrder) {
+        if (sortOrder === "asc" || sortOrder === "ascending") {
+            return function (a, b) {
+                if (a < b) {
+                    return -1;
+                }
+
+                if (a === b) {
+                    return 0
+                }
+
+                if (a > b) {
+                    return 1;
+                }
+            }
+        } else if (sortOrder === "dsc" || sortOrder === "descending") {
+            return function (a, b) {
+                if (a > b) {
+                    return -1;
+                }
+
+                if (a === b) {
+                    return 0
+                }
+
+                if (a < b) {
+                    return 1;
+                }
+            }
+        } else {
+            throw Error(`Invalid sort order provided <${sortOrder}>`);
+        }
+    }
+
+    queryParser(queryArray);
+}
+
+module.exports = Query;
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
+(function (Buffer){(function (){
+const ObservableMixin = require("../../utils/ObservableMixin");
+
+function SingleDSUStorageStrategy() {
+    let volatileMemory = {}
+    let self = this
+    let storageDSU;
+    let shareableSSI;
+    let dbName;
+
+    ObservableMixin(this);
+
+    this.initialise = function (_storageDSU, _dbName) {
+        storageDSU = _storageDSU;
+        dbName = _dbName;
+        this.dispatchEvent("initialised");
+    }
+    this.beginBatch = () => {
+        storageDSU.beginBatch();
+    }
+
+    this.cancelBatch = (callback) => {
+        storageDSU.cancelBatch(callback);
+    }
+
+    this.commitBatch = (callback) => {
+        storageDSU.commitBatch(callback);
+    }
+
+    function readTheWholeTable(tableName, callback) {
+        getPrimaryKeys(tableName, (err, recordKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read the records in table ${tableName}`, err));
+            }
+            const table = {};
+            const TaskCounter = require("swarmutils").TaskCounter;
+            const tc = new TaskCounter(() => {
+                return callback(undefined, table);
+            });
+            tc.increment(recordKeys.length);
+            recordKeys.forEach(recordKey => {
+                self.getRecord(tableName, recordKey, (err, record) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to get record ${recordKey} in table ${tableName}`, err));
+                    }
+
+                    table[recordKey] = record;
+                    tc.decrement();
+                });
+            })
+        });
     }
 
     /*
        Get the whole content of the table and asynchronously returns an array with all the  records satisfying the condition tested by the filterFunction
     */
-    this.filterTable = function(tableName, filterFunction, callback){
-        let tbl = getTable(tableName);
-        let result = [];
-        for(let n in tbl){
-            let item = tbl[n];
-            if(filterFunction(item)){
-                item.__key = n;
-                result.push(item);
+    this.filterTable = function (tableName, filterFunction, callback) {
+        readTheWholeTable(tableName, function (err, tbl) {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read table ${tableName}`, err));
             }
-        }
-        callback(undefined,result);
-    };
-
-    /*
-      Insert a record, return error if already exists
-    */
-    this.insertRecord = function(tableName, key, record, callback){
-        let tbl = getTable(tableName);
-        if(tbl[key] !== undefined){
-            return callback(new Error("Can't insert a new record for key "+ key))
-        }
-        tbl[key] = record;
-        autoStore();
-        callback(undefined, record);
-    };
-
-    /*
-        Update a record, return error if does not exists
-     */
-    this.updateRecord = function(tableName, key, record, callback){
-        let tbl = getTable(tableName);
-        if(tbl[key] === undefined){
-            return callback(new Error("Can't update a record for key "+ key))
-        }
-        record.__previousRecord = tbl[key] ;
-        tbl[key] = record;
-        autoStore();
-        callback(undefined, record);
-    };
-
-    /*
-        Get a single row from a table
-     */
-    this.getRecord = function(tableName, key, callback){
-        let tbl = getTable(tableName);
-        let record = tbl[key];
-        if( record === undefined){
-            return callback(new Error("Can't retrieve a record for key "+ key))
-        }
-        callback(undefined,record);
-    };
-}
-module.exports = BigFileStorageStrategy;
-},{}],"/opt/privatesky/modules/opendsu/db/SSDB.js":[function(require,module,exports){
-/*
-    An OpenDSU  Data Base (DB) is a simple noSQL database offered by OpenDSU for programmers to handle tasks where multiple users are contributing to a database.
-    The DB is used with a concept of "table" as described bellow:
-     - users are sharing information in the database with other users in a self sovereign way
-        - users are capable to read data from other users
-        - users are keeping strict audiatbility and ownership on written data (they share only sReadSSI and not SeedSSIs with other users)
-     - users are working with a concept of "tables" at a logical level:  however each user has a "shard" that he is updating
-     - the data stored as a map of objects. The objects have a primary key and are indexed by this primary key
-     -  the array of objects from all users is automatically merged when the user is reading a table.
-
-
-       The initialisation a DB can be done using and "mountingPoint" and 2 KeySSIs:
-       - sharedSSI :
-                - typically is a sReadSSI that users  use for reading data
-                - if sharedSSI is a SeedSSI, that this can be used  in the wallets belonging to the organisation to enrol new users.
-       - mySeedSSI: the current user use it to write data in its shard
- */
-
-
-function SSDB(mountingPoint, sharedSSI, mySeedSSI){
-
-    /*
-        Get the whole content of the table and returns an array with all the  records satisfying the condition tested by the filterFunction
-     */
-    this.filterTable = function(tableName, filterFunction){
-
-    };
-
-
-    /*
-        Update the content of my part of the table
-     */
-    this.updateMyShard = function(tableName, shardObject){
-
-    };
-
-
-    /*
-        Get a single row from a table
-     */
-    this.getRow = function(tableName, key){
-
-    };
-
-    /*
-        Update a single row
-     */
-    this.updateRow = function(tableName, key, value){
-
-    };
-
-
-    /*
-       Insert a single row
-     */
-    this.insertRow = function(tableName, key, value){
-
-    };
-
-
-    /*
-      Delete a single row
-     */
-    this.deleteRow = function(tableName, key, value){
-
-    };
-
-
-    /*
-      Enrol a user by mounting the sReadSSI in the list of users
-     */
-    this.enrolUser = function(userName, sReadSSI){
-
-    };
-
-    /*
-      Enrol a user by mounting the sReadSSI in the list of users
-     */
-    this.removeUser = function(userName, sReadSSI){
-
-    };
-}
-
-module.exports = SSDB;
-},{}],"/opt/privatesky/modules/opendsu/db/SharedDB.js":[function(require,module,exports){
-
-
-/*
-    A shared DB is a baseDB stored in a writable DSU mounted in a /data folder in another wrapper DSU.
-    This scheme is useful to share the database without sharing the SeedSSI of the wrapper DSU as this is usually used for signing, etc
- */
-function getSharedDB(keySSI, dbName){
-    let db;
-    let dbModule = require("./index.js");
-    let storageDSU;
-    let shareableSSI;
-    let skipFirstRead = false;
-    let pendingReadFunctionCallback = undefined;
-
-    if(!dbName){
-        throw new Error("Please provide a database name");
-    }
-
-    let doStorageDSUInitialisation = registerMandatoryCallback(
-            function (dsu, ssi, skip) {
-            storageDSU = dsu;
-            shareableSSI = ssi;
-            skipFirstRead = skip;
-            if(pendingReadFunctionCallback){
-                if (!skipFirstRead) {
-                    console.log("Reading state during initialisation for:",keySSI.getAnchorId());
-                    readFunction(pendingReadFunctionCallback);
-                } else {
-                    pendingReadFunctionCallback(undefined, "{}");
+            let result = [];
+            for (let n in tbl) {
+                let item = tbl[n];
+                if (filterFunction(item)) {
+                    item.__key = n;
+                    result.push(item);
                 }
             }
-            db.dispatchEvent("initialised", storageDSU);
-        }, 10000);
+            callback(undefined, result);
+        });
+    };
 
-    let resolver = require("../resolver");
-    let keySSIApis = require("../keyssi");
-    let constants = require("../moduleConstants");
-    let bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-
-    if(keySSI.getTypeName() === constants.KEY_SSIS.SEED_SSI){
-        let writableDSU;
-        function createWritableDSU(){
-            let writableSSI = keySSIApis.createTemplateKeySSI(constants.KEY_SSIS.SEED_SSI, keySSI.getDLDomain());
-            resolver.createDSU(writableSSI, function(err,res){
-                writableDSU = res;
-                createWrapperDSU();
-            });
-        }
-        function createWrapperDSU(){
-            resolver.createDSUForExistingSSI(keySSI, function(err,res){
-                res.mount("/data", writableDSU.getCreationSSI(), function(err, resSSI){
-                    if(err){
-                        return reportUserRelevantError("Failed to create writable DSU while initialising shared database " + dbName, err);
-                    }
-                    doStorageDSUInitialisation(res, keySSI.derive(), true);
-                });
-            });
-        }
-        reportUserRelevantWarning("Creating a new shared database");
-        createWritableDSU();
-    } else {
-        resolver.loadDSU(keySSI, function(err,res){
-            if(err){
-                reportUserRelevantError("Failed to load the DSU of a shared database " + dbName, err);
+    function checkFieldIsIndexed(tableName, fieldName, callback) {
+        const path = getIndexPath(tableName, fieldName);
+        storageDSU.stat(path, (err, stat) => {
+            if (err || typeof stat.type === "undefined") {
+                return callback(undefined, false);
             }
-            doStorageDSUInitialisation(res, keySSI, false);
-            reportUserRelevantWarning("Loading a shared database");
+            callback(undefined, true);
+        });
+    }
+
+    this.filter = function (tableName, conditionsArray, sort, limit, callback) {
+        if (typeof conditionsArray === "function") {
+            callback = conditionsArray;
+            conditionsArray = undefined;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof conditionsArray === "undefined") {
+            conditionsArray = "__timestamp > 0";
+        }
+
+        if (typeof conditionsArray === "string") {
+            conditionsArray = [conditionsArray];
+        } else if (!Array.isArray(conditionsArray)) {
+            return callback(Error(`Condition argument of filter function need to be string or array of strings`));
+        }
+        let Query = require("./Query");
+        let query = new Query(conditionsArray);
+
+        if (typeof sort === "function") {
+            callback = sort;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof limit === "function") {
+            callback = limit;
+            limit = undefined;
+        }
+
+        if (typeof limit === "undefined") {
+            limit = Infinity;
+        }
+
+        if (typeof sort === "undefined") {
+            sort = "asc";
+        }
+
+        const indexName = query.getIndexName();
+
+        this.addIndex(tableName, indexName, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to add index for fields ${indexName} in table ${tableName}`, err));
+            }
+
+            storageDSU.listFolders(getIndexPath(tableName, indexName), (err, values) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed read values for field ${indexName}`, err));
+                }
+
+                let filteredValues = query.filterValuesForIndex(values);
+                query.sortValues(filteredValues, sort);
+                const getNextRecordForValue = getNextRecordFunction(tableName, indexName)
+                query.filter(filteredValues, getNextRecordForValue, limit, callback);
+            });
         });
     }
 
 
-    function readFunction(callback){
-        if(storageDSU){
-            if(skipFirstRead) {
-                callback(undefined, "{}");
-            } else {
-                console.log("Reading state for:",keySSI.getAnchorId());
-                storageDSU.readFile(`/data/${dbName}`, callback);
+    function getNextRecordFunction(tableName, fieldName) {
+        let currentValue;
+        let pksArray;
+        let currentPosition;
+
+        function getNext(callback) {
+            if (currentPosition >= pksArray.length) {
+                return callback(undefined, null);
             }
+
+            self.getRecord(tableName, pksArray[currentPosition++], callback);
+        }
+
+        return function (value, callback) {
+            if (value !== currentValue) {
+                storageDSU.listFiles(getIndexPath(tableName, fieldName, value), (err, pks) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`No primary key found for value ${value}`, err));
+                    }
+
+                    pksArray = pks;
+                    currentPosition = 0;
+                    currentValue = value
+
+                    getNext(callback);
+                });
+            } else {
+                getNext(callback);
+            }
+        }
+
+    }
+
+    this.addIndex = function (tableName, fieldName, forceReindex, callback) {
+        if (typeof forceReindex === "function") {
+            callback = forceReindex;
+            forceReindex = false;
+        }
+
+        if (typeof forceReindex === "undefined") {
+            forceReindex = false;
+        }
+
+        if (forceReindex === false) {
+            checkFieldIsIndexed(tableName, fieldName, (err, status) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to check if field ${fieldName} in table ${tableName} is indexed`, err));
+                }
+
+                if (status === true) {
+                    return callback();
+                }
+
+                createIndex(tableName, fieldName, callback);
+            });
         } else {
-            pendingReadFunctionCallback = callback;
+            createIndex(tableName, fieldName, callback);
         }
     }
 
-    function writeFunction(dbState,callback){
-        storageDSU.writeFile(`/data/${dbName}`,dbState, callback);
+    this.getIndexedFields = function (tableName, callback) {
+        getIndexedFieldsList(tableName, callback);
+    };
+
+    function createIndex(tableName, fieldName, callback) {
+        getPrimaryKeys(tableName, (err, primaryKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get primary keys for table ${tableName}`, err));
+            }
+
+            function createIndexFilesRecursively(index) {
+                if (index === primaryKeys.length) {
+                    return callback(undefined);
+                }
+
+                const pk = primaryKeys[index];
+                self.getRecord(tableName, pk, (err, record) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to get record ${pk} from table ${tableName}`));
+                    }
+
+                    storageDSU.writeFile(getIndexPath(tableName, fieldName, record[fieldName], pk), undefined, (err) => {
+                        if (err) {
+                            return callback(createOpenDSUErrorWrapper(`Failed to create index for field ${fieldName} in table ${tableName}`, err));
+                        }
+
+                        createIndexFilesRecursively(index + 1);
+                    });
+                });
+            }
+
+            if (primaryKeys.length === 0) {
+                storageDSU.createFolder(getIndexPath(tableName, fieldName), (err) => {
+
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to create empty index for field ${fieldName} in table ${tableName}`, err));
+                    }
+
+                    callback(undefined)
+                });
+            } else {
+                createIndexFilesRecursively(0);
+            }
+        });
     }
-    let storageStrategy = dbModule.getBigFileStorageStrategy(readFunction, writeFunction, onInitialisationDone);
 
-    db = bindAutoPendingFunctions(dbModule.getBasicDB(storageStrategy), {});
+    function createIndexEntry(tableName, fieldName, pk, value, callback) {
+        storageDSU.writeFile(getIndexPath(tableName, fieldName, value, pk), (err) => {
+            let retErr = undefined;
+            if (err) {
+                retErr = createOpenDSUErrorWrapper(`Failed to create file ${getIndexPath(tableName, fieldName, value, pk)}`, err);
+            }
 
-    function onInitialisationDone(){
-        setTimeout(function(){
-            db.finishInitialisation();
-        },1)
+            callback(retErr)
+        });
     }
 
-    db.getShareableSSI = function(){
-        return shareableSSI;
+    function updateIndexesForRecord(tableName, pk, record, callback) {
+        if (record.__deleted) {
+            //deleted records don't need to be into indexes
+            return callback();
+        }
+        const fields = Object.keys(record);
+        getIndexedFieldsList(tableName, (err, indexedFields) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get indexed fields list for table ${tableName}`, err));
+            }
+
+            if (indexedFields.length === 0) {
+                return callback();
+            }
+
+            function updateIndexesRecursively(index) {
+                const field = fields[index];
+                if (typeof field === "undefined") {
+                    return callback();
+                }
+                if (indexedFields.findIndex(indexedField => indexedField === field) !== -1) {
+                    createIndexEntry(tableName, field, pk, record[field], (err) => {
+                        if (err) {
+                            return callback(createOpenDSUErrorWrapper(`Failed to update index for field ${field} in table ${tableName}`, err));
+                        }
+
+                        updateIndexesRecursively(index + 1);
+                    });
+                } else {
+                    updateIndexesRecursively(index + 1);
+                }
+            }
+
+            updateIndexesRecursively(0);
+        });
     }
-    return db;
+
+    // pk and value can be undefined and you get only the path to index of fieldName
+    function getIndexPath(tableName, fieldName, value, pk) {
+        let path = `/${dbName}/${tableName}/indexes/${fieldName}`;
+        if (typeof value !== "undefined") {
+            path = `${path}/${value}`;
+        }
+
+        if (typeof pk !== "undefined") {
+            path = `${path}/${pk}`;
+        }
+        return path;
+    }
+
+    function getRecordPath(tableName, pk) {
+        return `/${dbName}/${tableName}/records/${pk}`;
+    }
+
+    function deleteIndex(tableName, fieldName, pk, value, callback) {
+        storageDSU.delete(getIndexPath(tableName, fieldName, value, pk), (err) => {
+            let retErr = undefined;
+            if (err) {
+                retErr = createOpenDSUErrorWrapper(`Failed to delete file ${getIndexPath(tableName, fieldName, value, pk)}`, err);
+            }
+
+            callback(retErr);
+
+
+        });
+    }
+
+    function deleteIndexesForRecord(tableName, pk, record, callback) {
+        const fields = Object.keys(record);
+        getIndexedFieldsList(tableName, (err, indexedFields) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get indexed fields list for table ${tableName}`, err));
+            }
+
+            if (indexedFields.length === 0) {
+                return callback();
+            }
+
+            function deleteIndexesRecursively(index) {
+                const field = fields[index];
+                if (typeof field === "undefined") {
+                    return callback();
+                }
+                if (indexedFields.findIndex(indexedField => indexedField === field) !== -1) {
+                    deleteIndex(tableName, field, pk, record[field], (err) => {
+                        if (err) {
+                            return callback(createOpenDSUErrorWrapper(`Failed to delete index for field ${field} in table ${tableName}`, err));
+                        }
+
+                        deleteIndexesRecursively(index + 1);
+                    });
+                } else {
+                    deleteIndexesRecursively(index + 1);
+                }
+            }
+
+            deleteIndexesRecursively(0);
+        });
+    }
+
+    function getIndexedFieldsList(tableName, callback) {
+        const indexesFilePath = `/${dbName}/${tableName}/indexes`;
+        storageDSU.listFolders(indexesFilePath, (err, indexes) => {
+            if (err) {
+                return callback(undefined, []);
+            }
+
+            callback(undefined, indexes);
+        });
+    }
+
+    /*
+      Insert a record
+    */
+    this.insertRecord = function (tableName, key, record, callback) {
+        this.updateRecord(tableName, key, record, undefined, callback);
+    };
+
+    function getPrimaryKeys(tableName, callback) {
+        storageDSU.listFiles(`/${dbName}/${tableName}/records`, (err, primaryKeys) => {
+            if (err) {
+                return storageDSU.createFolder(`/${dbName}/${tableName}/records`, (err) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to retrieve primary keys list in table ${tableName}`, err));
+                    }
+                    callback(undefined, []);
+                });
+            }
+
+            callback(undefined, primaryKeys);
+        });
+    }
+
+    /*
+        Update a record
+     */
+    this.updateRecord = function (tableName, key, record, currentRecord, callback) {
+        if (typeof record !== "object") {
+            return callback(Error(`Invalid record type. Expected "object"`))
+        }
+
+        if (Buffer.isBuffer(record)) {
+            return callback(Error(`"Buffer" is not a valid record type. Expected "object".`))
+        }
+
+        if (Array.isArray(record)) {
+            this.writeKey(key, value, callback);
+            return callback(Error(`"Array" is not a valid record type. Expected "object".`))
+        }
+
+        const recordPath = getRecordPath(tableName, key);
+        storageDSU.writeFile(recordPath, JSON.stringify(record), function (err, res) {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to update record in ${recordPath}`, err));
+            }
+
+            if (typeof currentRecord !== "undefined") {
+                return deleteIndexesForRecord(tableName, key, currentRecord, (err) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to delete index files for record ${JSON.stringify(currentRecord)}`, err));
+                    }
+
+                    return updateIndexesForRecord(tableName, key, record, (err) => {
+                        if (err) {
+                            return callback(createOpenDSUErrorWrapper(`Failed to update indexes for record ${record}`, err));
+                        }
+
+                        callback(undefined, record);
+                    });
+                });
+            }
+
+            updateIndexesForRecord(tableName, key, record, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to update indexes for record ${record}`, err));
+                }
+
+                callback(undefined, record);
+            });
+        });
+    };
+
+    /*
+        Get a single row from a table
+     */
+    this.getRecord = function (tableName, key, callback) {
+        const recordPath = getRecordPath(tableName, key);
+        storageDSU.readFile(recordPath, function (err, res) {
+            let record;
+            let retErr = undefined;
+            if (err) {
+                retErr = createOpenDSUErrorWrapper(`Failed to read record in ${recordPath}`, err);
+            } else {
+                try {
+                    record = JSON.parse(res);
+                } catch (newErr) {
+                    retErr = createOpenDSUErrorWrapper(`Failed to parse record in ${recordPath}: ${res}`, retErr);
+                }
+            }
+            callback(retErr, record);
+        });
+    };
+
+    const READ_WRITE_KEY_TABLE = "KeyValueTable";
+    this.writeKey = function (key, value, callback) {
+        let valueObject = {
+            type: typeof value,
+            value: value
+        };
+
+        if (typeof value === "object") {
+            if (Buffer.isBuffer(value)) {
+                valueObject = {
+                    type: "buffer",
+                    value: value.toString()
+                }
+            } else {
+                valueObject = {
+                    type: "object",
+                    value: JSON.stringify(value)
+                }
+            }
+        }
+
+        const recordPath = getRecordPath(READ_WRITE_KEY_TABLE, key);
+        storageDSU.writeFile(recordPath, JSON.stringify(valueObject), callback);
+    };
+
+    this.readKey = function (key, callback) {
+        this.getRecord(READ_WRITE_KEY_TABLE, key, (err, record) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read key ${key}`, err));
+            }
+
+            let value;
+            switch (record.type) {
+                case "buffer":
+                    value = Buffer.from(record.value);
+                    break;
+                case "object":
+                    value = JSON.parse(record.value);
+                    break;
+                default:
+                    value = record.value;
+            }
+
+            callback(undefined, value);
+        });
+    }
 }
 
-module.exports.getSharedDB = getSharedDB;
-},{"../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../resolver":"/opt/privatesky/modules/opendsu/resolver/index.js","../utils/BindAutoPendingFunctions":"/opt/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./index.js":"/opt/privatesky/modules/opendsu/db/index.js"}],"/opt/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+module.exports.SingleDSUStorageStrategy = SingleDSUStorageStrategy;
+}).call(this)}).call(this,require("buffer").Buffer)
 
-function getSelfSovereignDB(mountingPoint, sharedSSI, mySeedSSI){
-    return new (require("./SSDB"))(mountingPoint, sharedSSI, mySeedSSI);
-}
-
-function getBasicDB(storageStrategy){
-    return new (require("./BasicDB"))(storageStrategy);
-}
-
-function getBigFileStorageStrategy(readFunction, writeFunction, onInitialisationDone){
-    return new (require("./BigFileStorageStrategy"))(readFunction, writeFunction, onInitialisationDone);
-}
-
-let getSharedDB = require("./SharedDB").getSharedDB;
-
-module.exports = {
-    getSelfSovereignDB,
-    getBasicDB,
-    getSharedDB,
-    getBigFileStorageStrategy
-}
-
-},{"./BasicDB":"/opt/privatesky/modules/opendsu/db/BasicDB.js","./BigFileStorageStrategy":"/opt/privatesky/modules/opendsu/db/BigFileStorageStrategy.js","./SSDB":"/opt/privatesky/modules/opendsu/db/SSDB.js","./SharedDB":"/opt/privatesky/modules/opendsu/db/SharedDB.js"}],"/opt/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
-},{}],"/opt/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
-const fs = require("fs");
-const openDSU = require("opendsu");
-const keyssi = openDSU.loadApi("keyssi");
-const resolver = openDSU.loadApi("resolver");
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
+/**
+ * @module dt
+ */
 
-const operations = {
-    DELETE: "delete",
-    ADD_FOLDER: "addfolder",
-    ADD_FILE: "addfile",
-    MOUNT: "mount"
+/**
+ *
+ */
+const FileService = require("./FileService");
+
+const DSU_SPECIFIC_FILES = ["dsu-metadata.log", "manifest"]
+const {_getResolver, _getKeySSISpace} = require('./commands/utils');
+
+/**
+ * Default Options set for the {@link AppBuilderService}
+ * <pre>
+ *     {
+            anchoring: "default",
+            publicSecretsKey: '-$Identity-',
+            environmentKey: "-$Environment-",
+            basePath: "",
+            stripBasePathOnInstall: false,
+            walletPath: "",
+            hosts: "",
+            hint: undefined,
+            vault: "vault",
+            seedFileName: "seed",
+            appsFolderName: "apps",
+            appFolderName: "app",
+            codeFolderName: "code",
+            initFile: "init.file",
+            environment: {},
+            slots:{
+                primary: "wallet-patch",
+                secondary: "apps-patch"
+            }
+        }
+ * </pre>
+ */
+const OPTIONS = {
+    anchoring: "default",
+    publicSecretsKey: '-$Identity-',
+    environmentKey: "-$Environment-",
+    basePath: "",
+    stripBasePathOnInstall: false,
+    walletPath: "",
+    hosts: "",
+    hint: undefined,
+    vault: "vault",
+    seedFileName: "seed",
+    appsFolderName: "apps",
+    appFolderName: "app",
+    codeFolderName: "code",
+    initFile: "init.file",
+    environment: {},
+    slots:{
+        primary: "wallet-patch",
+        secondary: "apps-patch"
+    }
 }
+
+/**
+ * Convert the Environment object into the Options object
+ */
+const envToOptions = function(env, opts){
+    let options = Object.assign({}, OPTIONS, opts);
+    options.environment = env;
+    options.vault = env.vault;
+    options.anchoring = env.domain;
+    options.basePath = env.basePath;
+    options.walletPath = env.basePath.split('/').reduce((sum, s) => sum === '' && s !== '/' ? s : sum, '');
+    const opendsu = require('opendsu');
+    options.hosts = $$.environmentType === 'browser'
+        ? `${opendsu.loadApi('system').getEnvironmentVariable(opendsu.constants.BDNS_ROOT_HOSTS)}`
+        : `localhost:8080`;
+    return options;
+}
+
+/**
+ *
+ * @param {object} environment typically comes from an environment.js file is the ssapps. Overrides some options
+ * @param {object} [opts] options object mimicking {@link OPTIONS}
+ */
+function AppBuilderService(environment, opts) {
+    const options = envToOptions(environment, opts);
+    const dossierBuilder = new (require("./DossierBuilder"))();
+
+    const fileService = new FileService(options);
+
+    /**
+     * Lists a DSUs content
+     * @param {KeySSI} keySSI
+     * @param {function(err, files, mounts)} callback
+     * @private
+     */
+    const getDSUContent = function (keySSI, callback) {
+        _getResolver().loadDSU(keySSI, (err, dsu) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not load DSU with SSI ${keySSI}`, err));
+            dsu.listFiles("/", {ignoreMounts: true}, (err, files) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not retrieve DSU content`, err));
+                dsu.listMountedDSUs("/", (err, mounts) => {
+                    if (err)
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not retrieve DSU mounts`, err));
+                    callback(undefined, files.filter(f => {
+                        return DSU_SPECIFIC_FILES.indexOf(f) === -1;
+                    }), mounts, dsu);
+                });
+            });
+        });
+    }
+
+    /**
+     * Creates an Arrays SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {string[]} secrets
+     * @param {function(err, ArraySSI)} callback
+     * @private
+     */
+    const createArraySSI = function(secrets, callback){
+        const key = _getKeySSISpace().createArraySSI(options.anchoring, secrets, 'v0', options.hint ? JSON.stringify(options.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Creates a Wallet SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {string[]} secrets
+     * @param {function(err, ArraySSI)} callback
+     */
+    const createWalletSSI = function(secrets, callback){
+        const key = _getKeySSISpace().createTemplateWalletSSI(options.anchoring, secrets, 'v0', options.hint ? JSON.stringify(options.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Creates an Arrays SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {string} specificString
+     * @param {function(err, TemplateSeedSSI)} callback
+     */
+    const createSSI = function(specificString, callback){
+        const key = _getKeySSISpace().createTemplateSeedSSI(options.anchoring, specificString, undefined, 'v0', options.hint ? JSON.stringify(options.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Creates a DSU of an ArraySSI
+     * @param {string[]} secrets
+     * @param {object} opts DSU Creation Options
+     * @param {function(err, Archive)} callback
+     */
+    const createWalletDSU = function(secrets, opts, callback){
+        createWalletSSI(secrets, (err, keySSI) => {
+            _getResolver().createDSUForExistingSSI(keySSI, opts, (err, dsu) => {
+                if (err)
+                    return callback(`Could not create const DSU ${err}`);
+                callback(undefined, dsu);
+            });
+        });
+    }
+
+    /**
+     * Creates a DSU of an ArraySSI
+     * @param {string} specific String for Seed SSI
+     * @param {object} opts DSU Creation Options
+     * @param {function(err, Archive)} callback
+     */
+    const createDSU = function(specific, opts, callback){
+        createSSI(specific, (err, keySSI) => {
+            _getResolver().createDSU(keySSI, opts, (err, dsu) => {
+                if (err)
+                    return callback(`Could not create const DSU ${err}`);
+                callback(undefined, dsu);
+            });
+        });
+    }
+
+    /**
+     * Creates a DSU of an ArraySSI
+     * @param {string[]} secrets
+     * @param {object} opts DSU Creation Options
+     * @param {function(err, Archive)} callback
+     */
+    const createConstDSU = function(secrets,opts , callback){
+        createArraySSI(secrets, (err, keySSI) => {
+            _getResolver().createDSUForExistingSSI(keySSI, opts, (err, dsu) => {
+                if (err)
+                    return callback(`Could not create const DSU ${err}`);
+                callback(undefined, dsu);
+            });
+        });
+    }
+
+    const getDSUFactory = function(isConst, isWallet){
+        return isConst ? (isWallet ? createWalletDSU : createConstDSU) : createDSU;
+    }
+
+    /**
+     * Creates a new DSU (Const or not) and clones the content another DSU into it
+     * @param {object|string} arg can be a secrets object or a string depending on if it's a const DSU or not. A secrets object is like:
+     * <pre>
+     *     {
+     *         secretName: {
+     *             secret: "...",
+     *             public: (defaults to false. If true will be made available to the created DSU for use of initialization Scripts)
+     *         },
+     *         (...)
+     *     }
+     * </pre>
+     * @param {KeySSI} keyForDSUToClone
+     * @param {boolean} [isConst] decides if the Created DSU is Const or not. defaults to true
+     * @param {function(err, KeySSI)} callback
+     */
+    this.clone = function (arg, keyForDSUToClone, isConst, callback) {
+        if (typeof isConst === 'function'){
+            callback = isConst;
+            isConst = true;
+        }
+        parseSecrets(true, arg, (err, keyGenArgs, publicSecrets) => {
+            if (err)
+                return callback(err);
+            getDSUContent(keyForDSUToClone, (err, files, mounts, dsuToClone) => {
+                if (err)
+                    return callback(err);
+                console.log(`Loaded Template DSU with key ${keyForDSUToClone}:\nmounts: ${mounts}`);
+                getDSUFactory(isConst)(keyGenArgs, (err, destinationDSU) => {
+                    if (err)
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+                    doClone(dsuToClone, destinationDSU, files, mounts,  publicSecrets,(err, keySSI) => {
+                        if (err)
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+                        console.log(`DSU ${keySSI} as a clone of ${keyForDSUToClone} was created`);
+                        // if (publicSecrets)
+                        //     return writeToCfg(destinationDSU, publicSecrets, err => callback(err, keySSI));
+                        callback(undefined, keySSI);
+                    });
+                });
+            });
+        });
+    }
+
+    const _getPatchContent = function(appName, callback){
+        fileService.getFolderContentAsJSON(appName, (err, content) => {
+           if (err)
+               return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not retrieve patch content for ${appName}`, err));
+           try {
+               content = JSON.parse(content);
+           } catch (e) {
+               return callback(`Could not parse content`);
+           }
+            content['/'][options.seedFileName] = undefined;
+            delete content['/'][options.seedFileName];
+
+           callback(undefined, content);
+        });
+    }
+
+    const filesToCommands = (content) => {
+        let commands = [];
+        for (let directory in content)
+            if (content.hasOwnProperty(directory)){
+                let directoryFiles = content[directory];
+                for (let fileName in directoryFiles)
+                    if (directoryFiles.hasOwnProperty(fileName))
+                        commands.push(`createfile ${directory}/${fileName} ${directoryFiles[fileName]}`);
+            }
+        return commands;
+    }
+
+    /**
+     * Copies the patch files from the path folder onto the DSU
+     * @param {Archive} dsu
+     * @param {string} slotPath should be '{@link OPTIONS.slots}[/appName]' when appName is required
+     * @param {function(err, Archive, KeySSI)} callback
+     */
+    const patch = function(dsu, slotPath, callback) {
+        // Copy any files found in the RESPECTIVE PATCH FOLDER on the local file system
+        // into the app's folder
+        _getPatchContent(slotPath, (err, files) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+            let commands = filesToCommands(files);
+            if (commands.length === 0){
+                console.log(`Application ${slotPath} does not require patching`);
+                return callback(undefined, dsu);
+            }
+
+            dossierBuilder.buildDossier(dsu, commands, (err, keySSI) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+                console.log(`Application ${slotPath} successfully patched`);
+                callback(undefined, dsu, keySSI);
+            });
+        });
+    }
+
+    /**
+     * When writing the env to an SSApp, because she'll run in an iFrame,
+     * its basePath will always be '/' unlike the loader, we have the option to strip the base path id that's desirable
+     * @param {object} env
+     */
+    const resetBasePath = function(env){
+        if (!env.stripBasePathOnInstall)
+            return env;
+        return Object.assign({}, env, {basePath: '/'});
+    }
+
+    /**
+     * Reads from {@link OPTIONS.initFile} and executes the commands founds there via {@link DossierBuilder#buildDossier}
+     * @param {Archive} instance
+     * @param {object} publicSecrets what elements of the registration elements should be passed onto the SSApp
+     * @param {function(err, Archive)} callback
+     */
+    const initializeInstance = function(instance, publicSecrets, callback){
+        instance.readFile(`${options.codeFolderName}/${options.initFile}`, (err, data) => {
+            if (err) {
+                console.log(`No init file found. Initialization complete`);
+                return callback(undefined, instance);
+            }
+
+            // embed the environment and identity into in the initializations commands
+            let commands = data.toString().replace(options.environmentKey, JSON.stringify(resetBasePath(options.environment)));
+            commands = (publicSecrets
+                    ? commands.replace(options.publicSecretsKey, JSON.stringify(publicSecrets))
+                    : commands)
+                .split(/\r?\n/).map(cmd => cmd.trim()).filter(cmd => !!cmd && !cmd.startsWith('##'));
+
+            dossierBuilder.buildDossier(instance, commands, (err, keySSI) => {
+                if (err)
+                   return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not initialize SSApp instance`, err));
+                console.log(`Instance successfully initialized: ${keySSI}`);
+                callback(undefined, instance);
+            });
+        });
+    }
+
+    /**
+     * Parser the secrets object according to if its a wallet or not
+     * @param {boolean} isWallet
+     * @param {object|string} secrets can be a secrets object or a string depending on if it's a wallet or not. A secrets object is like:
+     * <pre>
+     *     {
+     *         secretName: {
+     *             secret: "...",
+     *             public: (defaults to false. If true will be made available to the created DSU for use of initialization Scripts)
+     *         },
+     *         (...)
+     *     }
+     * </pre>
+     * @param {function(err, string|string[], publicSecrets)} callback
+     */
+    const parseSecrets = function(isWallet, secrets, callback){
+        let specificArg = secrets;
+        let publicSecrets = undefined;
+        if (isWallet && typeof secrets === 'object'){
+            specificArg = [];
+            publicSecrets = {};
+            Object.entries(secrets).forEach(e => {
+                if (e[1].public)
+                    publicSecrets[e[0]] = e[1].secret;
+                specificArg.push(e[1].secret);
+            });
+        }
+        callback(undefined, specificArg, publicSecrets);
+    }
+
+    this.parseSecrets = parseSecrets;
+
+    /**
+     * Builds an SSApp
+     * @param {boolean} isWallet
+     * @param {object|string} secrets according to {@link parseSecrets}
+     * @param {string} seed
+     * @param {string} [name]
+     * @param {function(err, KeySSI, Archive)} callback
+     */
+    const buildApp = function(isWallet, secrets, seed, name, callback){
+        if (typeof name === 'function'){
+            if (!isWallet)
+                return callback(`No SSApp name provided`);
+            callback = name;
+            name = undefined;
+        }
+
+        const patchAndInitialize = function(instance, publicSecrets, callback){
+            const patchPath = isWallet ? `${options.slots.primary}` : `${options.slots.secondary}/${name}`;
+            patch(instance, patchPath, (err) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Error patching SSApp ${name}`, err));
+                initializeInstance(instance, publicSecrets, (err) => {
+                    if (err)
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+                    instance.getKeySSIAsString((err, keySSI) => {
+                        if (err)
+                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+                        callback(undefined, keySSI);
+                    });
+                });
+            });
+        }
+
+        parseSecrets(isWallet, secrets, (err, keyArgs, publicSecrets) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+            getDSUFactory(isWallet, isWallet)(keyArgs, isWallet ? {dsuTypeSSI: seed} : undefined, (err, wallet) => {
+                if (err)
+                    return callback(`Could not create instance`);
+
+                const instance = isWallet ? wallet.getWritableDSU() : wallet;
+
+                if (isWallet)
+                    return patchAndInitialize(instance, publicSecrets, (err, key) => callback(err, key, wallet));
+
+                instance.mount(`${options.codeFolderName}`, seed, (err) => {
+                    if (err)
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not mount Application code in instance`, err));
+                    patchAndInitialize(instance, publicSecrets, (err, key) => callback(err, key, wallet));
+                });
+            });
+        });
+    }
+
+    /**
+     * Retrieves the list of Applications to be installed
+     * @param {function(err, object)} callback
+     */
+    const getListOfAppsForInstallation = (callback) => {
+        fileService.getFolderContentAsJSON(options.slots.secondary, function (err, data) {
+            if (err){
+                console.log(`No Apps found`)
+                return callback(undefined, {});
+            }
+
+            let apps;
+
+            try {
+                apps = JSON.parse(data);
+            } catch (e) {
+                return callback(`Could not parse App list`);
+            }
+
+            callback(undefined, apps);
+        });
+    };
+
+    /**
+     * Installs all aps in the apps folder in the wallet
+     * @param {Archive} wallet
+     * @param {function(err, object)} callback returns the apps details
+     */
+    const installApps = function(wallet, callback){
+        const performInstallation = function(wallet, apps, appList, callback){
+            if (!appList.length)
+                return callback();
+            let appName = appList.pop();
+            const appInfo = apps[appName];
+
+            if (appName[0] === '/')
+                appName = appName.replace('/', '');
+
+            const mountApp = (newAppSeed) => {
+                wallet.mount(`/${options.appsFolderName}/${appName}`, newAppSeed, (err) => {
+                    if (err)
+                        return callback("Failed to mount in folder" + `/apps/${appName}: ${err}`);
+
+                    performInstallation(wallet, apps, appList, callback);
+                });
+            };
+
+            // If new instance is not demanded just mount (leftover code from privatesky.. when is it not a new instance?)
+            if (appInfo.newInstance === false)
+                return mountApp(appInfo.seed);
+
+            buildApp(false, undefined, appInfo.seed, appName, (err, keySSI) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to build app ${appName}`, err));
+                mountApp(keySSI);
+            });
+        }
+
+        getListOfAppsForInstallation((err, apps) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper( err));
+            apps = apps || {};
+            let appList = Object.keys(apps).filter(n => n !== '/');
+            if(!appList.length)
+                return callback(undefined, appList);
+            let tempList = [...appList]
+            performInstallation(wallet, apps, tempList, (err) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not complete installations`, err));
+                callback(undefined, appList);
+            });
+        });
+    }
+
+    /**
+     * Builds a new SSApp from the provided secrets
+     * @param {KeySSI} seed the SSApp's keySSI
+     * @param {string} name the SSApp's name
+     * @param {function(err, KeySSI, Archive)} callback
+     */
+    this.buildSSApp = function(seed, name, callback){
+        return buildApp(false, seed, name, callback);
+    }
+
+    /**
+     * Builds a new Wallet from the provided secrets
+     * @param {object|string} secrets according to {@link parseSecrets}
+     * @param {function(err, KeySSI, Archive)} callback
+     */
+    this.buildWallet = function(secrets, callback){
+        fileService.getWalletSeed((err, seed) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Could not retrieve template wallet SSI.", err));
+            buildApp(true, secrets, seed, (err, keySSI, wallet) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not build wallet`, err));
+                console.log(`Wallet built with SSI ${keySSI}`);
+                installApps(wallet, (err, appList) => {
+                    if (err)
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not Install Applications ${JSON.stringify(appList)}`, err));
+                    if (appList.length)
+                        console.log(`Applications installed successfully`);
+                    callback(undefined, keySSI, wallet);
+                })
+            });
+        });
+    }
+
+    this.loadWallet = function(secrets, callback){
+        parseSecrets(true, secrets, (err, keyGenArgs, publicSecrets) => {
+            if (err)
+                return callback(err);
+            createWalletSSI(keyGenArgs, (err, keySSI) => {
+                if (err)
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Could not create wallet with ssi ${{keySSI}}`, err));
+                console.log(`Loading wallet with ssi ${keySSI.getIdentifier()}`);
+                _getResolver().loadDSU(keySSI, (err, wallet) => {
+                    if (err)
+                        return callback(`Could not load wallet DSU ${err}`);
+                    wallet = wallet.getWritableDSU();
+                    console.log(`wallet Loaded`);
+                    wallet.getKeySSIAsString(callback);
+                });
+            });
+        });
+    }
+}
+module.exports = AppBuilderService;
+},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
+/**
+ * @module dt
+ */
+
+const {_getByName } = require('./commands');
+const {_getResolver, _getKeySSISpace} = require('./commands/utils');
 
 /**
  * Automates the Dossier Building process
@@ -10308,6 +13994,7 @@ const operations = {
  *          "domain": "default",
  *     }
  * </pre>
+ *
  * For a Simple SSApp (with only mounting of cardinal/themes and creation of code folder) the commands would be like:
  * <pre>
  *     delete /
@@ -10315,239 +14002,1876 @@ const operations = {
  *     mount ../cardinal/seed /cardinal
  *     mount ../themes/'*'/seed /themes/'*'
  * </pre>
+ * @param {Archive} [sourceDSU] if provided will perform all OPERATIONS from the sourceDSU as source and not the fs
+ * @param {VarStore} [varStore]
  */
-const DossierBuilder = function(){
+const DossierBuilder = function(sourceDSU, varStore){
 
-    /**
-     * recursively executes the provided func with the dossier and each of the provided arguments
-     * @param {DSU Archive} dossier: The DSU instance
-     * @param {function} func: function that accepts the dossier and one param as arguments
-     * @param {any} arguments: a list of arguments to be consumed by the func param
-     * @param {function} callback: callback function. The first argument must be err
-     */
-    let execute = function (dossier, func, arguments, callback) {
-        let arg = arguments.pop();
-        if (! arg)
-            return callback();
-        let options = typeof arg === 'object' && arg.options ? arg.options : undefined;
-        func(dossier, arg, options, (err, result) => {
-            if (err)
-                return callback(err);
-
-            if (arguments.length !== 0) {
-                execute(dossier, func, arguments, callback);
-            } else {
-                callback(undefined, result);
-            }
-        });
-    };
-
-    let del = function (bar, path, options, callback) {
-        if (typeof options === 'function'){
-            callback = options;
-            options = {}
-        }
-        options = options || {ignoreMounts: false};
-        console.log("Deleting " + path);
-        bar.delete(path, options, err => callback(err, bar));
-    };
-
-    let addFolder = function (folder_root = "/") {
-        return function (bar, arg, options, callback){
-            if (typeof options === 'function'){
-                callback = options;
-                options = {}
-            }
-            options = options || {batch: false, encrypt: false};
-            console.log("Adding Folder " + folder_root + arg)
-            bar.addFolder(arg, folder_root, options, err => callback(err, bar));
-        };
-    };
-
-    let addFile = function (bar, arg, options, callback) {
-        if (typeof options === 'function'){
-            callback = options;
-            options = {}
-        }
-        options = options || {encrypt: true, ignoreMounts: false}
-        console.log("Copying file " + arg.from + " to " + arg.to)
-        bar.addFile(arg.from, arg.to, options, err => callback(err, bar));
-    };
-
-    let mount = function (bar, arg, options, callback) {
-        if (typeof options === 'function'){
-            callback = options;
-            options = undefined
-        }
-
-        readFile(arg.seed_path, (err, data) => {
-            if (err)
-                return callback(err);
-            let seed = data.toString();
-            console.log("Mounting " + arg.seed_path + " with seed " + seed + " to " + arg.mount_point);
-            bar.mount(arg.mount_point, seed, err => callback(err, bar));
-        });
-    };
-
-    let mount_folders = function (bar, arg, callback) {
-        let base_path = arg.seed_path.split("*");
-        let names = fs.readdirSync(base_path[0]);
-        let arguments = names.map(n => {
-            return {
-                "seed_path": arg.seed_path.replace("*", n),
-                "mount_point": arg.mount_point.replace("*", n)
-            };
-        });
-        execute(bar, mount, arguments, callback);
-    };
-
-    let evaluate_mount = function(bar, cmd, callback){
-        let arguments = {
-            "seed_path": cmd[0],
-            "mount_point": cmd[1]
-        };
-
-        if (!arguments.seed_path.match(/[\\/]\*[\\/]/))
-            mount(bar, arguments, callback);             // single mount
-        else
-            mount_folders(bar, arguments, callback);     // folder mount
-    };
+    const _varStore = varStore || new (require('./commands/VarStore'))();
 
     let createDossier = function (conf, commands, callback) {
         console.log("creating a new dossier...")
-        resolver.createDSU(keyssi.buildTemplateSeedSSI(conf.domain), (err, bar) => {
+        _getResolver().createDSU(_getKeySSISpace().createTemplateSeedSSI(conf.domain), (err, bar) => {
             if (err)
                 return callback(err);
             updateDossier(bar, conf, commands, callback);
         });
     };
 
-    let readFile = function (filePath, callback) {
-        fs.readFile(filePath, (err, content) => {
-            if (err || content.length === 0)
-                return callback(err);
+    /**
+     * Writes to a file on the filesystem
+     * @param filePath
+     * @param data
+     * @param callback
+     */
+    const writeFile = function(filePath, data, callback){
+        new (_getByName('createfile'))(_varStore).execute([filePath, data], (err) => err
+            ? callback(err)
+            : callback(undefined, data));
+    }
 
-            callback(undefined, content.toString());
-        })
-    };
+    /**
+     * Reads a file from the filesystem
+     * @param filePath
+     * @param callback
+     */
+    const readFile = function(filePath, callback){
+        new (_getByName('readfile'))(_varStore).execute(filePath, callback);
+    }
 
-    let writeFile = function (filePath, data, callback) {
-        fs.writeFile(filePath, data, (err) => {
-            if (err)
-                return callback(err);
-            callback(undefined, data.toString());
-        });
-    };
-
+    /**
+     * Stores the keySSI to the SEED file when no sourceDSU is provided
+     * @param {string} seed_path the path to store in
+     * @param {string} keySSI
+     * @param {function(err, KeySSI)} callback
+     */
     let storeKeySSI = function (seed_path, keySSI, callback) {
         writeFile(seed_path, keySSI, callback);
     };
 
-    let runCommand = function(bar, command, callback){
-        let cmd = command.split(/\s+/);
-        switch (cmd.shift().toLowerCase()){
-            case operations.DELETE:
-                execute(bar, del, cmd, callback);
-                break;
-            case operations.ADD_FOLDER:
-                execute(bar, addFolder(), cmd, callback);
-                break;
-            case operations.ADD_FILE:
-                let arg = {
-                    "from": cmd[0],
-                    "to": cmd[1]
-                }
-                addFile(bar, arg, callback);
-                break;
-            case operations.MOUNT:
-                evaluate_mount(bar, cmd, callback)
-                break;
-            default:
-                return callback(new Error("Invalid operation requested: " + command));
-        }
+    /**
+     * Runs an operation
+     * @param {Archive} bar
+     * @param {string|string[]} command
+     * @param {string[]} next the remaining commands to be executed
+     * @param {function(err, Archive)} callback
+     */
+    let runCommand = function(bar, command, next, callback){
+        let args = command.split(/\s+/);
+        const cmdName = args.shift();
+        const cmd = _getByName(cmdName);
+        return cmd
+            ? new (cmd)(_varStore, this.source).execute(args, bar, next, callback)
+            : callback(`Command not recognized: ${cmdName}`);
     };
 
+    /**
+     * Retrieves the KeysSSi after save (when applicable)
+     * @param {Archive} bar
+     * @param {object} cfg is no sourceDSU is provided must contain a seed field
+     * @param {function(err, KeySSI)} callback
+     */
     let saveDSU = function(bar, cfg, callback){
         bar.getKeySSIAsString((err, barKeySSI) => {
             if (err)
                 return callback(err);
+            if(sourceDSU || cfg.skipFsWrite)
+                return callback(undefined, barKeySSI);
             storeKeySSI(cfg.seed, barKeySSI, callback);
         });
     };
 
+    /**
+     * Run a sequence of {@link Command}s on the DSU
+     * @param {Archive} bar
+     * @param {object} cfg
+     * @param {string[]} commands
+     * @param {function(err, KeySSI)} callback
+     */
     let updateDossier = function(bar, cfg, commands, callback) {
         if (commands.length === 0)
             return saveDSU(bar, cfg, callback);
         let cmd = commands.shift();
-        runCommand(bar, cmd, (err, updated_bar) => {
+        runCommand(bar, cmd, commands,(err, updated_bar) => {
             if (err)
                 return callback(err);
             updateDossier(updated_bar, cfg, commands, callback);
         });
     };
 
-    this.buildDossier = function(cfg, commands, callback){
+    /**
+     * Builds s DSU according to it's building instructions
+     * @param {object|Archive} configOrDSU: can be a config file form octopus or the destination DSU when cloning.
+     *
+     *
+     * Example of config file:
+     * <pre>
+     *     {
+     *         seed: path to SEED file in fs
+     *     }
+     * </pre>
+     * @param {string[]|object[]} [commands]
+     * @param {function(err, KeySSI)} callback
+     */
+    this.buildDossier = function(configOrDSU, commands, callback){
         if (typeof commands === 'function'){
             callback = commands;
             commands = [];
         }
 
-        readFile(cfg.seed, (err, content) => {
-            if (err || content.length === 0)
-                return createDossier(cfg, commands, callback);
-
-            let keySSI;
+        let builder = function(keySSI){
             try {
-                keySSI = keyssi.parse(content.toString());
+                keySSI = _getKeySSISpace().parse(keySSI);
             } catch (err) {
                 console.log("Invalid keySSI");
-                return createDossier(cfg, commands, callback);
+                return createDossier(configOrDSU, commands, callback);
             }
 
-            if (keySSI.getDLDomain() !== cfg.domain) {
+            if (keySSI.getDLDomain() !== configOrDSU.domain) {
                 console.log("Domain change detected.");
-                return createDossier(cfg, commands, callback);
+                return createDossier(configOrDSU, commands, callback);
             }
 
-            let identifier = content.toString();
-            resolver.loadDSU(identifier, (err, bar) => {
+            _getResolver().loadDSU(keySSI, (err, bar) => {
                 if (err){
-                    console.log("DSU not available. Creating a new DSU for", identifier);
-                    return resolver.createDSU(identifier, {useSSIAsIdentifier: true}, (err, bar)=>{
-                        if(err){
+                    console.log("DSU not available. Creating a new DSU for", keySSI.getIdentifier());
+                    return _getResolver().createDSU(keySSI, {useSSIAsIdentifier: true}, (err, bar)=>{
+                        if(err)
                             return callback(err);
-                        }
-
-                        updateDossier(bar, cfg, commands, callback);
+                        updateDossier(bar, configOrDSU, commands, callback);
                     });
                 }
                 console.log("Dossier updating...");
-                updateDossier(bar, cfg, commands, callback);
+                updateDossier(bar, configOrDSU, commands, callback);
             });
+        }
+
+        if (configOrDSU.constructor && configOrDSU.constructor.name === 'Archive')
+            return updateDossier(configOrDSU, {skipFsWrite: true}, commands, callback);
+
+        readFile(configOrDSU.seed, (err, content) => {
+            if (err || content.length === 0)
+                return createDossier(configOrDSU, commands, callback);
+            builder(content.toString());
         });
     };
 };
 
 module.exports = DossierBuilder;
 
-},{"fs":false,"opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
-/*
-html API space
-*/
+},{"./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
+/**
+ * @module dt
+ */
 
-const getDossierBuilder = () => {
-    return new (require("./DossierBuilder"))()
+/**
+ * Forked from PrivateSky
+ * Provides an environment independent file service to the {@link AppBuilderService}
+ */
+function FileService(options) {
+    const isBrowser = $$.environmentType === 'browser';
+
+    function constructUrlBase(prefix){
+        let url, protocol, host;
+        prefix = prefix || "";
+        let appName = '';
+        if (isBrowser){
+            let location = window.location;
+            const paths = location.pathname.split("/");
+            while (paths.length > 0) {
+                if (paths[0] === "") {
+                    paths.shift();
+                } else {
+                    break;
+                }
+            }
+            appName = paths[0];
+            protocol = location.protocol;
+            host = location.host;
+            url = `${protocol}//${host}/${prefix}${appName}`;
+            return url;
+        } else {
+            return `http://${options.hosts}/${prefix}${options.walletPath}`;
+        }
+    }
+
+    this.getWalletSeed = function(callback){
+        this.getAppSeed(options.slots.primary, callback);
+    }
+
+    this.getAppSeed = function(appName, callback){
+        this.getFile(appName, options.seedFileName, (err, data) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(err));
+           Utf8ArrayToStr(data, callback);
+        });
+    }
+
+    function doGet(url, options, callback){
+        if (typeof options === "function") {
+            callback = options;
+            options = {};
+        }
+
+        const http = require("opendsu").loadApi("http");
+        http.fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.arrayBuffer().then((data) => {
+                if (!response.ok)
+                    return callback("array data failed")
+                callback(undefined, data);
+            }).catch(e => callback(e));
+        }).catch(err => callback(err));
+    }
+
+    /**
+     * Returns the content of a file as a uintArray
+     * @param {string} appName
+     * @param {string} fileName
+     * @param {function(err, U8intArray)} callback
+     */
+    this.getFile = function(appName, fileName, callback){
+        const suffix = `${appName}/${fileName}`;
+        const base = constructUrlBase();
+        const joiner = suffix !== '/' && base[base.length - 1] !== '/' && suffix[0] !== '/'
+            ? '/'
+            : '';
+
+        let url = base + joiner + suffix;
+        doGet(url, callback);
+    };
+
+
+    /**
+     *
+     * @param innerFolder
+     * @param callback
+     */
+    this.getFolderContentAsJSON = function(innerFolder, callback){
+        if (typeof innerFolder === 'function'){
+            callback = innerFolder;
+            innerFolder = undefined;
+        }
+        let url = constructUrlBase("directory-summary/") + (innerFolder ? `/${innerFolder}` : '') ;
+        doGet(url, (err, data) => {
+            if (err)
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(err));
+            Utf8ArrayToStr(data, callback);
+        });
+    }
+
+    /**
+     * Util method to convert Utf8Arrays to Strings in the browser
+     * (simpler methods fail for big content jsons)
+     * @param {U8intArray} array
+     * @param {function(err, string)} callback
+     */
+    function Utf8ArrayToStr(array, callback) {
+        if (!isBrowser)
+            return callback(undefined, array.toString());
+        var bb = new Blob([array]);
+        var f = new FileReader();
+        f.onload = function(e) {
+            callback(undefined, e.target.result);
+        };
+        f.readAsText(bb);
+    }
+}
+
+module.exports = FileService;
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+const { _err } = require('./utils');
+
+/**
+ * **Every Command must be registered under the index.js file in the commands folder**
+ * @param {VarStore} varStore
+ * @param {Archive|fs} [source]
+ * @param {boolean} [canRunIteratively] defines if the command can expect multiple arguments and run multiple times. defaults to false
+ * @class Command
+ * @abstract
+ */
+class Command {
+    constructor(varStore, source, canRunIteratively) {
+        if (typeof source === 'boolean'){
+            canRunIteratively = source;
+            source = undefined;
+        }
+        if (!varStore.checkVariables)
+            throw new Error('Cant happen')
+
+        this.varStore = varStore;
+        this.source = source;
+        this.canRunIteratively = !!canRunIteratively;
+    }
+
+    /**
+     * Parses the command text and executes the command onto the provided DSU
+     * @param {string[]|string} args the arguments of the command split into words
+     * @param {Archive|KeySSI} [bar] the destinationDSU or the keySSI
+     * @param {string[]} [next] the remaining commands
+     * @param {object} [options]
+     * @param {function(err, Archive|KeySSI|string|boolean)} callback
+     */
+    execute(args,bar, next, options, callback){
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined;
+        }
+        if (typeof next === 'function'){
+            callback = next;
+            options = undefined;
+            next = undefined;
+        }
+        if (callback === undefined){
+            callback = bar;
+            bar = undefined;
+        }
+        let self = this;
+        this._parseCommand(args, next, (err, parsedArgs) => {
+            if (err)
+                return _err(`Could not parse command ${args}`, err, callback);
+
+            // Tests against variables
+            if (self.varStore)
+                parsedArgs = self.varStore.checkVariables(parsedArgs);
+
+            if (!self.canRunIteratively || !(parsedArgs instanceof Array))
+                return self._runCommand(parsedArgs, bar, options, callback);
+
+            const iterator = function(args, callback){
+                let arg = parsedArgs.shift();
+                if (!arg)
+                    return callback(undefined, bar);
+                return self._runCommand(arg, bar, options, (err, dsu) => err
+                    ? _err(`Could iterate over Command ${self.constructor.name} with args ${JSON.stringify(arg)}`, err, callback)
+                    : iterator(args, callback));
+            }
+
+            iterator(args, callback);
+        });
+    }
+
+    /**
+     * Should be overridden by child classes if any argument parsing is required
+     *
+     * @param {string[]|string|boolean} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|string[]|object)} callback
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, command);
+    }
+
+    /**
+     * @param {string|object} arg the command argument
+     * @param {Archive} [bar]
+     * @param {object} options
+     * @param {function(err, Archive|KeySSI|string)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        throw new Error("Child classes must implement this");
+    }
+}
+
+module.exports = Command;
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js":[function(require,module,exports){
+/**
+ * List of all available commands to the Dossier Builder
+ * Without being here, they can't be used
+ */
+const _availableCommands = {
+    addfile: require('./addFile'),
+    addfolder: require('./addFolder'),
+    createdsu: require('./createDSU'),
+    createfile: require('./createFile'),
+    define: require('./define'),
+    delete: require('./delete'),
+    derive: require('./derive'),
+    endwith: require('./endWith'),
+    genkey: require('./genKey'),
+    getidentifier: require('./getIndentifier'),
+    mount: require('./mount'),
+    objtoarray: require('./objToArray'),
+    readfile: require('./readFile'),
+    with: require('./with')
+};
+
+/**
+ * return the Command class by its name
+ * @param cmdName
+ * @return {Command} the command calls to be instanced
+ */
+const _getByName = function(cmdName){
+    if (cmdName in _availableCommands)
+        return _availableCommands[cmdName];
+    return undefined;
+}
+
+module.exports = _getByName;
+},{"./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js":[function(require,module,exports){
+/**
+ * @module commands
+ * A simple variable store
+ */
+
+
+const VarStore = function(){
+    const _memory = {};
+    let _hasVars = false;
+    const self = this;
+
+    this.define = function(name, value){
+        _memory[name] = value;
+        _hasVars = true;
+        console.log(`Variable ${name} defined as ${value}`)
+    }
+
+    const tryReplace = function(value){
+        for (let name in _memory)
+            if (value.includes(name)) {
+                value = value.replace(name, _memory[name]);
+                console.log(`Replaced variable ${name}`)
+            }
+        return value;
+    }
+
+    this.checkVariables = function(args){
+        if (!_hasVars)
+            return args;
+        if (typeof args === 'string')
+            return tryReplace(args);
+        if (args instanceof Array)
+            return args.map(a => self.checkVariables(a));
+        if (typeof args !== 'object')
+            return args;
+        const result = {};
+        Object.keys(args).forEach(k => {
+            result[k] = self.checkVariables(args[k]);
+        });
+        return result;
+    }
+}
+
+module.exports = VarStore;
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * Copies a File from disk or from a source DSU when provided
+ *
+ * supports sourceDSU, defaults to fs
+ *
+ * Can run iteratively
+ *
+ * @class AddFileCommand
+ */
+class AddFileCommand extends Command{
+    constructor(varStore, source) {
+        super(varStore, source, true);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next discarded
+     * @param {function(err, string|object)} [callback] discarded
+     * @return {string|object} the command argument
+     * <pre>
+     *     {
+     *         from: (...),
+     *         to: (..)
+     *     }
+     * </pre>
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, {
+            "from": command[0],
+            "to": command[1]
+        });
+    }
+
+    /**
+     * Copies a file, from disk or another DSU
+     * @param {object} arg
+     * <pre>
+     *     {
+     *         from: (...),
+     *         to: (..)
+     *     }
+     * </pre>
+     * @param {Archive} bar
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+
+        options = options || {encrypt: true, ignoreMounts: false}
+        console.log("Copying file " + arg.from + (this.source ? " from sourceDSU" : "") + " to " + arg.to);
+
+        if (!this.source)
+            return bar.addFile(arg.from, arg.to, options, err => err
+                ? _err(`Could not read from ${arg.from}`, err, callback)
+                : callback(undefined, bar));
+
+        this.source.readFile(arg.from, (err, data) => {
+            if (err)
+                return _err(`Could not read from ${arg.from}`, err, callback);
+            bar.writeFile(arg.to, data, err => err
+                ? _err(`Could not write to ${arg.to}`, err, callback)
+                : callback(undefined, bar));
+        });
+    }
+}
+
+module.exports = AddFileCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * This command copies an entire folder from the filesystem onto the destination DSU
+ * (as a single brick for efficiency if I'm not mistaken)
+ *
+ * Does not Support sourceDSU (yet)
+ *
+ * Can run iteratively
+ *
+ * @class AddFolderCommand
+ */
+class AddFolderCommand extends Command {
+    constructor(varStore, source) {
+        super(varStore, source, false);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, command[0]);
+    }
+
+    /**
+     * @param {string|object} arg the command argument
+     * @param {Archive} bar
+     * @param {object} [options]
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        if (this.source){
+            console.log("The addFolder Method is not supported when reading from a sourceDSU");
+            callback(undefined, bar);
+        }
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+
+        options = options || {batch: false, encrypt: false};
+        console.log("Adding Folder " + '/' + arg)
+        bar.addFolder(arg, '/', options, err => err
+            ? _err(`Could not add folder at '${'/' + arg}'`, err, callback)
+            : callback(undefined, bar));
+    }
+}
+
+module.exports = AddFolderCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err, _getResolver, DSU_TYPE, KEY_TYPE } = require('./utils');
+const genKey = require('./genKey');
+
+/**
+ * @param {DSU_TYPE} dsuType
+ * @return {KEY_TYPE}
+ */
+const _getKeyType = function(dsuType){
+    switch (dsuType){
+        case DSU_TYPE.CONST:
+            return KEY_TYPE.ARRAY;
+        case DSU_TYPE.WALLET:
+            return KEY_TYPE.WALLET;
+        case DSU_TYPE.SEED:
+            return KEY_TYPE.SEED;
+        default:
+            throw new Error(`Unsupported DSU Type`);
+    }
+}
+
+
+/**
+ * Creates an Arrays SSI off a secret list
+ *
+ * Adds options.hint to hit if available
+ * @param {string[]} arg
+ * @param {function(err, KeySSI)} callback
+ */
+_createSSI = function(varStore, arg, callback){
+    const argToArray = (arg) => {
+        return `${arg.type} ${arg.domain} ${typeof arg.args === 'string' ? arg.args : JSON.stringify(arg.hint ? {
+            hint: arg.hint,
+            args: arg.args
+        } : arg.args)}`.split(/\s+/);
+    }
+    new genKey(varStore).execute(argToArray(arg), callback);
+}
+
+
+/**
+ * Creates a DSU of an ArraySSI
+ * @param {string[]} arg
+ * @param {object} opts DSU Creation Options
+ * @param {function(err, Archive)} callback
+ */
+_createWalletDSU = function(varStore, arg, opts, callback){
+    _createSSI(varStore, arg, (err, keySSI) => {
+        _getResolver().createDSUForExistingSSI(keySSI, opts, (err, dsu) => {
+            if (err)
+                return _err(`Could not create wallet DSU`, err, callback);
+            callback(undefined, dsu);
+        });
+    });
+}
+
+/**
+ * Creates a DSU of an ArraySSI
+ * @param {string[]} arg String for Seed SSI
+ * @param {object} opts DSU Creation Options
+ * @param {function(err, Archive)} callback
+ */
+_createDSU = function(varStore, arg, opts, callback){
+    _createSSI(varStore, arg, (err, keySSI) => {
+        _getResolver().createDSU(keySSI, opts, (err, dsu) => {
+            if (err)
+                return _err(`Could not create DSU`, err, callback);
+            callback(undefined, dsu);
+        });
+    });
+}
+
+/**
+ * Creates a DSU of an ArraySSI
+ * @param {string[]} arg
+ * @param {object} opts DSU Creation Options
+ * @param {function(err, Archive)} callback
+ */
+_createConstDSU = function(varStore, arg,opts , callback){
+    _createSSI(varStore, arg, (err, keySSI) => {
+        _getResolver().createDSUForExistingSSI(keySSI, opts, (err, dsu) => {
+            if (err)
+                return _err(`Could not create const DSU`, err, callback);
+            callback(undefined, dsu);
+        });
+    });
+}
+
+_getDSUFactory = function(isConst, isWallet){
+    return isConst ? (isWallet ? _createWalletDSU : _createConstDSU) : _createDSU;
+}
+
+/**
+ * creates a new DSU of the provided type and with the provided key gen arguments
+ *
+ * @class CreateDSUCommand
+ */
+class CreateDSUCommand extends Command{
+    constructor(varStore, source) {
+        super(varStore, source, false);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next discarded
+     * @param {function(err, string|object)} [callback] discarded
+     * @return {string|object} the command argument
+     * <pre>
+     *     {
+     *         type: (...),
+     *         domain: (..)
+     *         args: {string[]|object},
+     *     }
+     * </pre>
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        try {
+            let arg = {
+                dsuType: command.shift(),
+                domain: command.shift(),
+                args: command.length === 1 ? command[0] : JSON.parse(command.join(' '))
+            }
+            arg.type = _getKeyType(arg.dsuType);
+            if (typeof arg.args === 'object' && arg.args.args){
+                arg.hint = arg.args.hint;
+                arg.args = arg.args.args;
+            }
+            callback(undefined, arg)
+        } catch (e){
+            _err(`could not parse json ${command}`, e, callback);
+        }
+    }
+
+    /**
+     * Copies a file, from disk or another DSU
+     * @param {object} arg
+     * <pre>
+     *     {
+     *         from: (...),
+     *         to: (..)
+     *     }
+     * </pre>
+     * @param {Archive} bar
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if(!callback){
+            callback = options;
+            options = bar;
+            bar = undefined;
+        }
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined;
+        }
+        const cb = function(err, dsu){
+            if (err)
+                return _err(`Could not create DSU with ${JSON.stringify(arg)}`, err, callback);
+            console.log(`${arg.dsuType} DSU created`);
+            callback(undefined, dsu);
+        }
+
+        switch (arg.dsuType){
+            case DSU_TYPE.SEED:
+                return _createDSU(this.varStore, arg, cb)
+            case DSU_TYPE.CONST:
+                return _createConstDSU(this.varStore, arg, cb);
+            case DSU_TYPE.WALLET:
+                return _createWalletDSU(this.varStore, arg, cb);
+            default:
+                callback(`Unsupported key type`);
+        }
+    }
+}
+
+module.exports = CreateDSUCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const {_getFS, _err} = require('./utils');
+
+/**
+ * Creates a file with the provided content on the destination DSU
+ * (similar to a touch command with added content)
+ *
+ * @class CreateFileCommand
+ */
+class CreateFileCommand extends Command{
+    constructor(varStore) {
+        super(varStore);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        command = typeof command === 'string' ? command.split(' ') : command;
+        callback(undefined,  {
+            path: command.shift(),
+            content: command.join(' ')
+        });
+    }
+
+    /**
+     * Writes a file
+     * @param {object} arg the command argument
+     * <pre>
+     *     {
+     *         path: (...),
+     *         content: (..)
+     *     }
+     * </pre>
+     * @param {Archive|fs} bar
+     * @param {object} options
+     * @param {function(err, string)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        if (typeof options === 'function') {
+            callback = options;
+            options = undefined;
+        }
+        if (!bar)
+            bar = _getFS();
+        options = options || {encrypt: true, ignoreMounts: false};
+        bar.writeFile(arg.path, arg.content, options, (err) => err
+            ? _err(`Could not create file at ${arg.path}`, err, callback)
+            : callback(undefined, bar));
+    }
+}
+
+module.exports = CreateFileCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * Defines a variable that can later be used in the script
+ *
+ * @class DefineCommand
+ */
+class DefineCommand extends Command {
+    constructor(varStore) {
+        super(varStore);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback) {
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+
+        callback(undefined, {
+            varName: command.shift(),
+            command: command
+        });
+    }
+
+    /**
+     * @param {string[]|object} arg the command argument
+     * @param {Archive} bar
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if (typeof options === 'function') {
+            callback = options;
+            options = undefined;
+        }
+        let self = this;
+        const _getByName = require('./Registry');
+
+        if (!_getByName(arg.command[0])){
+            this.varStore.define(arg.varName, arg.command);
+            console.log(`Define executed: ${arg.command}`);
+            return callback(undefined, bar);
+        }
+
+        const parseCommand = function(command, callback){
+            const cmdName = command.shift();
+            const actualCmd = _getByName(cmdName);
+            if (!actualCmd)
+                return callback(`Could not find command`);
+            callback(undefined, cmdName, actualCmd, command);
+        }
+
+        return parseCommand(arg.command, (err, cmdName, command, args) => err
+            ? _err(`Could not parse Command`, err, callback)
+            : new (command)(self.varStore, self.source).execute(args, bar, (err, result) => {
+                if (err)
+                    return _err(`Could not obtain result`, err, callback);
+                this.varStore.define(arg.varName, result);
+                console.log(`Define executed: ${result}`);
+                callback(undefined, bar);
+            }));
+    }
+}
+
+module.exports = DefineCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * Deletes everything in the specified path of the DSU
+ *
+ * @class DeleteCommand
+ */
+class DeleteCommand extends Command {
+    constructor(varStore) {
+        super(varStore,undefined, false);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        callback(undefined, command[0]);
+    }
+
+    /**
+     * @param {string} arg
+     * @param {Archive} bar
+     * @param {object} [options]
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        if (typeof options === 'function'){
+            callback = options;
+            options = {}
+        }
+        options = options || {ignoreMounts: false};
+        console.log("Deleting " + arg);
+        bar.delete(arg, options, err => err
+            ? _err(`Could not delete path '${arg}'`, err, callback)
+            : callback(undefined, bar));
+    }
+}
+
+module.exports = DeleteCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _getKeySSISpace, _err } = require('./utils');
+
+/**
+ * Derives the provided keySSI
+ *
+ * @class DeriveCommand
+ */
+class DeriveCommand extends Command{
+    constructor(varStore) {
+        super(varStore);
+    }
+
+    _parseCommand(command, next, callback) {
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, command
+            ? !(command === 'false' || command[0] === 'false')
+            : true);
+    }
+
+    /**
+     * derives the provided keySSI (in the source object)
+     * @param {object} arg unused
+     * @param {KeySSI} bar
+     * @param {object} options unsused
+     * @param {function(err, KeySSI)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+
+        try{
+            const keySSI = _getKeySSISpace().parse(bar).derive();
+            callback(undefined, arg ? keySSI.getIdentifier() : keySSI);
+        } catch (e) {
+            _err(`Could not derive Key ${JSON.stringify(bar)}`, e, callback)
+        }
+    }
+}
+
+module.exports = DeriveCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+
+/**
+ * Allows for more complex logic by allowing you to control the output/input for commands
+ * while keeping the commands readable
+ *
+ * basically sets whatever the result of the with operation into the source portion until it finds the endwith command
+ *
+ * @class EndWithCommand
+ */
+class EndWithCommand extends Command{
+    constructor(varStore) {
+        super(varStore);
+    }
+
+    /**
+     * Returns the source object
+     * @param {string[]|object} arg unused
+     * @param {Archive} bar unused
+     * @param {object} options unused
+     * @param {function(err, Archive|KeySSI)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+        if (!callback){
+            callback = bar;
+            bar = arg;
+            arg = undefined;
+        }
+
+        // return whatever the object was
+        if (!bar)
+            return callback(`Nothing to return. should not be possible`);
+
+        console.log(`Ending With command. Returning to ${JSON.stringify(bar)}`);
+        callback(undefined, bar);
+    }
+}
+
+module.exports = EndWithCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err, _getKeySSISpace, KEY_TYPE } = require('./utils');
+
+/**
+ * Generates a KeySSI
+ *
+ * @class GenKeyCommand
+ */
+class GenKeyCommand extends Command {
+    constructor(varStore) {
+        super(varStore,undefined, false);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+
+        const tryParseJson = function(text){
+            try {
+                let parsedArgs = JSON.parse(text);
+                if (parsedArgs && typeof parsedArgs === 'object')
+                    return parsedArgs;
+                return text;
+            } catch (e) {
+                // The argument is just a string. leave it be
+                return text;
+            }
+        }
+
+        try {
+            let arg = {
+                type: command.shift(),
+                domain: command.shift(),
+                args: tryParseJson(command.shift())
+            }
+
+            if (typeof arg.args === 'object' && arg.args.args){
+                arg.hint = arg.args.hint;
+                arg.args = tryParseJson(arg.args.args);
+            }
+            callback(undefined, arg);
+        } catch (e){
+            _err(`could not parse json ${command}`, e, callback);
+        }
+    }
+
+    /**
+     * Creates an Arrays SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {object} args
+     * @param {function(err, ArraySSI)} callback
+     * @private
+     */
+    _createArraySSI = function(args, callback){
+        const key = _getKeySSISpace().createArraySSI(args.domain, args.args, 'v0', args.hint ? JSON.stringify(args.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Creates a Wallet SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {object} args
+     * @param {function(err, ArraySSI)} callback
+     */
+    _createWalletSSI = function(args, callback){
+        const key = _getKeySSISpace().createTemplateWalletSSI(args.domain, args.args, 'v0', args.hint ? JSON.stringify(args.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Creates an Arrays SSI off a secret list
+     *
+     * Adds options.hint to hit if available
+     * @param {object} args
+     * @param {function(err, TemplateSeedSSI)} callback
+     */
+    _createSSI = function(args, callback){
+        const key = _getKeySSISpace().createTemplateSeedSSI(args.domain, args.args, undefined, 'v0', args.hint ? JSON.stringify(args.hint) : undefined);
+        callback(undefined, key);
+    }
+
+    /**
+     * Copies a file, from disk or another DSU
+     * @param {object} arg
+     * <pre>
+     *     {
+     *         type: (...),
+     *         domain: (..),
+     *         args: []| {
+     *                  hint: (..)
+     *                  args: []
+     *         }
+     *     }
+     * </pre>
+     * @param {Archive} bar unused
+     * @param {object} options unused
+     * @param {function(err, KeySSI)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if(!callback){
+            callback = options;
+            options = bar;
+            bar = undefined;
+        }
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined;
+        }
+        const cb = function(err, keySSI){
+            if (err)
+                return _err(`Could not create keySSI with ${JSON.stringify(arg)}`, err, callback);
+            console.log(`${arg.type} KeySSI created with SSI ${keySSI.getIdentifier()}`)
+            callback(undefined, keySSI);
+        }
+
+        switch (arg.type){
+            case KEY_TYPE.SEED:
+                return this._createSSI(arg, cb)
+            case KEY_TYPE.ARRAY:
+                return this._createArraySSI(arg, cb);
+            case KEY_TYPE.WALLET:
+                return this._createWalletSSI(arg, cb);
+            default:
+                callback(`Unsupported key type`);
+        }
+    }
+}
+
+module.exports = GenKeyCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * Returns the identifier for the current source object
+ *
+ * @class GetIdentifierCommand
+ */
+class GetIdentifierCommand extends Command{
+    constructor(varStore) {
+        super(varStore);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next discarded
+     * @param {function(err, boolean)} callback
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, command
+            ? !(command === 'false' || command[0] === 'false')
+            : true);
+    }
+
+    /**
+     * derives the provided keySSI
+     * @param {boolean} arg identifier as string (defaults to false)
+     * @param {Archive|KeySSI} bar
+     * @param {object} options unused
+     * @param {function(err, string|KeySSI)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+        if (!bar.getIdentifier && !bar.getKeySSIAsString)
+            return callback(`The object cannot be derived. It is a KeySSI or a DSU?`);
+
+        // if its a dsu
+        if (bar.constructor && bar.constructor.name === 'Archive')
+            return (arg ? bar.getKeySSIAsString : bar.getKeySSIAsObject)((err, identifier) => err
+                ? _err(`Could not get identifier`, err, callback)
+                : callback(undefined, identifier));
+
+        // if its a KeySSI
+        try{
+            let identifier = arg ? bar.getIdentifier() : bar;
+            if (!identifier)
+                return callback(`Could not get identifier`);
+            callback(undefined, identifier);
+        } catch (e){
+            _err(`Could not get identifier`, e, callback);
+        }
+    }
+}
+
+module.exports = GetIdentifierCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+module.exports = {
+    AddFileCommand: require('./addFile'),
+    AddFolderCommand: require('./addFolder'),
+    CreateDSUCommand: require('./createDSU'),
+    CreateFileCommand: require('./createFile'),
+    DefineCommand: require('./define'),
+    DeleteCommand: require('./delete'),
+    DeriveCommand: require('./derive'),
+    EndWithCommand: require('./endWith'),
+    GenKeyCommand: require('./genKey'),
+    GetIdentifierCommand: require('./getIndentifier'),
+    MountCommand: require('./mount'),
+    ObjToArrayCommand: require('./objToArray'),
+    ReadFileCommand: require('./readFile'),
+    WithCommand: require('./with'),
+    _getByName: require('./Registry')
+}
+},{"./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const ReadFileCommand = require('./readFile');
+const { _err, _getFS, _getKeySSISpace } = require('./utils');
+
+/**
+ * Mounts a DSU onto the provided path
+ *
+ * @class MountCommand
+ */
+class MountCommand extends Command{
+    constructor(varStore, source) {
+        super(varStore, source, true);
+        if (!source)
+            this._getFS = require('./utils');
+    }
+
+    /**
+     * Lists all the mounts in the provided pattern, either via fs or source dsu
+     * @param {object} arg
+     * @param {function(err, string[])} callback
+     * @private
+     */
+    _listMounts(arg, callback){
+        let self = this;
+        let basePath = arg.seed_path.split("*");
+        const listMethod = this.source ? this.source.listMountedDSUs : _getFS().readdir;
+        listMethod(basePath[0], (err, args) => err
+            ? _err(`Could not list mounts`, err, callback)
+            : callback(undefined, self._transform_mount_arguments(arg, args)));
+    }
+
+    /**
+     * handles the difference between the mount arguments in the 2 cases (with/without sourceDSU)
+     * @param arg
+     * @param args
+     * @return {*}
+     * @private
+     */
+    _transform_mount_arguments(arg, args){
+        return this.source
+            ? args.map(m => {
+                return {
+                    "seed_path": m.identifier,
+                    "mount_point": m.path
+                }
+            })
+            : args.map(n => {
+                return {
+                    "seed_path": arg.seed_path.replace("*", n),
+                    "mount_point": arg.mount_point.replace("*", n)
+                };
+            });
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|string[]|object)} callback
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        let arg = {
+            "seed_path": command[0],
+            "mount_point": command[1]
+        };
+
+        if (!arg.seed_path.match(/[\\/]\*[\\/]/))
+            return callback(undefined, arg);   // single mount
+        // multiple mount
+        this._listMounts(arg, callback);
+    }
+
+    /**
+     * Mounts a DSu onto a path
+     * @param {object} arg
+     * <pre>
+     *     {
+     *         seed_path: (...),
+     *         mount_point: (..)
+     *     }
+     * </pre>
+     * @param {Archive} [bar]
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        let self = this;
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined;
+        }
+
+        const doMount = function(seed, callback){
+            console.log("Mounting seed " + seed + " to " + arg.mount_point);
+            bar.mount(arg.mount_point, seed, err => err
+                ? _err(`Could not perform mount of ${seed} at ${arg.seed_path}`, err, callback)
+                : callback(undefined, bar));
+        };
+        try {
+            if (_getKeySSISpace().parse(arg.seed_path))
+                return doMount(arg.seed_path, callback);
+        } catch (e){
+            new ReadFileCommand(this.varStore, this.source).execute(arg.seed_path, (err, seed) => {
+                if (err)
+                    return _err(`Could not read seed from ${arg.seed_path}`, err, callback);
+                seed = seed.toString();
+                doMount(seed, callback);
+            });
+        }
+    }
+}
+
+module.exports = MountCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+
+/**
+ * Util Command to convert objects to and array with their values
+ * @class ObjToArrayCommand
+ */
+class ObjToArrayCommand extends Command{
+    constructor(varStore, source) {
+        super(varStore, source, false);
+    }
+
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, typeof command === 'string' ? command : command.shift());
+    }
+
+    /**
+     * Outputs all args to console
+     * @param {object} arg
+     * @param {Archive} bar
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        if (!callback) {
+            callback = options;
+            options = undefined;
+        }
+        try{
+            const obj = JSON.parse(arg);
+            if (typeof obj !== 'object')
+                return callback(`Provided argument is not an object`);
+            if (Array.isArray(obj)){
+                console.log(`Object was already an array ${arg}`);
+                callback(undefined, obj);
+            }
+            callback(undefined, JSON.stringify(Object.values(obj)));
+        } catch (e) {
+            _err(`Could not parse object. Was it a valid json?`, e, callback);
+        }
+    }
+}
+
+module.exports = ObjToArrayCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _getFS, _err } = require('./utils')
+
+/**
+ * Reads The contents of a file from disk or from a sourceDSU
+ *
+ * supports sourceDSU
+ *
+ * @class ReadFileCommand
+ */
+class ReadFileCommand extends Command{
+    constructor(varStore, source) {
+        super(varStore, source ? source : _getFS());
+        this.dataToString = !source;
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string)} callback
+     * @protected
+     */
+    _parseCommand(command, next, callback){
+        if (!callback){
+            callback = next;
+            next = undefined;
+        }
+        callback(undefined, command);
+    }
+
+    /**
+     * @param {Archive} bar unused in this method
+     * @param {string} arg the command argument
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback){
+        if (typeof options === 'function'){
+            callback = options;
+            options = undefined;
+        }
+        if (!callback) {
+            callback = bar;
+            bar = undefined
+        }
+
+        this.source.readFile(arg, (err, data) => err
+            ? _err(`Could not read file at ${arg}`, err, callback)
+            : callback(undefined, this.dataToString ? data : data.toString()));
+    }
+}
+
+module.exports = ReadFileCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js":[function(require,module,exports){
+/**
+ * @module Commands
+ */
+
+/**
+ * cache of node's fs object
+ */
+
+let  _fileSystem = undefined;
+
+/**
+ * Caches and returns node's fs object if the environment is right
+ * @return {fs}
+ */
+const _getFS = function(){
+    if ($$.environmentType !== 'nodejs')
+        throw new Error("Wrong environment for this function. Please make sure you know what you are doing...");
+    if (!_fileSystem)
+        _fileSystem = require('fs');
+    return _fileSystem;
+}
+
+/**
+ * Provides Util functions and Methods as well as caching for the open DSU resolver and {@Link DSUBuilder}
+ */
+
+let resolver, keyssi;
+
+/**
+ * Wrapper around
+ * <pre>
+ *     OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(msg, err));
+ * </pre>
+ * @param msg
+ * @param err
+ * @param callback
+ * @protected
+ */
+const _err = function(msg, err, callback){
+    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(msg, err));
+}
+
+/**
+ * for singleton use
+ * @returns {function} resolver api
+ */
+const _getResolver = function(){
+    if (!resolver)
+        resolver = require('opendsu').loadApi('resolver');
+    return resolver;
+}
+
+/**
+ * for singleton use
+ * @returns {function} keyssi api
+ */
+const _getKeySSISpace = function(){
+    if (!keyssi)
+        keyssi = require('opendsu').loadApi('keyssi');
+    return keyssi;
+}
+
+const KEY_TYPE = {
+    ARRAY: "array",
+    SEED: "seed",
+    WALLET: 'wallet'
+}
+
+const DSU_TYPE = {
+    CONST: "const",
+    WALLET: "wallet",
+    SEED: "seed"
 }
 
 module.exports = {
-    getDossierBuilder
+    _getFS,
+    _getResolver,
+    _getKeySSISpace,
+    _err,
+    KEY_TYPE,
+    DSU_TYPE
+};
+},{"fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js":[function(require,module,exports){
+/**
+ * @module Commands
+ * @memberOf dt
+ */
+
+/**
+ */
+const Command = require('./Command');
+const { _err } = require('./utils');
+const endCommand = 'endwith';
+const startCommand = 'with';
+
+
+
+/**
+ * Allows for more complex logic by allowing you to control the output/input for commands
+ * while keeping the commands readable
+ *
+ * basically sets whatever the result of the with operation into the source portion until it finds the endwith command
+ *
+ * @class WithCommand
+ */
+class WithCommand extends Command {
+    constructor(varStore, source) {
+        super(varStore, source);
+    }
+
+    /**
+     * @param {string[]|string} command the command split into words
+     * @param {string[]} next the following Commands
+     * @param {function(err, string|object)} [callback] for async versatility
+     * @return {string|object} the command argument
+     * @protected
+     */
+    _parseCommand(command, next, callback) {
+        if (!next)
+            throw new Error("No next defined");
+        const commandsToConsider = [command];
+        let cmd;
+        let count = 0;
+        while (!this._isEndCommand((cmd = next.shift())) && count === 0){
+            let c = cmd.split(/\s+/);
+            commandsToConsider.push(c);
+            if (this._isStartCommand(c[0]))
+                count++;
+            if (this._isEndCommand(c[0]))
+                count--;
+        }
+
+        commandsToConsider.push(cmd.split(/\s+/));
+        callback(undefined, commandsToConsider);
+    }
+
+    _isStartCommand(cmd){
+        return cmd.indexOf(startCommand) === 0;
+    }
+
+    _isEndCommand(cmd) {
+        return cmd.indexOf(endCommand) === 0;
+    }
+
+    /**
+     * @param {string[]} arg the command argument
+     * @param {Archive} bar
+     * @param {object} options
+     * @param {function(err, Archive)} callback
+     * @protected
+     */
+    _runCommand(arg, bar, options, callback) {
+        let self = this;
+        if (typeof options === 'function') {
+            callback = options;
+            options = undefined;
+        }
+        if (!callback){
+            callback = bar;
+            bar = undefined;
+        }
+        const _getByName = require('./Registry');
+
+        const parseCommand = function(command, callback){
+            const cmdName = command.shift();
+            const actualCmd = _getByName(cmdName);
+            if (!actualCmd)
+                return callback(`Could not find command`);
+            callback(undefined, cmdName, actualCmd, command);
+        }
+
+        const performWith = function(newSource, commands, callback){
+            const cmd = commands.shift();
+            if (!cmd)
+                return callback(`No endWith command found. this should not be possible`);
+            parseCommand(cmd, (err, cmdName, command, args) => {
+                if (err)
+                    return _err(`Could not parse the command ${cmd}`, err, callback);
+                if (cmdName === endCommand)
+                    return new command(self.varStore, self.source).execute(undefined, bar, callback);
+                new command(self.varStore, self.source).execute(args, newSource, (err, result) => {
+                    if (err)
+                        return _err(`Could not execute command ${cmdName}`, err, callback);
+                    console.log(`Command ${cmdName} executed with output ${JSON.stringify(result)}`);
+                    performWith(newSource, commands, callback);
+                });
+            });
+        }
+
+        const cmdOrVar = arg[0][0];
+        const cmd = _getByName(cmdOrVar);
+
+        if (!cmd){
+            console.log(`With VARIABLE executed: ${arg[0]}`);
+            return performWith(arg.shift().shift(), arg, callback);
+        }
+
+        parseCommand(arg.shift(), (err, cmdName, command, args) => err
+            ? _err(`Could not parse Command`, err, callback)
+            : new (command)(self.varStore, self.source).execute(args, (err, result) => {
+                if (err)
+                    return _err(`Could not obtain result`, err, callback);
+                console.log(`With COMMAND executed: ${JSON.stringify(result)}`);
+                performWith(result, arg, callback);
+            }));
+    }
 }
 
-},{"./DossierBuilder":"/opt/privatesky/modules/opendsu/dt/DossierBuilder.js"}],"/opt/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+module.exports = WithCommand;
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
+/**
+ * @module dt
+ */
+
+/**
+ * Provides a Environment Independent and Versatile Dossier Building API.
+ *
+ * Meant to be integrated into OpenDSU
+ */
+
+/**
+ * Returns a DossierBuilder Instance
+ * @param {Archive} [sourceDSU] should only be provided when cloning a DSU
+ * @return {DossierBuilder}
+ */
+const getDossierBuilder = (sourceDSU, ) => {
+    return new (require("./DossierBuilder"))(sourceDSU)
+}
+
+module.exports = {
+    getDossierBuilder,
+    Commands: require('./commands'),
+    AppBuilderService: require('./AppBuilderService')
+}
+
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
-    let newErr;
+    let newErr = {};
+    if((err && err.message) || otherErrors) {
+        if (err.originalMessage) {
+            newErr.originalMessage = err.originalMessage;
+        }else{
+            newErr.originalMessage = err.message;
+            if(otherErrors){
+                if (typeof otherErrors === "string") {
+                    newErr.originalMessage += otherErrors;
+                }
+
+                if (Array.isArray(otherErrors)) {
+                    otherErrors.forEach(e => newErr.originalMessage += `[${e.message}]`);
+                }
+            }
+            if(typeof newErr.originalMessage === "string") {
+                newErr.originalMessage = newErr.originalMessage.replace(/\n/g, " ");
+            }
+        }
+    }
+
     try{
-        throw Error(message);
+        if (err.originalMessage) {
+            newErr = new Error(message + `(${err.originalMessage})`);
+            newErr.originalMessage = err.originalMessage;
+        }else{
+            newErr = new Error(newErr.originalMessage);
+            newErr.originalMessage = newErr.message;
+        }
+        throw newErr;
     }catch (e) {
         newErr = e;
     }
@@ -10610,29 +15934,24 @@ function OpenDSUSafeCallback(callback){
     }
 }
 
-let errorObservers = [];
-let infoObservers = [];
-let warnObservers = [];
+let observable = require("./../utils/observable").createObservable();
 let devObservers = [];
-function reportUserRelevantError(message, err){
-    errorObservers.forEach( c=> {
-        c(message, err);
-    })
-    console.error(message, err);
+function reportUserRelevantError(message, err, showIntermediateErrors){
+    observable.dispatchEvent("error", {message, err});
+    console.log(message);
+    if(err && typeof err.debug_message != "undefined"){
+        printErrorWrapper(err, showIntermediateErrors);
+    }
 }
 
 function reportUserRelevantWarning(message){
-    warnObservers.forEach( c=> {
-        c(message);
-    })
+    observable.dispatchEvent("warn", message);
     console.log(">>>",message);
 }
 
 
 function reportUserRelevantInfo(message){
-    infoObservers.forEach( c=> {
-        c(message);
-    })
+    observable.dispatchEvent("info", message);
     console.log(">>>",message);
 }
 
@@ -10643,23 +15962,43 @@ function reportDevRelevantInfo(message){
     console.log(">>>",message);
 }
 
+function unobserveUserRelevantMessages(type, callback){
+    switch(type){
+        case "error": observable.off(type, callback);break;
+        case "info": observable.off(type, callback);break;
+        case "warn": observable.off(type, callback);break;
+        default:
+            let index = devObservers.indexOf(callback);
+            if(index !==-1){
+                devObservers.splice(index, 1);
+            }
+    }
+}
+
 function observeUserRelevantMessages(type, callback){
     switch(type){
-        case "error": errorObservers.push(callback);break;
-        case "info": infoObservers.push(callback);break;
-        case "warn": warnObservers.push(callback);break;
+        case "error": observable.on(type, callback);break;
+        case "info": observable.on(type, callback);break;
+        case "warn": observable.on(type, callback);break;
         case "dev": devObservers.push(callback);break;
         default: devObservers.push(callback);break;
     }
 }
 
-function printErrorWrapper(ew){
+function printErrorWrapper(ew, showIntermediateErrors){
     let level = 0;
+    console.log("Top level error:",  ew.debug_message, ew.debug_stack);
+    let firstError;
+    ew = ew.previousError;
      while(ew){
-         console.log("Error at layer ",level," :", ew);
+         if(showIntermediateErrors && ew.previousError){
+             console.log("Error at layer ",level," :", ew.debug_message, ew.debug_stack);
+         }
          level++;
+         firstError = ew;
          ew = ew.previousError;
      }
+    console.log("\tFirst error in the ErrorWrapper at level ",level," :", firstError);
 }
 
 function printOpenDSUError(...args){
@@ -10679,12 +16018,13 @@ module.exports = {
     reportUserRelevantInfo,
     reportDevRelevantInfo,
     observeUserRelevantMessages,
+    unobserveUserRelevantMessages,
     OpenDSUSafeCallback,
     registerMandatoryCallback,
     printOpenDSUError
 }
 
-},{}],"/opt/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
+},{"./../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -10746,8 +16086,13 @@ function generateMethodForRequestWithData(httpMethod) {
 	};
 }
 
-function doGet(url, callback){
-	fetch(url)
+function doGet(url, options, callback){
+	if (typeof options === "function") {
+		callback = options;
+		options = undefined;
+	}
+
+	fetch(url, options)
 		.then(response => response.text())
 		.then(data => callback(undefined, data))
 		.catch(err => callback(err));
@@ -10760,7 +16105,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT'),
 	doGet
 }
-},{}],"/opt/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -10770,6 +16115,7 @@ switch ($$.environmentType) {
 	case or.constants.BROWSER_ENVIRONMENT_TYPE:
 		module.exports = require("./browser");
 		break;
+	case or.constants.WEB_WORKER_ENVIRONMENT_TYPE:
 	case or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE:
 		module.exports = require("./serviceWorker");
 		break;
@@ -10792,7 +16138,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/opt/privatesky/modules/opendsu/http/browser/index.js","./node":"/opt/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/opt/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/opt/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/opt/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/opt/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
+},{"./browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -10862,13 +16208,22 @@ function fetch(url, options = {}) {
 	let promise = new Promise((resolve, reject) => {
 		decipherUrl(url, options);
 
-		if(options && options.method && options.method.toLowerCase() !== "get"){
-			throw Error("http.fetch on nodejs environment should be used only for GET requests for the moment. Use http.doPost instead.");
-		}
-
 		let request = protocol.request(url, options, (response) => {
 			resolve(new Response(request, response));
 		});
+
+		if (options.body) {
+			let body = options.body;
+			if (typeof body.pipe === 'function') {
+				body.pipe(request);
+			} else {
+				if (typeof body !== 'string' && !$$.Buffer.isBuffer(body) && !ArrayBuffer.isView(body)) {
+					body = JSON.stringify(body);
+				}
+
+				request.write(body);
+			}
+		}
 
 		request.on("error", (error) => {
 			reject(error);
@@ -10925,6 +16280,8 @@ function Response(httpRequest, httpResponse) {
 	}
 
 	this.ok = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 ? true : false;
+	this.statusCode = httpResponse.statusCode;
+	this.statusMessage = httpResponse.statusMessage;
 
 	this.arrayBuffer = function () {
 		let promise = new Promise((resolve, reject) => {
@@ -11003,7 +16360,8 @@ function Response(httpRequest, httpResponse) {
 module.exports = {
 	fetch
 }
-},{"http":false,"https":false,"url":false}],"/opt/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
+
+},{"http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -11066,19 +16424,26 @@ function generateMethodForRequestWithData(httpMethod) {
 					`URL: ${options.hostname}:${options.port}${options.path}`);
 			}
 
-			if (error) {
-				callback({error: error, statusCode: statusCode});
-				// free up memory
-				res.resume();
-				return;
-			}
-
 			let rawData = '';
 			res.on('data', (chunk) => {
 				rawData += chunk;
 			});
 			res.on('end', () => {
 				try {
+					if (error) {
+						let response = rawData;
+						try {
+							response = JSON.parse(rawData);
+						} catch (error) {
+							console.log('parse error', error);
+							// the received response is not a JSON, so we keep it as it is
+						}
+
+						const message = response.message ? response.message : response;
+						callback({error: error, statusCode: statusCode, message: message});
+						return;
+					}
+
 					callback(undefined, rawData, res.headers);
 				} catch (err) {
 					console.error(err);
@@ -11111,7 +16476,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
-},{"./fetch":"/opt/privatesky/modules/opendsu/http/node/fetch.js","http":false,"https":false,"url":false}],"/opt/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js","http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -11158,92 +16523,108 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{}],"/opt/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
 function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
-	const requests = {};
+	const requests = new Map();
 
-	function Request(url, options, delayedStart) {
-		let self = this;
-
+	function Request(url, options, delay = 0) {
+		let promiseHandlers = {};
 		let currentState = undefined;
-		this.execute = function(){
-			//if there is a delayedStart and it's the first time when the request is executed
-			if(delayedStart && typeof currentState === "undefined"){
-				setTimeout(function(){
-					currentState = fetchFunction(url, options);
-				}, delayedStart);
-			}else{
+		let timeout;
+		this.url = url;
+
+		this.execute = function() {
+			if (!currentState && delay) {
+				currentState = new Promise((resolve, reject) => {
+					timeout = setTimeout(() => {
+						fetchFunction(url, options).then((response) => {
+							resolve(response);
+						}).catch((err) => {
+							reject(err);
+						})
+					}, delay);
+				});
+			} else {
 				currentState = fetchFunction(url, options);
 			}
-
 			return currentState;
 		}
 
-		this.cancelExecution = function(){
-			if(typeof this.currentState !== "undefined"){
-				this.currentState = undefined;
+		this.cancelExecution = function() {
+			clearTimeout(timeout);
+			timeout = undefined;
+			if(typeof currentState !== "undefined"){
+				currentState = undefined;
 			}
-			this.resolve = ()=>{};
-			this.reject = ()=>{};
+			promiseHandlers.resolve = () => {};
+			promiseHandlers.reject = () => {};
 		}
 
-		let promiseHandlers = {};
-		this.setExecutor = function(resolve, reject){
+		this.setExecutor = function(resolve, reject) {
 			promiseHandlers.resolve = resolve;
 			promiseHandlers.reject = reject;
 		}
 
-		this.resolve = function(...args){
-			this.destroy();
+		this.resolve = function(...args) {
 			promiseHandlers.resolve(...args);
-		}
-
-		this.reject = function(...args){
 			this.destroy();
-			promiseHandlers.reject(...args);
 		}
 
-		this.destroy = function(identifier){
+		this.reject = function(...args) {
+			promiseHandlers.reject(...args);
+			this.destroy();
+		}
+
+		this.destroy = function(removeFromPool = true) {
 			this.cancelExecution();
 
-			requests[identifier] = undefined;
-			delete requests[identifier];
+			if (!removeFromPool) {
+				return;
+			}
+
+			// Find our identifier
+			const requestsEntries = requests.entries()
+			let identifier;
+			for (const [key, value] of requestsEntries) {
+				if (value === this) {
+					identifier = key;
+					break;
+				}
+			}
+
+			if (identifier) {
+				requests.delete(identifier);
+			}
 		}
 	}
 
-	this.createRequest = function (url, options, delayedStart=0) {
-		let request = new Request(url, options, delayedStart);
+	this.createRequest = function (url, options, delayedStart = 0) {
+		const request = new Request(url, options, delayedStart);
 
-		let promise = new Promise((resolve, reject) => {
-
+		const promise = new Promise((resolve, reject) => {
 			request.setExecutor(resolve, reject);
-
-			if(delayedStart){
-				setTimeout(function(){
-					createPollThread(request);
-				}, delayedStart);
-			}else{
-				createPollThread(request);
-			}
+			createPollThread(request);
 		});
-
-		requests[promise] = request;
 		promise.abort = () => {
 			this.cancelRequest(promise);
 		};
 
+		requests.set(promise, request);
 		return promise;
 	};
 
-	this.cancelRequest = function(promiseHandler){
-		let request = requests[promiseHandler];
-		if(typeof request === "undefined"){
+	this.cancelRequest = function(promiseOfRequest){
+		if(typeof promiseOfRequest === "undefined"){
 			console.log("No active request found.");
 			return;
 		}
 
-		request.destroy();
+		const request = requests.get(promiseOfRequest);
+		if (request) {
+			request.destroy(false);
+			requests.delete(promiseOfRequest);
+		}
 	}
 
 
@@ -11276,7 +16657,8 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 }
 
 module.exports = PollRequestManager;
-},{}],"/opt/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
 let interceptors = [];
 
 function registerInterceptor(interceptor){
@@ -11378,8 +16760,9 @@ function enable(handler){
 }
 
 module.exports = {enable};
-},{}],"/opt/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
+const crypto = require("../crypto");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 const SSITypes = keySSIResolver.SSITypes;
 
@@ -11388,23 +16771,23 @@ const parse = (ssiString, options) => {
 };
 
 const createSeedSSI = (domain, vn, hint, callback) => {
-    if(typeof vn == "function"){
+    if (typeof vn == "function") {
         callback = vn;
         vn = undefined;
     }
 
-    if(typeof hint == "function"){
+    if (typeof hint == "function") {
         callback = hint;
         hint = undefined;
     }
 
     let seedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 
-    seedSSI.initialize(domain, undefined, undefined, vn, hint, callback );
+    seedSSI.initialize(domain, undefined, undefined, vn, hint, callback);
     return seedSSI;
 };
 
-const buildSeedSSI = function(){
+const buildSeedSSI = function () {
     throw new Error("Obsoleted, use buildTemplateSeedSSI");
 }
 
@@ -11417,9 +16800,9 @@ const createTemplateSeedSSI = (domain, specificString, control, vn, hint, callba
     return createTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const createHashLinkSSI = (domain, hash, vn) => {
+const createHashLinkSSI = (domain, hash, vn, hint) => {
     const hashLinkSSI = keySSIFactory.createType(SSITypes.HASH_LINK_SSI)
-    hashLinkSSI.initialize(domain, hash, vn);
+    hashLinkSSI.initialize(domain, hash, vn, hint);
     return hashLinkSSI;
 };
 
@@ -11452,24 +16835,31 @@ const createTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint
 
 const buildTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
     console.log("This function is obsolete. Use createTemplateWalletSSI instead.");
-    try{
-        let ssi  = createArraySSI(domain, arrayWIthCredentials,undefined,hint);
+    try {
+        let ssi = createArraySSI(domain, arrayWIthCredentials, undefined, hint);
         ssi.cast(SSITypes.WALLET_SSI);
         return parse(ssi.getIdentifier());
-    } catch(err){
+    } catch (err) {
         console.log("Failing to build WalletSSI");
     }
 };
 
 const createTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
-    try{
-        let ssi  = createArraySSI(domain, arrayWIthCredentials,undefined,hint);
+    try {
+        let ssi = createArraySSI(domain, arrayWIthCredentials, undefined, hint);
         ssi.cast(SSITypes.WALLET_SSI);
         return parse(ssi.getIdentifier());
-    } catch(err){
+    } catch (err) {
         console.log("Failing to build WalletSSI");
     }
 };
+
+const createConstSSI = (domain, constString, vn, hint, callback) => {
+    const constSSI = keySSIFactory.createType(SSITypes.CONST_SSI);
+    constSSI.initialize(domain, constString, vn, hint);
+    return constSSI;
+};
+
 const createArraySSI = (domain, arr, vn, hint, callback) => {
     const arraySSI = keySSIFactory.createType(SSITypes.ARRAY_SSI);
     arraySSI.initialize(domain, arr, vn, hint);
@@ -11485,6 +16875,98 @@ const createTemplateSymmetricalEncryptionSSI = (domain, encryptionKey, control, 
     return createTemplateKeySSI(SSITypes.SYMMETRICAL_ENCRYPTION_SSI, domain, encryptionKey, control, vn, hint, callback);
 };
 
+const createToken = (domain, amountOrSerialNumber, vn, hint, callback) => {
+    if (typeof vn === "function") {
+        callback = vn;
+        vn = undefined;
+        hint = undefined
+    }
+
+    if (typeof hint === "function") {
+        callback = hint;
+        hint = undefined
+    }
+    // the tokenSSI is closely linked with an ownershipSSI
+    // the tokenSSI must have the ownershipSSI's public key hash
+    // the ownershipSSI must have the tokenSSI's base58 ssi
+    const ownershipSSI = keySSIFactory.createType(SSITypes.OWNERSHIP_SSI);
+    ownershipSSI.initialize(domain, undefined, undefined, vn, hint, (err) => {
+
+        const ownershipPublicKeyHash = ownershipSSI.getPublicKeyHash();
+        const ownershipPrivateKey = ownershipSSI.getPrivateKey();
+
+        const tokenSSI = keySSIFactory.createType(SSITypes.TOKEN_SSI);
+        tokenSSI.initialize(domain, amountOrSerialNumber, ownershipPublicKeyHash, vn, hint);
+
+        // update ownershipSSI to set level and token
+        const ownershipLevelAndToken = `0/${tokenSSI.getIdentifier()}`;
+        ownershipSSI.load(SSITypes.OWNERSHIP_SSI, domain, ownershipPrivateKey, ownershipLevelAndToken, vn, hint);
+
+        // create a TRANSFER_SSI, since the token's ownership is first transfered to the owner itself
+        const transferTimestamp = new Date().getTime();
+
+        // get signature by sign(lastEntryInAnchor, transferTimestamp, ownershipPublicKeyHash)
+        const transferDataToSign = `${transferTimestamp}${ownershipPublicKeyHash}`;
+        ownershipSSI.sign(transferDataToSign, (err, signature) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper("Failed to signed transfer data", err));
+            }
+
+            let transferSSI = createTransferSSI(domain, ownershipPublicKeyHash, transferTimestamp, signature);
+            const {createAnchor, appendToAnchor} = require("../anchoring");
+            createAnchor(ownershipSSI, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to anchor ownershipSSI", err));
+                }
+
+                appendToAnchor(ownershipSSI, transferSSI, (err) => {
+                    if (err) {
+                        return callback(createOpenDSUErrorWrapper("Failed to anchor transferSSI", err));
+                    }
+
+                    const result = {
+                        tokenSSI: tokenSSI,
+                        ownershipSSI: ownershipSSI,
+                        transferSSI: transferSSI
+                    }
+
+                    callback(undefined, result);
+                });
+            });
+        });
+    });
+};
+
+const createOwnershipSSI = (domain, levelAndToken, vn, hint, callback) => {
+    let ownershipSSI = keySSIFactory.createType(SSITypes.OWNERSHIP_SSI);
+    ownershipSSI.initialize(domain, undefined, levelAndToken, vn, hint, callback);
+    return ownershipSSI;
+};
+
+const createTransferSSI = (domain, hashNewPublicKey, timestamp, signatureCurrentOwner, vn, hint, callback) => {
+    let transferSSI = keySSIFactory.createType(SSITypes.TRANSFER_SSI);
+    transferSSI.initialize(domain, hashNewPublicKey, timestamp, signatureCurrentOwner, vn, hint, callback);
+    return transferSSI;
+};
+
+const createTemplateTransferSSI = (domain, hashNewPublicKey, vn, hint) => {
+    let transferSSI = keySSIFactory.createType(SSITypes.TRANSFER_SSI);
+    transferSSI.load(domain, hashNewPublicKey, undefined, vn, hint);
+    return transferSSI;
+};
+
+const createSignedHashLinkSSI = (domain, hashLink, timestamp, signature, vn, hint) => {
+    let signedHashLink = keySSIFactory.createType(SSITypes.SIGNED_HASH_LINK_SSI);
+    signedHashLink.initialize(domain, hashLink, timestamp, signature, vn, hint);
+    return signedHashLink;
+};
+
+const createPublicKeySSI = (compatibleFamilyName, publicKey, vn) => {
+    let publicKeySSI = keySSIFactory.createType(SSITypes.PUBLIC_KEY_SSI);
+    publicKeySSI.initialize(compatibleFamilyName, publicKey, vn);
+    return publicKeySSI;
+};
+
 module.exports = {
     parse,
     createSeedSSI,
@@ -11496,10 +16978,504 @@ module.exports = {
     createTemplateWalletSSI,
     createTemplateKeySSI,
     createHashLinkSSI,
+    createConstSSI,
     createArraySSI,
-    buildSymmetricalEncryptionSSI
+    buildSymmetricalEncryptionSSI,
+    createToken,
+    createOwnershipSSI,
+    createTransferSSI,
+    createTemplateTransferSSI,
+    createSignedHashLinkSSI,
+    createPublicKeySSI
 };
-},{"key-ssi-resolver":"key-ssi-resolver"}],"/opt/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+
+},{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
+const apis = {};
+function defineApi(name, implementation){
+	if(typeof implementation !== "function"){
+		throw Error("second argument of the defineApi should be a function that will represent the implementation for that api");
+	}
+	apis[name] = implementation;
+}
+
+function getApis(){
+	return apis;
+}
+
+module.exports = {defineApi, getApis}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js":[function(require,module,exports){
+const registry = require("../apisRegistry");
+
+/*
+* based on jsonIndications Object {attributeName1: "DSU_file_path", attributeName2: "DSU_file_path"}
+* the this of the mapping will be populated with the data extracted from the DSU
+* */
+registry.defineApi("loadJSONS", async function (dsu, jsonIndications) {
+	for (let prop in jsonIndications) {
+		try {
+			let data;
+			data = await dsu.readFile(jsonIndications[prop]);
+			this[prop] = JSON.parse(data);
+		}
+		catch (e){
+			console.log("Failed to load JSON due to ",e.message);
+		}
+	}
+});
+
+/*
+* based on jsonIndications Object {attributeName1: "DSU_file_path", attributeName2: "DSU_file_path"}
+* the data from the this of the mapping will be saved into the DSU
+* */
+registry.defineApi("saveJSONS", async function (dsu, jsonIndications) {
+	for (let prop in jsonIndications) {
+		let data = JSON.stringify(this[prop]);
+		await dsu.writeFile(jsonIndications[prop], data);
+	}
+});
+
+function promisifyDSUAPIs(dsu) {
+	//this API method list will be promisify on the fly with the help of the registerDSU method and a Proxy over DSU instance
+	const promisifyAPIs = [
+		"addFile",
+		"addFiles",
+		"addFolder",
+		"appendToFile",
+		"batch",
+		"beginBatch",
+		"cancelBatch",
+		"cloneFolder",
+		"commitBatch",
+		"createFolder",
+		"delete",
+		"dsuLog",
+		"extractFile",
+		"extractFolder",
+		"getKeySSI",
+		"getKeySSIAsObject",
+		"getKeySSIAsString",
+		"getSSIForMount",
+		"init",
+		"listFiles",
+		"listFolders",
+		"listMountedDossiers",
+		"load",
+		"mount",
+		"readDir",
+		"readFile",
+		"rename",
+		"stat",
+		"unmount",
+		"writeFile",
+		"listMountedDSUs",
+		"refresh"
+	];
+
+	const promisifyHandler = {
+		get: function (target, prop, receiver) {
+			if (promisifyAPIs.indexOf(prop) !== -1) {
+				return $$.promisify(target[prop]);
+			}
+			return target[prop];
+		}
+	};
+
+	//we create a proxy over the normal DSU / Archive instance
+	//in order to promisify on the fly the public API to be easier to work with in the mapping functions
+	return new Proxy(dsu, promisifyHandler);
+}
+
+//all DSUs that are created with different exposed APIs need to be registered
+// in order to control the batch operations and promisify the API on them
+registry.defineApi("registerDSU", function (dsu) {
+	if (typeof dsu === "undefined" || typeof dsu.beginBatch !== "function") {
+		throw Error("registerDSU needs a DSU instance");
+	}
+	if (typeof this.registeredDSUs === "undefined") {
+		this.registeredDSUs = [];
+	}
+
+	//TODO: temporary fix, this apiRegistry is now instantiated for each mapping message
+	if(!dsu.batchInProgress()){
+		this.registeredDSUs.push(dsu);
+		dsu.beginBatch();
+	}
+
+	return promisifyDSUAPIs(dsu);
+});
+
+registry.defineApi("loadConstSSIDSU", async function (constSSI,options) {
+	const resolver = this.getResolver();
+
+	let dsu;
+	try {
+		dsu= await resolver.loadDSU(constSSI);
+	}
+	catch (e){
+		//TODO check error type
+		//on purpose if DSU does not exists an error gets throw
+	}
+
+	if (dsu) {
+		//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+		return {dsu: this.registerDSU(dsu), alreadyExists: true};
+	}
+
+	dsu = await resolver.createDSUForExistingSSI(constSSI, options);
+
+	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+	return {dsu: this.registerDSU(dsu), alreadyExists: false};
+});
+
+registry.defineApi("loadArraySSIDSU", async function (domain, arr) {
+	const opendsu = require("opendsu");
+	const resolver = this.getResolver();
+	const keySSISpace = opendsu.loadApi("keyssi");
+
+	const keySSI = keySSISpace.createArraySSI(domain, arr);
+	let dsu = await resolver.loadDSU(keySSI);
+	if (dsu) {
+		//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+		return {dsu: this.registerDSU(dsu), alreadyExists: true};
+	}
+
+	dsu = await resolver.createArrayDSU(domain, arr);
+	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+	return {dsu: this.registerDSU(dsu), alreadyExists: false};
+});
+
+registry.defineApi("createDSU", async function (domain, ssiType, options) {
+	let dsu = await this.getResolver().createDSUx(domain, ssiType, options);
+	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+	return this.registerDSU(dsu);
+});
+
+registry.defineApi("loadDSU", async function (keySSI, options) {
+	let dsu = await this.getResolver().loadDSU(keySSI, options);
+	if (!dsu) {
+		throw new Error("No DSU found for " + keySSI);
+	}
+	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+	return this.registerDSU(dsu);
+});
+
+
+//an api that returns an OpenDSU Resolver instance that has promisified methods
+// to be used in mappings easier
+registry.defineApi("getResolver", function (domain, ssiType, options) {
+	const promisify = ["createDSU",
+		"createDSUx",
+		"createSeedDSU",
+		"createArrayDSU",
+		"createDSUForExistingSSI",
+		"loadDSU"];
+
+	const resolver = require("opendsu").loadApi("resolver");
+	for(let i=0; i<promisify.length; i++){
+		resolver[promisify[i]] = $$.promisify(resolver[promisify[i]]);
+	}
+
+	return resolver;
+});
+
+
+},{"../apisRegistry":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js":[function(require,module,exports){
+const mappingRegistry = require("./../mappingRegistry.js");
+
+async function validateMessage(message){
+	return !!(message.messageType === "standard");
+}
+
+async function digestMessage(message){
+	throw Error("Not implemented yet!");
+}
+
+mappingRegistry.defineMapping(validateMessage, digestMessage);
+},{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
+const mappingRegistry = require("./mappingRegistry.js");
+const apisRegistry = require("./apisRegistry.js");
+
+//loading defaultApis
+require("./defaultApis");
+
+//loading defaultMappings
+require("./defaultMappings");
+
+function MappingEngine(storageService, options) {
+	if (typeof storageService === "undefined"
+		|| typeof storageService.beginBatch !== "function"
+		|| typeof storageService.commitBatch !== "function"
+		|| typeof storageService.cancelBatch !== "function") {
+		throw Error("The MappingEngine requires a storage service that exposes beginBatch, commitBatch, cancelBatch apis!");
+	}
+
+	const errorHandler = require("opendsu").loadApi("error");
+
+	//the purpose of the method is to create a "this" instance to be used during a message mapping process
+	function buildMappingInstance() {
+		let instance = {storageService, options};
+		const apis = apisRegistry.getApis();
+
+		//we inject all the registered apis on the instance that will become the "this" for a mapping
+		for (let prop in apis) {
+			if (typeof instance[prop] !== "undefined") {
+				console.log(`Take note that an overwriting processing is in place for the api named ${prop}.`);
+			}
+			instance[prop] = (...args) => {
+				return apis[prop].call(instance, ...args);
+			}
+		}
+
+		return instance;
+	}
+
+	function digestMessage(message) {
+		return new Promise((resolve, reject) => {
+			function finish() {
+				//first of all we set an event listener to catch any errors during the commit processes
+				errorHandler.observeUserRelevantMessages("error", function ({message, error}) {
+					return reject(errorHandler.createOpenDSUErrorWrapper("Caught an error during commit batch", error));
+
+					/*const cancelBatch = $$.promisify(persistenceDSU.cancelBatch);
+					cancelBatch().then(res => {
+						reject(errorHandler.createOpenDSUErrorWrapper("Batch canceled", error));
+					}).catch(err => {
+						reject(errorHandler.createOpenDSUErrorWrapper("Batch canceled", errorHandler.createOpenDSUErrorWrapper(err.message, error)));
+					});*/
+				});
+			}
+
+			async function process() {
+				const mappings = mappingRegistry.getMappings();
+				let messageDigested = false;
+
+				for (let i = 0; i < mappings.length; i++) {
+					let mapping = mappings[i];
+					let {matchFunction, mappingFunction} = mapping;
+					let applyMapping = await matchFunction(message);
+
+					if (applyMapping) {
+						const instance = buildMappingInstance();
+						try{
+							await mappingFunction.call(instance, message);
+
+
+						//if all good until this point, we need to commit any registeredDSU during the message mapping
+						const commitPromises = [];
+						for (let i = 0; i < instance.registeredDSUs.length; i++) {
+							const commitBatch = $$.promisify(instance.registeredDSUs[i].commitBatch);
+							commitPromises.push(commitBatch());
+						}
+
+						Promise.all(commitPromises)
+							.then(async results => {
+									for (let i = 0; i < results.length; i++) {
+										let result = results[i];
+										if (result && result.status == "rejected") {
+											registeredDSUs[i].cancelBatch();
+											let getDSUIdentifier = $$.promisify(registeredDSUs[i].getKeySSIAsString);
+											return reject(errorHandler.createOpenDSUErrorWrapper(`Cancel batch on dsu identified with ${await getDSUIdentifier()}`, error));
+										}
+									}
+									resolve(true);
+								}
+							).catch(err => {
+							return reject(errorHandler.createOpenDSUErrorWrapper(`Caught error during commit batch on registered DSUs`, err));
+						});
+						}
+						catch(err){
+							reject(errorHandler.createOpenDSUErrorWrapper(`Caught error during mapping`, err));
+						}
+						messageDigested = true;
+						//we apply only the first mapping found to be suited for the message that we try to digest
+						break;
+					}
+				}
+				if (!messageDigested) {
+					console.log(`Unable to find a suitable mapping to handle the following message: ${JSON.stringify(message)}`);
+				}
+				return messageDigested;
+			}
+
+			return process();
+		});
+	}
+
+	let inProgress = false;
+	this.digestMessages = (messages) => {
+		if (!Array.isArray(messages)) {
+			messages = [messages];
+		}
+
+		async function rollback(){
+			const cancelBatch = $$.promisify(storageService.cancelBatch);
+			await cancelBatch();
+			inProgress = false;
+		}
+
+		async function finish() {
+			const commitBatch = $$.promisify(storageService.commitBatch);
+			await commitBatch();
+			inProgress = false;
+		}
+
+		return new Promise((resolve, reject) => {
+				if (inProgress) {
+					throw Error("Mapping Engine is digesting messages for the moment.");
+				}
+				inProgress = true;
+				storageService.beginBatch();
+
+				//digests will contain promises for each of message digest
+				let digests = [];
+
+				for (let i = 0; i < messages.length; i++) {
+					let message = messages[i];
+					if (typeof message !== "object") {
+						throw Error(`Message is not an Object is :${typeof message} and has the value: ${message}`);
+					}
+
+					function handleErrorsDuringPromiseResolving(err) {
+						reject(err);
+					}
+
+					try {
+						digests.push(digestMessage(message));
+					} catch (err) {
+						errorHandler.reportUserRelevantError("Caught error during message digest", err);
+					}
+
+				}
+
+			function digestConfirmation(results) {
+				let failedMessages = [];
+				for (let index = 0; index < results.length; index++) {
+					let result = results[index];
+					switch (result.status) {
+						case "fulfilled" :
+							if (result.value === false) {
+								// message digest failed
+								failedMessages.push({
+									message: messages[index],
+									reason: `Not able to digest message due to missing suitable mapping`
+								});
+							}
+							break;
+						case "rejected" :
+							failedMessages.push({
+								message: messages[index],
+								reason: result.reason
+							});
+							break;
+					}
+				}
+
+				finish().then(()=>{
+					resolve(failedMessages);
+				}).catch(async (err)=>{
+					await rollback();
+					reject(err);
+				});
+			}
+
+
+				Promise.allSettled(digests)
+				.then(digestConfirmation)
+				.catch(handleErrorsDuringPromiseResolving);
+
+			}
+		);
+	}
+
+	return this;
+}
+
+module.exports = {
+	getMappingEngine: function (persistenceDSU, options) {
+		return new MappingEngine(persistenceDSU, options);
+	},
+	getMessagesPipe:function (){
+		return require("./messagesPipe");
+	},
+	defineMapping: mappingRegistry.defineMapping,
+	defineApi: apisRegistry.defineApi
+}
+},{"./apisRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
+const mappingRegistry = [];
+function defineMapping(matchFunction, mappingFunction){
+	mappingRegistry.push({matchFunction, mappingFunction});
+}
+
+function getMappings(){
+	return mappingRegistry;
+}
+
+module.exports = {
+	defineMapping,
+	getMappings
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js":[function(require,module,exports){
+module.exports = function (maxGroupSize, maxQueuingTime, groupingFunction) {
+
+    this.queue = [];
+    let newGroupCallback;
+    let pipeIsWaiting = false;
+    let waitingIntervalId;
+
+    let startWaitingMessages = () => {
+        if(pipeIsWaiting === false){
+            pipeIsWaiting = true;
+            waitingIntervalId = setInterval(async()=>{
+                if (this.queue.length > 0) {
+                    await checkPipeMessages(true);
+                }
+            }, maxQueuingTime);
+        }
+    }
+
+    let stopWaitingMessages = () =>{
+        pipeIsWaiting = false;
+        if(waitingIntervalId){
+            clearInterval(waitingIntervalId);
+        }
+    }
+
+    this.addInQueue =  async (messages) => {
+
+        if (!Array.isArray(messages)) {
+            messages = [messages]
+        }
+
+        for (let i = 0; i < messages.length; i++) {
+            this.queue.push(messages[i]);
+        }
+
+        await checkPipeMessages();
+
+    }
+
+    this.onNewGroup = (__newGroupCallback) => {
+         newGroupCallback = __newGroupCallback;
+    };
+
+    let checkPipeMessages = async (forceFlush) =>{
+
+        let messageGroup = await $$.promisify(groupingFunction)(this.queue);
+
+        if (messageGroup.length < this.queue.length || maxGroupSize <= this.queue.length || forceFlush) {
+            messageGroup = [...messageGroup];
+            //TODO we are loosing messages that are not properly digested
+            this.queue.splice(0,messageGroup.length);
+            stopWaitingMessages();
+            await newGroupCallback(messageGroup);
+        }
+        startWaitingMessages();
+    }
+
+    startWaitingMessages();
+
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
 const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
 
 let cachedKeySSIResolver = undefined;
@@ -11543,6 +17519,7 @@ module.exports = {
 		VAULT: "vault",
 		MOBILE: "mobile",
 	},
+    BOOT_CONFIG_FILE: 'boot-cfg.json',
 	 get KEY_SSIS(){
 		if(cachedKeySSIResolver === undefined){
 			cachedKeySSIResolver = require("key-ssi-resolver");
@@ -11560,7 +17537,7 @@ module.exports = {
 
 
 
-},{"../overwrite-require/moduleConstants":"/opt/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/opt/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -11568,29 +17545,30 @@ Message Queues API space
 let http = require("../http");
 let bdns = require("../bdns")
 
-function send(keySSI, message, callback){
+function send(keySSI, message, callback) {
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
-        if(err){
+        if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
-        let url = endpoints[0]+`/mq/send-message/${keySSI}`;
+        let url = endpoints[0] + `/mq/send-message/${keySSI}`;
         let options = {body: message};
 
         let request = http.poll(url, options, timeout);
 
-        request.then((response)=>{
+        request.then((response) => {
             callback(undefined, response);
-        }).catch((err)=>{
+        }).catch((err) => {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to send message`, err));
         });
     });
 }
 
 let requests = {};
-function getHandler(keySSI, timeout){
+
+function getHandler(keySSI, timeout) {
     let obs = require("../utils/observable").createObservable();
     bdns.getMQEndpoints(keySSI, (err, endpoints) => {
-        if(err || endpoints.length === 0){
+        if (err || endpoints.length === 0) {
             return callback(new Error("Not available!"));
         }
 
@@ -11600,11 +17578,13 @@ function getHandler(keySSI, timeout){
                 if (err.statusCode === 409) {
                     //channels already exists. no problem :D
                 } else {
+                    get
                     obs.dispatch("error", err);
                     return;
                 }
             }
-            function makeRequest(){
+
+            function makeRequest() {
                 let url = endpoints[0] + `/mq/receive-message/${keySSI}`;
                 let options = {};
 
@@ -11628,31 +17608,175 @@ function getHandler(keySSI, timeout){
     return obs;
 }
 
-function unsubscribe(keySSI, observable){
+function unsubscribe(keySSI, observable) {
     http.unpoll(requests[observable]);
+}
+
+function MQHandler(didDocument, domain) {
+    let token;
+    let expiryTime;
+    let queueName = didDocument.getHash();
+    domain = domain || didDocument.getDomain();
+
+    function getURL(queueName, action, signature, messageID, callback) {
+        let url
+        if (typeof signature === "function") {
+            callback = signature;
+            signature = undefined;
+            messageID = undefined;
+        }
+
+        if (typeof messageID === "function") {
+            callback = messageID;
+            messageID = undefined;
+        }
+
+        bdns.getMQEndpoints(domain, (err, mqEndpoints) => {
+            if (err) {
+                return callback(err);
+            }
+
+            url = `${mqEndpoints[0]}/mq/${domain}`
+            switch (action) {
+                case "token":
+                    url = `${url}/${queueName}/token`;
+                    break;
+                case "get":
+                    url = `${url}/get/${queueName}/${signature}`;
+                    break;
+                case "put":
+                    url = `${url}/put/${queueName}`;
+                    break;
+                case "take":
+                    url = `${url}/take/${queueName}/${signature}`;
+                    break;
+                case "delete":
+                    url = `${url}/delete/${queueName}/${messageID}/${signature}`;
+                    break;
+                default:
+                    throw Error(`Invalid action received ${action}`);
+            }
+
+            callback(undefined, url);
+        })
+    }
+
+    function ensureAuth(callback) {
+        getURL(queueName, "token", (err, url) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (!token || (expiryTime && Date.now() + 2000 > expiryTime)) {
+                callback = $$.makeSaneCallback(callback);
+                return http.fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        token = data.token;
+                        expiryTime = data.expires;
+                        callback(undefined, token);
+                    })
+                    .catch(err => callback(err));
+            }
+
+            callback(undefined, token);
+        });
+    }
+
+    this.writeMessage = (message, callback) => {
+        ensureAuth((err, token) => {
+            if (err) {
+                return callback(err);
+            }
+
+            getURL(queueName, "put", (err, url) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                http.doPut(url, message, {headers: {"Authorization": token}}, callback);
+            });
+        })
+
+    }
+
+    function consumeMessage(action, callback) {
+        ensureAuth((err, token) => {
+            if (err) {
+                return callback(err);
+            }
+
+            didDocument.sign(token, (err, signature) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to sign token`, err));
+                }
+
+                getURL(queueName, action, signature.toString("hex"), (err, url) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback = $$.makeSaneCallback(callback);
+                    http.fetch(url, {headers: {Authorization: token}})
+                        .then(response => response.json())
+                        .then(data => callback(undefined, data))
+                        .catch(err => callback(err));
+                })
+            })
+        })
+    }
+
+    this.previewMessage = (callback) => {
+        consumeMessage("get", callback);
+    }
+
+    this.readMessage = (callback) => {
+        consumeMessage("take", callback);
+    };
+
+    this.deleteMessage = (messageID, callback) => {
+        throw Error("Not implemented");
+    }
+}
+
+function getMQHandlerForDID(didDocument, domain) {
+    return new MQHandler(didDocument, domain);
 }
 
 module.exports = {
     send,
     getHandler,
-    unsubscribe
+    unsubscribe,
+    getMQHandlerForDID
 }
-},{"../bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","../http":"/opt/privatesky/modules/opendsu/http/index.js","../utils/observable":"/opt/privatesky/modules/opendsu/utils/observable.js"}],"/opt/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
 
-let http = require("../index").loadApi("http");
-let bdns = require("../index").loadApi("bdns");
+let http = require("../http");
+let bdns = require("../bdns");
 
-function publish(keySSI, message, callback){
-	bdns.getNotificationEndpoints(keySSI, (err, endpoints) => {
-		if(err || endpoints.length === 0){
-			return callback(new Error("Not available!"));
+function publish(keySSI, message, timeout, callback){
+	if (typeof timeout === 'function') {
+		callback = timeout;
+		timeout = 0;
+	}
+	bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
+		if (err) {
+			throw new Error(err);
 		}
 
-		let url = endpoints[0]+`/notifications/publish/${keySSI}`;
-		let options = {body: message};
+		if (!endpoints.length) {
+			throw new Error("No notification endpoints are available!");
+		}
+
+		let url = endpoints[0]+`/notifications/publish/${keySSI.getAnchorId()}`;
+
+		if (typeof message !== 'string' && !$$.Buffer.isBuffer(message) && !ArrayBuffer.isView(message)) {
+			message = JSON.stringify(message);
+		}
+
+        let options = {body: message, method: 'PUT'};
 
 		let request = http.poll(url, options, timeout);
 
@@ -11661,57 +17785,83 @@ function publish(keySSI, message, callback){
 		}).catch((err)=>{
 			return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish message`, err));
 		});
-	});
+    });
 }
 
-let requests = {};
+let requests = new Map();
 function getObservableHandler(keySSI, timeout){
+	timeout = timeout || 0;
 	let obs = require("../utils/observable").createObservable();
-	bdns.getNotificationEndpoints(keySSI, (err, endpoints) => {
-		if(err || endpoints.length === 0){
-			throw (new Error("Not available!"));
+
+	bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
+		if (err) {
+			throw new Error(err);
+		}
+
+		if (!endpoints.length) {
+			throw new Error("No notification endpoints are available!");
 		}
 
 		function makeRequest(){
-			let url = endpoints[0] + `/notifications/subscribe/${keySSI}`;
-			let options = {};
+			let url = endpoints[0] + `/notifications/subscribe/${keySSI.getAnchorId()}`;
+			let options = {
+				method: 'POST'
+			};
 			let request = http.poll(url, options, timeout);
 
 			request.then((response) => {
-				obs.dispatch("message", response);
-				makeRequest();
+				obs.dispatchEvent("message", response);
+
+				// If a subscription still exists, continue polling for messages
+				if (requests.has(obs)) {
+					makeRequest();
+				}
 			}).catch((err) => {
-				obs.dispatch("error", err);
+				obs.dispatchEvent("error", err);
 			});
 
-			requests[obs] = request;
+			requests.set(obs, request);
 		}
 
 		makeRequest();
-	});
+	})
+
 	return obs;
 }
 
-function unsubscribe(keySSI, observable){
-	http.unpoll(requests[observable]);
+function unsubscribe(observable){
+	const request = requests.get(observable);
+	if (!request) {
+		return;
+	}
+	http.unpoll(request);
+	requests.delete(observable);
+}
+
+function isSubscribed(observable) {
+	return requests.has(observable);
 }
 
 module.exports = {
 	publish,
 	getObservableHandler,
-	unsubscribe
+	unsubscribe,
+	isSubscribed
 }
-},{"../index":"/opt/privatesky/modules/opendsu/index.js","../utils/observable":"/opt/privatesky/modules/opendsu/utils/observable.js"}],"/opt/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
 const cache = require("../cache");
-const sc = require("../sc").createSecurityContext();
 let dsuCache = cache.getMemoryCache("DSUs");
+let {ENVIRONMENT_TYPES, KEY_SSIS} = require("../moduleConstants.js");
+const {getWebWorkerBootScript, getNodeWorkerBootScript} = require("./resolver-utils");
 
 const initializeResolver = (options) => {
     options = options || {};
     return KeySSIResolver.initialize(options);
-}
+};
 
 const registerDSUFactory = (type, factory) => {
     KeySSIResolver.DSUFactory.prototype.registerDSUType(type, factory);
@@ -11728,12 +17878,25 @@ function addDSUInstanceInCache(dsuInstance, callback) {
 }
 
 const createDSU = (templateKeySSI, options, callback) => {
-    if (typeof templateKeySSI === "string") {
-        templateKeySSI = keySSISpace.parse(templateKeySSI);
-    }
     if (typeof options === "function") {
         callback = options;
-        options = undefined;
+        options = {addLog: true};
+    }
+
+    if(typeof options === "undefined"){
+        options = {};
+    }
+
+    if(typeof options.addLog === "undefined"){
+        options.addLog = true;
+    }
+
+    if (typeof templateKeySSI === "string") {
+        try {
+            templateKeySSI = keySSISpace.parse(templateKeySSI);
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${templateKeySSI}`, e));
+        }
     }
 
     const keySSIResolver = initializeResolver(options);
@@ -11742,9 +17905,8 @@ const createDSU = (templateKeySSI, options, callback) => {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
         }
 
-        function addInCache(err, result){
-            if (err)
-            {
+        function addInCache(err, result) {
+            if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
             }
             addDSUInstanceInCache(dsuInstance, callback);
@@ -11755,19 +17917,43 @@ const createDSU = (templateKeySSI, options, callback) => {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get SeedSSI`, err));
             }
 
-            sc.registerKeySSI(keySSI);
-            dsuInstance.dsuLog("DSU created on " + Date.now(), addInCache);
+            // const sc = require("../sc").getSecurityContext();
+            // sc.registerKeySSI(keySSI);
+            if (typeof options === "object" && options.addLog && keySSI.getTypeName() !== KEY_SSIS.CONST_SSI) {
+                dsuInstance.dsuLog("DSU created on " + Date.now(), addInCache);
+            } else {
+                addInCache(undefined, dsuInstance);
+            }
         });
     });
 };
 
+const createDSUx = (domain, ssiType, options, callback) => {
+    const templateKeySSI = keySSISpace.createTemplateKeySSI(ssiType, domain);
+    createDSU(templateKeySSI, options, callback);
+}
+
+const createSeedDSU = (domain, options, callback) => {
+    const seedSSI = keySSISpace.createTemplateSeedSSI(domain);
+    createDSU(seedSSI, options, callback);
+}
+
+const createArrayDSU = (domain, arr, options, callback) => {
+    const arraySSI = keySSISpace.createArraySSI(domain, arr);
+    createDSUForExistingSSI(arraySSI, options, callback);
+}
+
+const createConstDSU = (domain, constString, options, callback) => {
+    const constSSI = keySSISpace.createConstSSI(domain, constString);
+    createDSUForExistingSSI(constSSI, options, callback);
+}
 
 const createDSUForExistingSSI = (ssi, options, callback) => {
-    if(typeof options === "function"){
+    if (typeof options === "function") {
         callback = options;
         options = {};
     }
-    if(!options){
+    if (!options) {
         options = {};
     }
     options.useSSIAsIdentifier = true;
@@ -11775,22 +17961,26 @@ const createDSUForExistingSSI = (ssi, options, callback) => {
 };
 
 const loadDSU = (keySSI, options, callback) => {
-    if (typeof keySSI === "string") {
-        keySSI = keySSISpace.parse(keySSI);
-    }
-
     if (typeof options === "function") {
         callback = options;
         options = undefined;
     }
 
+    if (typeof keySSI === "string") {
+        try {
+            keySSI = keySSISpace.parse(keySSI);
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e));
+        }
+    }
     const ssiId = keySSI.getIdentifier();
     let fromCache = dsuCache.get(ssiId);
-    if (fromCache){
+    if (fromCache) {
         return callback(undefined, fromCache);
     }
     const keySSIResolver = initializeResolver(options);
-    sc.registerKeySSI(keySSI);
+    // const sc = require("../sc").getSecurityContext();
+    // sc.registerKeySSI(keySSI);
     keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
@@ -11799,38 +17989,230 @@ const loadDSU = (keySSI, options, callback) => {
     });
 };
 
+/*
+    boot the DSU in a thread
+ */
+const getDSUHandler = (dsuKeySSI) => {
+    if (typeof dsuKeySSI === "string") {
+        // validate the dsuKeySSI to ensure it's valid
+        try {
+            keySSISpace.parse(dsuKeySSI);
+        } catch (error) {
+            const errorMessage = `Cannot parse keySSI ${dsuKeySSI}`;
+            console.error(errorMessage, error);
+            throw new Error(errorMessage);
+        }
+    }
 
-const getHandler = () => {
+    const syndicate = require("syndicate");
+
+    function DSUHandler() {
+        switch ($$.environmentType) {
+            case ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+                throw new Error(`service-worker environment is not supported!`);
+            case ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+                if (!window.Worker) {
+                    throw new Error("Current environment does not support Web Workers!");
+                }
+
+                console.log("[Handler] starting web worker...");
+
+                let blobURL = getWebWorkerBootScript(dsuKeySSI);
+                workerPool = syndicate.createWorkerPool({
+                    bootScript: blobURL,
+                    maximumNumberOfWorkers: 1,
+                    workerStrategy: syndicate.WorkerStrategies.WEB_WORKERS,
+                });
+
+                setTimeout(() => {
+                    // after usage, the blob must be removed in order to avoit memory leaks
+                    // it requires a timeout in order for syndicate to be able to get the blob script before it's removed
+                    URL.revokeObjectURL(blobURL);
+                });
+
+                break;
+            case ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE: {
+                console.log("[Handler] starting node worker...");
+
+                const script = getNodeWorkerBootScript(dsuKeySSI);
+                workerPool = syndicate.createWorkerPool({
+                    bootScript: script,
+                    maximumNumberOfWorkers: 1,
+                    workerOptions: {
+                        eval: true,
+                    },
+                });
+
+                break;
+            }
+            default:
+                throw new Error(`Unknown environment ${$$.environmentType}!`);
+        }
+
+        const sendTaskToWorker = (task, callback) => {
+            workerPool.addTask(task, (err, message) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let {error, result} =
+                    typeof Event !== "undefined" && message instanceof Event ? message.data : message;
+
+                if (error) {
+                    return callback(error);
+                }
+
+                if (result) {
+                    if (result instanceof Uint8Array) {
+                        // the buffers sent from the worker will be converted to Uint8Array when sending to parent
+                        result = Buffer.from(result);
+                    } else {
+                        try {
+                            result = JSON.parse(result);
+                        } catch (error) {
+                            // if parsing fails then the string must be an ordinary one so we leave it as it is
+                        }
+                    }
+                }
+
+                callback(error, result);
+            });
+        };
+
+        this.callDSUAPI = function (fn, ...args) {
+            const fnArgs = [...args];
+            const callback = fnArgs.pop();
+
+            const parseResult = (error, result) => {
+                if (error) {
+                    return callback(error);
+                }
+
+                // try to recreate keyssi
+                try {
+                    result = keySSISpace.parse(result);
+                } catch (error) {
+                    // if it fails, then the result is not a valid KeySSI
+                }
+                callback(undefined, result);
+            };
+
+            sendTaskToWorker({fn, args: fnArgs}, parseResult);
+        };
+
+        this.callApi = function (fn, ...args) {
+            const apiArgs = [...args];
+            const callback = apiArgs.pop();
+            sendTaskToWorker({api: fn, args: apiArgs}, callback);
+        };
+    }
+
+    let res = new DSUHandler();
+    let availableFunctions = [
+        "addFile",
+        "addFiles",
+        "addFolder",
+        "appendToFile",
+        "createFolder",
+        "delete",
+        //"extractFile",
+        //"extractFolder",
+        "listFiles",
+        "listFolders",
+        "mount",
+        "readDir",
+        "readFile",
+        "rename",
+        "unmount",
+        "writeFile",
+        "listMountedDSUs",
+        "beginBatch",
+        "commitBatch",
+        "cancelBatch",
+    ];
+
+    function getWrapper(functionName) {
+        return function (...args) {
+            res.callDSUAPI(functionName, ...args);
+        }.bind(res);
+    }
+
+    for (let f of availableFunctions) {
+        res[f] = getWrapper(f);
+    }
+
+    return res;
+};
+
+const getRemoteHandler = (dsuKeySSI, remoteURL, presentation) => {
     throw Error("Not available yet");
 };
 
-
 function invalidateDSUCache(dsuKeySSI) {
-    let  ssiId = dsuKeySSI;
-    if(typeof dsuKeySSI != "string"){
+    let ssiId = dsuKeySSI;
+    if (typeof dsuKeySSI != "string") {
         ssiId = dsuKeySSI.getIdentifier();
     }
-    delete dsuCache.set(ssiId,undefined);
+    delete dsuCache.set(ssiId, undefined);
 }
 
 module.exports = {
     createDSU,
+    createDSUx,
+    createSeedDSU,
+    createConstDSU,
+    createArrayDSU,
     createDSUForExistingSSI,
     loadDSU,
-    getHandler,
+    getDSUHandler,
     registerDSUFactory,
-    invalidateDSUCache
+    invalidateDSUCache,
+};
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./resolver-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js","buffer":false,"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js":[function(require,module,exports){
+(function (global){(function (){
+function getWebWorkerBootScript(dsuKeySSI) {
+    const scriptLocation = document.currentScript
+        ? document.currentScript
+        : new Error().stack.match(/([^ ^(\n])*([a-z]*:\/\/\/?)*?[a-z0-9\/\\]*\.js/gi)[0];
+    let blobURL = URL.createObjectURL(
+        new Blob(
+            [
+                `
+                (function () {
+                    importScripts("${scriptLocation}");
+                    require("opendsu").loadApi("boot")("${dsuKeySSI}");                                    
+                })()
+                `,
+            ],
+            { type: "application/javascript" }
+        )
+    );
+    return blobURL;
 }
 
-},{"../cache":"/opt/privatesky/modules/opendsu/cache/index.js","../sc":"/opt/privatesky/modules/opendsu/sc/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/opt/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+function getNodeWorkerBootScript(dsuKeySSI) {
+    const openDSUScriptPath = global.bundlePaths.openDSU.replace(/\\/g, "\\\\").replace(".js", "");
+    const script = `require("${openDSUScriptPath}");require('opendsu').loadApi('boot')('${dsuKeySSI}')`;
+    return script;
+}
+
+module.exports = {
+    getWebWorkerBootScript,
+    getNodeWorkerBootScript,
+};
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 /*
     Security Context related functionalities
 
  */
-const PendingCallMixin = require("../utils/PendingCallMixin");
 
 const getMainDSU = () => {
-
     if (!globalVariableExists("rawDossier")) {
         throw Error("Main DSU does not exist in the current context.");
     }
@@ -11841,42 +18223,78 @@ const setMainDSU = (mainDSU) => {
     return setGlobalVariable("rawDossier", mainDSU);
 };
 
-function SecurityContext(storage) {
-    const keySSISpace = require("../keyssi");
-    const crypto = require("../crypto")
-    PendingCallMixin(this);
+function SecurityContext(keySSI) {
+    const openDSU = require("opendsu");
+    const crypto = openDSU.loadAPI("crypto");
+    const db = openDSU.loadAPI("db")
+    const keySSISpace = openDSU.loadAPI("keyssi")
+
+    const DB_NAME = "security_context";
+    const KEY_SSIS_TABLE = "keyssis";
+    const DIDS_PRIVATE_KEYS = "dids_private";
+    const DIDS_PUBLIC_KEYS = "dids_public";
 
     let isInitialized = false;
-    const SECURITY_CONTEXT_PERSISTENCE_PATH = "/security_context.json";
 
-    const load = () => {
-        storage.getItem(SECURITY_CONTEXT_PERSISTENCE_PATH, (err, scData) => {
-            if (err) {
-                return console.log(err);
+    if (typeof keySSI === "string") {
+        keySSI = keySSISpace.parse(keySSI);
+    }
+
+    let storageDB = db.getWalletDB(keySSI, DB_NAME);
+
+
+    this.registerDID = (didDocument, callback) => {
+        let privateKeys = didDocument.getPrivateKeys();
+        if (!Array.isArray(privateKeys)) {
+            privateKeys = [privateKeys]
+        }
+        storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
+            if (err || !res) {
+                return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), {privateKeys: privateKeys}, callback);
             }
 
-            if ($$.Buffer.isBuffer(scData)) {
-                scData = scData.toString();
-            }
-            try {
-                keySSIs = JSON.parse(scData)
-            } catch (e) {
-                throw Error(`Failed to load security context data`);
+            privateKeys.forEach(privateKey => {
+                res.privateKeys.push(privateKey);
+            })
+            storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
+        });
+    };
+
+    this.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
+        const privateKeyObj = {privateKeys: [privateKey]}
+
+        storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
+            if (err || !res) {
+                return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
             }
 
-            isInitialized = true;
-            this.executePendingCalls();
+            res.privateKeys.push(privateKey);
+            storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
         });
     }
 
-    let keySSIs;
-    if (typeof storage === "undefined") {
-        keySSIs = {};
-        isInitialized = true;
-    } else {
-        load();
+    this.addPublicKeyForDID = (didDocument, publicKey, callback) => {
+        const publicKeyObj = {publicKeys: [publicKey]}
+        storageDB.getRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), (err, res) => {
+            if (err || !res) {
+                return storageDB.insertRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), publicKeyObj, callback);
+            }
+
+            res.publicKeys.push(publicKey);
+            return storageDB.updateRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), res, callback);
+        });
     }
 
+    this.getPrivateInfoForDID = (did, callback) => {
+        storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const privateKeysAsBuff = record.privateKeys.map(privateKey => $$.Buffer.from(privateKey));
+            callback(undefined, privateKeysAsBuff);
+        });
+    };
 
     this.registerKeySSI = (keySSI, callback) => {
         if (typeof keySSI === "undefined") {
@@ -11884,35 +18302,64 @@ function SecurityContext(storage) {
         }
 
         if (typeof keySSI === "string") {
-            keySSI = keySSISpace.parse(keySSI);
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
+            }
         }
 
-        let derivedKeySSI = keySSI;
         const keySSIIdentifier = keySSI.getIdentifier();
 
         function registerDerivedKeySSIs(derivedKeySSI) {
-            try {
-                derivedKeySSI = derivedKeySSI.derive();
-                keySSIs[derivedKeySSI.getIdentifier()] = keySSIIdentifier;
-            } catch (e) {
-                if (storage) {
-                    storage.setItem(SECURITY_CONTEXT_PERSISTENCE_PATH, (JSON.stringify(keySSIs)), callback);
+            storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
+                if (err) {
+                    return callback(err);
                 }
-                return;
-            }
-            registerDerivedKeySSIs(derivedKeySSI);
-        }
 
-        return registerDerivedKeySSIs(derivedKeySSI);
-    };
+                try {
+                    derivedKeySSI = derivedKeySSI.derive();
+                } catch (e) {
+                    return callback();
+                }
 
-    this.getKeySSI = (keySSI, ) => {
-        if (!isInitialized) {
-            return this.addPendingCall(() => {
-                this.getKeySSI(keySSI);
+                registerDerivedKeySSIs(derivedKeySSI);
             });
         }
 
+        return registerDerivedKeySSIs(keySSI);
+    };
+
+    this.getCapableOfSigningKeySSI = (keySSI, callback) => {
+        if (typeof keySSI === "undefined") {
+            return callback(Error(`A SeedSSI should be specified.`));
+        }
+
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
+            }
+        }
+
+        storageDB.getRecord(KEY_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`No capable of signing keySSI found for keySSI ${keySSI.getIdentifier()}`, err));
+            }
+
+            let keySSI;
+            try {
+                keySSI = keySSISpace.parse(record.capableOfSigningKeySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${record.capableOfSigningKeySSI}`, e))
+            }
+
+            callback(undefined, keySSI);
+        });
+    };
+
+    this.getKeySSI = (keySSI) => {
         if (typeof keySSI === "undefined") {
             throw Error(`A KeySSI should be specified.`)
         }
@@ -11925,6 +18372,8 @@ function SecurityContext(storage) {
     };
 
     this.sign = (keySSI, data, callback) => {
+        // temporary solution until proper implementation
+        return callback(undefined, {signature: "", publicKey: ""});
         if (!isInitialized) {
             return this.addPendingCall(() => {
                 this.sign(keySSI, data, callback);
@@ -11935,37 +18384,75 @@ function SecurityContext(storage) {
         crypto.sign(powerfulKeySSI, data, callback);
     }
 
-    this.verify = (keySSI, data, signature, callback) => {
-
+    this.signAsDID = (didDocument, data, callback) => {
+        this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKey) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
+            }
+            didDocument.signImpl(privateKey, data, callback);
+        });
     }
 
-    this.encrypt = (keySSI, data, callback) => {
+    this.verifyForDID = (didDocument, data, signature, callback) => {
+        didDocument.verifyImpl(data, signature, callback);
+    }
 
+
+    this.encryptForDID = (senderDIDDocument, receiverDIDDocument, message, callback) => {
+        this.getPrivateInfoForDID(senderDIDDocument.getIdentifier(), (err, privateKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${senderDIDDocument.getIdentifier()}`, err));
+            }
+
+            senderDIDDocument.encryptMessageImpl(privateKeys, receiverDIDDocument, message, callback);
+        });
     };
 
-    this.decrypt = (keySSI, data, callback) => {
+    this.decryptAsDID = (didDocument, encryptedMessage, callback) => {
+        this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
+            }
 
+            didDocument.decryptMessageImpl(privateKeys, encryptedMessage, callback);
+        });
     };
+
+    return this;
 }
 
-let sc;
-const createSecurityContext = (storage) => {
-    if (sc) {
-        return sc;
+const getSecurityContext = (keySSI) => {
+    if (typeof $$.sc === "undefined") {
+        const keySSISpace = require("opendsu").loadAPI("keyssi");
+        if (typeof keySSI === "undefined") {
+            //TODO get sc from main dsu
+            // throw Error(`A keySSI should be provided.`)
+            keySSI = keySSISpace.createSeedSSI("default");
+        }
+
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e);
+            }
+        }
+
+        $$.sc = new SecurityContext(keySSI);
     }
 
-    sc = new SecurityContext(storage);
-    return sc;
+    return $$.sc;
 };
 module.exports = {
     getMainDSU,
     setMainDSU,
-    createSecurityContext
+    getSecurityContext
 };
-},{"../crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","../keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","../utils/PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/opt/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
-    if (typeof envVariables[name] === "undefined") {
+    if (typeof envVariables[name] !== "undefined") {
         return envVariables[name];
     }
     return process.env[name];
@@ -11990,7 +18477,7 @@ module.exports = {
     getFS,
     getPath
 }
-},{}],"/opt/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
 const PendingCallMixin = require("./PendingCallMixin");
 /*
     Utility to make classes that depend on some initialisation easier to use.
@@ -11999,9 +18486,10 @@ const PendingCallMixin = require("./PendingCallMixin");
 
 module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
     let originalFunctions = {};
+
     for(let m in obj){
         if(typeof obj[m] == "function"){
-            if(!exceptionList[m]){
+            if(!exceptionList || exceptionList.indexOf(m) === -1){
                 originalFunctions[m] = obj[m];
             }
         }
@@ -12017,7 +18505,7 @@ module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
    function getWrapper(func){
        return function(...args){
            if(isInitialised){
-               func(...args);
+              return func(...args);
            } else {
                obj.addSerialPendingCall( function(next){
                    let callback = args[args.length -1];
@@ -12029,7 +18517,7 @@ module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
                    } else {
                        next();
                    }
-                   func(...args);
+                  return func(...args);
                })
            }
        }.bind(obj);
@@ -12040,7 +18528,8 @@ module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
     }
     return obj;
 };
-},{"./PendingCallMixin":"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
+
+},{"./PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
 function ObservableMixin(target) {
     let observers = {};
 
@@ -12059,13 +18548,13 @@ function ObservableMixin(target) {
             reportDevRelevantInfo("Off-ing an unknown observer");
             return;
         }
-        let index = handlers[eventName].indexOf(callback);
+        let index = observers[eventType].indexOf(callback);
         if(index === -1){
             reportDevRelevantInfo("Observer not found into the list of known observers.");
             return;
         }
 
-        handlers[eventName].splice(index, 1);
+        observers[eventType].splice(index, 1);
     }
 
     target.dispatchEvent = function(eventType, message){
@@ -12080,15 +18569,25 @@ function ObservableMixin(target) {
             try{
                 c(message);
             }catch(err){
+				console.error(err);
                 reportDevRelevantInfo(`Caught an error during the delivery of ${eventType} to ${c.toString()}`);
             }
 
         });
     }
+
+    target.removeAllObservers = function (eventType){
+        if(observers[eventType]){
+            delete observers[eventType];
+        } else {
+            reportDevRelevantInfo("No observers found in the list of known observers.");
+        }
+    }
 }
 
 module.exports = ObservableMixin;
-},{}],"/opt/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
 function PendingCallMixin(target) {
     let pendingCalls = [];
     let serialPendingCalls = [];
@@ -12137,7 +18636,7 @@ function PendingCallMixin(target) {
 }
 
 module.exports = PendingCallMixin;
-},{}],"/opt/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -12147,7 +18646,7 @@ function shuffle(array) {
 
 module.exports.shuffle = shuffle;
 
-},{}],"/opt/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const system = require("../system");
 function getBaseURL(){
@@ -12158,17 +18657,23 @@ function getBaseURL(){
             let parts = scope.split("/");
             return `${parts[0]}//${parts[2]}`;
 
-        case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+        case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:            
             const protocol = window.location.protocol;
             const host = window.location.hostname;
             const port = window.location.port;
 
             return `${protocol}//${host}:${port}`;
 
+        case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:            
+            return self.location.origin;
+
         case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
             let baseUrl = system.getEnvironmentVariable(constants.BDNS_ROOT_HOSTS);
             if (typeof baseUrl === "undefined") {
                 baseUrl = "http://localhost:8080";
+            } else {
+                const myURL = new URL(baseUrl);
+                baseUrl = myURL.origin;
             }
             if (baseUrl.endsWith("/")) {
                 baseUrl = baseUrl.slice(0, -1);
@@ -12180,7 +18685,7 @@ function getBaseURL(){
 }
 
 module.exports = getBaseURL;
-},{"../moduleConstants":"/opt/privatesky/modules/opendsu/moduleConstants.js","../system":"/opt/privatesky/modules/opendsu/system/index.js"}],"/opt/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -12188,7 +18693,7 @@ module.exports.createObservable = function(){
 	observableMixin(obs);
 	return obs;
 }
-},{"./ObservableMixin":"/opt/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/opt/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+},{"./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
 const arrayUtils = require("./array");
 
 function validateMajorityRunAllWithSuccess(successResults, errorResults, totalCount) {
@@ -12230,8 +18735,14 @@ function runAll(listEntries, executeEntry, validateResults, callback, debugInfo)
   Promise.all(allInitialExecutions)
     .then((results) => {
       const successExecutions = results.filter((run) => run.success);
-      const errorExecutions = results.filter((run) => !run.success);
-
+      let errorExecutions = results.filter((run) => !run.success);
+      errorExecutions = errorExecutions.map(e => {
+        if (e.error && e.error.error) {
+          return e.error.error;
+        }else {
+          return e;
+        }
+      });
       const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions);
       if (isConsideredSuccessfulRun) {
         const successExecutionResults = successExecutions.map((run) => run.result);
@@ -12241,7 +18752,7 @@ function runAll(listEntries, executeEntry, validateResults, callback, debugInfo)
       let baseError = debugInfo;
       if(errorExecutions.length){
         if(baseError){
-          baseError = createOpenDSUErrorWrapper("Error found during runAll", errorExecutions[0], debugInfo);
+          baseError = createOpenDSUErrorWrapper("Error found during runAll", errorExecutions[0], errorExecutions, debugInfo);
         }
       }
       return callback(createOpenDSUErrorWrapper("FAILED to runAll " , baseError));
@@ -12341,17 +18852,1282 @@ module.exports = {
   runEnoughForMajority,
 };
 
-},{"./array":"/opt/privatesky/modules/opendsu/utils/array.js"}],"/opt/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./array":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
+/*
+    W3CDID Minxin is abstracting the DID document for OpenDSU compatible DID methods
+
+    did:whatever   resolved to an OpenDSU abstraction: W3CDIDDocument
+    verify signatures
+    sign
+    send and receive encrypted messages
+
+
+ */
+
+function W3CDID_Mixin(target) {
+
+    const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+    const keySSISpace = require("opendsu").loadAPI("keyssi");
+    const crypto = require("opendsu").loadAPI("crypto");
+    target.findPrivateKeysInSecurityContext = function (callback) {
+
+    };
+
+    target.sign = function (hash, callback) {
+        securityContext.signAsDID(target, hash, callback);
+    };
+
+    target.verify = function (hash, signature, callback) {
+        securityContext.verifyForDID(target, hash, signature, callback);
+    };
+
+    target.signImpl = (privateKeys, data, callback) => {
+        const keySSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+        keySSI.initialize(keySSI.getDLDomain(), privateKeys[0]);
+        crypto.sign(keySSI, data, callback);
+    };
+
+    target.verifyImpl = (data, signature, callback) => {
+        target.getPublicKey("pem", (err, publicKey) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read public key for did ${target.getIdentifier()}`, err));
+            }
+
+            const templateKeySSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+            crypto.verifySignature(templateKeySSI, data, signature, publicKey, callback);
+        });
+    }
+    /*Elliptic Curve Integrated Encryption Scheme
+    * https://github.com/bin-y/standard-ecies/blob/master/main.js
+    * https://www.npmjs.com/package/ecies-lite  //try to use functions from SSI and from crypto
+    * https://github.com/ecies/js
+    * https://github.com/sigp/ecies-parity
+    * https://github.com/pedrouid/eccrypto-js
+    *
+    * annoncrypt  - symertric enc (IES)
+    * authcrypt   -  asymetric enc + sign
+    * plaintext   + asym sign
+    *
+    * A -> B   sign(enc( ASYM_PK_B, M), PK_A)
+    * */
+
+    target.encryptMessage = function (receiverDID, message, callback) {
+        securityContext.encryptForDID(target, receiverDID, message, callback);
+    };
+
+    target.decryptMessage = function (encryptedMessage, callback) {
+        securityContext.decryptAsDID(target, encryptedMessage, callback);
+    };
+
+    const saveNewKeyPairInSC = async (receiverDIDDocument, compatibleSSI) => {
+        try {
+            await $$.promisify(securityContext.addPrivateKeyForDID)(receiverDIDDocument, compatibleSSI.getPrivateKey("raw"));
+            await $$.promisify(securityContext.addPublicKeyForDID)(receiverDIDDocument, compatibleSSI.getPublicKey("raw"));
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
+        }
+
+        try {
+            await $$.promisify(receiverDIDDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
+        }
+    };
+
+    target.encryptMessageImpl = function (privateKeys, receiverDIDDocument, message, callback) {
+        const senderSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+        senderSeedSSI.initialize(target.getDomain(), privateKeys[0]);
+
+        receiverDIDDocument.getPublicKey("raw", async (err, receiverPublicKey) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get sender publicKey`, err));
+            }
+
+            const publicKeySSI = keySSISpace.createPublicKeySSI("seed", receiverPublicKey);
+
+            const encryptMessage = (receiverKeySSI) => {
+                let encryptedMessage;
+                try {
+                    encryptedMessage = crypto.ecies_encrypt_ds(senderSeedSSI, receiverKeySSI, message);
+                } catch (e) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, e));
+                }
+
+                callback(undefined, encryptedMessage);
+            }
+
+            let compatibleSSI;
+            try {
+                compatibleSSI = await $$.promisify(publicKeySSI.generateCompatiblePowerfulKeySSI)();
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to create compatible seed ssi`, e));
+            }
+
+            try {
+                await saveNewKeyPairInSC(receiverDIDDocument, compatibleSSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
+            }
+
+            encryptMessage(compatibleSSI);
+        });
+    };
+
+    target.decryptMessageImpl = function (privateKeys, encryptedMessage, callback) {
+        let decryptedMessage;
+        const decryptMessageRecursively = (privateKeyIndex) => {
+            const privateKey = privateKeys[privateKeyIndex];
+            if (typeof privateKey === "undefined") {
+                return callback(createOpenDSUErrorWrapper(`Failed to decrypt message`, Error(`Private key is undefined`)));
+            }
+
+            const receiverSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+            receiverSeedSSI.initialize(target.getDomain(), privateKey);
+            try {
+                decryptedMessage = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
+            } catch (e) {
+                return decryptMessageRecursively(privateKeyIndex + 1);
+            }
+
+            callback(undefined, decryptedMessage);
+        }
+
+        decryptMessageRecursively(0);
+    };
+
+    /* messages to the APiHUb MQ compatible APIs
+
+    * */
+
+    target.getHash = () => {
+        return crypto.sha256(target.getIdentifier());
+    };
+
+    target.sendMessage = function (message, toOtherDID, callback) {
+        const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(toOtherDID);
+        target.encryptMessage(toOtherDID, message, (err, encryptedMessage) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, err));
+            }
+
+            mqHandler.writeMessage(encryptedMessage, callback);
+        });
+    };
+
+    target.readMessage = function ( callback) {
+        const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(target);
+        mqHandler.previewMessage((err, encryptedMessage) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
+            }
+
+            target.decryptMessage(encryptedMessage.message, callback);
+        });
+    };
+
+    target.on = function (callback) {
+
+    };
+
+    target.revokeDID = function (callback) {
+
+    };
+
+    target.revokeKey = function (key, callback) {
+
+    };
+
+    target.getControllerKey = function (callback) {
+
+    };
+
+    target.getPublicKeys = function (callback) {
+
+    };
+
+}
+
+module.exports = W3CDID_Mixin;
+
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js":[function(require,module,exports){
+
+
+function DemoPKDocument(identifier){
+    let mixin =  require("../W3CDID_Mixin");
+    mixin(this);
+
+    this.sign = function(hash, callback){
+        return hash;
+    };
+
+    this.verify = function(hash, signature, callback){
+        callback(undefined, hash == signature);
+    };
+
+    function getApiHubEndpoint(){
+        const opendsu = require("opendsu");
+        const getBaseURL = require("../../utils/getBaseURL");
+        const consts = opendsu.constants;
+        const system = opendsu.loadApi("system");
+        // return system.getEnvironmentVariable(consts.BDNS_ROOT_HOSTS);
+        return getBaseURL();
+    }
+
+    this.sendMessage = (message, toOtherDID, callback) => {
+        const opendsu = require("opendsu");
+        const http = opendsu.loadApi("http");
+
+        let url = `${getApiHubEndpoint()}/mq/send-message/${encodeURI(toOtherDID)}`;
+        let options = message;
+
+        let request = http.doPost(url, options, (err, response)=>{
+            if(err){
+                return callback(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to send message`, err)));
+            }
+
+            return callback();
+        });
+    };
+
+    this.readMessage = (callback) => {
+        const endpoint = getApiHubEndpoint();
+        const opendsu = require("opendsu");
+        const http = opendsu.loadApi("http");
+        let didIdentifier = this.getIdentifier();
+        let createChannelUrl = `${endpoint}/mq/create-channel/${encodeURI(didIdentifier)}`;
+        http.doPost(createChannelUrl, "", (err, response) => {
+            if (err) {
+                if (err.statusCode === 409) {
+                    //channels already exists. no problem :D
+                } else {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create channel for DID ${didIdentifier}`, err));
+                }
+            }
+            function makeRequest(){
+                let url = `${endpoint}/mq/receive-message/${encodeURI(didIdentifier)}`;
+                let options = {};
+
+                let request = http.poll(url, options);
+
+                request.then((response) => {
+                    return response.text();
+                }).then((message)=>{
+                    return callback(undefined, message);
+                }).catch((err) => {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Unable to read message`, err));
+                });
+            }
+
+            makeRequest();
+        });
+    };
+
+    this.getIdentifier = function(){
+        return `did:demo:${identifier}`;
+    }
+
+    return this;
+}
+
+function DEMO_DIDMethod(){
+    let aliasDocument = require("../proposals/aliasDocument");
+    this.create = function(identifier, callback){
+        callback(null, new DemoPKDocument(identifier));
+    }
+
+    this.resolve = function(tokens, callback){
+        callback(null, new DemoPKDocument(tokens[2]));
+    }
+}
+
+module.exports.create_demo_DIDMethod = function(){
+    return new DEMO_DIDMethod();
+}
+
+},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
+(function (Buffer){(function (){
+function ConstDID_Document_Mixin(target, domain, name) {
+    let mixin = require("../W3CDID_Mixin");
+    const observableMixin = require("../../utils/ObservableMixin")
+    mixin(target);
+    observableMixin(target);
+
+    const openDSU = require("opendsu");
+    const sc = openDSU.loadAPI("sc").getSecurityContext();
+    const error = openDSU.loadAPI("error");
+    const crypto = openDSU.loadAPI("crypto");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const resolver = openDSU.loadAPI("resolver");
+
+    const WRITABLE_DSU_PATH = "writableDSU";
+    const PUB_KEYS_PATH = "publicKeys";
+
+    const generatePublicKey = async () => {
+        let seedSSI;
+        try {
+            seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to create SeedSSI`, e);
+        }
+
+        target.privateKey = seedSSI.getPrivateKey();
+        return seedSSI.getPublicKey("raw");
+    };
+
+    const createDSU = async () => {
+        let constDSU;
+        try {
+            constDSU = await $$.promisify(resolver.createConstDSU)(domain, name);
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to create constDSU`, e);
+        }
+
+        try {
+            target.dsu = await $$.promisify(resolver.createSeedDSU)(domain);
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to create writableDSU`, e);
+        }
+
+        let publicKey = await generatePublicKey();
+        try {
+            await $$.promisify(target.addPublicKey)(publicKey);
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to save public key`, e);
+        }
+        let seedSSI;
+        try {
+            seedSSI = await $$.promisify(target.dsu.getKeySSIAsString)();
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to get seedSSI`, e);
+        }
+
+        try {
+            await $$.promisify(constDSU.mount)(WRITABLE_DSU_PATH, seedSSI);
+        } catch (e) {
+            return error.reportUserRelevantError(`Failed to mount writable DSU`, e);
+        }
+
+        target.finishInitialisation();
+        target.dispatchEvent("initialised");
+    };
+
+    target.init = () => {
+        resolver.loadDSU(keySSISpace.createConstSSI(domain, name), async (err, constDSUInstance) => {
+            if (err) {
+                try {
+                    await createDSU(domain, name);
+                } catch (e) {
+                    return error.reportUserRelevantError(`Failed to create DSU`, e);
+                }
+                return;
+            }
+
+            try {
+                const dsuContext = await $$.promisify(constDSUInstance.getArchiveForPath)(WRITABLE_DSU_PATH);
+                target.dsu = dsuContext.archive;
+            } catch (e) {
+                return error.reportUserRelevantError(`Failed to load writableDSU`, e);
+            }
+
+            target.finishInitialisation();
+            target.dispatchEvent("initialised");
+        });
+    }
+
+    target.getPrivateKeys = () => {
+        return target.privateKey;
+    };
+
+    target.getPublicKey = (format, callback) => {
+        target.dsu.listFiles(PUB_KEYS_PATH, (err, pubKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read public key for did ${target.getIdentifier()}`, err));
+            }
+
+            let pubKey = Buffer.from(pubKeys[pubKeys.length - 1], "hex");
+            if (format === "raw") {
+                return callback(undefined, pubKey);
+            }
+
+            try {
+                pubKey = crypto.convertPublicKey(pubKey, format);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to convert raw public key to pem`, e));
+            }
+
+            callback(undefined, pubKey);
+        });
+    };
+
+    target.getDomain = () => {
+        return domain;
+    };
+
+    target.addPublicKey = (publicKey, callback) => {
+        target.dsu.writeFile(`${PUB_KEYS_PATH}/${publicKey.toString("hex")}`, callback);
+    }
+}
+
+module.exports = ConstDID_Document_Mixin;
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
+function GroupDID_Document(domain, groupName) {
+    if (typeof domain === "undefined" || typeof groupName === "undefined") {
+        throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
+    }
+
+    let mixin = require("./ConstDID_Document_Mixin");
+    mixin(this, domain, groupName);
+    const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    const openDSU = require("opendsu");
+    const MEMBERS_FILE = "members";
+
+    this.addMember = (identity, alias, callback) => {
+        if (typeof alias === "function") {
+            callback = alias;
+            alias = identity;
+        }
+        updateMembers("add", [identity], [alias], callback);
+    };
+
+    this.addMembers = (identities, aliases, callback) => {
+        updateMembers("add", identities, aliases, callback);
+    };
+
+    this.removeMember = (identity, callback) => {
+        updateMembers("remove", [identity], callback);
+    };
+
+    this.removeMembers = (identities, callback) => {
+        updateMembers("remove", identities, callback);
+    };
+
+    this.listMembersByAlias = (callback) => {
+        readMembers((err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, Object.values(members));
+        });
+    };
+
+    this.listMembersByIdentity = (callback) => {
+        readMembers((err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, Object.keys(members));
+        });
+    };
+
+    this.getMemberIdentity = (alias, callback) => {
+        readMembers((err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const member = Object.keys(members).find(identifier => members[identifier] === alias);
+            if (typeof member === "undefined") {
+                return callback(Error(`Failed to find member with alias ${alias}`));
+            }
+            callback(undefined, Object.keys(member)[0]);
+        });
+    };
+
+    this.getMemberAlias = (identity, callback) => {
+        readMembers((err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const memberAlias = members[identity];
+            if (typeof memberAlias === "undefined") {
+                return callback(Error(`Failed to find member with id ${identity}`));
+            }
+            callback(undefined, memberAlias);
+        });
+    };
+
+    this.getIdentifier = () => {
+        return `did:ssi:group:${domain}:${groupName}`;
+    };
+
+    this.getGroupName = () => {
+        return groupName;
+    };
+
+    this.sendMessage = (message, callback) => {
+        const w3cDID = openDSU.loadAPI("w3cdid");
+        readMembers(async (err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            let senderDIDDocument;
+            try {
+                senderDIDDocument = await $$.promisify(w3cDID.resolveDID)(message.getSender());
+            } catch (e) {
+                return callback(e);
+            }
+
+            const membersIds = Object.keys(members);
+            const noMembers = membersIds.length;
+
+            let counter = noMembers - 1;
+            for (let i = 0; i < noMembers; i++) {
+                if (membersIds[i] !== message.getSender()) {
+                    try {
+                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), membersIds[i])
+                    } catch (e) {
+                        return callback(e);
+                    }
+
+                    counter--;
+                    if (counter === 0) {
+                        return callback();
+                    }
+                }
+            }
+        });
+    };
+
+    const readMembers = (callback) => {
+        this.dsu.readFile(MEMBERS_FILE, (err, members) => {
+            if (err || typeof members === "undefined") {
+                members = {};
+            } else {
+                try {
+                    members = JSON.parse(members.toString());
+                } catch (e) {
+                    return callback(e);
+                }
+            }
+
+            callback(undefined, members);
+        });
+    };
+
+    const updateMembers = (operation, identities, aliases, callback) => {
+        if (typeof aliases === "function") {
+            callback = aliases;
+            aliases = identities;
+        }
+
+        readMembers((err, members) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (operation === "remove") {
+                identities.forEach(id => {
+                    if (typeof members[id] !== "undefined") {
+                        delete members[id];
+                    }
+                });
+
+                return this.dsu.writeFile(MEMBERS_FILE, JSON.stringify(members), callback);
+            } else if (operation === "add") {
+                identities.forEach((id, index) => {
+                    if (typeof members[id] === "undefined") {
+                        members[id] = aliases[index]
+                    }
+                });
+                return this.dsu.writeFile(MEMBERS_FILE, JSON.stringify(members), callback);
+            } else {
+                callback(Error(`Invalid operation ${operation}`));
+            }
+        });
+    };
+
+    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getGroupName", "on", "off", "addPublicKey"]);
+    this.init();
+    return this;
+}
+
+
+module.exports = {
+    initiateDIDDocument: function (domain, groupName) {
+        return new GroupDID_Document(domain, groupName)
+    },
+    createDIDDocument: function (tokens) {
+        return new GroupDID_Document(tokens[3], tokens[4]);
+    }
+};
+
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js":[function(require,module,exports){
+function KeyDID_Document(isInitialisation, seedSSI) {
+    let mixin = require("../W3CDID_Mixin");
+    mixin(this);
+    let tokens;
+    if (!isInitialisation) {
+        tokens = seedSSI;
+        seedSSI = undefined;
+    }
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const crypto = openDSU.loadAPI("crypto");
+    const sc = openDSU.loadAPI("sc").getSecurityContext();
+    if (typeof seedSSI === "string") {
+        try {
+            seedSSI = keySSISpace.parse(seedSSI);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to parse ssi ${seedSSI}`);
+        }
+    }
+
+    this.getDomain = () => {
+        let domain;
+        if (!isInitialisation) {
+            domain = tokens[0];
+        } else {
+            domain = seedSSI.getDLDomain();
+        }
+
+        return domain;
+    }
+
+    const getRawPublicKey = () => {
+        let publicKey;
+        if (!isInitialisation) {
+            publicKey = crypto.decodeBase58(tokens[1])
+        } else {
+            publicKey = seedSSI.getPublicKey("raw");
+        }
+
+        return publicKey;
+    }
+
+    this.getPublicKey = (format, callback) => {
+        let pubKey = getRawPublicKey();
+        try {
+            pubKey = crypto.convertPublicKey(pubKey, format);
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to convert public key to ${format}`, e));
+        }
+
+        callback(undefined, pubKey);
+    };
+
+    this.getIdentifier = () => {
+        const domain = this.getDomain();
+        let publicKey = getRawPublicKey();
+        publicKey = crypto.encodeBase58(publicKey);
+        return `did:ssi:key:${domain}:${publicKey}`;
+    };
+
+    this.getPrivateKeys = () => {
+        return seedSSI.getPrivateKey()
+    };
+
+    return this;
+}
+
+module.exports = {
+    initiateDIDDocument: function (seedSSI) {
+        return new KeyDID_Document(true, seedSSI)
+    },
+    createDIDDocument: function (tokens) {
+        return new KeyDID_Document(false, [tokens[3], tokens[4]]);
+    }
+};
+
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
+function NameDID_Document(domain, name) {
+    if (typeof domain === "undefined" || typeof name === "undefined") {
+        throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
+    }
+
+    let mixin = require("./ConstDID_Document_Mixin");
+    mixin(this, domain, name);
+    const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+
+    this.getIdentifier = () => {
+        return `did:ssi:name:${domain}:${name}`;
+    };
+
+    this.getName = () => {
+        return name;
+    };
+
+    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getName", "on", "off", "addPublicKey", "readMessage", "getDomain", "getHash"]);
+    this.init();
+    return this;
+}
+
+
+module.exports = {
+    initiateDIDDocument: function (domain, name) {
+        return new NameDID_Document(domain, name)
+    },
+    createDIDDocument: function (tokens) {
+        return new NameDID_Document(tokens[3], tokens[4]);
+    }
+};
+
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js":[function(require,module,exports){
+function SReadDID_Document(isInitialisation, seedSSI) {
+    let DID_mixin = require("./ConstDID_Document_Mixin");
+    let tokens;
+    let sReadSSI;
+
+    const PUB_KEYS_PATH = "publicKeys";
+    DID_mixin(this);
+
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const resolver = openDSU.loadAPI("resolver");
+
+    const createSeedDSU = async () => {
+        try {
+            this.dsu = await $$.promisify(resolver.createDSUForExistingSSI)(seedSSI);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to create seed dsu`, e);
+        }
+
+        let ssi;
+        try {
+            ssi = await $$.promisify(keySSISpace.createSeedSSI)(seedSSI.getDLDomain());
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to create seed ssi`, e);
+        }
+
+        this.privateKey = ssi.getPrivateKey();
+        const publicKey = ssi.getPublicKey("raw");
+        try {
+            await $$.promisify(this.dsu.writeFile)(`${PUB_KEYS_PATH}/${publicKey.toString("hex")}`);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to write public key in dsu`, e);
+        }
+    };
+
+    this.init = async () => {
+        if (typeof seedSSI === "string") {
+            try {
+                seedSSI = keySSISpace.parse(seedSSI);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to parse ssi ${seedSSI}`, e);
+            }
+        }
+
+        if (isInitialisation) {
+            sReadSSI = seedSSI.derive();
+            await createSeedDSU();
+            this.finishInitialisation();
+            this.dispatchEvent("initialised");
+        } else {
+            tokens = seedSSI;
+            sReadSSI = tokens.join(":");
+            sReadSSI = keySSISpace.parse(sReadSSI);
+            seedSSI = undefined;
+
+            try {
+                this.dsu = await $$.promisify(resolver.loadDSU)(sReadSSI);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to load dsu`, e);
+            }
+
+            this.finishInitialisation();
+            this.dispatchEvent("initialised");
+        }
+    };
+
+    this.getDomain = () => {
+        let domain;
+        if (!isInitialisation) {
+            domain = sReadSSI.getDLDomain();
+        } else {
+            domain = seedSSI.getDLDomain();
+        }
+
+        return domain;
+    }
+
+    this.getIdentifier = () => {
+        return `did:${sReadSSI.getIdentifier(true)}`
+    };
+
+    const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getDomain", "on", "off", "addPublicKey"]);
+
+    this.init();
+    return this;
+}
+
+module.exports = {
+    initiateDIDDocument: function (seedSSI) {
+        return new SReadDID_Document(true, seedSSI)
+    },
+    createDIDDocument: function (tokens) {
+        return new SReadDID_Document(false, tokens.slice(1));
+    }
+};
+
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
+function SReadDID_Method() {
+    let SReadDID_Document = require("./SReadDID_Document");
+    this.create = (seedSSI, callback) => {
+        const sReadDIDDocument = SReadDID_Document.initiateDIDDocument(seedSSI);
+        sReadDIDDocument.on("initialised", () => {
+            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+
+            securityContext.registerDID(sReadDIDDocument, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`failed to register did ${sReadDIDDocument.getIdentifier()} in security context`, err));
+                }
+
+                callback(null, sReadDIDDocument);
+            })
+        });
+    }
+    this.resolve = function (tokens, callback) {
+        const sReadDIDDocument = SReadDID_Document.createDIDDocument(tokens);
+        sReadDIDDocument.on("initialised", () => {
+            callback(null, sReadDIDDocument);
+        });
+    }
+}
+
+function KeyDID_Method() {
+    let KeyDIDDocument = require("./KeyDID_Document");
+    this.create = function (seedSSI, callback) {
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(seedSSI);
+        const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+
+        securityContext.registerDID(keyDIDDocument, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`failed to register did ${keyDIDDocument.getIdentifier()} in security context`, err));
+            }
+
+            callback(null, keyDIDDocument);
+        })
+    }
+
+    this.resolve = function (tokens, callback) {
+        callback(null, KeyDIDDocument.createDIDDocument(tokens))
+    }
+}
+
+function NameDID_Method() {
+    const NameDIDDocument = require("./NameDID_Document");
+
+    this.create = (domain, publicName, callback) => {
+        const nameDIDDocument = NameDIDDocument.initiateDIDDocument(domain, publicName);
+        nameDIDDocument.on("initialised", () => {
+            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+
+            securityContext.registerDID(nameDIDDocument, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`failed to register did ${nameDIDDocument.getIdentifier()} in security context`, err));
+                }
+
+                callback(null, nameDIDDocument);
+            })
+        });
+    }
+
+    this.resolve = (tokens, callback) => {
+        callback(null, NameDIDDocument.createDIDDocument(tokens))
+    }
+}
+
+function GroupDID_Method() {
+    const GroupDIDDocument = require("./GroupDID_Document");
+
+    this.create = (domain, groupName, callback) => {
+        callback(null, GroupDIDDocument.initiateDIDDocument(domain, groupName));
+    }
+
+    this.resolve = (tokens, callback) => {
+        callback(null, GroupDIDDocument.createDIDDocument(tokens))
+    }
+}
+
+function create_KeyDID_Method() {
+    return new KeyDID_Method();
+}
+
+function create_SReadDID_Method() {
+    return new SReadDID_Method();
+}
+
+function create_NameDID_Method() {
+    return new NameDID_Method();
+}
+
+function create_GroupDID_Method() {
+    return new GroupDID_Method();
+}
+
+
+module.exports = {
+    create_KeyDID_Method,
+    create_SReadDID_Method,
+    create_NameDID_Method,
+    create_GroupDID_Method
+}
+
+},{"./GroupDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./NameDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./SReadDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js":[function(require,module,exports){
+/*
+    OpenDSU W3C compatible  ID pluginisable resolver  that can resolve arbitrary DID methods.
+
+        1. SeedSSI compatible DID method that does not need anchoring or external DSUs
+            did:ssi:key:blockchain_domain::publicKey:v2:
+
+        2.  DID method storing the public key in an anchored DSU. It is a SeedSSI compatible DID method.
+            did:ssi:sread:blockchain_domain:hash_privateKey:hash_publicKey:
+
+        3.  DID method storing the public key in an immutable DSU that is mounting another mutable DSU to store the keys
+            did:ssi:name:blockchain_domain:public-name:::
+
+        4. Group DID
+            did:ssi:group:blockchain_domain:const_string
+
+        5. DID Web Method
+            did:web:internet_domain.
+
+        6. SSI DID_KEY
+            did:key:public_key
+
+        7. DID DEMO
+            did:demo:const_string
+        TODO: analise the implementation of resolvers  masquerading as DSUs anchored in the BDNS central root:  did:ethereum:whatever
+
+ */
+
+const OPENDSU_METHOD_NAME = "ssi";
+const KEY_SUBTYPE = "key";
+const S_READ_SUBTYPE = "sread";
+const NAME_SUBTYPE = "name";
+const DEMO_METHOD_NAME = "demo";
+const GROUP_METHOD_NAME = "group";
+
+let methodRegistry = {};
+
+/*
+    Create a new W3CDID based on SeedSSI
+ */
+function createIdentity(didMethod, ...args) {
+    let callback = args.pop();
+    methodRegistry[didMethod].create(...args, callback);
+}
+
+
+/*
+    Returns an error or an instance of W3CDID
+ */
+function resolveDID(identifier, callback) {
+    let tokens = identifier.split(":");
+    if (tokens[0] !== "did") {
+        return callback(Error("Wrong identifier format. Missing did keyword."));
+    }
+    let method = tokens[1];
+    if (tokens[1] === OPENDSU_METHOD_NAME) {
+        method = tokens[2];
+    }
+    methodRegistry[method].resolve(tokens, callback);
+}
+
+function registerDIDMethod(method, implementation) {
+    methodRegistry[method] = implementation;
+}
+
+
+registerDIDMethod(S_READ_SUBTYPE, require("./didssi/ssiMethods").create_SReadDID_Method());
+registerDIDMethod(KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
+registerDIDMethod(NAME_SUBTYPE, require("./didssi/ssiMethods").create_NameDID_Method());
+
+registerDIDMethod(DEMO_METHOD_NAME, require("./demo/diddemo").create_demo_DIDMethod());
+registerDIDMethod(GROUP_METHOD_NAME, require("./didssi/ssiMethods").create_GroupDID_Method());
+
+
+module.exports = {
+    createIdentity,
+    resolveDID,
+    registerDIDMethod
+}
+
+},{"./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
+
+
+function AliasDIDDocument(isInitialisation, alias, seedSSI){
+    let mixin =  require("../W3CDID_Mixin");
+    let tokens;
+    if(isInitialisation){
+        tokens = alias;
+        alias = undefined;
+    }
+    mixin(this);
+    return this;
+}
+
+module.exports = {
+    initiateDIDDocument:function(alias, seedSSI){
+        new AliasDIDDocument(true, alias, seedSSI)
+    },
+    createDIDDocument:function(tokens){
+        new AliasDIDDocument(false, tokens)
+    }
+};
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
+module.exports = () => {
+    const worker_threads = "worker_threads";
+    const { parentPort } = require(worker_threads);
+
+    parentPort.postMessage("ready");
+
+    parentPort.on("message", ({ functionName, payload }) => {
+        console.log(`[workers] node worker activated by function "${functionName}"`);
+
+        try {
+            const result = require("opendsu").loadAPI("workers").getFunctionsRegistry()[functionName](payload);
+            parentPort.postMessage({ result });
+        } catch (error) {
+            parentPort.postMessage({ error });
+        }
+    });
+
+    process.on("uncaughtException", (error) => {
+        console.error("[workers] uncaughtException inside node worker", error);
+
+        setTimeout(() => process.exit(1), 100);
+    });
+}
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js":[function(require,module,exports){
+module.exports = () => {
+    addEventListener('message', (event) => {
+        const { functionName, payload } = event.data;
+
+        console.log(`[workers] web worker activated by function "${functionName}"`);
+
+        try {
+            const result = require("opendsu").loadAPI("workers").getFunctionsRegistry()[functionName](payload);
+            postMessage({ result });
+        } catch (error) {
+            postMessage({ error });
+        }
+    });
+
+    addEventListener('error', (event) => {
+        const error = event.data;
+
+        console.error("[workers] web worker error", error);
+    });
+}
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js":[function(require,module,exports){
+function runSyncFunction({ apiSpaceName, functionName, params }) {
+    const openDSU = require("opendsu");
+    const api = openDSU.loadAPI(apiSpaceName);
+
+    if (!api[functionName]) {
+        throw Error(`function "${functionName}" does not exists in "${apiSpaceName}"!`)
+    }
+
+    return api[functionName].apply(undefined, params);
+}
+
+function runSyncFunctionOnlyFromWorker({ apiSpaceName, functionName, params }) {
+    return runSyncFunction({ apiSpaceName, functionName, params })
+}
+
+module.exports = {
+    runSyncFunction,
+    runSyncFunctionOnlyFromWorker
+}
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js":[function(require,module,exports){
+(function (global){(function (){
+function getWebWorkerBootScript() {
+    const scriptLocation = document.currentScript
+        ? document.currentScript
+        : new Error().stack.match(/([^ ^(\n])*([a-z]*:\/\/\/?)*?[a-z0-9\/\\]*\.js/gi)[0];
+    return URL.createObjectURL(
+        new Blob(
+            [
+                `
+                (function () {
+                    importScripts("${scriptLocation}");
+                    (${require("./bootScript/web").toString()})();     
+                })()
+                `
+            ],
+            { type: "application/javascript" }
+        )
+    );
+}
+
+function getNodeWorkerBootScript() {
+    const openDSUScriptPath = global.bundlePaths.openDSU.replace(/\\/g, "\\\\").replace(".js", "");
+    return `
+        require("${openDSUScriptPath}");
+        (${require("./bootScript/node").toString()})();
+    `;
+}
+
+function createPoolOfWebWorkers(options = {}) {
+    if (!window.Worker) {
+        return;
+    }
+
+    console.log("[workers] starting web worker...");
+
+    const syndicate = require("syndicate");
+    const blobURL = getWebWorkerBootScript();
+    const workerPool = syndicate.createWorkerPool({
+        bootScript: blobURL,
+        workerStrategy: syndicate.WorkerStrategies.WEB_WORKERS,
+        ...options
+    });
+
+    setTimeout(() => {
+        // after usage, the blob must be removed in order to avoid memory leaks
+        // it requires a timeout in order for syndicate to be able to get the blob script before it's removed
+        URL.revokeObjectURL(blobURL);
+    });
+
+    return workerPool;
+}
+
+function createPoolOfNodeWorkers(options = {}) {
+    const worker_threads = "worker_threads";
+    const { isMainThread } = require(worker_threads);
+
+    if (!isMainThread) {
+        return;
+    }
+
+    console.log("[workers] starting node worker...");
+
+    return require("syndicate").createWorkerPool({
+        bootScript: getNodeWorkerBootScript(),
+        workerOptions: { eval: true },
+        ...options,
+    });
+}
+
+function callbackForWorker(callback) {
+    return (error, result) => {
+        if (error) {
+            return callback(error);
+        }
+
+        // this is quite a hack or workaround made for portability
+        // in WebWorkers messages are transmitted through "Events" (event.data)
+        // but in NodeWorkers messages are send as "Objects" (data)
+        const {
+            error: taskError,
+            result: taskResult
+        } = typeof Event !== "undefined" && result instanceof Event ? result.data : result;
+
+        if (taskError) {
+            return callback(taskError);
+        }
+
+        return callback(undefined, taskResult);
+    }
+}
+
+function runTask(functionName, payload, callback) {
+    // task is executed if there is a worker available
+    const isExecuted = this.workerPool.runTaskImmediately({ functionName, payload }, callbackForWorker(callback));
+
+    if (!isExecuted) {
+        try {
+            const result = require("opendsu").loadAPI("workers").getFunctionsRegistry()[functionName](payload);
+            return callback(undefined, result);
+        } catch (error) {
+            return callback(error);
+        }
+    }
+}
+
+function addTask(functionName, payload, callback) {
+    // task is queued if there is no worker available
+    this.workerPool.addTask({ functionName, payload }, callbackForWorker(callback));
+}
+
+
+/**
+ * Cross Environment wrapper over syndicate
+ */
+class CrossEnvironmentWorkerPool {
+    constructor(options) {
+        const { ENVIRONMENT_TYPES } = require("../moduleConstants.js");
+        this.workerPool = undefined;
+        this.environmentType = undefined;
+
+        switch ($$.environmentType) {
+            case ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+                this.workerPool = createPoolOfWebWorkers(options);
+                this.environmentType = ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE;
+                break;
+            case ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+                this.workerPool = createPoolOfNodeWorkers(options);
+                this.environmentType = ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE;
+                break;
+        }
+    }
+
+    runSyncFunction(apiSpaceName, functionName, ...params) {
+        const currentFunctionName = "runSyncFunction";
+        const callback = params.pop();
+        const payload = { apiSpaceName, functionName, params };
+
+        if (typeof callback !== 'function') {
+            console.error(`[workers] function ${currentFunctionName} must receive a callback!`);
+            return;
+        }
+
+        runTask.call(this, currentFunctionName, payload, callback);
+    }
+
+    runSyncFunctionOnlyByWorker(apiSpaceName, functionName, ...params) {
+        const currentFunctionName = "runSyncFunctionOnlyFromWorker";
+        const callback = params.pop();
+        const payload = { apiSpaceName, functionName, params };
+
+        if (typeof callback !== 'function') {
+            console.error(`[workers] function ${currentFunctionName} must receive a callback!`);
+            return;
+        }
+
+        addTask.call(this, "runSyncFunctionOnlyFromWorker", payload, callback);
+    }
+
+    get environment() {
+        return this.environmentType;
+    }
+}
+
+function createPool(options) {
+    const pool = new CrossEnvironmentWorkerPool(options);
+    return pool.environment ? pool : undefined;
+}
+
+function getFunctionsRegistry() {
+    return require("./functions");
+}
+
+module.exports = {
+    createPool,
+    getFunctionsRegistry
+}
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
+  WEB_WORKER_ENVIRONMENT_TYPE: 'web-worker',
   SERVICE_WORKER_ENVIRONMENT_TYPE: 'service-worker',
   ISOLATE_ENVIRONMENT_TYPE: 'isolate',
   THREAD_ENVIRONMENT_TYPE: 'thread',
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
 
@@ -12674,7 +20450,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/opt/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -12793,7 +20569,7 @@ function Cache(options) {
 
 module.exports = Cache;
 
-},{}],"/opt/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js":[function(require,module,exports){
 /**********************  utility class **********************************/
 function RequestManager(pollingTimeOut) {
     if (!pollingTimeOut) {
@@ -13270,7 +21046,7 @@ $$.apihub.createConnection = function(alias, url, ssi){
     return $$.apihub.connections[alias];
 }
 
-},{}],"/opt/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-browser-client.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
     return function (url, data, callback) {
         const xhr = new XMLHttpRequest();
@@ -13409,7 +21185,7 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return window.atob(encodedString);
 };
 
-},{}],"/opt/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-node-client.js":[function(require,module,exports){
 require("./psk-abstract-client");
 
 const http = require("http");
@@ -13594,21 +21370,21 @@ $$.remote.base64Decode = function base64Decode(encodedString){
     return $$.Buffer.from(encodedString, 'base64').toString('ascii');
 };
 
-},{"./psk-abstract-client":"/opt/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","http":false,"https":false,"url":false}],"/opt/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
+},{"./psk-abstract-client":"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/Agent.js":[function(require,module,exports){
 function Agent(agentId, publicKey){
     this.agentId = agentId;
     this.publicKey = publicKey;
 }
 
 module.exports = Agent;
-},{}],"/opt/privatesky/modules/psk-security-context/lib/EncryptedSecret.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js":[function(require,module,exports){
 function EncryptedSecret(encryptedData, agentId){
     this.encryptedData = encryptedData;
     this.agentId = agentId;
 }
 
 module.exports = EncryptedSecret;
-},{}],"/opt/privatesky/modules/psk-security-context/lib/PSKSignature.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/PSKSignature.js":[function(require,module,exports){
 function PSKSignature(message, signature, type, agentId) {
     this.message = message;
     this.signature = signature;
@@ -13617,7 +21393,7 @@ function PSKSignature(message, signature, type, agentId) {
 }
 
 module.exports = PSKSignature;
-},{}],"/opt/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js":[function(require,module,exports){
 function RawCSBSecurityContext(parentSecurityContext) {
     this.generateIdentity = parentSecurityContext.generateIdentity;
     this.getCurrentAgentIdentity = parentSecurityContext.getCurrentAgentIdentity;
@@ -13629,7 +21405,7 @@ function RawCSBSecurityContext(parentSecurityContext) {
 }
 
 module.exports = RawCSBSecurityContext;
-},{}],"/opt/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js":[function(require,module,exports){
 const SecurityContext = require("./SecurityContext");
 
 function RootCSBSecurityContext() {
@@ -13645,7 +21421,7 @@ function RootCSBSecurityContext() {
 }
 
 module.exports = RootCSBSecurityContext;
-},{"./SecurityContext":"/opt/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"/opt/privatesky/modules/psk-security-context/lib/SecurityContext.js":[function(require,module,exports){
+},{"./SecurityContext":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/SecurityContext.js":[function(require,module,exports){
 
 function SecurityContext() {
     throw Error("Security context should be refactored.")
@@ -13755,20 +21531,1139 @@ function SecurityContext() {
 
 module.exports = SecurityContext;
 
-},{"./Agent":"/opt/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/opt/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/opt/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/opt/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
+},{"./Agent":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/Agent.js","./EncryptedSecret":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./PSKSignature":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/PSKSignature.js","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto')
+const config = require('../config')
+const crypto = require('crypto');
+
+// Prevent benign malleability
+function computeKDFInput(ephemeralPublicKey, sharedSecret) {
+    return $$.Buffer.concat([ephemeralPublicKey, sharedSecret],
+        ephemeralPublicKey.length + sharedSecret.length)
+}
+
+function computeSymmetricEncAndMACKeys(kdfInput, options) {
+    let kdfKey = mycrypto.KDF(kdfInput, options.symmetricCipherKeySize + options.macKeySize, options.hashFunctionName, options.hashSize)
+    const symmetricEncryptionKey = kdfKey.slice(0, options.symmetricCipherKeySize);
+    const macKey = kdfKey.slice(options.symmetricCipherKeySize)
+    return {
+        symmetricEncryptionKey,
+        macKey
+    };
+}
+
+function getDecodedECDHPublicKeyFromEncEnvelope(encEnvelope) {
+    if (encEnvelope.to_ecdh === undefined) {
+        throw new Error("Receiver ECDH public key property not found in input encrypted envelope")
+    }
+    return mycrypto.PublicKeyDeserializer.deserializeECDHPublicKey(encEnvelope.to_ecdh)
+}
+
+function checkEncryptedEnvelopeMandatoryProperties(encryptedEnvelope) {
+    const mandatoryProperties = ["to_ecdh", "r", "ct", "iv", "tag"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof encryptedEnvelope[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from input encrypted envelope");
+        }
+    })
+}
+
+function createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralECDHPublicKey, ciphertext, iv, tag, options) {
+    return {
+        to_ecdh: mycrypto.PublicKeySerializer.serializeECDHPublicKey(receiverECDHPublicKey, options),
+        r: mycrypto.PublicKeySerializer.serializeECDHPublicKey(ephemeralECDHPublicKey, options),
+        ct: ciphertext.toString(options.encodingFormat),
+        iv: iv.toString(options.encodingFormat),
+        tag: tag.toString(options.encodingFormat)
+    }
+}
+
+function checkKeyPairMandatoryProperties(keyPairObject) {
+    const mandatoryProperties = ["publicKey", "privateKey"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof keyPairObject[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from input key pair object");
+        }
+    })
+}
+
+function convertKeysToKeyObjects(keysArray, type) {
+    let createKey;
+    if (!type) {
+        type = "public";
+    }
+
+    if (type === "private") {
+        createKey = crypto.createPrivateKey;
+    }
+
+    if (type === "public") {
+        createKey = crypto.createPublicKey;
+    }
+
+    if (typeof createKey !== "function") {
+        throw Error(`The specified type is invalid.`);
+    }
+
+    if (!Array.isArray(keysArray)) {
+        keysArray = [keysArray];
+    }
+
+    const keyObjectsArr = keysArray.map(key => {
+        if (typeof key === "string") {
+            return createKey(key)
+        } else {
+            return key;
+        }
+    });
+
+    if (keyObjectsArr.length === 1) {
+        return keyObjectsArr[0];
+    }
+
+    return keyObjectsArr;
+}
+
+module.exports = {
+    computeKDFInput,
+    computeSymmetricEncAndMACKeys,
+    getDecodedECDHPublicKeyFromEncEnvelope,
+    checkEncryptedEnvelopeMandatoryProperties,
+    createEncryptedEnvelopeObject,
+    checkKeyPairMandatoryProperties,
+    convertKeysToKeyObjects
+}
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js":[function(require,module,exports){
+module.exports = {
+    curveName: 'secp256k1',
+    encodingFormat: 'base64',
+    macAlgorithmName: 'sha256',
+    macKeySize: 16,
+    hashFunctionName: 'sha256',
+    hashSize: 32,
+    signAlgorithmName: 'sha256',
+    symmetricCipherName: 'aes-128-cbc',
+    symmetricCipherKeySize: 16,
+    ivSize: 16,
+    publicKeyFormat: 'pem',
+    publicKeyType: 'spki'
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto');
+const config = require('../config')
+
+
+function symmetricEncrypt(key, plaintext, iv, options) {
+    if (key.length !== options.symmetricCipherKeySize) {
+        throw new Error('Invalid length of input symmetric encryption key')
+    }
+    if (iv === undefined) {
+        iv = null
+    }
+    let cipher = crypto.createCipheriv(options.symmetricCipherName, key, iv);
+    const firstChunk = cipher.update(plaintext);
+    const secondChunk = cipher.final();
+    return $$.Buffer.concat([firstChunk, secondChunk]);
+}
+
+function symmetricDecrypt(key, ciphertext, iv, options) {
+    if (key.length !== options.symmetricCipherKeySize) {
+        throw new Error('Invalid length of input symmetric decryption key')
+    }
+    if (iv === undefined) {
+        iv = null
+    }
+    let cipher = crypto.createDecipheriv(options.symmetricCipherName, key, iv);
+    const firstChunk = cipher.update(ciphertext);
+    const secondChunk = cipher.final();
+    return $$.Buffer.concat([firstChunk, secondChunk]);
+}
+
+module.exports = {
+    symmetricEncrypt,
+    symmetricDecrypt
+}
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto');
+const config = require('../config');
+
+function computeDigitalSignature(privateECSigningKey, buffer, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    let encodingFormat = options.encodingFormat;
+    let signObject = crypto.createSign(config.signAlgorithmName)
+    signObject.update(buffer)
+    signObject.end();
+    return signObject.sign(privateECSigningKey, encodingFormat)
+
+}
+
+function verifyDigitalSignature(publicECVerificationKey, signature, buffer, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    let verifyObject = crypto.createVerify(options.signAlgorithmName)
+    verifyObject.update(buffer)
+    verifyObject.end()
+    return verifyObject.verify(publicECVerificationKey, signature)
+}
+
+module.exports = {
+    computeDigitalSignature,
+    verifyDigitalSignature
+}
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto');
+const config = require('../config');
+
+class ECEphemeralKeyAgreement {
+
+    constructor(options) {
+        options = options || {};
+        const defaultOpts = config;
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        this.ecdh = crypto.createECDH(options.curveName);
+    }
+
+    generateEphemeralPublicKey = () => {
+        return this.ecdh.generateKeys();
+    }
+
+    generateSharedSecretForPublicKey = (theirECDHPublicKey) => {
+        try {
+            this.ecdh.getPublicKey()
+        } catch(error) {
+            throw new Error('You cannot generate a shared secret for another public key without calling generateEphemeralPublicKey() first')
+        }
+        return this.ecdh.computeSecret(theirECDHPublicKey);
+    }
+
+    computeSharedSecretFromKeyPair = (myECDHPrivateKey, theirECDHPublicKey) => {
+        this.ecdh.setPrivateKey(myECDHPrivateKey);
+        return this.ecdh.computeSecret(theirECDHPublicKey);
+    }
+}
+
+module.exports = ECEphemeralKeyAgreement
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js":[function(require,module,exports){
+'use strict';
+
+const cipher = require('./cipher')
+const kdf = require('./kdf')
+const kmac = require('./kmac')
+const sig = require('./digitalsig')
+const crypto = require('crypto')
+
+module.exports = {
+    timingSafeEqual: crypto.timingSafeEqual,
+    getRandomBytes: crypto.randomBytes,
+    computeDigitalSignature: sig.computeDigitalSignature,
+    verifyDigitalSignature: sig.verifyDigitalSignature,
+    symmetricEncrypt: cipher.symmetricEncrypt,
+    symmetricDecrypt: cipher.symmetricDecrypt,
+    KMAC: kmac,
+    ECEphemeralKeyAgreement: require('./ecephka'),
+    KDF: kdf.KDF2,
+    PublicKeySerializer: require('./pkserializer'),
+    PublicKeyDeserializer: require('./pkdeserializer')
+}
+
+},{"./cipher":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js","./digitalsig":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js","./ecephka":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js","./kdf":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js","./kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js","./pkdeserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js","./pkserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto');
+const config = require('../config')
+
+// Implementation of KDF2 as defined in ISO/IEC 18033-2
+function KDF2(x, outputByteSize, hashFunction = config.hashFunctionName, hashSize = config.hashSize) {
+    if (outputByteSize < 0) {
+        throw new Error("KDF output key byte size needs to be >= 0, not " + outputByteSize)
+    } //silly optimization here
+    else if (outputByteSize === 0) {
+        return $$.Buffer.alloc(0)
+    }
+    let k = Math.ceil(outputByteSize / hashSize)
+    k++;
+    let derivedKeyBuffer = $$.Buffer.alloc(outputByteSize)
+    let iBuffer = $$.Buffer.alloc(4)
+    for (let i = 1; i < k; i++) {
+        iBuffer.writeInt32BE(i)
+        let roundInput = $$.Buffer.concat([x, iBuffer], x.length + iBuffer.length)
+        let roundHash = crypto.createHash(hashFunction).update(roundInput).digest()
+        roundHash.copy(derivedKeyBuffer, (i - 1) * hashSize)
+    }
+    return derivedKeyBuffer
+}
+
+module.exports = {
+    KDF2
+}
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto');
+const config = require('../config');
+
+function computeKMAC(key, data, options) {
+    if (key.length !== options.macKeySize) {
+        throw new Error('Invalid length of input MAC key')
+    }
+    return crypto.createHmac(options.hashFunctionName, key).update(data).digest();
+}
+
+function verifyKMAC(tag, key, data, options) {
+    if (key.length !== options.macKeySize) {
+        throw new Error('Invalid length of input MAC key')
+    }
+    const timingSafeEqual = require('./index').timingSafeEqual;
+    const computedTag = computeKMAC(key, data, options)
+    return timingSafeEqual(computedTag, tag)
+}
+
+module.exports = {
+    computeKMAC,
+    verifyKMAC
+}
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","./index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js":[function(require,module,exports){
+'use strict';
+
+const crypto = require('crypto')
+const config = require('../config');
+
+function PublicKeyDeserializer() {
+    this.deserializeECDHPublicKey = (ecdhPublicKeySerialized, options) => {
+        options = options || {};
+        const defaultOpts = config;
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        let encodingFormat = options.encodingFormat;
+        return $$.Buffer.from(ecdhPublicKeySerialized, encodingFormat)
+    }
+
+    this.deserializeECSigVerPublicKey = (ecSigVerPublicKeySerialized, options) => {
+        options = options || {};
+        const defaultOpts = config;
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        let encodingFormat = options.encodingFormat;
+        // let publicKey = $$.Buffer.from(ecSigVerPublicKeySerialized, encodingFormat);
+        const ecKeyGenerator = require("../../lib/ECKeyGenerator").createECKeyGenerator();
+        const publicKey = ecKeyGenerator.convertPublicKey(ecSigVerPublicKeySerialized, {originalFormat: "der", outputFormat: "pem", encodingFormat});
+        return publicKey;
+    }
+
+}
+
+module.exports = new PublicKeyDeserializer()
+
+},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js":[function(require,module,exports){
+const config = require('../config');
+
+function PublicKeySerializer() {
+    this.serializeECDHPublicKey = (ecdhPublicKey, options) => {
+        options = options || {};
+        const defaultOpts =  config;
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        let encodingFormat = options.encodingFormat;
+        return ecdhPublicKey.toString(encodingFormat);
+    }
+
+    this.serializeECSigVerPublicKey = (ecSigVerPublicKey, options) => {
+        options = options || {};
+        const defaultOpts = config;
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+
+        let encodingFormat = options.encodingFormat;
+        const ecKeyGenerator = require("../../lib/ECKeyGenerator").createECKeyGenerator();
+        const derPublicKey = ecKeyGenerator.convertPublicKey(ecSigVerPublicKey, {originalFormat: "pem", outputFormat: "der", encodingFormat});
+        return derPublicKey.toString(encodingFormat)
+    }
+}
+
+module.exports = new PublicKeySerializer()
+
+},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto')
+const common = require('../common')
+const config = require('../config')
+
+function checkWrappedMessageMandatoryProperties(wrappedMessage) {
+    const mandatoryProperties = ["from_ecsig", "msg", "sig"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof wrappedMessage[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from wrapped message");
+        }
+    })
+}
+
+module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+    if (typeof encEnvelope === "string") {
+        try{
+            encEnvelope = JSON.parse(encEnvelope);
+        }   catch (e) {
+            throw Error(`Could not parse encEnvelope ${encEnvelope}`);
+        }
+    }
+
+    if (typeof encEnvelope !== "object") {
+        throw Error(`encEnvelope should be an object. Received ${typeof encEnvelope}`);
+    }
+
+    common.checkEncryptedEnvelopeMandatoryProperties(encEnvelope);
+    const ephemeralPublicKey = $$.Buffer.from(encEnvelope.r, options.encodingFormat)
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const sharedSecret = ephemeralKeyAgreement.computeSharedSecretFromKeyPair(receiverECDHPrivateKey, ephemeralPublicKey)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, sharedSecret)
+    const { symmetricEncryptionKey, macKey } = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const ciphertext = $$.Buffer.from(encEnvelope.ct, options.encodingFormat)
+    const tag = $$.Buffer.from(encEnvelope.tag, options.encodingFormat)
+    const iv = $$.Buffer.from(encEnvelope.iv, options.encodingFormat)
+
+    if (!mycrypto.KMAC.verifyKMAC(tag,
+        macKey,
+        $$.Buffer.concat([ciphertext, iv],
+            ciphertext.length + iv.length), options)
+    ) {
+        throw new Error("Bad MAC")
+    }
+
+    let wrappedMessageObject = JSON.parse(mycrypto.symmetricDecrypt(symmetricEncryptionKey, ciphertext, iv, options).toString())
+    checkWrappedMessageMandatoryProperties(wrappedMessageObject)
+    const senderECSigVerPublicKey = mycrypto.PublicKeyDeserializer.deserializeECSigVerPublicKey(wrappedMessageObject.from_ecsig)
+
+    if (!mycrypto.verifyDigitalSignature(senderECSigVerPublicKey,
+        $$.Buffer.from(wrappedMessageObject.sig, options.encodingFormat),
+        sharedSecret, options)) {
+        throw new Error("Bad signature")
+    }
+    return {
+        from_ecsig: senderECSigVerPublicKey,
+        message: $$.Buffer.from(wrappedMessageObject.msg, options.encodingFormat)
+    };
+}
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto')
+const common = require('../common');
+const config = require('../config');
+
+function senderMessageWrapAndSerialization(senderECSigVerPublicKey, message, signature, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    return JSON.stringify({
+        from_ecsig: mycrypto.PublicKeySerializer.serializeECSigVerPublicKey(senderECSigVerPublicKey, options),
+        msg: message.toString(options.encodingFormat),
+        sig: signature.toString(options.encodingFormat)
+    });
+}
+
+module.exports.encrypt = function (senderECSigningKeyPair, receiverECDHPublicKey, message, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof message === "object" && !$$.Buffer.isBuffer(message)) {
+        message = JSON.stringify(message);
+    }
+
+    if (typeof message === "string") {
+        message = $$.Buffer.from(message);
+    }
+
+    if (!$$.Buffer.isBuffer(message)) {
+        throw new Error('Input message has to be of type Buffer');
+    }
+
+    common.checkKeyPairMandatoryProperties(senderECSigningKeyPair)
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const ephemeralPublicKey = ephemeralKeyAgreement.generateEphemeralPublicKey()
+    const sharedSecret = ephemeralKeyAgreement.generateSharedSecretForPublicKey(receiverECDHPublicKey)
+
+    const signature = mycrypto.computeDigitalSignature(senderECSigningKeyPair.privateKey, sharedSecret, options)
+    const senderAuthMsgEnvelopeSerialized = senderMessageWrapAndSerialization(senderECSigningKeyPair.publicKey, message, signature, options)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, sharedSecret)
+    const { symmetricEncryptionKey, macKey } = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const iv = mycrypto.getRandomBytes(options.ivSize)
+    const ciphertext = mycrypto.symmetricEncrypt(symmetricEncryptionKey, senderAuthMsgEnvelopeSerialized, iv, options)
+    const tag = mycrypto.KMAC.computeKMAC(macKey,
+        $$.Buffer.concat([ciphertext, iv],
+            ciphertext.length + iv.length), options
+    )
+
+    return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
+};
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  encrypt: require('./encrypt').encrypt,
+  decrypt: require('./decrypt').decrypt,
+  getDecodedECDHPublicKeyFromEncEnvelope: require('../common').getDecodedECDHPublicKeyFromEncEnvelope
+}
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto');
+const common = require('../common')
+const config = require('../config')
+
+function checkWrappedMessageMandatoryProperties(wrappedMessage) {
+    const mandatoryProperties = ["from_ecdh", "msg"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof wrappedMessage[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from wrapped message");
+        }
+    })
+}
+
+module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof encEnvelope === "string") {
+        try{
+            encEnvelope = JSON.parse(encEnvelope);
+        }   catch (e) {
+            throw Error(`Could not parse encEnvelope ${encEnvelope}`);
+        }
+    }
+
+    if (typeof encEnvelope !== "object") {
+        throw Error(`encEnvelope should be an object. Received ${typeof encEnvelope}`);
+    }
+
+    common.checkEncryptedEnvelopeMandatoryProperties(encEnvelope)
+    const ephemeralPublicKey = mycrypto.PublicKeyDeserializer.deserializeECDHPublicKey(encEnvelope.r, options)
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const sharedSecret = ephemeralKeyAgreement.computeSharedSecretFromKeyPair(receiverECDHPrivateKey, ephemeralPublicKey)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, sharedSecret)
+    const { symmetricEncryptionKey, macKey } = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const ciphertext = $$.Buffer.from(encEnvelope.ct, options.encodingFormat)
+    const tag = $$.Buffer.from(encEnvelope.tag, options.encodingFormat)
+    const iv = $$.Buffer.from(encEnvelope.iv, options.encodingFormat)
+
+    const wrappedMessageObject = JSON.parse(mycrypto.symmetricDecrypt(symmetricEncryptionKey, ciphertext, iv, options).toString())
+    checkWrappedMessageMandatoryProperties(wrappedMessageObject)
+    const senderPublicKey = mycrypto.PublicKeyDeserializer.deserializeECDHPublicKey(wrappedMessageObject.from_ecdh, options);
+
+    const senderKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const senderDerivedSharedSecret = senderKeyAgreement.computeSharedSecretFromKeyPair(receiverECDHPrivateKey, senderPublicKey)
+    // **TODO**: This does not seem correct, need to think about it.
+    mycrypto.KMAC.verifyKMAC(tag, macKey,
+        $$.Buffer.concat([ciphertext, iv, senderDerivedSharedSecret],
+            ciphertext.length + iv.length + senderDerivedSharedSecret.length), options
+    )
+
+    return {
+        from_ecdh: senderPublicKey,
+        message: $$.Buffer.from(wrappedMessageObject.msg, options.encodingFormat)
+    };
+}
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto');
+const common = require('../common')
+const config = require('../config')
+
+function senderMessageWrapAndSerialization(senderECDHPublicKey, message) {
+    return JSON.stringify({
+        from_ecdh: mycrypto.PublicKeySerializer.serializeECDHPublicKey(senderECDHPublicKey),
+        msg: message
+    });
+}
+
+module.exports.encrypt = function (senderECDHKeyPair, receiverECDHPublicKey, message, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof message === "object" && !$$.Buffer.isBuffer(message)) {
+        message = JSON.stringify(message);
+    }
+
+    if (typeof message === "string") {
+        message = $$.Buffer.from(message);
+    }
+
+    if (!$$.Buffer.isBuffer(message)) {
+        throw new Error('Input message has to be of type Buffer');
+    }
+    common.checkKeyPairMandatoryProperties(senderECDHKeyPair)
+    const senderKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const senderDerivedSharedSecret = senderKeyAgreement.computeSharedSecretFromKeyPair(senderECDHKeyPair.privateKey, receiverECDHPublicKey)
+
+    const senderAuthMsgEnvelopeSerialized = senderMessageWrapAndSerialization(senderECDHKeyPair.publicKey, message);
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const ephemeralPublicKey = ephemeralKeyAgreement.generateEphemeralPublicKey()
+    const ephemeralSharedSecret = ephemeralKeyAgreement.generateSharedSecretForPublicKey(receiverECDHPublicKey)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, ephemeralSharedSecret)
+    const {symmetricEncryptionKey, macKey} = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const iv = mycrypto.getRandomBytes(options.ivSize)
+    const ciphertext = mycrypto.symmetricEncrypt(symmetricEncryptionKey, senderAuthMsgEnvelopeSerialized, iv, options)
+    // **TODO**: This does not seem correct, need to think about it.
+    const tag = mycrypto.KMAC.computeKMAC(macKey,
+        $$.Buffer.concat([ciphertext, iv, senderDerivedSharedSecret],
+            ciphertext.length + iv.length + senderDerivedSharedSecret.length), options
+    )
+
+    return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
+};
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../../crypto')
+const utils = require('../utils')
+const common = require('../../common')
+const config = require('../../config')
+
+function checkEncryptedEnvelopeMandatoryProperties(encryptedEnvelope) {
+    const mandatoryProperties = ["recvs", "rtag", "ct", "iv", "tag"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof encryptedEnvelope[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from input group encrypted envelope");
+        }
+    })
+}
+
+module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    checkEncryptedEnvelopeMandatoryProperties(encEnvelope)
+    common.checkKeyPairMandatoryProperties(receiverECDHKeyPair)
+    const receiverECIESInstancesBuffer = $$.Buffer.from(encEnvelope.recvs, options.encodingFormat)
+
+    const keyBuffer = utils.receiverMultiRecipientECIESDecrypt(receiverECDHKeyPair, receiverECIESInstancesBuffer)
+    const {symmetricCipherKey, ciphertextMacKey, recvsMacKey} = utils.parseKeyBuffer(keyBuffer)
+
+    const ciphertext = $$.Buffer.from(encEnvelope.ct, options.encodingFormat)
+    const tag = $$.Buffer.from(encEnvelope.tag, options.encodingFormat)
+    const iv = $$.Buffer.from(encEnvelope.iv, options.encodingFormat)
+    const recvsTag = $$.Buffer.from(encEnvelope.rtag, options.encodingFormat)
+
+    if (!mycrypto.KMAC.verifyKMAC(tag,
+        ciphertextMacKey,
+        $$.Buffer.concat([ciphertext, iv],
+            ciphertext.length + iv.length), options)
+    ) {
+        throw new Error("Bad ciphertext MAC")
+    }
+    if (!mycrypto.KMAC.verifyKMAC(recvsTag,
+        recvsMacKey,
+        receiverECIESInstancesBuffer, options)
+    ) {
+        throw new Error("Bad recipient ECIES MAC")
+    }
+
+    return mycrypto.symmetricDecrypt(symmetricCipherKey, ciphertext, iv, options)
+}
+
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js":[function(require,module,exports){
+'use strict';
+
+const utils = require('../utils')
+const mycrypto = require('../../crypto')
+const config = require('../../config')
+
+module.exports.encrypt = function (message, ...receiverECDHPublicKeys) {
+    let options;
+    const lastArg = receiverECDHPublicKeys[receiverECDHPublicKeys.length - 1];
+    if (typeof lastArg === "object" && !Array.isArray(lastArg) && !$$.Buffer.isBuffer(lastArg) && !(lastArg instanceof Uint8Array)) {
+        options = receiverECDHPublicKeys.pop();
+    } else {
+        options = {};
+    }
+
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof message === "object" && !$$.Buffer.isBuffer(message)) {
+        message = JSON.stringify(message);
+    }
+
+    if (typeof message === "string") {
+        message = $$.Buffer.from(message);
+    }
+
+    if (!$$.Buffer.isBuffer(message)) {
+        throw new Error('Input message has to be of type Buffer');
+    }
+
+    if (receiverECDHPublicKeys.length === 0) {
+        throw new Error('Need to specify at least one receiver public key')
+    }
+
+    receiverECDHPublicKeys.push(options);
+    const { symmetricCipherKey, ciphertextMacKey, recvsMacKey } = utils.generateKeyBufferParams(options)
+    const multiRecipientECIESBuffer = utils.senderMultiRecipientECIESEncrypt(
+        $$.Buffer.concat([symmetricCipherKey, ciphertextMacKey, recvsMacKey],
+            symmetricCipherKey.length + ciphertextMacKey.length + recvsMacKey.length),
+        ...receiverECDHPublicKeys)
+
+    const iv = mycrypto.getRandomBytes(options.ivSize)
+    const ciphertext = mycrypto.symmetricEncrypt(symmetricCipherKey, message, iv, options)
+    const tag = mycrypto.KMAC.computeKMAC(ciphertextMacKey,
+        $$.Buffer.concat(
+            [ciphertext, iv],
+            ciphertext.length + iv.length), options
+    );
+    const recvsTag = mycrypto.KMAC.computeKMAC(recvsMacKey, multiRecipientECIESBuffer, options)
+
+    return {
+        recvs: multiRecipientECIESBuffer.toString(options.encodingFormat),
+        rtag: recvsTag.toString(options.encodingFormat),
+        ct: ciphertext.toString(options.encodingFormat),
+        iv: iv.toString(options.encodingFormat),
+        tag: tag.toString(options.encodingFormat)
+    }
+}
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js":[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  encrypt: require('./encrypt').encrypt,
+  decrypt: require('./decrypt').decrypt,
+  getRecipientECDHPublicKeysFromEncEnvelope: require('../utils').getRecipientECDHPublicKeysFromEncEnvelope
+}
+
+},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../../crypto')
+const config = require('../../config')
+const common = require('../../common')
+const eciesGEAnon = require('../ecies-ge-anon')
+
+function checkEncryptedEnvelopeMandatoryProperties(encryptedEnvelope) {
+    const mandatoryProperties = ["from_ecsig", "sig"];
+    mandatoryProperties.forEach((property) => {
+        if (typeof encryptedEnvelope[property] === 'undefined') {
+            throw new Error("Mandatory property " + property + " is missing from input encrypted envelope");
+        }
+    })
+}
+
+module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    checkEncryptedEnvelopeMandatoryProperties(encEnvelope)
+    common.checkKeyPairMandatoryProperties(receiverECDHKeyPair)
+
+    let tempGEAnonEnvelope = Object.assign({}, encEnvelope)
+    delete tempGEAnonEnvelope.from_ecsig;
+    delete tempGEAnonEnvelope.sig;
+    const message = eciesGEAnon.decrypt(receiverECDHKeyPair, tempGEAnonEnvelope, options)
+    tempGEAnonEnvelope = null;
+
+    const senderECSigVerPublicKey = mycrypto.PublicKeyDeserializer.deserializeECSigVerPublicKey(encEnvelope.from_ecsig, options)
+
+    const recvsTagBuffer = $$.Buffer.from(encEnvelope.rtag, options.encodingFormat)
+    const tagBuffer = $$.Buffer.from(encEnvelope.tag, options.encodingFormat)
+    const signature = $$.Buffer.from(encEnvelope.sig, options.encodingFormat)
+    if (!mycrypto.verifyDigitalSignature(senderECSigVerPublicKey,
+        signature,
+        $$.Buffer.concat([recvsTagBuffer, tagBuffer],
+            recvsTagBuffer.length + tagBuffer.length), options)
+    ) {
+        throw new Error("Bad signature")
+    }
+
+    return {
+        from: senderECSigVerPublicKey,
+        message: message
+    }
+}
+
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../../crypto')
+const common = require('../../common')
+const config = require('../../config')
+const eciesGEAnon = require('../ecies-ge-anon')
+
+module.exports.encrypt = function (senderECSigningKeyPair, message, ...receiverECDHPublicKeys) {
+    let options;
+    const lastArg = receiverECDHPublicKeys[receiverECDHPublicKeys.length - 1];
+    if (typeof lastArg === "object" && !Array.isArray(lastArg) && !$$.Buffer.isBuffer(lastArg) && !(lastArg instanceof Uint8Array)) {
+        options = receiverECDHPublicKeys.pop();
+    } else {
+        options = {};
+    }
+
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof message === "object" && !$$.Buffer.isBuffer(message)) {
+        message = JSON.stringify(message);
+    }
+
+    if (typeof message === "string") {
+        message = $$.Buffer.from(message);
+    }
+
+    if (!$$.Buffer.isBuffer(message)) {
+        throw new Error('Input message has to be of type Buffer');
+    }
+
+    common.checkKeyPairMandatoryProperties(senderECSigningKeyPair);
+    receiverECDHPublicKeys.push(options);
+    let eciesGEEnvelope = eciesGEAnon.encrypt(message, ...receiverECDHPublicKeys)
+
+    const recvsTagBuffer = $$.Buffer.from(eciesGEEnvelope.rtag, options.encodingFormat)
+    const tagBuffer = $$.Buffer.from(eciesGEEnvelope.tag, options.encodingFormat)
+    const signature = mycrypto.computeDigitalSignature(senderECSigningKeyPair.privateKey,
+        $$.Buffer.concat([recvsTagBuffer, tagBuffer],
+            recvsTagBuffer.length + tagBuffer.length), options)
+
+    eciesGEEnvelope.sig = signature.toString(options.encodingFormat)
+    eciesGEEnvelope.from_ecsig = mycrypto.PublicKeySerializer.serializeECSigVerPublicKey(senderECSigningKeyPair.publicKey, options)
+
+    return eciesGEEnvelope;
+}
+
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"][0].apply(exports,arguments)
+},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js":[function(require,module,exports){
+'use strict';
+
+const sender = require('./sender')
+const recipient = require('./recipient')
+
+module.exports = {
+    generateKeyBufferParams: sender.generateKeyBufferParams,
+    senderMultiRecipientECIESEncrypt: sender.senderMultiRecipientECIESEncrypt,
+    getRecipientECDHPublicKeysFromEncEnvelope: recipient.getRecipientECDHPublicKeysFromEncEnvelope,
+    receiverMultiRecipientECIESDecrypt: recipient.receiverMultiRecipientECIESDecrypt,
+    parseKeyBuffer: recipient.parseKeyBuffer
+}
+
+
+
+},{"./recipient":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js","./sender":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../../crypto')
+const common = require('../../common')
+const ecies = require('../../ecies')
+const config = require('../../config')
+
+module.exports.getRecipientECDHPublicKeysFromEncEnvelope = function (encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (encEnvelope.recvs === undefined) {
+        throw new Error('Mandatory property recvs not found in encrypted envelope')
+    }
+    let multiRecipientECIESEnvelopeArray = JSON.parse($$.Buffer.from(encEnvelope.recvs, options.encodingFormat))
+    if (multiRecipientECIESEnvelopeArray.length === 0) {
+        throw new Error('Invalid receiver array in encrypted envelope')
+    }
+    let recipientECDHPublicKeyArray = [];
+    multiRecipientECIESEnvelopeArray.forEach(function (curRecipientECIESEnvelope) {
+        common.checkEncryptedEnvelopeMandatoryProperties(curRecipientECIESEnvelope)
+        let curRecipientECDHPublicKey = common.getDecodedECDHPublicKeyFromEncEnvelope(curRecipientECIESEnvelope, options)
+        recipientECDHPublicKeyArray.push(curRecipientECDHPublicKey)
+    })
+    if (recipientECDHPublicKeyArray.length === 0) {
+        throw new Error('Unable to parse any of the receivers\' ECIES instances')
+    }
+    return recipientECDHPublicKeyArray;
+}
+
+function isECIESEnvelopeForInputECDHPublicKey(eciesEnvelope, ecdhPublicKey, options) {
+    const ecdhPublicKeyBuffer = $$.Buffer.from(mycrypto.PublicKeySerializer.serializeECDHPublicKey(ecdhPublicKey, options))
+    const envelopeECDHPublicKey = $$.Buffer.from(eciesEnvelope.to_ecdh)
+    return mycrypto.timingSafeEqual(envelopeECDHPublicKey, ecdhPublicKeyBuffer);
+}
+
+module.exports.receiverMultiRecipientECIESDecrypt = function(receiverECDHKeyPair, multiRecipientECIESBuffer, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    let multiRecipientECIESEnvelopeArray = JSON.parse(multiRecipientECIESBuffer)
+    if (multiRecipientECIESEnvelopeArray.length === 0) {
+        throw new Error("Parsed an empty receivers ECIES instances array")
+    }
+    let myECIESInstanceFound = false;
+    let message;
+    multiRecipientECIESEnvelopeArray.forEach(function (curRecipientECIESEnvelope) {
+        common.checkEncryptedEnvelopeMandatoryProperties(curRecipientECIESEnvelope)
+        if (isECIESEnvelopeForInputECDHPublicKey(curRecipientECIESEnvelope, receiverECDHKeyPair.publicKey, options)) {
+            message = ecies.decrypt(receiverECDHKeyPair.privateKey, curRecipientECIESEnvelope, options)
+            myECIESInstanceFound = true;
+            return;
+        }
+    })
+    if (!myECIESInstanceFound) {
+        throw new Error("Unable to decrypt input envelope with input EC key pair")
+    }
+    return message;
+}
+
+module.exports.parseKeyBuffer = function (keyBuffer, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+
+    options = defaultOpts;
+    if (keyBuffer.length !== (options.symmetricCipherKeySize + (2*options.macKeySize))) {
+        throw new Error("Invalid length of decrypted key buffer")
+    }
+    const symmetricCipherKey = keyBuffer.slice(0, options.symmetricCipherKeySize)
+    const ciphertextMacKey = keyBuffer.slice(options.symmetricCipherKeySize, options.symmetricCipherKeySize + options.macKeySize)
+    const recvsMacKey = keyBuffer.slice(options.symmetricCipherKeySize + options.macKeySize)
+    return {
+        symmetricCipherKey,
+        ciphertextMacKey,
+        recvsMacKey
+    }
+}
+
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../../crypto')
+const ecies = require('../../ecies')
+const config = require('../../config')
+
+module.exports.generateKeyBufferParams = function (options) {
+    const symmetricCipherKey = mycrypto.getRandomBytes(options.symmetricCipherKeySize)
+    const ciphertextMacKey = mycrypto.getRandomBytes(options.macKeySize)
+    const recvsMacKey = mycrypto.getRandomBytes(options.macKeySize)
+    return {
+        symmetricCipherKey,
+        ciphertextMacKey,
+        recvsMacKey
+    }
+}
+
+module.exports.senderMultiRecipientECIESEncrypt = function(message, ...receiverECDHPublicKeyArray) {
+    let options;
+    const lastArg = receiverECDHPublicKeyArray[receiverECDHPublicKeyArray.length - 1];
+    if (typeof lastArg === "object" && !Array.isArray(lastArg) && !$$.Buffer.isBuffer(lastArg) && !(lastArg instanceof Uint8Array)) {
+        options = receiverECDHPublicKeyArray.pop();
+    } else {
+        options = {};
+    }
+
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    let eciesInstancesArray = []
+    receiverECDHPublicKeyArray.forEach(function (curReceiverECDHPublicKey) {
+        eciesInstancesArray.push(ecies.encrypt(curReceiverECDHPublicKey, message, options))
+    })
+    return $$.Buffer.from(JSON.stringify(eciesInstancesArray))
+}
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto')
+const common = require('../common')
+const config = require('../config')
+
+
+module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof encEnvelope === "string") {
+        try{
+            encEnvelope = JSON.parse(encEnvelope);
+        }   catch (e) {
+            throw Error(`Could not parse encEnvelope ${encEnvelope}`);
+        }
+    }
+
+    if (typeof encEnvelope !== "object") {
+        throw Error(`encEnvelope should be an object. Received ${typeof encEnvelope}`);
+    }
+
+    common.checkEncryptedEnvelopeMandatoryProperties(encEnvelope)
+
+    const ephemeralPublicKey = mycrypto.PublicKeyDeserializer.deserializeECDHPublicKey(encEnvelope.r, options)
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const sharedSecret = ephemeralKeyAgreement.computeSharedSecretFromKeyPair(receiverECDHPrivateKey, ephemeralPublicKey)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, sharedSecret)
+    const { symmetricEncryptionKey, macKey } = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const ciphertext = $$.Buffer.from(encEnvelope.ct, options.encodingFormat)
+    const tag = $$.Buffer.from(encEnvelope.tag, options.encodingFormat)
+    const iv = $$.Buffer.from(encEnvelope.iv, options.encodingFormat)
+
+    if (!mycrypto.KMAC.verifyKMAC(tag,
+        macKey,
+        $$.Buffer.concat([ciphertext, iv],
+            ciphertext.length + iv.length), options)
+    ) {
+        throw new Error("Bad MAC")
+    }
+
+    return mycrypto.symmetricDecrypt(symmetricEncryptionKey, ciphertext, iv, options)
+}
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js":[function(require,module,exports){
+'use strict';
+
+const mycrypto = require('../crypto')
+const common = require('../common')
+const config = require('../config');
+
+module.exports.encrypt = function (receiverECDHPublicKey, message, options) {
+    options = options || {};
+    const defaultOpts = config;
+    Object.assign(defaultOpts, options);
+    options = defaultOpts;
+
+    if (typeof message === "object" && !$$.Buffer.isBuffer(message)) {
+        message = JSON.stringify(message);
+    }
+
+    if (typeof message === "string") {
+        message = $$.Buffer.from(message);
+    }
+
+    if (!$$.Buffer.isBuffer(message)) {
+        throw new Error('Input message has to be of type Buffer');
+    }
+
+    const ephemeralKeyAgreement = new mycrypto.ECEphemeralKeyAgreement(options)
+    const ephemeralPublicKey = ephemeralKeyAgreement.generateEphemeralPublicKey()
+    const sharedSecret = ephemeralKeyAgreement.generateSharedSecretForPublicKey(receiverECDHPublicKey)
+
+    const kdfInput = common.computeKDFInput(ephemeralPublicKey, sharedSecret)
+    const { symmetricEncryptionKey, macKey } = common.computeSymmetricEncAndMACKeys(kdfInput, options)
+
+    const iv = mycrypto.getRandomBytes(options.ivSize)
+    const ciphertext = mycrypto.symmetricEncrypt(symmetricEncryptionKey, message, iv, options)
+    const tag = mycrypto.KMAC.computeKMAC(macKey,
+        $$.Buffer.concat([ciphertext, iv],
+            ciphertext.length + iv.length), options
+    )
+
+    return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
+}
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js":[function(require,module,exports){
+module.exports = {
+    ecies_encrypt: require("./ecies").encrypt,
+    ecies_decrypt: require("./ecies").decrypt,
+    ecies_encrypt_ds: require("./ecies-doa-ds").encrypt,
+    ecies_decrypt_ds: require("./ecies-doa-ds").decrypt,
+    ecies_encrypt_kmac: require("./ecies-doa-kmac").encrypt,
+    ecies_decrypt_kmac: require("./ecies-doa-kmac").decrypt,
+    ecies_getDecodedECDHPublicKeyFromEncEnvelope: require("./ecies/index").getDecodedECDHPublicKeyFromEncEnvelope,
+    ecies_group_encrypt: require("./ecies-group-encryption/ecies-ge-anon").encrypt,
+    ecies_group_decrypt: require("./ecies-group-encryption/ecies-ge-anon").decrypt,
+    ecies_group_encrypt_ds: require("./ecies-group-encryption/ecies-ge-doa").encrypt,
+    ecies_group_decrypt_ds: require("./ecies-group-encryption/ecies-ge-doa").decrypt,
+    ecies_group_getRecipientECDHPublicKeysFromEncEnvelope: require("./ecies-group-encryption/ecies-ge-doa").getRecipientECDHPublicKeysFromEncEnvelope
+}
+
+},{"./ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js","./ecies-doa-ds":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js","./ecies-doa-kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js","./ecies-group-encryption/ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js","./ecies-group-encryption/ecies-ge-doa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js","./ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 function ECKeyGenerator() {
     const crypto = require('crypto');
     const KeyEncoder = require('./keyEncoder');
 
     this.generateKeyPair = (namedCurve, callback) => {
-        if (typeof namedCurve === "function") {
-            callback = namedCurve;
+        if (typeof namedCurve === "undefined") {
+            callback = undefined;
             namedCurve = 'secp256k1';
+        } else {
+            if (typeof namedCurve === "function") {
+                callback = namedCurve;
+                namedCurve = 'secp256k1';
+            }
         }
+
         const ec = crypto.createECDH(namedCurve);
         const publicKey = ec.generateKeys();
         const privateKey = ec.getPrivateKey();
-        callback(undefined, publicKey, privateKey);
+        if(callback) {
+            callback(undefined, publicKey, privateKey);
+        }
+        return {publicKey, privateKey};
     };
 
     this.getPemKeys = (privateKey, publicKey, options) => {
@@ -13796,25 +22691,58 @@ function ECKeyGenerator() {
         ecdh.setPrivateKey(privateKey);
         return ecdh.getPublicKey();
     };
+
+    this.convertPublicKey = (publicKey, options) => {
+        options = options || {};
+        options = removeUndefinedPropsInOpt(options)
+        const defaultOpts = {originalFormat: 'raw', outputFormat: 'pem', encodingFormat:"hex", namedCurve: 'secp256k1'};
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        const keyEncoder = new KeyEncoder(options.namedCurve);
+        return keyEncoder.encodePublic(publicKey, options.originalFormat, options.outputFormat, options.encodingFormat)
+    };
+
+    this.convertPrivateKey = (rawPrivateKey, options) => {
+        options = options || {};
+        options = removeUndefinedPropsInOpt(options)
+        const defaultOpts = {originalFormat: 'raw', outputFormat: 'pem', namedCurve: 'secp256k1'};
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
+        const keyEncoder = new KeyEncoder(options.namedCurve);
+        return keyEncoder.encodePrivate(rawPrivateKey, options.originalFormat, options.outputFormat)
+    };
+
+    const removeUndefinedPropsInOpt = (options) => {
+        if (options) {
+            for (let prop in options) {
+                if (typeof options[prop] === "undefined") {
+                    delete options[prop];
+                }
+            }
+        }
+
+        return options;
+    };
 }
 
 exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
-},{"./keyEncoder":"/opt/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/opt/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+
+},{"./keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
     const derAsn1Decoder = require("./utils/DerASN1Decoder");
     const PskEncryption = require("./PskEncryption");
-    const or = require('overwrite-require');
+
 
     this.createPskEncryption = (algorithm) => {
         return new PskEncryption(algorithm);
     };
 
     this.generateKeyPair = (options, callback) => {
-        this.createKeyPairGenerator().generateKeyPair(options, callback);
+        return this.createKeyPairGenerator().generateKeyPair(options, callback);
     };
 
     this.createKeyPairGenerator = require("./ECKeyGenerator").createECKeyGenerator;
@@ -13839,6 +22767,10 @@ function PskCrypto() {
         verify.end();
         return verify.verify(publicKey, signature);
     };
+
+    this.verifyDefault = (data, publicKey, signature) => {
+        return this.verify('sha256', data, publicKey, signature);
+    }
 
     this.privateEncrypt = (privateKey, data) => {
         if (typeof data === "string") {
@@ -13883,6 +22815,9 @@ function PskCrypto() {
     };
 
     this.hash = (algorithm, data, encoding) => {
+        if (typeof data === "object" && !$$.Buffer.isBuffer(data)) {
+            data = JSON.stringify(data);
+        }
         const hash = crypto.createHash(algorithm);
         hash.update(data);
         return hash.digest(encoding);
@@ -13953,7 +22888,7 @@ function PskCrypto() {
 
 
     this.randomBytes = (len) => {
-        if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
+        if ($$.environmentType === "browser" /*or.constants.BROWSER_ENVIRONMENT_TYPE*/) {
             let randomArray = new Uint8Array(len);
 
             return window.crypto.getRandomValues(randomArray);
@@ -13993,13 +22928,21 @@ function PskCrypto() {
     };
     this.decodeDerToASN1ETH = (derSignatureBuffer) => derAsn1Decoder.decodeDERIntoASN1ETH(derSignatureBuffer);
     this.PskHash = utils.PskHash;
+
+    const ecies = require("../js-mutual-auth-ecies/index");
+    this.ecies_encrypt = ecies.ecies_encrypt;
+    this.ecies_decrypt = ecies.ecies_decrypt;
+    this.ecies_encrypt_kmac = ecies.ecies_encrypt_kmac;
+    this.ecies_decrypt_kmac = ecies.ecies_decrypt_kmac;
+    this.ecies_encrypt_ds = ecies.ecies_encrypt_ds;
+    this.ecies_decrypt_ds = ecies.ecies_decrypt_ds;
 }
 
 module.exports = new PskCrypto();
 
 
 
-},{"../signsensusDS/ssutil":"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/opt/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/opt/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/opt/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false,"overwrite-require":"overwrite-require"}],"/opt/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"../js-mutual-auth-ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
     const crypto = require("crypto");
     const utils = require("./utils/cryptoUtils");
@@ -14018,6 +22961,10 @@ function PskEncryption(algorithm) {
     let encryptionIsAuthenticated = utils.encryptionIsAuthenticated(algorithm);
 
     this.encrypt = (plainData, encryptionKey, options) => {
+        if (typeof plainData === "string") {
+            plainData = $$.Buffer.from(plainData);
+        }
+
         if (typeof encryptionKey === "string") {
             encryptionKey = $$.Buffer.from(encryptionKey);
         }
@@ -14044,12 +22991,15 @@ function PskEncryption(algorithm) {
         if (tag) {
             encData = $$.Buffer.concat([encData, tag]);
         }
-        
+
         key = encryptionKey;
         return encData;
     };
 
     this.decrypt = (encryptedData, decryptionKey, authTagLength = 0, options) => {
+        if (typeof encryptedData === "string") {
+            encryptedData = $$.Buffer.from(encryptedData);
+        }
         if (typeof decryptionKey === "string") {
             decryptionKey = $$.Buffer.from(decryptionKey);
         }
@@ -14091,7 +23041,8 @@ function PskEncryption(algorithm) {
 }
 
 module.exports = PskEncryption;
-},{"./utils/cryptoUtils":"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+
+},{"./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -14152,7 +23103,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false,"vm":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
+},{"./asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false,"vm":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('./bignum/bn');
@@ -14163,7 +23114,7 @@ asn1.constants = require('./constants/index');
 asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
-},{"./api":"/opt/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./api":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -14282,7 +23233,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-},{"../base":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -14290,7 +23241,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
 //var assert = require('double-check').assert;
@@ -14894,7 +23845,7 @@ Node.prototype._encodePrimitive = function encodePrimitive(tag, data) {
     throw new Error('Unsupported tag: ' + tag);
 };
 
-},{"../base":"/opt/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 function Reporter(options) {
@@ -14998,7 +23949,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"util":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
+},{"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
 (function (module, exports) {
 
 'use strict';
@@ -17441,7 +26392,7 @@ Mont.prototype.invm = function invm(a) {
 
 })(typeof module === 'undefined' || module, this);
 
-},{}],"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
 var constants = require('../constants');
 
 exports.tagClass = {
@@ -17485,7 +26436,7 @@ exports.tag = {
 };
 exports.tagByName = constants._reverse(exports.tag);
 
-},{"../constants":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
 var constants = exports;
 
 // Helper
@@ -17506,7 +26457,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -17799,13 +26750,13 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
 var decoders = exports;
 
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 
 const asn1 = require('../asn1');
@@ -17855,7 +26806,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -18125,13 +27076,13 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -18155,7 +27106,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/opt/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/opt/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -18206,10 +27157,10 @@ function KeyEncoder(options) {
 KeyEncoder.ECPrivateKeyASN = ECPrivateKeyASN;
 KeyEncoder.SubjectPublicKeyInfoASN = SubjectPublicKeyInfoASN;
 
-KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
+KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey, encodingFormat = "hex") {
     const privateKeyObject = {
         version: new BN(1),
-        privateKey: $$.Buffer.from(rawPrivateKey, 'hex'),
+        privateKey: $$.Buffer.from(rawPrivateKey, encodingFormat),
         parameters: this.options.curveParameters,
         pemOptions: {label: "EC PRIVATE KEY"}
     };
@@ -18217,14 +27168,14 @@ KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey) {
     if (rawPublicKey) {
         privateKeyObject.publicKey = {
             unused: 0,
-            data: $$.Buffer.from(rawPublicKey, 'hex')
+            data: $$.Buffer.from(rawPublicKey, encodingFormat)
         }
     }
 
     return privateKeyObject
 };
 
-KeyEncoder.prototype.publicKeyObject = function (rawPublicKey) {
+KeyEncoder.prototype.publicKeyObject = function (rawPublicKey, encodingFormat = "hex") {
     return {
         algorithm: {
             id: this.algorithmID,
@@ -18232,94 +27183,95 @@ KeyEncoder.prototype.publicKeyObject = function (rawPublicKey) {
         },
         pub: {
             unused: 0,
-            data: $$.Buffer.from(rawPublicKey, 'hex')
+            data: rawPublicKey
         },
         pemOptions: {label: "PUBLIC KEY"}
     }
 }
 
-KeyEncoder.prototype.encodePrivate = function (privateKey, originalFormat, destinationFormat) {
+KeyEncoder.prototype.encodePrivate = function (privateKey, originalFormat, destinationFormat, encodingFormat = "hex") {
     let privateKeyObject;
 
     /* Parse the incoming private key and convert it to a private key object */
     if (originalFormat === 'raw') {
-        if (!typeof privateKey === 'string') {
-            throw 'private key must be a string'
+        if (!$$.Buffer.isBuffer(privateKey)) {
+            throw Error('private key must be a buffer');
         }
-        let privateKeyObject = this.options.curve.keyFromPrivate(privateKey, 'hex'),
-            rawPublicKey = privateKeyObject.getPublic('hex')
+        let privateKeyObject = this.options.curve.keyFromPrivate(privateKey, encodingFormat),
+            rawPublicKey = privateKeyObject.getPublic(encodingFormat)
         privateKeyObject = this.privateKeyObject(privateKey, rawPublicKey)
     } else if (originalFormat === 'der') {
-        if (typeof privateKey === 'buffer') {
+        if ($$.Buffer.isBuffer(privateKey)) {
             // do nothing
         } else if (typeof privateKey === 'string') {
-            privateKey = $$.Buffer.from(privateKey, 'hex')
+            privateKey = $$.Buffer.from(privateKey, encodingFormat);
         } else {
-            throw 'private key must be a buffer or a string'
+            throw Error('private key must be a buffer or a string');
         }
         privateKeyObject = ECPrivateKeyASN.decode(privateKey, 'der')
     } else if (originalFormat === 'pem') {
         if (!typeof privateKey === 'string') {
-            throw 'private key must be a string'
+            throw Error('private key must be a string');
         }
         privateKeyObject = ECPrivateKeyASN.decode(privateKey, 'pem', this.options.privatePEMOptions)
     } else {
-        throw 'invalid private key format'
+        throw Error('invalid private key format');
     }
 
     /* Export the private key object to the desired format */
     if (destinationFormat === 'raw') {
-        return privateKeyObject.privateKey.toString('hex')
+        return privateKeyObject.privateKey;
     } else if (destinationFormat === 'der') {
-        return ECPrivateKeyASN.encode(privateKeyObject, 'der').toString('hex')
+        return ECPrivateKeyASN.encode(privateKeyObject, 'der').toString(encodingFormat)
     } else if (destinationFormat === 'pem') {
         return ECPrivateKeyASN.encode(privateKeyObject, 'pem', this.options.privatePEMOptions)
     } else {
-        throw 'invalid destination format for private key'
+        throw Error('invalid destination format for private key');
     }
 }
 
-KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destinationFormat) {
+KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destinationFormat, encodingFormat = "hex") {
     let publicKeyObject;
 
     /* Parse the incoming public key and convert it to a public key object */
     if (originalFormat === 'raw') {
-        if (!typeof publicKey === 'string') {
-            throw 'public key must be a string'
+        if (!$$.Buffer.isBuffer(publicKey)) {
+            throw Error('public key must be a buffer');
         }
         publicKeyObject = this.publicKeyObject(publicKey)
     } else if (originalFormat === 'der') {
-        if (typeof publicKey === 'buffer') {
+        if ($$.Buffer.isBuffer(publicKey)) {
             // do nothing
         } else if (typeof publicKey === 'string') {
-            publicKey = $$.Buffer.from(publicKey, 'hex')
+            publicKey = $$.Buffer.from(publicKey, encodingFormat)
         } else {
-            throw 'public key must be a buffer or a string'
+            throw Error('public key must be a buffer or a string');
         }
         publicKeyObject = SubjectPublicKeyInfoASN.decode(publicKey, 'der')
     } else if (originalFormat === 'pem') {
-        if (!typeof publicKey === 'string') {
-            throw 'public key must be a string'
+        if (!(typeof publicKey === 'string')) {
+            throw Error('public key must be a string');
         }
         publicKeyObject = SubjectPublicKeyInfoASN.decode(publicKey, 'pem', this.options.publicPEMOptions)
     } else {
-        throw 'invalid public key format'
+        throw Error('invalid public key format');
     }
 
     /* Export the private key object to the desired format */
     if (destinationFormat === 'raw') {
-        return publicKeyObject.pub.data.toString('hex')
+        return publicKeyObject.pub.data;
     } else if (destinationFormat === 'der') {
-        return SubjectPublicKeyInfoASN.encode(publicKeyObject, 'der').toString('hex')
+        return SubjectPublicKeyInfoASN.encode(publicKeyObject, 'der').toString(encodingFormat)
     } else if (destinationFormat === 'pem') {
         return SubjectPublicKeyInfoASN.encode(publicKeyObject, 'pem', this.options.publicPEMOptions)
     } else {
-        throw 'invalid destination format for public key'
+        throw Error('invalid destination format for public key');
     }
 }
 
 module.exports = KeyEncoder;
-},{"./asn1/asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/opt/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+
+},{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
 
@@ -18408,7 +27360,7 @@ function ecdsaVerify(data, signature, key) {
 module.exports = {
     decodeDERIntoASN1ETH
 };
-},{"../asn1/asn1":"/opt/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/opt/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":false}],"/opt/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -18433,7 +27385,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":false,"util":false}],"/opt/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -18568,7 +27520,7 @@ module.exports = {
     encode,
     decode
 };
-},{}],"/opt/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -18658,7 +27610,7 @@ module.exports = {
 };
 
 
-},{"./base58":"/opt/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/opt/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -18686,7 +27638,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":false}],"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -18885,7 +27837,7 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":false}],"/opt/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+},{"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 (function (global){(function (){
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
@@ -18992,7 +27944,7 @@ module.exports = BootEngine;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/opt/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -19018,7 +27970,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/opt/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -19109,7 +28061,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/opt/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -19155,6 +28107,38 @@ function Queue() {
 		return this.head === null;
 	};
 
+    this.remove = function (el) {
+        if (this.length === 1 && el === this.front()) {
+            this.head = this.tail = null;
+            this.length--;
+            return;
+        }
+
+        if (el === this.front()) {
+            this.pop();
+            return;
+        }
+
+        let head = this.head;
+        let prev = null;
+        while (head !== null) {
+            if (head.content !== el) {
+                prev = head;
+                head = head.next;
+                continue;
+            }
+
+            prev.next = head.next;
+            this.length--;
+
+            if (head === this.tail) {
+                this.tail = prev;
+            }
+            return;
+        }
+
+    }
+
 	this[Symbol.iterator] = function* () {
 		let head = this.head;
 		while(head !== null) {
@@ -19177,7 +28161,8 @@ Queue.prototype.toString = function () {
 Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
-},{}],"/opt/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -19326,7 +28311,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/opt/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -19376,7 +28361,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/opt/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -19432,7 +28417,7 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/opt/privatesky/modules/swarmutils/lib/OwM.js"}],"/opt/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+},{"./OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
 function replaceAll(str, search, replacement) {
     return str.split(search).join(replacement);
 }
@@ -19619,7 +28604,7 @@ module.exports = {
     extname
 };
 
-},{}],"/opt/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -19711,7 +28696,7 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-},{"child_process":false}],"/opt/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"child_process":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 var commands = {};
 var commands_help = {};
 
@@ -19782,7 +28767,7 @@ module.exports = {
 };
 
 
-},{}],"/opt/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -19849,7 +28834,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":false}],"/opt/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 function UidGenerator(minBuffers, buffersSize) {
     const Queue = require("./Queue");
     var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
@@ -19951,7 +28936,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-},{"./Queue":"/opt/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"/opt/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
+},{"./Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
 (function (setImmediate){(function (){
 const {assert} = require('./utils');
 const util = require('util');
@@ -20055,15 +29040,15 @@ function AbstractPool(options) {
 
 }
 
-AbstractPool.prototype.events = PoolEvents;
 util.inherits(AbstractPool, EventEmitter);
+AbstractPool.prototype.events = PoolEvents;
 
 
 module.exports = AbstractPool;
 
 }).call(this)}).call(this,require("timers").setImmediate)
 
-},{"./utils":"/opt/privatesky/modules/syndicate/lib/utils.js","events":false,"timers":false,"util":false}],"/opt/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","events":false,"timers":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 /**
@@ -20099,7 +29084,7 @@ util.inherits(PoolIsolates, AbstractPool);
 
 module.exports = PoolIsolates;
 
-},{"./AbstractPool":"/opt/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/opt/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -20152,7 +29137,7 @@ util.inherits(PoolThreads, AbstractPool);
 
 module.exports = PoolThreads;
 
-},{"./AbstractPool":"/opt/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/opt/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -20183,7 +29168,7 @@ function PoolWebWorkers(options, workerCreateHelper) {
         };
 
         function onMessage(msg) {
-            if(msg !== 'ready') {
+            if(msg.data !== 'ready') {
                 callbackWrapper(new Error('Build script did not respond accordingly, it might be incompatible with current version'));
                 return;
             }
@@ -20192,14 +29177,12 @@ function PoolWebWorkers(options, workerCreateHelper) {
         }
 
         function removeListeners() {
-            newWorker.removeListener('message', onMessage);
-            newWorker.removeListener('error', callbackWrapper);
-            newWorker.removeListener('exit', callbackWrapper);
+            newWorker.removeEventListener('message', onMessage);
+            newWorker.removeEventListener('messageerror', callbackWrapper);
         }
 
-        newWorker.on('message', onMessage);
-        newWorker.on('error', callbackWrapper);
-        newWorker.on('exit', callbackWrapper);
+        newWorker.addEventListener('message', onMessage);
+        newWorker.addEventListener('messageerror', callbackWrapper);
     };
 
 }
@@ -20208,7 +29191,7 @@ util.inherits(PoolWebWorkers, AbstractPool);
 
 module.exports = PoolWebWorkers;
 
-},{"./AbstractPool":"/opt/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"overwrite-require","util":false}],"/opt/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"overwrite-require","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
 const os = require('os');
 const util = require('util');
 const WorkerStrategies = require('./WorkerStrategies');
@@ -20310,7 +29293,7 @@ PoolConfig.createByOverwritingDefaults = function (config = {}, options = {allow
 };
 
 module.exports = PoolConfig;
-},{"./WorkerStrategies":"/opt/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":false,"util":false}],"/opt/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
+},{"./WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
 function Queue() {
     const backingStorage = [];
 
@@ -20372,17 +29355,16 @@ function Queue() {
 
 module.exports = Queue;
 
-},{}],"/opt/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
-
+},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
 /** @param pool {AbstractPool} */
 function WorkerPool(pool) {
-    const {assert} = require('./utils');
+    const { assert } = require("./utils");
     let Queue;
 
     try {
-        Queue = require('swarmutils').Queue;
+        Queue = require("swarmutils").Queue;
     } catch (e) {
-        Queue = require('./QueueShim.js');
+        Queue = require("./QueueShim.js");
     }
 
     const PoolEvents = pool.events;
@@ -20392,7 +29374,7 @@ function WorkerPool(pool) {
         const taskAccepted = this.runTaskImmediately(task, callback);
 
         if (!taskAccepted) {
-            taskQueue.push({task, callback});
+            taskQueue.push({ task, callback });
             return false;
         }
 
@@ -20429,10 +29411,14 @@ function WorkerPool(pool) {
         if (taskWasAcceptedByAWorker) {
             taskQueue.pop();
             const newTaskSize = taskQueue.length;
-            assert(newTaskSize === taskSize - 1, {ifFails: `The task queue size did not decrease, expected to be ${taskSize - 1} but is ${newTaskSize}`})
+            assert(newTaskSize === taskSize - 1, {
+                ifFails: `The task queue size did not decrease, expected to be ${taskSize - 1} but is ${newTaskSize}`,
+            });
         } else {
             const newTaskSize = taskQueue.length;
-            assert(newTaskSize === taskSize, {ifFails: `The task queue size modified when it shouldn't, expected to be equal but got pair (old: ${taskSize}, new: ${newTaskSize})`});
+            assert(newTaskSize === taskSize, {
+                ifFails: `The task queue size modified when it shouldn't, expected to be equal but got pair (old: ${taskSize}, new: ${newTaskSize})`,
+            });
             // events are propagates synchronously as mentioned in documentation (https://nodejs.org/api/events.html#events_asynchronous_vs_synchronous)
             // one reason why this can happen is if the worker is not properly marked as "not working"
             // another one is that the queue contains a worker that is free but can't accept tasks (it might have been terminated)
@@ -20445,10 +29431,9 @@ function WorkerPool(pool) {
      * @param {function} callbackForListeners
      */
     function addWorkerListeners(worker, callbackForListeners) {
-
         function callbackWrapper(...args) {
             removeListeners();
-            if(args[0] instanceof Error) {
+            if (args[0] instanceof Error) {
                 pool.removeWorker(worker);
             } else {
                 pool.returnWorker(worker);
@@ -20474,22 +29459,37 @@ function WorkerPool(pool) {
             }
         }
 
-        worker.once('message', onMessage);
-        worker.once('error', onError);
-        worker.once('exit', onExit);
+        // ensure consistent API across supported workers
+        if (!worker.removeListener) {
+            worker.removeListener = worker.removeEventListener.bind(worker);
+        }
+
+        // ensure consistent API across supported workers
+        if (!worker.once) {
+            worker.once = (event, callback) => {
+                const listener = (...args) => {
+                    worker.removeListener(event, listener);
+                    callback(...args);
+                };
+                worker.addEventListener(event, listener);
+            };
+        }
+
+        worker.once("message", onMessage);
+        worker.once("error", onError);
+        worker.once("exit", onExit);
 
         function removeListeners() {
-            worker.removeListener('message', onMessage);
-            worker.removeListener('error', onError);
-            worker.removeListener('exit', onExit);
+            worker.removeListener("message", onMessage);
+            worker.removeListener("error", onError);
+            worker.removeListener("exit", onExit);
         }
     }
-
 }
 
 module.exports = WorkerPool;
 
-},{"./QueueShim.js":"/opt/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/opt/privatesky/modules/syndicate/lib/utils.js","swarmutils":"swarmutils"}],"/opt/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
+},{"./QueueShim.js":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
 const WorkerStrategies = {
     THREADS: 'threads',
     ISOLATES: 'isolates',
@@ -20498,7 +29498,7 @@ const WorkerStrategies = {
 
 module.exports = Object.freeze(WorkerStrategies);
 
-},{}],"/opt/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
 function assert(condition, {ifFails}) {
     if (condition === false) {
         console.error(ifFails);
@@ -20514,7 +29514,7 @@ module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
 };
-},{"./lib/FsAdapter":"/opt/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
+},{"./lib/FsAdapter":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
 
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
 const createFolderBrickStorage = require("./lib/obsolete/FolderBrickStorage").createFolderBrickStorage;
@@ -20553,7 +29553,7 @@ module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapS
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/opt/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/opt/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/opt/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/opt/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/opt/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/opt/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/opt/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/opt/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"dossier":[function(require,module,exports){
+},{"./lib/Archive":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"dossier":[function(require,module,exports){
 function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{
@@ -20600,6 +29600,7 @@ module.exports.load = function(seed, identity, callback){
             const powerCord = new se.OuterThreadPowerCord(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/bundles/threadBoot.js"), false, seed);
             return envSetup(powerCord, seed, identity, callback);
             break;
+        case envTypes.WEB_WORKER_ENVIRONMENT_TYPE:
         case envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE:
         case envTypes.ISOLATE_ENVIRONMENT_TYPE:
         case envTypes.THREAD_ENVIRONMENT_TYPE:
@@ -20609,10 +29610,9 @@ module.exports.load = function(seed, identity, callback){
 }
 
 module.exports.RawDossier = require("./lib/RawDossier");
-},{"./lib/RawDossier":"/opt/privatesky/modules/dossier/lib/RawDossier.js","overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine":false}],"key-ssi-resolver":[function(require,module,exports){
+},{"./lib/RawDossier":"/home/runner/work/privatesky/privatesky/modules/dossier/lib/RawDossier.js","overwrite-require":"overwrite-require","pskcrypto":"pskcrypto","swarm-engine":false}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
-const BootStrapingService = require("./lib/BootstrapingService");
 
 /**
  * Create a new KeySSIResolver instance and append it to
@@ -20623,14 +29623,13 @@ const BootStrapingService = require("./lib/BootstrapingService");
 function initialize(options) {
     options = options || {};
 
+
     const BrickMapStrategyFactory = require("bar").BrickMapStrategyFactory;
 
-    const bootstrapingService = new BootStrapingService(options);
     const brickMapStrategyFactory = new BrickMapStrategyFactory();
     const keySSIFactory = require('./lib/KeySSIs/KeySSIFactory');
 
     options.dsuFactory =  new DSUFactory({
-        bootstrapingService,
         brickMapStrategyFactory,
         keySSIFactory
     });
@@ -20643,13 +29642,13 @@ function initialize(options) {
 module.exports = {
     initialize,
     KeySSIFactory: require('./lib/KeySSIs/KeySSIFactory'),
-    CryptoAlgorithmsRegistry: require('./lib/KeySSIs/CryptoAlgorithmsRegistry'),
-    CryptoFunctionTypes: require('./lib/KeySSIs/CryptoFunctionTypes'),
+    CryptoAlgorithmsRegistry: require('./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry'),
+    CryptoFunctionTypes: require('./lib/CryptoAlgorithms/CryptoFunctionTypes'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/BootstrapingService":"/opt/privatesky/modules/key-ssi-resolver/lib/BootstrapingService/index.js","./lib/DSUFactoryRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/CryptoAlgorithmsRegistry":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoAlgorithmsRegistry.js","./lib/KeySSIs/CryptoFunctionTypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/CryptoFunctionTypes.js","./lib/KeySSIs/KeySSIFactory":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/opt/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
 (function (global){(function (){
 /*
 html API space
@@ -20657,11 +29656,8 @@ html API space
 
 let constants = require("./moduleConstants.js");
 
-
-
-
-
 switch ($$.environmentType) {
+    case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
     case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
         if (typeof self !== "undefined") {
             if(!self.PREVENT_DOUBLE_LOADING_OF_OPENDSU) {
@@ -20692,8 +29688,10 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "http":return require("./http"); break;
             case "crypto":return require("./crypto"); break;
             case "anchoring":return require("./anchoring"); break;
+            case "contracts":return require("./contracts"); break;
             case "bricking":return require("./bricking"); break;
             case "bdns":return require("./bdns"); break;
+            case "boot":return require("./boot"); break;
             case "dc":return require("./dc"); break;
             case "dt":return require("./dt"); break;
             case "keyssi":return require("./keyssi"); break;
@@ -20705,13 +29703,17 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "config":return require("./config"); break;
             case "system":return require("./system"); break;
             case "db":return require("./db"); break;
+            case "w3cdid":return require("./w3cdid"); break;
             case "error":return require("./error"); break;
+            case "m2dsu":return require("./m2dsu"); break;
+            case "workers":return require("./workers"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
 
      function setGlobalVariable(name, value){
         switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
             case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
                 if (typeof self !== "undefined") {
                     self[name] = value;
@@ -20722,7 +29724,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
                 if (typeof window !== "undefined") {
                     window[name] = value;
-                }else {
+                } else {
                     reportUserRelevantError("window not defined in browser environment");
                 }
                 break;
@@ -20738,6 +29740,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
 
     function getGlobalVariable(name){
         switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
             case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
                 return self[name];
             case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
@@ -20750,6 +29753,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
 
     function globalVariableExists(name){
         switch ($$.environmentType) {
+            case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
             case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
                 return typeof self[name] != "undefined";
             case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
@@ -20776,7 +29780,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/opt/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/opt/privatesky/modules/opendsu/bdns/index.js","./bricking":"/opt/privatesky/modules/opendsu/bricking/index.js","./cache":"/opt/privatesky/modules/opendsu/cache/index.js","./config":"/opt/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/opt/privatesky/modules/opendsu/config/autoConfig.js","./crypto":"/opt/privatesky/modules/opendsu/crypto/index.js","./db":"/opt/privatesky/modules/opendsu/db/index.js","./dc":"/opt/privatesky/modules/opendsu/dc/index.js","./dt":"/opt/privatesky/modules/opendsu/dt/index.js","./error":"/opt/privatesky/modules/opendsu/error/index.js","./http":"/opt/privatesky/modules/opendsu/http/index.js","./keyssi":"/opt/privatesky/modules/opendsu/keyssi/index.js","./moduleConstants.js":"/opt/privatesky/modules/opendsu/moduleConstants.js","./mq":"/opt/privatesky/modules/opendsu/mq/index.js","./notifications":"/opt/privatesky/modules/opendsu/notifications/index.js","./resolver":"/opt/privatesky/modules/opendsu/resolver/index.js","./sc":"/opt/privatesky/modules/opendsu/sc/index.js","./system":"/opt/privatesky/modules/opendsu/system/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -20799,6 +29803,7 @@ function enableForEnvironment(envType){
         case moduleConstants.BROWSER_ENVIRONMENT_TYPE :
             global = window;
             break;
+        case moduleConstants.WEB_WORKER_ENVIRONMENT_TYPE:
         case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
             global = self;
             break;
@@ -20882,6 +29887,10 @@ function enableForEnvironment(envType){
     function requireFromCache(request) {
         const existingModule = $$.__runtimeModules[request];
         return existingModule;
+    }
+
+    $$.__registerModule = function (name, module) {
+        $$.__runtimeModules[name] = module;
     }
 
     function wrapStep(callbackName) {
@@ -21108,6 +30117,10 @@ function enableForEnvironment(envType){
                 makeBrowserRequire();
                 $$.require = require;
                 break;
+            case moduleConstants.WEB_WORKER_ENVIRONMENT_TYPE:
+                makeBrowserRequire();
+                $$.require = require;
+                break;
             case moduleConstants.SERVICE_WORKER_ENVIRONMENT_TYPE:
                 makeBrowserRequire();
                 $$.require = require;
@@ -21121,7 +30134,40 @@ function enableForEnvironment(envType){
         }
 
     }
-};
+
+    $$.promisify = function promisify(fn) {
+        return function (...args) {
+            return new Promise((resolve, reject) => {
+                fn(...args, (err, ...res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(...res);
+                    }
+                });
+            });
+        };
+    };
+
+    $$.makeSaneCallback = function makeSaneCallback(fn) {
+        let alreadyCalled = false;
+        let prevErr;
+        return (err, res, ...args) => {
+            if (alreadyCalled) {
+                if (err) {
+                    console.log('Sane callback error:', err);
+                }
+
+                throw new Error(`Callback called 2 times! Second call was stopped. Function code:\n${fn.toString()}\n` + (prevErr ? `Previous error stack ${prevErr.toString()}` : ''));
+            }
+            alreadyCalled = true;
+            if(err){
+                prevErr = err;
+            }
+            return fn(err, res, ...args);
+        };
+    };
+}
 
 
 
@@ -21132,7 +30178,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/opt/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/opt/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
 const Cache = require("./lib/Cache")
 let cacheInstance;
 
@@ -21169,7 +30215,7 @@ module.exports = {
     }
 };
 
-},{"./lib/Cache":"/opt/privatesky/modules/psk-cache/lib/Cache.js"}],"psk-http-client":[function(require,module,exports){
+},{"./lib/Cache":"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js"}],"psk-http-client":[function(require,module,exports){
 //to look nice the requireModule on Node
 require("./lib/psk-abstract-client");
 const or = require('overwrite-require');
@@ -21178,7 +30224,7 @@ if ($$.environmentType === or.constants.BROWSER_ENVIRONMENT_TYPE) {
 } else {
 	require("./lib/psk-node-client");
 }
-},{"./lib/psk-abstract-client":"/opt/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/opt/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/opt/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-security-context":[function(require,module,exports){
+},{"./lib/psk-abstract-client":"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-abstract-client.js","./lib/psk-browser-client":"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-browser-client.js","./lib/psk-node-client":"/home/runner/work/privatesky/privatesky/modules/psk-http-client/lib/psk-node-client.js","overwrite-require":"overwrite-require"}],"psk-security-context":[function(require,module,exports){
 const RawCSBSecurityContext = require("./lib/RawCSBSecurityContext");
 const RootCSBSecurityContext = require("./lib/RootCSBSecurityContext");
 const SecurityContext = require("./lib/SecurityContext");
@@ -21205,7 +30251,7 @@ module.exports.createPSKSignature = (serializedPSKSignature) => {
     return new PSKSignature(serializedPSKSignature);
 };
 
-},{"./lib/EncryptedSecret":"/opt/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/opt/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/opt/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/opt/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/opt/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"pskcrypto":[function(require,module,exports){
+},{"./lib/EncryptedSecret":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/EncryptedSecret.js","./lib/PSKSignature":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/PSKSignature.js","./lib/RawCSBSecurityContext":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/RawCSBSecurityContext.js","./lib/RootCSBSecurityContext":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/RootCSBSecurityContext.js","./lib/SecurityContext":"/home/runner/work/privatesky/privatesky/modules/psk-security-context/lib/SecurityContext.js"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -21216,7 +30262,7 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/opt/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/opt/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/opt/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/opt/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/launcherBootScript":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarm-engine/bootScripts/launcherBootScript":[function(require,module,exports){
 //the first argument is a path to a configuration folder
 const path = require('path');
 
@@ -21348,7 +30394,7 @@ function launch(csb) {
     }
 }
 
-},{"./BootEngine":"/opt/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","dossier":"dossier","opendsu":"opendsu","path":false,"swarmutils":"swarmutils"}],"swarmutils":[function(require,module,exports){
+},{"./BootEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","dossier":"dossier","opendsu":"opendsu","path":false,"swarmutils":"swarmutils"}],"swarmutils":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
@@ -21400,7 +30446,7 @@ module.exports.ensureIsBuffer = function (data) {
     return buffer;
 }
 
-},{"./lib/Combos":"/opt/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/opt/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/opt/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/opt/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/opt/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/opt/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/opt/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/opt/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/opt/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/opt/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/opt/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
+},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
@@ -21456,7 +30502,7 @@ module.exports = {
     registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/opt/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/opt/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/opt/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/opt/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/opt/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/opt/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"zmq_adapter":[function(require,module,exports){
+},{"./lib/Pool-Isolates":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"zmq_adapter":[function(require,module,exports){
 const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
 const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
 const defaultPubAddress = process.env.vmq_zeromq_pub_address || "tcp://127.0.0.1:5001";
@@ -21705,4 +30751,8 @@ module.exports = {
     testIfAvailable,
     registerKiller
 };
-},{"swarmutils":"swarmutils"}]},{},["/opt/privatesky/builds/tmp/launcherBoot.js"])
+},{"swarmutils":"swarmutils"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/launcherBoot.js"])
+                    ;(function(global) {
+                        global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
+                    })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
+                
