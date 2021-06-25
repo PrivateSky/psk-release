@@ -33,9 +33,7 @@
   ],
   "dependencies": {
     "browserify": "^16.3.0",
-    "zeromq": "4.6.0",
     "@msgpack/msgpack": "^1.8.0",
-    "isolated-vm": "2.0.3",
     "source-map-support": "^0.5.13"
   },
   "scripts": {
@@ -43,6 +41,6 @@
     "start": "npm run build && node ./psknode/bin/scripts/psknode.js",
     "test": "npm run build && cd tests && node ./../scripts/testrunner.js",
     "cmd": "node bin//terminal.js",
-    "build": "node ./psknode/bin/scripts/pskbuild.js  --projectMap=./build/build.json --output=./psknode/bundles"
+    "build": "echo \"Nothing to build here!\" && exit 0"
   }
 }
