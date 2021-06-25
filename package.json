@@ -38,7 +38,7 @@
   },
   "scripts": {
     "watch": "node ./psknode/bin/scripts/watcher.js --watch ./ --run ./psknode/bin/scripts/psknode.js --ignore=\"/engine/pskbuildtemp/,/builds/devel/,/tests/,/bin/\"",
-    "start": "npm run build && node ./psknode/bin/scripts/psknode.js",
+    "start": "node bin/scripts/serviceLauncher.js",
     "test": "npm run build && cd tests && node ./../scripts/testrunner.js",
     "cmd": "node bin//terminal.js",
     "build": "echo \"Nothing to build here!\" && exit 0"
