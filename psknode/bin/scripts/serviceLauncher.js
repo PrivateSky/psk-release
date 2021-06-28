@@ -5,11 +5,7 @@ const defaultConfig = {
     services: ["psk_api_hub"],
     maxTimeout: 10 * 60 * 1000, // 10 minutes
     psk_api_hub:{
-        module: "pskApiHubLauncher.js",
-        restartPolicy: {
-            onError: true, // on spawn error
-            onExit: false
-        }
+        module: "pskApiHubLauncher.js"
     },
     domainLauncher:{
         module: "../../core/launcher.js",
@@ -44,17 +40,10 @@ const restartDelays = {};
 
 const pingFork = require("../../core/utils/pingpongFork").fork;
 
-const shouldRestart = true;
+let shouldRestart = true;
 const forkedProcesses = {};
 
-function startProcess(filePath, processOptions) {
-    const args = processOptions.args;
-    const options = processOptions.options
-    const restartPolicy = processOptions.restartPolicy || {
-        onError: shouldRestart,
-        onExit: shouldRestart
-    }
-
+function startProcess(filePath,  args, options) {
     console.log(`[${TAG}] Starting a new process using <${filePath}>`);
     forkedProcesses[filePath] = pingFork(filePath, args, options);
 
@@ -65,14 +54,15 @@ function startProcess(filePath, processOptions) {
         console.log(`Process will restart in ${timeout} ms ...`);
         setTimeout(()=>{
             restartDelays[filePath] = (timeout * 2) % max_timeout;
-            startProcess(filePath, processOptions);
+            startProcess(filePath);
         }, timeout);
     }
 
     function errorHandler(filePath) {
+        let timeout = 100;
         return function (error) {
             console.log(`\x1b[31mException caught on spawning file ${filePath} `, error ? error : "", "\x1b[0m"); //last string is to reset terminal colours
-            if (restartPolicy.onError) {
+            if (shouldRestart) {
                 restartWithDelay(filePath);
             }
         }
@@ -81,7 +71,7 @@ function startProcess(filePath, processOptions) {
     function exitHandler(filePath) {
         return function () {
             console.log(`\x1b[33mExit caught on spawned file ${filePath}`, "\x1b[0m"); //last string is to reset terminal colours
-            if (restartPolicy.onExit) {
+            if (shouldRestart) {
                 restartWithDelay(filePath);
             }
         }
@@ -94,5 +84,5 @@ function startProcess(filePath, processOptions) {
 for(let i=0; i<config.services.length; i++){
     let serviceName = config.services[i];
     let serviceConfig = config[serviceName];
-    startProcess(path.join(__dirname, serviceConfig.module), serviceConfig);
+    startProcess(path.join(__dirname, serviceConfig.module));
 }
