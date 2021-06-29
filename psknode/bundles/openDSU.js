@@ -1090,7 +1090,7 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
-
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1116,6 +1116,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1140,6 +1141,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -1163,6 +1165,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -1186,6 +1189,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -1209,6 +1213,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1257,7 +1262,7 @@ function Archive(archiveConfigurator) {
 
 
     this.delete = (path, options, callback) => {
-        const defaultOpts = {ignoreMounts: false};
+        const defaultOpts = {ignoreMounts: false, ignoreError: false};
         if (typeof options === 'function') {
             callback = options;
             options = {};
@@ -1268,7 +1273,13 @@ function Archive(archiveConfigurator) {
         options = defaultOpts;
 
         if (options.ignoreMounts) {
-            return _delete(path, callback);
+            return _delete(path, err => {
+                if (!err || (err && options.ignoreError)) {
+                    return callback();
+                }
+
+                callback(err);
+            });
         }
 
         this.getArchiveForPath(path, (err, dossierContext) => {
@@ -1291,6 +1302,8 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1324,11 +1337,15 @@ function Archive(archiveConfigurator) {
     };
 
     this.listFiles = (path, options, callback) => {
-        if (typeof options === "function") {
+        const defaultOpts = {ignoreMounts: false, recursive: true};
+        if (typeof options === 'function') {
             callback = options;
-            options = {recursive: true, ignoreMounts: false};
+            options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
         if (options.ignoreMounts === true) {
             if (!options.recursive) {
                 return _listFiles(path, options, callback);
@@ -1372,10 +1389,15 @@ function Archive(archiveConfigurator) {
     };
 
     this.listFolders = (path, options, callback) => {
-        if (typeof options === "function") {
+        const defaultOpts = {ignoreMounts: false, recursive: false};
+        if (typeof options === 'function') {
             callback = options;
-            options = {ignoreMounts: false, recursive: false};
+            options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
         if (options.ignoreMounts === true) {
             if (!options.recursive) {
@@ -1426,6 +1448,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1454,6 +1477,7 @@ function Archive(archiveConfigurator) {
             };
         }
 
+        callback = $$.makeSaneCallback(callback);
         const entries = {};
         this.getArchiveForPath(folderPath, (err, result) => {
             if (err) {
@@ -1521,6 +1545,8 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -1558,6 +1584,28 @@ function Archive(archiveConfigurator) {
             options = undefined;
         }
 
+        callback = $$.makeSaneCallback(callback);
+
+        const keySSISpace = require("opendsu").loadAPI("keyssi");
+
+        if (typeof archiveSSI === "string") {
+            try {
+                archiveSSI = keySSISpace.parse(archiveSSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is not a valid SSI string.`, e));
+            }
+        }
+
+        if (typeof archiveSSI === "object") {
+            try {
+                archiveSSI = archiveSSI.getIdentifier();
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is not a valid SSI instance`));
+            }
+        } else {
+            return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is neither a string nor a valid SSI instance`));
+        }
+
         function internalMount() {
             _listFiles(path, (err, files) => {
                 if (!err && files.length > 0) {
@@ -1586,6 +1634,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.unmount = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         getManifest((err, manifestHandler) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
@@ -1596,6 +1646,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.listMountedDossiers = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
@@ -1627,6 +1679,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.getArchiveForPath = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         getManifest((err, handler) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
@@ -1898,8 +1952,10 @@ function Archive(archiveConfigurator) {
         }
 
         const defaultOptions = {
-            onError: () => {},
-            onSync: () => {},
+            onError: () => {
+            },
+            onSync: () => {
+            },
             ignoreMounts: true
         }
 
@@ -2017,12 +2073,14 @@ function Archive(archiveConfigurator) {
                 }
 
                 autoSyncStatus ? subscribe(autoSyncOptions, callback)
-                               : unsubscribe(callback);
+                    : unsubscribe(callback);
             })
         });
     }
 
     this.stat = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         this.getArchiveForPath(path, (err, res) => {
             if (err) {
                 callback(undefined, {type: undefined})
@@ -15551,9 +15609,25 @@ async function generateNoncedCommand(signerDID, domain, contractName, methodName
     }
 }
 
+function generateSafeCommandForSpecificServer(serverUrl, ...args) {
+    if (!serverUrl || typeof serverUrl !== "string") {
+        throw new Error(`Invalid serverUrl specified`);
+    }
+    generateSafeCommand(...args);
+}
+
+function generateNoncedCommandForSpecificServer(serverUrl, ...args) {
+    if (!serverUrl || typeof serverUrl !== "string") {
+        throw new Error(`Invalid serverUrl specified`);
+    }
+    generateNoncedCommand(...args);
+}
+
 module.exports = {
     generateSafeCommand,
     generateNoncedCommand,
+    generateSafeCommandForSpecificServer,
+    generateNoncedCommandForSpecificServer,
 };
 
 },{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
@@ -18847,9 +18921,9 @@ class DeleteCommand extends Command {
     _runCommand(arg, bar, options, callback){
         if (typeof options === 'function'){
             callback = options;
-            options = {}
+            options = undefined
         }
-        options = options || {ignoreMounts: false};
+        options = options || {ignoreMounts: false, ignoreError: true};
         console.log("Deleting " + arg);
         bar.delete(arg, options, err => err
             ? _err(`Could not delete path '${arg}'`, err, callback)

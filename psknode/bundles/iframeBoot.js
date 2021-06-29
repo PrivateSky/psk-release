@@ -1827,7 +1827,7 @@ module.exports = Config;
 
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/boot.js":[function(require,module,exports){
 (function (process){(function (){
-async function boot(validatorDID, domain, domainConfig, rootFolder) {
+async function boot(validatorDID, domain, domainConfig, rootFolder, serverUrl) {
     console.log(
         `[contract-worker] booting contracts for domain ${domain} and domainConfig ${JSON.stringify(domainConfig)} booting...`,
         domainConfig
@@ -1839,19 +1839,16 @@ async function boot(validatorDID, domain, domainConfig, rootFolder) {
 
     try {
         const initiliseBrickLedger = await $$.promisify(bricksledger.initiliseBrickLedger);
-        const bricksledgerInstance = await initiliseBrickLedger(validatorDID, domain, domainConfig, rootFolder, null);
+        const bricksledgerInstance = await initiliseBrickLedger(validatorDID, domain, domainConfig, rootFolder, serverUrl, null);
 
         const handleCommand = async (command, callback) => {
             const args = command.args || [];
 
-            if (command.type === "lastestBlockInfo") {
+            if (command.type === "latestBlockInfo") {
                 return bricksledgerInstance.getLatestBlockInfo(callback);
             }
-            if (command.type === "getPBlock") {
-                return bricksledgerInstance.getPBlock(...args, callback);
-            }
-            if (command.type === "checkPBlockFromNetwork") {
-                return bricksledgerInstance.getPBlock(...args, callback);
+            if (command.type === "validatePBlockFromNetwork") {
+                return bricksledgerInstance.validatePBlockFromNetwork(...args, callback);
             }
 
             const commandExecutionCallback = async (error, commandExecution) => {
@@ -1915,16 +1912,23 @@ async function boot(validatorDID, domain, domainConfig, rootFolder) {
     });
 }
 
-module.exports = {
-    boot,
-};
+module.exports = boot;
 
 }).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","bricksledger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js":[function(require,module,exports){
-const { ensureContractConstitutionIsPresent, getNodeWorkerBootScript, validateCommandInput } = require("./utils");
+const {
+    ensureContractConstitutionIsPresent,
+    getNodeWorkerBootScript,
+    validateCommandInput,
+    validatePostCommandInput,
+} = require("./utils");
 
 function Contract(server) {
+    const config = require("../../config");
+
+    const serverUrl = `${server.protocol}://${config.getConfig("host")}:${config.getConfig("port")}`;
+
     const syndicate = require("syndicate");
     const { requestBodyJSONMiddleware, responseModifierMiddleware } = require("../../utils/middlewares");
 
@@ -1934,8 +1938,6 @@ function Contract(server) {
         if (allDomainsWorkerPools[domain]) {
             return callback(null, allDomainsWorkerPools[domain]);
         }
-
-        const config = require("../../config");
 
         const domainConfig = { ...(config.getDomainConfig(domain) || {}) };
         ensureContractConstitutionIsPresent(domain, domainConfig);
@@ -1948,7 +1950,7 @@ function Contract(server) {
         const validatorDID = (await $$.promisify(w3cDID.createIdentity)("demo", "id")).getIdentifier();
 
         const { rootFolder } = server;
-        const script = getNodeWorkerBootScript(validatorDID, domain, domainConfig, rootFolder);
+        const script = getNodeWorkerBootScript(validatorDID, domain, domainConfig, rootFolder, serverUrl);
         allDomainsWorkerPools[domain] = syndicate.createWorkerPool({
             bootScript: script,
             maximumNumberOfWorkers: 1,
@@ -1985,13 +1987,7 @@ function Contract(server) {
 
     const sendLatestBlockInfoCommandToWorker = (request, response) => {
         const { domain } = request.params;
-        const command = { domain, type: "lastestBlockInfo" };
-        sendCommandToWorker(command, response);
-    };
-
-    const sendGetPBlockCommandToWorker = (request, response) => {
-        const { domain, pBlockHashLinkSSI } = request.params;
-        const command = { domain, type: "getPBlock", args: [pBlockHashLinkSSI] };
+        const command = { domain, type: "latestBlockInfo" };
         sendCommandToWorker(command, response);
     };
 
@@ -2009,21 +2005,20 @@ function Contract(server) {
 
     const sendPBlockToValidateToWorker = (request, response) => {
         const { domain } = request.params;
-        const pBlock = request.body;
-        const command = { domain, type: "checkPBlockFromNetwork", args: [pBlock] };
-        sendPBlockToValidateToWorker(command, response);
+        const pBlockMessage = request.body;
+        const command = { domain, type: "validatePBlockFromNetwork", args: [pBlockMessage] };
+        sendCommandToWorker(command, response);
     };
 
     server.use(`/contracts/:domain/*`, responseModifierMiddleware);
     server.use(`/contracts/:domain/*`, requestBodyJSONMiddleware);
     server.use(`/contracts/:domain/*`, validateCommandInput);
+    server.post(`/contracts/:domain/*`, validatePostCommandInput);
 
     server.get(`/contracts/:domain/latest-block-info`, sendLatestBlockInfoCommandToWorker);
-    server.get(`/contracts/:domain/pblock/:pBlockHashLinkSSI`, sendGetPBlockCommandToWorker);
-
     server.post(`/contracts/:domain/safe-command`, sendSafeCommandToWorker);
     server.post(`/contracts/:domain/nonced-command`, sendNoncedCommandToWorker);
-    server.post(`/contracts/:domain/validate`, sendPBlockToValidateToWorker);
+    server.post(`/contracts/:domain/pblock-added`, sendPBlockToValidateToWorker);
 }
 
 module.exports = Contract;
@@ -2071,12 +2066,15 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
     }
 }
 
-function getNodeWorkerBootScript(validatorDID, domain, domainConfig, rootFolder) {
+function getNodeWorkerBootScript(validatorDID, domain, domainConfig, rootFolder, serverUrl) {
     const apihubBundleScriptPath = escapePath(global.bundlePaths.pskWebServer);
     const rootFolderPath = escapePath(rootFolder);
+    serverUrl = escapePath(serverUrl);
+    domainConfig = JSON.stringify(domainConfig);
+
     const script = `
         require("${apihubBundleScriptPath}");
-        require('apihub').bootContracts('${validatorDID}', '${domain}', ${JSON.stringify(domainConfig)}, '${rootFolderPath}');
+        (${require('./boot').toString()})('${validatorDID}', '${serverUrl}', '${domain}', ${domainConfig}, '${rootFolderPath}');
     `;
     return script;
 }
@@ -2093,6 +2091,10 @@ const validateCommandInput = (request, response, next) => {
         return response.send(404, `Unsupported domain '${domain}' specified`);
     }
 
+    next();
+};
+
+const validatePostCommandInput = (request, response, next) => {
     if (!request.body) {
         return response.send(400, "Missing required body");
     }
@@ -2104,11 +2106,12 @@ module.exports = {
     ensureContractConstitutionIsPresent,
     getNodeWorkerBootScript,
     validateCommandInput,
+    validatePostCommandInput,
 };
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/modules/apihub/components/contracts")
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/boot.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js":[function(require,module,exports){
 const url = require('url');
 const fs = require('fs');
 const path = require('swarmutils').path;
@@ -4442,14 +4445,10 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 	return config.getDomainConfig(domain, ...configKeys);
 };
 
-module.exports.bootContracts = function (...params) {
-    return require("./components/contracts/boot").boot(...params);
-}
-
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 }).call(this)}).call(this,require('_process'))
 
-},{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/contracts/boot":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/boot.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
+},{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
 const stateStorageFileName = 'queues.json';
 
 function NotificationsManager(workingFolderPath, storageFolderPath) {
@@ -7423,7 +7422,7 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
-
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7449,6 +7448,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7473,6 +7473,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -7496,6 +7497,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -7519,6 +7521,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
         if (options.ignoreMounts === true) {
@@ -7542,6 +7545,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7590,7 +7594,7 @@ function Archive(archiveConfigurator) {
 
 
     this.delete = (path, options, callback) => {
-        const defaultOpts = {ignoreMounts: false};
+        const defaultOpts = {ignoreMounts: false, ignoreError: false};
         if (typeof options === 'function') {
             callback = options;
             options = {};
@@ -7601,7 +7605,13 @@ function Archive(archiveConfigurator) {
         options = defaultOpts;
 
         if (options.ignoreMounts) {
-            return _delete(path, callback);
+            return _delete(path, err => {
+                if (!err || (err && options.ignoreError)) {
+                    return callback();
+                }
+
+                callback(err);
+            });
         }
 
         this.getArchiveForPath(path, (err, dossierContext) => {
@@ -7624,6 +7634,8 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7657,11 +7669,15 @@ function Archive(archiveConfigurator) {
     };
 
     this.listFiles = (path, options, callback) => {
-        if (typeof options === "function") {
+        const defaultOpts = {ignoreMounts: false, recursive: true};
+        if (typeof options === 'function') {
             callback = options;
-            options = {recursive: true, ignoreMounts: false};
+            options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
         if (options.ignoreMounts === true) {
             if (!options.recursive) {
                 return _listFiles(path, options, callback);
@@ -7705,10 +7721,15 @@ function Archive(archiveConfigurator) {
     };
 
     this.listFolders = (path, options, callback) => {
-        if (typeof options === "function") {
+        const defaultOpts = {ignoreMounts: false, recursive: false};
+        if (typeof options === 'function') {
             callback = options;
-            options = {ignoreMounts: false, recursive: false};
+            options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
+        Object.assign(defaultOpts, options);
+        options = defaultOpts;
 
         if (options.ignoreMounts === true) {
             if (!options.recursive) {
@@ -7759,6 +7780,7 @@ function Archive(archiveConfigurator) {
             options = {};
         }
 
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7787,6 +7809,7 @@ function Archive(archiveConfigurator) {
             };
         }
 
+        callback = $$.makeSaneCallback(callback);
         const entries = {};
         this.getArchiveForPath(folderPath, (err, result) => {
             if (err) {
@@ -7854,6 +7877,8 @@ function Archive(archiveConfigurator) {
             callback = options;
             options = {};
         }
+
+        callback = $$.makeSaneCallback(callback);
         Object.assign(defaultOpts, options);
         options = defaultOpts;
 
@@ -7891,6 +7916,28 @@ function Archive(archiveConfigurator) {
             options = undefined;
         }
 
+        callback = $$.makeSaneCallback(callback);
+
+        const keySSISpace = require("opendsu").loadAPI("keyssi");
+
+        if (typeof archiveSSI === "string") {
+            try {
+                archiveSSI = keySSISpace.parse(archiveSSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is not a valid SSI string.`, e));
+            }
+        }
+
+        if (typeof archiveSSI === "object") {
+            try {
+                archiveSSI = archiveSSI.getIdentifier();
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is not a valid SSI instance`));
+            }
+        } else {
+            return callback(createOpenDSUErrorWrapper(`The provided archiveSSI is neither a string nor a valid SSI instance`));
+        }
+
         function internalMount() {
             _listFiles(path, (err, files) => {
                 if (!err && files.length > 0) {
@@ -7919,6 +7966,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.unmount = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         getManifest((err, manifestHandler) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
@@ -7929,6 +7978,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.listMountedDossiers = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         this.getArchiveForPath(path, (err, result) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
@@ -7960,6 +8011,8 @@ function Archive(archiveConfigurator) {
     };
 
     this.getArchiveForPath = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         getManifest((err, handler) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
@@ -8231,8 +8284,10 @@ function Archive(archiveConfigurator) {
         }
 
         const defaultOptions = {
-            onError: () => {},
-            onSync: () => {},
+            onError: () => {
+            },
+            onSync: () => {
+            },
             ignoreMounts: true
         }
 
@@ -8350,12 +8405,14 @@ function Archive(archiveConfigurator) {
                 }
 
                 autoSyncStatus ? subscribe(autoSyncOptions, callback)
-                               : unsubscribe(callback);
+                    : unsubscribe(callback);
             })
         });
     }
 
     this.stat = (path, callback) => {
+        callback = $$.makeSaneCallback(callback);
+
         this.getArchiveForPath(path, (err, res) => {
             if (err) {
                 callback(undefined, {type: undefined})
@@ -13917,6 +13974,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
 },{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/index.js":[function(require,module,exports){
 function BricksLedger(
+    domain,
     validatorDID,
     pBlocksFactory,
     broadcaster,
@@ -13926,6 +13984,14 @@ function BricksLedger(
     commandHistoryStorage
 ) {
     const Command = require("./src/Command");
+    const Logger = require("./src/Logger");
+
+    const logger = new Logger(`[Bricksledger][${domain}][${validatorDID.getIdentifier()}]`);
+
+    this.boot = async function () {
+        logger.info("Booting BricksLedger...");
+        await consensusCore.boot();
+    };
 
     this.getLatestBlockInfo = function (callback) {
         const lastestBlockInfo = consensusCore.getLatestBlockInfo();
@@ -13933,7 +13999,8 @@ function BricksLedger(
     };
 
     this.executeSafeCommand = async function (command, callback) {
-        console.log("[Bricksledger] Received safe command");
+        logger.debug(`Received safe command ${command.getHash()}`);
+
         callback = $$.makeSaneCallback(callback);
 
         if (!command || !(command instanceof Command)) {
@@ -13943,19 +14010,19 @@ function BricksLedger(
         try {
             await executionEngine.validateSafeCommand(command);
 
-            console.log(`[Bricksledger] Executing safe command optimistically with hash ${command.getHash()}`);
+            logger.debug(`[safe-command-${command.getHash()}] executing method optimistically...`);
             let execution = executionEngine.executeMethodOptimistically(command);
 
             try {
                 callback(undefined, execution);
             } catch (error) {
-                console.error(error);
+                logger.error(error);
             }
 
             if (await execution.requireConsensus()) {
-                console.log(`[Bricksledger] Executing safe command optimistically still requires consensus`);
+                logger.debug(`Executing safe command optimistically still requires consensus`);
                 await commandHistoryStorage.addOptimisticComand(command);
-                pBlocksFactory.addCommandForConsensus(command);
+                pBlocksFactory.addCommandForConsensusAsync(command);
             }
         } catch (error) {
             callback(error);
@@ -13963,7 +14030,7 @@ function BricksLedger(
     };
 
     this.executeNoncedCommand = async function (command, callback) {
-        console.log("[Bricksledger] Received nonced command");
+        logger.debug(`Received nonced command ${command.getHash()}`);
         callback = $$.makeSaneCallback(callback);
 
         if (!command || !(command instanceof Command)) {
@@ -13971,11 +14038,17 @@ function BricksLedger(
         }
 
         try {
+            logger.debug(`[nonced-command-${command.getHash()}] getting latest block info...`);
             const latestBlockInfo = consensusCore.getLatestBlockInfo();
+            logger.debug(`[nonced-command-${command.getHash()}] got latest block info`, latestBlockInfo);
+
+            logger.debug(`[nonced-command-${command.getHash()}] validating nonced command...`, latestBlockInfo);
             await executionEngine.validateNoncedCommand(command, latestBlockInfo.number);
 
+            logger.debug(`[nonced-command-${command.getHash()}] adding command to history storage...`, latestBlockInfo);
             await commandHistoryStorage.addOptimisticComand(command);
 
+            logger.debug(`[nonced-command-${command.getHash()}] executing method optimistically...`);
             let execution = executionEngine.executeMethodOptimistically(command);
 
             try {
@@ -13984,29 +14057,7 @@ function BricksLedger(
                 console.error(error);
             }
 
-            pBlocksFactory.addCommandForConsensus(command);
-        } catch (error) {
-            callback(error);
-        }
-    };
-
-    this.getPBlock = async function (pBlockHashLinkSSI, callback) {
-        callback = $$.makeSaneCallback(callback);
-
-        if (!pBlockHashLinkSSI) {
-            return callback("pBlockHashLinkSSI not provided");
-        }
-
-        try {
-            if (typeof pBlockHashLinkSSI === "string") {
-                const keySSISpace = require("opendsu").loadApi("keyssi");
-                pBlockHashLinkSSI = keySSISpace.parse(pBlockHashLinkSSI);
-            }
-
-            const pBlockHash = pBlockHashLinkSSI.getHash();
-            const pBlock = await brickStorage.getBrickAsync(pBlockHash);
-
-            return pBlock;
+            pBlocksFactory.addCommandForConsensusAsync(command);
         } catch (error) {
             callback(error);
         }
@@ -14020,21 +14071,34 @@ function BricksLedger(
         }
 
         try {
+            pBlock = new PBlock(pBlock);
             await consensusCore.validatePBlock(pBlock);
             await consensusCore.addInConsensusAsync(pBlock);
+            pBlocksFactory.sendCurrentCommandsForConsensus();
         } catch (error) {
             callback(error);
         }
     };
 }
 
-const initiliseBrickLedger = async (validatorDID, domain, domainConfig, rootFolder, notificationHandler, config, callback) => {
-    try {
-        if (typeof config === "function") {
-            callback = config;
-            config = {};
-        }
+const initiliseBrickLedger = async (
+    validatorDID,
+    validatorURL,
+    domain,
+    domainConfig,
+    rootFolder,
+    notificationHandler,
+    config,
+    callback
+) => {
+    if (typeof config === "function") {
+        callback = config;
+        config = {};
+    }
 
+    callback = $$.makeSaneCallback(callback);
+
+    try {
         if (typeof validatorDID === "string") {
             const w3cDID = require("opendsu").loadAPI("w3cdid");
             validatorDID = await $$.promisify(w3cDID.resolveDID)(validatorDID);
@@ -14057,18 +14121,18 @@ const initiliseBrickLedger = async (validatorDID, domain, domainConfig, rootFold
             commandHistoryStorage,
             notificationHandler
         );
-        await executionEngine.loadContracts();
 
         let consensusCore = require("./src/ConsensusCore").create(
+            validatorDID,
+            validatorURL,
             domain,
             rootFolder,
             maxBlockTimeMs,
             brickStorage,
             executionEngine
         );
-        await consensusCore.init();
 
-        let broadcaster = require("./src/Broadcaster").create(domain, validatorDID, executionEngine);
+        let broadcaster = require("./src/Broadcaster").create(domain, validatorDID, validatorURL, executionEngine);
         let pBlocksFactory = require("./src/PBlocksFactory").create(
             domain,
             validatorDID,
@@ -14079,7 +14143,10 @@ const initiliseBrickLedger = async (validatorDID, domain, domainConfig, rootFold
             maxPBlockTimeMs
         );
 
+        await executionEngine.loadContracts(pBlocksFactory);
+
         const bricksLedger = new BricksLedger(
+            domain,
             validatorDID,
             pBlocksFactory,
             broadcaster,
@@ -14088,8 +14155,12 @@ const initiliseBrickLedger = async (validatorDID, domain, domainConfig, rootFold
             brickStorage,
             commandHistoryStorage
         );
+
+        await bricksLedger.boot();
+
         callback(null, bricksLedger);
     } catch (error) {
+        console.log("error");
         callback(error);
     }
 };
@@ -14109,7 +14180,7 @@ module.exports = {
     createFSBrickStorage,
 };
 
-},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js":[function(require,module,exports){
+},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js":[function(require,module,exports){
 class Block {
     constructor(block) {
         if (!block) {
@@ -14117,46 +14188,102 @@ class Block {
         }
 
         const { pbs, blockNumber, previousBlock, hashLinkSSI } = block;
-        this.block = block;
         this.pbs = pbs;
         this.blockNumber = blockNumber;
         this.previousBlock = previousBlock;
         this.hashLinkSSI = hashLinkSSI;
     }
 
-    getSerialisation(){
-        return JSON.stringify(this.block);
+    getSerialisation() {
+        const { pbs, blockNumber, previousBlock, hashLinkSSI } = this;
+        const block = { pbs, blockNumber, previousBlock, hashLinkSSI };
+        return JSON.stringify(block);
     }
 }
 
 module.exports = Block;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster.js":[function(require,module,exports){
-const { getValidatorsForCurrentDomain } = require("./utils/bdns-utils");
+},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js":[function(require,module,exports){
+class PBlockAddedMessage {
+    constructor(body) {
+        if (!body) {
+            throw new Error("body must be specified");
+        }
 
-async function broadcastPBlockToValidator(domain, validator, pBlock) {
-    const { doPost } = require("opendsu").loadApi("http");
-    const { DID, URL } = validator;
+        const { validatorDID, validatorURL, blockNumber, pBlockHashLinkSSI, validatorSignature } = body;
 
-    const broadcastUrl = `${URL}/contracts/${domain}/validate`;
-    const broadcastBody = {
-        validatorDID: DID,
-        validatorURL: URL,
-        pBlockHashLinkSSI: pBlock.hashLinkSSI,
-    };
-    try {
-        const response = await $$.promisify(doPost)(broadcastUrl, broadcastBody);
-        console.log("[Broadcaster] Received validator response", response);
-    } catch (error) {
-        console.log(`[Broadcaster] Failed to broadcast to validator ${DID} at ${URL}`, error);
+        this.validatorDID = validatorDID;
+        this.validatorURL = validatorURL;
+        this.blockNumber = blockNumber;
+        this.pBlockHashLinkSSI = pBlockHashLinkSSI;
+        this.validatorSignature = validatorSignature;
+    }
+
+    computeHash() {
+        const { validatorDID, validatorURL, blockNumber, pBlockHashLinkSSI } = this;
+
+        const objectToHash = {
+            validatorDID,
+            validatorURL,
+            blockNumber,
+            pBlockHashLinkSSI,
+        };
+
+        const crypto = require("opendsu").loadApi("crypto");
+        const hash = crypto.sha256(objectToHash);
+
+        return hash;
+    }
+
+    sign(validatorDID) {
+        const hash = this.computeHash();
+        this.validateSignature = validatorDID.sign(hash);
+    }
+
+    async validateSignature() {
+        const { validatorDID: validatorDIDIdentifier, validatorSignature } = this;
+
+        const hash = this.computeHash();
+
+        const w3cDID = require("opendsu").loadApi("w3cdid");
+        const validatorDID = await $$.promisify(w3cDID.resolveDID)(validatorDIDIdentifier);
+        const isValidSignature = await $$.promisify(validatorDID.verify)(hash, validatorSignature);
+
+        if (!isValidSignature) {
+            throw new Error("Invalid signature specified");
+        }
+    }
+
+    getContent() {
+        const { validatorDID, validatorURL, blockNumber, pBlockHashLinkSSI, validatorSignature } = body;
+
+        const content = {
+            validatorDID,
+            validatorURL,
+            blockNumber,
+            pBlockHashLinkSSI,
+            validatorSignature,
+        };
+        return content;
     }
 }
 
+module.exports = PBlockAddedMessage;
+
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js":[function(require,module,exports){
+const Logger = require("../Logger");
+const PBlockAddedMessage = require("./PBlockAddedMessage");
+const { getValidatorsForCurrentDomain } = require("../utils/bdns-utils");
+
 class Broadcaster {
-    constructor(domain, validatorDID, executionEngine) {
+    constructor(domain, validatorDID, validatorURL, executionEngine) {
         this.domain = domain;
         this.validatorDID = validatorDID;
+        this.validatorURL = validatorURL;
         this.executionEngine = executionEngine;
+
+        this._logger = new Logger(`[Bricksledger][${this.domain}][${this.validatorDID.getIdentifier()}][Broadcaster]`);
+        this._logger.info("Create finished");
     }
 
     broadcastPBlock(pBlock) {
@@ -14166,9 +14293,34 @@ class Broadcaster {
             return;
         }
 
+        const { validatorDID, validatorURL } = this;
+        const { blockNumber, hashLinkSSI } = pBlock;
+        const pBlockAddedMessage = new PBlockAddedMessage({
+            validatorDID,
+            validatorURL,
+            blockNumber,
+            pBlockHashLinkSSI: hashLinkSSI,
+        });
+        const messageToBroadcast = pBlockAddedMessage.getContent();
+
         // we must broadcast to the validators configured for the current domain, except to the validator or the pBlock
         const validatorsToBroadcastTo = validators.filter((validator) => validator.DID !== pBlock.validatorDID);
-        validatorsToBroadcastTo.forEach((validator) => broadcastPBlockToValidator(this.domain, validator, pBlock));
+        this._logger.info(`Broadcasting pBlockAdded to ${validatorsToBroadcastTo.length} validator(s)...`);
+
+        validatorsToBroadcastTo.forEach((validator) => this._broadcastPBlockToValidator(validator, messageToBroadcast));
+    }
+
+    async _broadcastPBlockToValidator(validator, message) {
+        const { doPost } = require("opendsu").loadApi("http");
+        const { DID, URL } = validator;
+
+        const broadcastUrl = `${URL}/contracts/${this.domain}/pblock-added`;
+        try {
+            const response = await $$.promisify(doPost)(broadcastUrl, message);
+            this._logger.info("[Broadcaster] Broadcasted pBlockAdded to validator ${DID} at ${URL}", response);
+        } catch (error) {
+            this._logger.info(`[Broadcaster] Failed to broadcast pBlockAdded to validator ${DID} at ${URL}`, error);
+        }
     }
 }
 
@@ -14180,7 +14332,7 @@ module.exports = {
     create,
 };
 
-},{"./utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js":[function(require,module,exports){
+},{"../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","./PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js":[function(require,module,exports){
 class Command {
     constructor(command) {
         if (!command) {
@@ -14256,21 +14408,28 @@ class CommandHistoryStorage {
         this.optimisticFilePath = path.join(basePath, "optimistic");
         this.validatedFilePath = path.join(basePath, "validated");
 
-        const fs = require("fs");
-        this.optimisticStreamWriter = fs.createWriteStream(this.optimisticFilePath, { flags: "a" });
-        this.validatedStreamWriter = fs.createWriteStream(this.validatedFilePath, { flags: "a" });
+        console.log("!!!!!basePath", basePath);
+
+        // this.optimisticStreamWriter = fs.createWriteStream(this.optimisticFilePath, { flags: "a" });
+        // this.validatedStreamWriter = fs.createWriteStream(this.validatedFilePath, { flags: "a" });
     }
 
     async addOptimisticComand(command) {
+        const fs = require("fs");
         const os = require("os");
         const line = `${os.EOL}${command.getHash()}`;
-        await $$.promisify(this.optimisticStreamWriter.write.bind(this.optimisticStreamWriter))(line);
+        const optimisticStreamWriter = fs.createWriteStream(this.optimisticFilePath, { flags: "a" });
+        await $$.promisify(optimisticStreamWriter.write.bind(optimisticStreamWriter))(line);
+        optimisticStreamWriter.close();
     }
 
     async addValidatedComand(command) {
+        const fs = require("fs");
         const os = require("os");
         const line = `${os.EOL}${command.getHash()}`;
-        await $$.promisify(this.validatedStreamWriter.write.bind(this.validatedStreamWriter))(line);
+        const validatedStreamWriter = fs.createWriteStream(this.validatedFilePath, { flags: "a" });
+        await $$.promisify(validatedStreamWriter.write.bind(validatedStreamWriter))(line);
+        validatedStreamWriter.close();
     }
 
     async isOptimisticCommandHashRegistered(commandHash) {
@@ -14305,6 +14464,15 @@ class CommandHistoryStorage {
                     if (!isCommandRegistered) {
                         resolve(false);
                     }
+                })
+                .on("error", function (error) {
+                    if (error.code === "ENOENT") {
+                        // the file doesn't exist to the command isn't registered
+                        return resolve(false);
+                    }
+
+                    // we receive an error different than 'no such file'
+                    reject(error);
                 });
         });
     }
@@ -14318,7 +14486,316 @@ module.exports = {
     create,
 };
 
-},{"./utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js":[function(require,module,exports){
+},{"./utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutor.js":[function(require,module,exports){
+const Logger = require("../Logger");
+
+class ValidatorContractExecutor {
+    constructor(domain, validatorDID, validatorURL) {
+        this._domain = domain;
+        this._validatorDID = validatorDID;
+        this._validatorURL = validatorURL;
+        this._logger = new Logger(`[Bricksledger][${this._validatorDID}][ValidatorContractExecutor]`);
+    }
+
+    async getValidatorsAsync() {
+        return await this._callSafeCommand("bdns", "getDomainValidators");
+    }
+
+    async getLatestBlockInfoAsync() {
+        return await this._callSafeCommand("consensus", "getLatestBlockInfo");
+    }
+
+    async getBlockAsync(blockHashLinkSSI) {
+        return await this._callSafeCommand("consensus", "getBlock", [blockHashLinkSSI]);
+    }
+
+    async getPBlockAsync(pBlockHashLinkSSI) {
+        return await this._callSafeCommand("consensus", "getPBlock", [pBlockHashLinkSSI]);
+    }
+
+    async getProposedPBlockForBlock(blockNumber) {
+        return await this._callSafeCommand("consensus", "getProposedPBlockForBlock", [blockNumber]);
+    }
+
+    async proposeValidatorAsync(proposedValidator) {
+        await this._callNoncedCommand("bdns", "addDomainValidator", [proposedValidator]);
+    }
+
+    async _callSafeCommand(contractName, methodName, params) {
+        const opendsu = require("opendsu");
+        const contractsApi = opendsu.loadApi("contracts");
+
+        const generateSafeCommand = $$.promisify(contractsApi.generateSafeCommandForSpecificServer);
+
+        const paramsString = typeof params === "object" ? JSON.stringify(params) : params;
+        const callDebugInfo = `validator '${this._validatorDID}'s contract '${contractName}' - safe - '${methodName}' - params: ${paramsString}`;
+        this._logger.debug(`Calling ${callDebugInfo}`);
+
+        try {
+            const result = await generateSafeCommand(this._validatorURL, this._domain, contractName, methodName, params);
+            this._logger.debug(`Calling validator ${callDebugInfo} responded with:`, result);
+
+            return result;
+        } catch (error) {
+            this._logger.debug(`Calling validator ${callDebugInfo} failed with:`, error);
+        }
+    }
+
+    async _callNoncedCommand(contractName, methodName, params) {
+        const opendsu = require("opendsu");
+        const contractsApi = opendsu.loadApi("contracts");
+
+        const generateNoncedCommand = $$.promisify(contractsApi.generateNoncedCommandForSpecificServer);
+
+        const paramsString = typeof params === "object" ? JSON.stringify(params) : params;
+        const callDebugInfo = `validator '${this._validatorDID}'s contract '${contractName}' - nonced - '${methodName}' - params: ${paramsString}`;
+        this._logger.debug(`Calling ${callDebugInfo}`);
+
+        try {
+            const result = await generateNoncedCommand(
+                this._validatorURL,
+                this._validatorDID,
+                this._domain,
+                contractName,
+                methodName,
+                params
+            );
+            this._logger.debug(`Calling validator ${callDebugInfo} responded with:`, result);
+
+            return result;
+        } catch (error) {
+            this._logger.debug(`Calling validator ${callDebugInfo} failed with:`, error);
+        }
+    }
+}
+
+module.exports = ValidatorContractExecutor;
+
+},{"../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js":[function(require,module,exports){
+const ValidatorContractExecutor = require("./ValidatorContractExecutor");
+
+function create(...params) {
+    return new ValidatorContractExecutor(...params);
+}
+
+module.exports = {
+    create
+}
+},{"./ValidatorContractExecutor":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutor.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js":[function(require,module,exports){
+const Logger = require("../Logger");
+const Block = require("../Block");
+const { checkIfPathExists, ensurePathExists } = require("../utils/fs-utils");
+
+async function getCachedPBlocksFolderPath(rootFolder, domain) {
+    const path = require("path");
+    const folderPath = path.join(rootFolder, "domains", domain, "cache/pblocks");
+    try {
+        await ensurePathExists(folderPath);
+    } catch (error) {
+        console.log(error);
+    }
+    return folderPath;
+}
+
+const VALIDATOR_SYNC_INTERVAL_MS = 10 * 1000;
+
+class ValidatorSynchronizer {
+    constructor(
+        domain,
+        currentValidatorDID,
+        currentValidatorURL,
+        validator,
+        rootFolder,
+        getLatestBlockInfo,
+        getLocalValidators,
+        validatorContractExecutorFactory,
+        executeBlock,
+        onSyncFinished
+    ) {
+        this.domain = domain;
+        this.currentValidatorDID = currentValidatorDID;
+        this.currentValidatorURL = currentValidatorURL;
+        this.validatorDID = validator.DID;
+        this.validatorURL = validator.URL;
+        this.rootFolder = rootFolder;
+        this.getLatestBlockInfo = getLatestBlockInfo;
+        this.getLocalValidators = getLocalValidators;
+        this.validatorContractExecutorFactory = validatorContractExecutorFactory;
+        this.executeBlock = executeBlock;
+        this.onSyncFinished = onSyncFinished;
+
+        this._logger = new Logger(
+            `[Bricksledger][${domain}][${this.currentValidatorDID.getIdentifier()}][Consensus][ValidatorSynchronizer]`
+        );
+        this._logger.info("Create finished");
+    }
+
+    async synchronize() {
+        const { domain, validatorDID, validatorURL, validatorContractExecutorFactory } = this;
+
+        this._logger.info(`Checking validator '${validatorDID}' for validator list...`);
+        this._validatorContractExecutor = validatorContractExecutorFactory.create(domain, validatorDID, validatorURL);
+
+        this._blockSyncInterval = setInterval(async () => {
+            this._runSyncFlow();
+        }, VALIDATOR_SYNC_INTERVAL_MS);
+
+        this._runSyncFlow();
+    }
+
+    async _runSyncFlow() {
+        if (this._isSyncInProgress) {
+            this._logger.info("Another block sync is already in progress...");
+            return;
+        }
+
+        try {
+            this._isSyncInProgress = true;
+            await this._getMissingBlocksFromValidator();
+            await this._proposeSelfAsValidator();
+        } catch (error) {
+            this._logger.error("An error has occured while running sync flow", error);
+            throw error;
+        } finally {
+            this._isSyncInProgress = false;
+        }
+    }
+
+    async _getMissingBlocksFromValidator() {
+        const { domain, validatorDID } = this;
+
+        this._logger.info(`Checking validator '${validatorDID}' for latest block info...`);
+
+        const validatorLatestBlockInfo = await this._validatorContractExecutor.getLatestBlockInfoAsync();
+        const { number, hash } = validatorLatestBlockInfo;
+        this._logger.info(`Validator '${validatorDID}' responded with block number ${number} and latest hash ${hash}...`);
+
+        const { number: latestBlockNumber, hash: latestBlockHash } = this.getLatestBlockInfo();
+        console.log("this.getLatestBlockInfo()", this.getLatestBlockInfo());
+        if (latestBlockNumber < number) {
+            this._logger.info(`Starting synchronization with validator '${validatorDID}'...`);
+
+            const missingBlocks = [];
+
+            let queriedBlockHash = hash;
+            while (true) {
+                this._logger.info(`Getting block with hash '${queriedBlockHash}' from validator '${validatorDID}'...`);
+                const block = await this._validatorContractExecutor.getBlockAsync(queriedBlockHash);
+                missingBlocks.unshift(new Block(block));
+
+                if (!block.previousBlock || block.previousBlock === latestBlockHash) {
+                    this._logger.info(
+                        `Finished getting ${missingBlocks.length} missing block(s) from validator '${validatorDID}'`
+                    );
+                    break;
+                }
+
+                queriedBlockHash = block.previousBlock;
+            }
+
+            const cachedPBlocksFolder = await getCachedPBlocksFolderPath(this.rootFolder, domain);
+            for (let blockIndex = 0; blockIndex < missingBlocks.length; blockIndex++) {
+                const missingBlock = missingBlocks[blockIndex];
+                this._logger.info(
+                    `Getting pblocks for block '${missingBlock.hashLinkSSI}  [${blockIndex + 1}/${missingBlocks.length}]'...`
+                );
+
+                // loading pblock for block
+                const pBlocks = [];
+                for (let pBlockIndex = 0; pBlockIndex < missingBlock.pbs.length; pBlockIndex++) {
+                    const pBlockHash = missingBlock.pbs[pBlockIndex];
+                    this._logger.debug(`Checking pblock '${pBlockHash}' [${pBlockIndex + 1}/${missingBlock.pbs.length}]...`);
+
+                    const cachedPBlockFilePath = require("path").join(cachedPBlocksFolder, pBlockHash);
+                    const isPBlockAlreadyDownloaded = await checkIfPathExists(cachedPBlockFilePath);
+
+                    const fs = require("fs");
+                    if (isPBlockAlreadyDownloaded) {
+                        this._logger.debug(`Getting pblock '${pBlockHash}' from cache (${cachedPBlockFilePath})...`);
+                        const pBlock = JSON.parse(await $$.promisify(fs.readFile)(cachedPBlockFilePath));
+                        pBlocks.push(pBlock);
+                    } else {
+                        this._logger.debug(`Getting pblock '${pBlockHash}'...`);
+                        const pBlock = await this._validatorContractExecutor.getPBlockAsync(pBlockHash);
+                        pBlocks.push(pBlock);
+
+                        this._logger.debug(`Storing pblock '${pBlockHash}' to local cache (${cachedPBlockFilePath})...`);
+                        try {
+                            await $$.promisify(fs.writeFile)(cachedPBlockFilePath, JSON.stringify(pBlock));
+                        } catch (error) {
+                            // we can continue the boot even if the pblock cache storage failed
+                            this._logger.debug(`Storing pblock '${pBlockHash}' to local cache failed`, error);
+                        }
+                    }
+                }
+
+                this._logger.info(`Executing block for block '${missingBlock.hashLinkSSI}'...`);
+                await this.executeBlock(missingBlock, pBlocks);
+            }
+        } else {
+            this._logger.info(
+                `Synchronization with validator '${validatorDID}' (${number} block(s)) is not needed since it doesn't have newer block - self hash ${latestBlockNumber} block(s)`
+            );
+        }
+    }
+
+    async _proposeSelfAsValidator() {
+        const { validatorDID } = this;
+        const currentValidatorDID = this.currentValidatorDID.getIdentifier();
+
+        const validatorLatestBlockInfo = await this._validatorContractExecutor.getLatestBlockInfoAsync();
+        const { number } = validatorLatestBlockInfo;
+        const { number: latestBlockNumber } = this.getLatestBlockInfo();
+        if (latestBlockNumber < number) {
+            this._logger.info(
+                `Cannot propose self as validator because validator '${validatorDID}' is at block number ${number} while self is at ${latestBlockNumber}. Waiting for sync...`
+            );
+            return;
+        }
+
+        const validatorValidators = (await this._validatorContractExecutor.getValidatorsAsync()) || [];
+        this._logger.info(`Received ${validatorValidators.length} validator(s) from '${validatorDID}'`, validatorValidators);
+
+        const isSelfRegisteredInValidator = validatorValidators.some((validator) => validator.DID === currentValidatorDID);
+        if (isSelfRegisteredInValidator) {
+            this._logger.info(`Self is already part of the validator's '${this.validatorDID}' validator list`);
+
+            this._logger.info(`Checking if self is part of self's validator list by getting local validators...`);
+            const localValidators = await this.getLocalValidators();
+            const isSelfPresentInLocalValidators = localValidators.some((validator) => validator.DID === currentValidatorDID);
+            if (isSelfPresentInLocalValidators) {
+                this._logger.info(`Self is part of self's validator list. Synchronization completed.`);
+                clearInterval(this._blockSyncInterval);
+                this.onSyncFinished();
+            }
+        } else if (this._validatorProposalBlockNumber == null || this._validatorProposalBlockNumber < number) {
+            console.trace("Sending proposal", this._validatorProposalBlockNumber);
+            this._logger.info(`Self is not part of the validator's '${this.validatorDID}' validators list. Sending proposal...`);
+
+            const { currentValidatorURL } = this;
+
+            try {
+                const proposedValidator = {
+                    DID: currentValidatorDID,
+                    URL: currentValidatorURL,
+                };
+                await this._validatorContractExecutor.proposeValidatorAsync(proposedValidator);
+
+                // we save the block number for when we send the validator proposal command, in order to check if it was accepted or not
+                this._validatorProposalBlockNumber = number;
+
+                this._logger.info(`Successfully proposed self as validator`);
+            } catch (error) {
+                this._logger.info(`Failed to propose self as validator to validator '${validatorDID}'`, error);
+                throw error;
+            }
+        }
+    }
+}
+
+module.exports = ValidatorSynchronizer;
+
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js":[function(require,module,exports){
 /*
 A configurable consensus core that can have 3 consensus strategies
  - SVBC - Single Validator BrickLedger Consensus:  Only one node is accepting commands and propose BrickBlocks. A block has only one BrickBlock.
@@ -14327,40 +14804,110 @@ A configurable consensus core that can have 3 consensus strategies
 */
 
 const PBlock = require("../PBlock");
-const { getValidatorsForCurrentDomain } = require("../utils/bdns-utils");
+const Logger = require("../Logger");
 const { clone } = require("../utils/object-utils");
-const { getValidatedBlocksWriteStream, createNewBlock, saveBlockInBricks, appendValidatedBlockHash } = require("./utils");
+const {
+    getLocalLatestBlockInfo,
+    getValidatedBlocksWriteStream,
+    createNewBlock,
+    saveBlockInBricks,
+    appendValidatedBlockHash,
+    loadValidatorsFromBdns,
+    sortPBlocks,
+} = require("./utils");
+const Block = require("../Block");
+const ValidatorSynchronizer = require("./ValidatorSynchronizer");
 
 class ConsensusCore {
-    constructor(domain, rootFolder, maxBlockTimeMs, brickStorage, executionEngine) {
-        this.domain = domain;
-        this.rootFolder = rootFolder;
+    constructor(
+        validatorDID,
+        validatorURL,
+        domain,
+        rootFolder,
+        maxBlockTimeMs,
+        brickStorage,
+        executionEngine,
+        validatorContractExecutorFactory
+    ) {
+        this._validatorDID = validatorDID;
+        this._validatorURL = validatorURL;
+        this._domain = domain;
+        this._rootFolder = rootFolder;
         if (!maxBlockTimeMs) {
             maxBlockTimeMs = 1000 * 60; // 1 minute
         }
-        this.maxBlockTimeMs = maxBlockTimeMs;
+        this._maxBlockTimeMs = maxBlockTimeMs;
 
-        this.brickStorage = brickStorage;
-        this.executionEngine = executionEngine;
+        this._brickStorage = brickStorage;
+        this._executionEngine = executionEngine;
+        this._validatorContractExecutorFactory =
+            validatorContractExecutorFactory || require("./ValidatorContractExecutorFactory");
 
         this._latestBlockNumber = 0;
         this._latestBlockHash = null;
 
         this._pendingBlocksByBlockNumber = {};
+
+        this._isRunning = false;
+
+        this._logger = new Logger(`[Bricksledger][${this._domain}][${this._validatorDID.getIdentifier()}][Consensus]`);
+        this._logger.info("Create finished");
     }
 
-    async init() {
-        const { domain, rootFolder, executionEngine } = this;
+    async boot() {
+        this._logger.info(`Booting consensus...`);
 
-        const validators = await getValidatorsForCurrentDomain(executionEngine);
-        if (!validators || !validators.length) {
-            throw new Error(`No validators found for domain '${domain}'`);
+        await this._loadValidators();
+
+        this._logger.info(`Checking local blocks history...`);
+        const latestBlockInfo = await getLocalLatestBlockInfo(this._rootFolder, this._domain);
+        const { number, hash } = latestBlockInfo;
+        this._latestBlockNumber = number;
+        this._latestBlockHash = hash;
+        this._logger.info(`Found ${number} local block(s), with the latest block hash being ${hash}...`);
+
+        // this.validatedBlocksWriteStream = await getValidatedBlocksWriteStream(this._rootFolder, this._domain);
+
+        const validatorsExceptSelf = this.validators.filter((validator) => validator.DID !== this._validatorDID.getIdentifier());
+        this._logger.info(`Found ${validatorsExceptSelf.length} external validators`);
+        if (validatorsExceptSelf.length) {
+            const validator = validatorsExceptSelf[0];
+
+            return new Promise(async (resolve) => {
+                const onSyncFinished = () => {
+                    // the synchronization process is finished (all blocks are up to date and validator is recognized as a validator)
+                    this._isRunning = true;
+                    resolve();
+                };
+                const validatorSynchronizer = new ValidatorSynchronizer(
+                    this._domain,
+                    this._validatorDID,
+                    this._validatorURL,
+                    validator,
+                    this._rootFolder,
+                    this.getLatestBlockInfo.bind(this),
+                    loadValidatorsFromBdns.bind(null, this._domain, this._executionEngine),
+                    this._validatorContractExecutorFactory,
+                    this._executeBlock.bind(this),
+                    onSyncFinished
+                );
+                await validatorSynchronizer.synchronize();
+            });
+        } else {
+            // no external validators were found except self, so we will be running consensus with a single validator
+            this._isRunning = true;
         }
-        if (validators.length === 2) {
-            throw new Error(`Consensus cannot be used for 2 validators`);
-        }
-        this.validators = validators;
-        this.validatedBlocksWriteStream = await getValidatedBlocksWriteStream(rootFolder, domain);
+    }
+
+    isRunning() {
+        return this._isRunning;
+    }
+
+    getLatestBlockInfo() {
+        return {
+            number: this._latestBlockNumber,
+            hash: this._latestBlockHash,
+        };
     }
 
     addInConsensus(pBlock, callback) {
@@ -14372,64 +14919,52 @@ class ConsensusCore {
     }
 
     async addInConsensusAsync(pBlock) {
+        if (!this._isRunning) {
+            throw new Error("Consensus not yet running");
+        }
+
+        if (!(pBlock instanceof PBlock)) {
+            throw new Error("pBlock not instance of PBlock");
+        }
+
         await this.validatePBlockAsync(pBlock);
 
         const { blockNumber } = pBlock;
 
         let pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
-        if (pendingBlock && pendingBlock.isConsensusRunning) {
-            throw new Error(
-                `Consensus is currently running for block number ${blockNumber}. PBlock ${pBlock.hashLinkSSI} rejected.`
-            );
-        }
-        const validators = clone(this.validators);
-        if (!pendingBlock) {
-            const blockTimeout = setTimeout(() => {
-                // the block timeout has occured after the consensus has been started, so we ignore the timeout
-                if (pendingBlock.isConsensusRunning) {
-                    return;
-                }
-
-                const { validators, pendingPBlocks } = pendingBlock;
-                pendingBlock.isConsensusRunning = true;
-                console.log(
-                    `[Consensus] Consensus timeout for pBlock ${blockNumber} has been reached. Received only ${pendingPBlocks.length} pBlocks out of ${validators.length} validators`
+        if (pendingBlock) {
+            if (pendingBlock.isConsensusRunning) {
+                throw new Error(
+                    `Consensus is currently running for block number ${blockNumber}. PBlock ${pBlock.hashLinkSSI} rejected.`
                 );
-                this._startConsensusForPendingBlock(pendingBlock);
-            }, this.maxBlockTimeMs);
-
-            pendingBlock = {
-                blockNumber,
-                startTime: Date.now(),
-                pendingPBlocks: [],
-                blockTimeout,
-                validators,
-            };
-            this._pendingBlocksByBlockNumber[blockNumber] = pendingBlock;
+            }
+        } else {
+            await this._startConsensusForBlockNumber(blockNumber);
+            pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
         }
 
-        const { pendingPBlocks } = pendingBlock;
+        const { pBlocks, validators } = pendingBlock;
 
+        // return a promise when the final consensus is reached
         return new Promise(async (resolve, reject) => {
-            pendingPBlocks.push({
-                pBlock,
-                callback: (error, result) => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    resolve(result);
-                },
-            });
+            pBlock.onConsensusFinished = (error, result) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(result);
+            };
 
-            const canStartConsensus = validators.length === pendingPBlocks.length;
+            pBlocks.push(pBlock);
+
+            const canStartConsensus = validators.length === pBlocks.length;
             if (canStartConsensus) {
                 pendingBlock.isConsensusRunning = true;
                 clearTimeout(pendingBlock.blockTimeout);
 
                 this._startConsensusForPendingBlock(pendingBlock);
             } else {
-                console.log(
-                    `[Consensus] Consensus for pBlock ${blockNumber} has received ${pendingPBlocks.length} pBlock(s) from a total of ${validators.length} validators`
+                this._logger.info(
+                    `Consensus for pBlock ${blockNumber} has received ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`
                 );
             }
         });
@@ -14444,9 +14979,15 @@ class ConsensusCore {
     }
 
     async validatePBlockAsync(pBlock) {
-        pBlock = new PBlock(pBlock);
+        if (!this._isRunning) {
+            throw new Error("Consensus not yet running");
+        }
 
-        const { blockNumber } = pBlock;
+        if (!(pBlock instanceof PBlock)) {
+            throw new Error("pBlock not instance of PBlock");
+        }
+
+        const { blockNumber, validatorDID } = pBlock;
 
         if (blockNumber <= this._latestBlockNumber) {
             throw new Error(
@@ -14455,50 +14996,103 @@ class ConsensusCore {
         }
 
         await pBlock.validateSignature();
-
-        // TODO: check if validatorDID is valid for participating into consensus
+        const isValidatorRecognized = this.validators.some((validator) => validator.DID === validatorDID);
+        if (!isValidatorRecognized) {
+            throw new Error(`Pblock '${pBlock.hashLinkSSI}' has a nonrecognized validator '${validatorDID}'`);
+        }
     }
 
-    getLatestBlockInfo() {
-        return {
-            number: this._latestBlockNumber,
-            hash: this._latestBlockHash,
+    async _startConsensusForBlockNumber(blockNumber) {
+        const blockTimeout = setTimeout(() => {
+            const pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
+            // the block timeout has occured after the consensus has been started, so we ignore the timeout
+            if (pendingBlock.isConsensusRunning) {
+                return;
+            }
+
+            const { validators, pBlocks } = pendingBlock;
+            pendingBlock.isConsensusRunning = true;
+            this._logger.info(
+                `Consensus timeout for pBlock ${blockNumber} has been reached. Received only ${pBlocks.length} pBlocks out of ${validators.length} validators`
+            );
+            this._startConsensusForPendingBlock(pendingBlock);
+        }, this._maxBlockTimeMs);
+
+        const pendingBlock = {
+            blockNumber,
+            startTime: Date.now(),
+            pBlocks: [],
+            blockTimeout,
         };
+        this._pendingBlocksByBlockNumber[blockNumber] = pendingBlock;
+
+        // add validators after setting pendingBlock in order to avoid race condition issues
+        await this._loadValidators();
+        pendingBlock.validators = clone(this.validators);
     }
 
     async _startConsensusForPendingBlock(pendingBlock) {
-        console.log(`[Consensus] Starting consensus for pBlock ${pendingBlock.blockNumber}...`);
+        this._logger.info(`Starting consensus for pBlock ${pendingBlock.blockNumber}...`);
         setTimeout(async () => {
             try {
                 // consensus finished with success, so generate block and broadcast it
                 const block = createNewBlock(pendingBlock, this._latestBlockHash);
-                console.log(`[Consensus] Created block for block number ${pendingBlock.blockNumber}...`, block);
-                const blockHashLinkSSI = await saveBlockInBricks(block, this.domain, this.brickStorage);
-                block.hashLinkSSI = blockHashLinkSSI;
-
-                this._latestBlockHash = blockHashLinkSSI.getIdentifier();
-                this._latestBlockNumber = block.blockNumber;
-
-                await appendValidatedBlockHash(this._latestBlockHash, this.validatedBlocksWriteStream);
-
-                // execute each pBlock and then call the block info callback in order for pBlocksFactory to know to continue pBlocks creations
-                const { pendingPBlocks } = pendingBlock;
-                for (let index = 0; index < pendingPBlocks.length; index++) {
-                    const { pBlock, callback } = pendingPBlocks[index];
-                    const saneCallback = $$.makeSaneCallback(callback);
-
-                    try {
-                        await this.executionEngine.executePBlock(pBlock);
-                        saneCallback();
-                    } catch (error) {
-                        saneCallback(error);
-                    }
-                }
+                this._logger.info(`Created block for block number ${pendingBlock.blockNumber}...`, block);
+                this._executeBlock(block, pendingBlock.pBlocks);
             } catch (error) {
                 console.error("Error while executing pBlock", error);
                 throw error;
             }
         }, 1000);
+    }
+
+    async _executeBlock(block, pBlocks) {
+        await this._storeBlock(block);
+        await this._executePBlocks(pBlocks);
+        await this._updateLatestBlockInfo(block);
+    }
+
+    async _storeBlock(block) {
+        this._logger.info("Storing block", block);
+        const blockHashLinkSSI = await saveBlockInBricks(block, this._domain, this._brickStorage);
+        block.hashLinkSSI = blockHashLinkSSI.getIdentifier();
+    }
+
+    async _executePBlocks(pBlocks) {
+        sortPBlocks(pBlocks);
+
+        for (let index = 0; index < pBlocks.length; index++) {
+            const pBlock = pBlocks[index];
+            const callback =
+                typeof pBlock.onConsensusFinished === "function" ? $$.makeSaneCallback(pBlock.onConsensusFinished) : () => {};
+
+            try {
+                await this._executionEngine.executePBlock(pBlock);
+
+                callback();
+            } catch (error) {
+                this._logger.error("Failed to execute pBlock", pBlock);
+                callback(error);
+                throw error;
+            }
+        }
+    }
+
+    async _updateLatestBlockInfo(block) {
+        this._logger.info(`Updating latest block number to ${block.blockNumber} and latest block hash to ${block.hashLinkSSI}`);
+        this._latestBlockNumber = block.blockNumber;
+        this._latestBlockHash = block.hashLinkSSI;
+
+        const validatedBlocksWriteStream = await getValidatedBlocksWriteStream(this._rootFolder, this._domain);
+        await appendValidatedBlockHash(this._latestBlockHash, validatedBlocksWriteStream);
+        validatedBlocksWriteStream.close();
+    }
+
+    async _loadValidators() {
+        this._logger.info(`Loading validators...`);
+        this.validators = await loadValidatorsFromBdns(this._domain, this._executionEngine);
+        this._logger.info(`Found ${this.validators.length} validator(s) from BDNS`);
+        this._logger.debug(`Validator(s) from BDNS: ${this.validators.map((validator) => validator.DID).join(", ")}`);
     }
 }
 
@@ -14510,20 +15104,81 @@ module.exports = {
     create,
 };
 
-},{"../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./ValidatorContractExecutorFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js","./ValidatorSynchronizer":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
 const Block = require("../Block");
-const { ensurePathExists } = require("../utils/fs-utils");
+const { checkIfPathExists, ensurePathExists } = require("../utils/fs-utils");
+const { getValidatorsForCurrentDomain } = require("../utils/bdns-utils");
 
-async function getValidatedBlocksWriteStream(rootFolder, domain) {
+async function getCachedBlocksFolderPath(rootFolder, domain) {
+    const path = require("path");
+    const folderPath = path.join(rootFolder, "domains", domain, "cache/blocks");
+    try {
+        await ensurePathExists(folderPath);
+    } catch (error) {
+        console.log(error);
+    }
+    return folderPath;
+}
+
+async function getValidatedBlocksFilePath(rootFolder, domain) {
     const path = require("path");
     const validatedBlocksFolderPath = path.join(rootFolder, "domains", domain);
-    const validatedBlocksFilePath = path.join(validatedBlocksFolderPath, "blocks");
-
     try {
         await ensurePathExists(validatedBlocksFolderPath);
     } catch (error) {
         console.log(error);
     }
+
+    const validatedBlocksFilePath = path.join(validatedBlocksFolderPath, "blocks");
+    return validatedBlocksFilePath;
+}
+
+async function getLocalLatestBlockInfo(rootFolder, domain) {
+    let latestBlockNumber = 0;
+    let latestBlockHash = null;
+
+    // if blocks file exists, then we have blocks that we have validated in the past
+    const validatedBlocksFilePath = await getValidatedBlocksFilePath(rootFolder, domain);
+    if (await checkIfPathExists(validatedBlocksFilePath)) {
+        return new Promise((resolve, reject) => {
+            const fs = require("fs");
+            const os = require("os");
+            const readStream = fs.createReadStream(validatedBlocksFilePath);
+            readStream
+                .on("data", function (chunk) {
+                    // split chunk by newline in order to get the block hashes
+                    const hashes = chunk
+                        .toString()
+                        .split(os.EOL)
+                        .map((hash) => (hash ? hash.trim() : null))
+                        .filter((hash) => !!hash);
+
+                    if (hashes.length) {
+                        latestBlockNumber += hashes.length;
+                        latestBlockHash = hashes[hashes.length - 1];
+                    }
+                })
+                .on("close", function (error) {
+                    if (error) {
+                        return reject(error);
+                    }
+
+                    resolve({
+                        number: latestBlockNumber,
+                        hash: latestBlockHash,
+                    });
+                });
+        });
+    }
+
+    return {
+        number: latestBlockNumber,
+        hash: latestBlockHash,
+    };
+}
+
+async function getValidatedBlocksWriteStream(rootFolder, domain) {
+    const validatedBlocksFilePath = await getValidatedBlocksFilePath(rootFolder, domain);
 
     const fs = require("fs");
     const validatedBlocksWriteStream = fs.createWriteStream(validatedBlocksFilePath, { flags: "a" });
@@ -14531,10 +15186,10 @@ async function getValidatedBlocksWriteStream(rootFolder, domain) {
 }
 
 function createNewBlock(pendingBlock, latestBlockHash) {
-    const participatingPBlockHashLinks = pendingBlock.pendingPBlocks.map(({ pBlock }) =>
+    const participatingPBlockHashLinks = pendingBlock.pBlocks.map((pBlock) =>
         typeof pBlock.hashLinkSSI === "string" ? pBlock.hashLinkSSI : pBlock.hashLinkSSI.getIdentifier()
     );
-    participatingPBlockHashLinks.sort();
+    sortPBlocks(participatingPBlockHashLinks);
 
     const block = {
         pbs: participatingPBlockHashLinks,
@@ -14561,21 +15216,51 @@ async function appendValidatedBlockHash(blockHash, writeStream) {
     await $$.promisify(writeStream.write.bind(writeStream))(line);
 }
 
+async function loadValidatorsFromBdns(domain, executionEngine) {
+    const validators = await getValidatorsForCurrentDomain(executionEngine);
+    if (!validators || !validators.length) {
+        throw new Error(`No validators found for domain '${domain}'`);
+    }
+    // if (validators.length === 2) {
+    //     throw new Error(`Consensus cannot be used for 2 validators`);
+    // }
+    return validators;
+}
+
+function sortPBlocks(pBlocks) {
+    const sortHashes = (a, b) => {
+        if (typeof a === "string" && typeof b === "string") {
+            return a.localeCompare(b);
+        }
+
+        const aHash = typeof a.hashLinkSSI === "string" ? a.hashLinkSSI : a.hashLinkSSI.getIdentifier();
+        const bHash = typeof b.hashLinkSSI === "string" ? b.hashLinkSSI : b.hashLinkSSI.getIdentifier();
+        return aHash.localeCompare(bHash);
+    };
+
+    pBlocks.sort(sortHashes);
+}
+
 module.exports = {
+    getCachedBlocksFolderPath,
+    getLocalLatestBlockInfo,
     getValidatedBlocksWriteStream,
     createNewBlock,
     saveBlockInBricks,
     appendValidatedBlockHash,
+    loadValidatorsFromBdns,
+    sortPBlocks,
 };
 
-},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js":[function(require,module,exports){
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js":[function(require,module,exports){
+const Logger = require("../Logger");
 const {
     getContractMethodExecutionPromise,
     getContractConfigs,
     loadContract,
     setContractMixin,
     validateCommand,
-    validateNoncedCommandExecution
+    validateNoncedCommandExecution,
 } = require("./utils");
 
 const MAX_ALLOWED_NONCED_BLOCK_NUMBER_DIFF = 1;
@@ -14588,15 +15273,22 @@ class ExecutionEngine {
         this.createFSKeyValueStorage = createFSKeyValueStorage;
         this.commandHistoryStorage = commandHistoryStorage;
         this.notificationHandler = notificationHandler;
+
+        this._logger = new Logger(`[Bricksledger][${this.domain}][ExecutionEngine]`);
+        this._logger.info("Create finished");
     }
 
-    async loadContracts() {
+    async loadContracts(pBlocksFactory) {
+        this._logger.info("Loading contracts...");
+
         const openDSU = require("opendsu");
         const resolver = openDSU.loadApi("resolver");
 
+        this._logger.debug("Loading DSU...");
         const loadRawDossier = $$.promisify(resolver.loadDSU);
         const rawDossier = await loadRawDossier(this.domainConfig.contracts.constitution);
 
+        this._logger.debug("Loading contract configs...");
         const contractConfigs = await getContractConfigs(rawDossier);
 
         const contractNames = [];
@@ -14606,6 +15298,7 @@ class ExecutionEngine {
             const contractConfig = contractConfigs[i];
             contractNames.push(contractConfig.name);
 
+            this._logger.debug(`Loading contract '${contractConfig.name}'...`);
             const contract = await loadContract(rawDossier, contractConfig);
             this.contracts[contractConfig.name] = contract;
         }
@@ -14620,13 +15313,16 @@ class ExecutionEngine {
         for (let i = 0; i < contractNames.length; i++) {
             const contractName = contractNames[i];
             const contract = this.contracts[contractName];
-            setContractMixin(this, contractName, contract);
+            setContractMixin(this, contractName, contract, pBlocksFactory);
 
             // run initialization step if the init function is defined
             if (typeof contract.init === "function") {
+                this._logger.debug(`Initializing contract '${contractName}'...`);
                 await $$.promisify(contract.init)();
             }
         }
+
+        this._logger.info("Loading contracts finished");
     }
 
     async validateSafeCommand(command) {
@@ -14642,6 +15338,8 @@ class ExecutionEngine {
         }
 
         await validateCommand(command, this.contracts, this.contractDescribeMethods, this.commandHistoryStorage);
+
+        this._logger.debug(`[nonced-command-${command.getHash()}] validating nonced command execution...`);
         await validateNoncedCommandExecution(command, this.commandHistoryStorage);
 
         const { blockNumber } = command;
@@ -14677,6 +15375,7 @@ class ExecutionEngine {
     }
 
     async executePBlock(pBlock) {
+        this._logger.debug(`Executing pBlock '${pBlock.hashLinkSSI}'...`);
         try {
             const { commands } = pBlock;
             for (let i = 0; i < commands.length; i++) {
@@ -14713,7 +15412,7 @@ module.exports = {
     create,
 };
 
-},{"./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/utils.js":[function(require,module,exports){
+},{"../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/utils.js":[function(require,module,exports){
 async function validateNoncedCommandExecution(command, commandHistoryStorage, isValidatedMode) {
     // check if this nonced command has already been executed
     const commandHash = command.getHash();
@@ -14819,7 +15518,7 @@ async function loadContract(rawDossier, contractConfig) {
     }
 }
 
-function setContractMixin(executionEngine, contractName, contract) {
+function setContractMixin(executionEngine, contractName, contract, pBlocksFactory) {
     const contractNames = Object.keys(executionEngine.contracts)
         .filter((contractName) => !["test"].includes(contractName))
         .sort();
@@ -14869,6 +15568,9 @@ function setContractMixin(executionEngine, contractName, contract) {
     contract.getContractNames = () => contractNames;
     contract.getContractsMetadata = () => contractsMetadata;
     contract.getContract = (contractName) => getContractProxy(contractName);
+
+    // used for consensus when each validator is trying to get all proposed pBlocks from all validators
+    contract.getPBlockProposedForConsensus = pBlocksFactory.getPBlockProposedForConsensus;
 }
 
 async function validateCommand(command, contracts, contractDescribeMethods, commandHistoryStorage) {
@@ -15223,14 +15925,46 @@ module.exports = {
     create,
 };
 
-},{"./StorageValue":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/StorageValue.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js":[function(require,module,exports){
+},{"./StorageValue":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/StorageValue.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js":[function(require,module,exports){
+const ENABLE_DEBUG = true;
+
+class Logger {
+    constructor(prefix) {
+        this.prefix = prefix || "";
+    }
+
+    debug(...args) {
+        if (ENABLE_DEBUG) {
+            console.log(`${this.prefix}[DEBUG]`, ...args);
+        }
+    }
+
+    info(...args) {
+        console.log(`${this.prefix}[INFO]`, ...args);
+    }
+
+    warn(...args) {
+        console.log(`${this.prefix}[WARN]`, ...args);
+    }
+
+    error(...args) {
+        console.log(`${this.prefix}[ERROR]`, ...args);
+    }
+
+    trace(...args) {
+        console.trace(`${this.prefix}[ERROR]`, ...args);
+    }
+}
+
+module.exports = Logger;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js":[function(require,module,exports){
 class PBlock {
-    constructor(pBlock) {
+    constructor(pBlock, onConsensusFinished) {
         if (!pBlock) {
             throw "pBlock must be specified";
         }
 
-        this.pBlock = pBlock;
         const { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI } = pBlock;
 
         this.validatorDID = validatorDID;
@@ -15240,6 +15974,12 @@ class PBlock {
         this.hash = hash;
         this.validatorSignature = validatorSignature;
         this.hashLinkSSI = hashLinkSSI;
+        this.onConsensusFinished = onConsensusFinished;
+    }
+
+    sign(validatorDID) {
+        this.hash = this.computeHash();
+        this.validatorSignature = validatorDID.sign(this.hash);
     }
 
     computeHash() {
@@ -15271,14 +16011,17 @@ class PBlock {
         }
     }
 
-     getSerialisation() {
-         return JSON.stringify(this.pBlock);
-     }
+    getSerialisation() {
+        const { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI } = this;
+        const pBlock = { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI };
+        return JSON.stringify(pBlock);
+    }
 }
 
 module.exports = PBlock;
 
 },{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js":[function(require,module,exports){
+const Logger = require("./Logger");
 const PBlock = require("./PBlock");
 
 async function savePBlockInBricks(pBlock, domain, brickStorage) {
@@ -15299,8 +16042,7 @@ function createPBlock(validatorDID, commands, previousBlockHash, blockNumber) {
         blockNumber,
     };
     const pBlock = new PBlock(pBlockInfo);
-    pBlock.hash = pBlock.computeHash();
-    pBlock.validatorSignature = validatorDID.sign(pBlock.hash);
+    pBlock.sign(validatorDID);
 
     return pBlock;
 }
@@ -15326,44 +16068,107 @@ class PBlocksFactory {
         this.maxPBlockTimeMs = maxPBlockTimeMs;
 
         this._latestPBlock = null;
-        this._isNextPBlockWaiting = false;
+
+        this._logger = new Logger(`[Bricksledger][${this.domain}][${this.validatorDID.getIdentifier()}][PBlocksFactory]`);
+        this._logger.info("Create finished");
 
         this._startBlockTimeCheckTimeout();
     }
 
-    addCommandForConsensus(command) {
-        console.log(`[PBlocksFactory] Added command for consensus with hash ${command.getHash()}`, this.maxPBlockSize);
+    addCommandForConsensus(pBlock, callback) {
+        callback = $$.makeSaneCallback(callback);
+
+        this.addCommandForConsensusAsync(pBlock)
+            .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
+    }
+
+    async addCommandForConsensusAsync(command) {
+        this._logger.info(`Adding command for consensus with hash ${command.getHash()}...`);
 
         this.pendingCommands.push(command);
 
         const isBlockSizeLimitReached = this.pendingCommands.length >= this.maxPBlockSize;
         if (isBlockSizeLimitReached) {
-            console.log(`[PBlocksFactory] Reached block size restriction of ${this.maxPBlockSize}`);
-            this._buildPBlockFromCommands();
+            this._logger.info(`Reached block size restriction of ${this.maxPBlockSize}`);
+            const pBlock = this._buildPBlockForMaxBlockSize();
+            if (pBlock) {
+                this._sendPBlockForConsensus(pBlock);
+            }
         }
     }
 
-    createBlock(brickBlocksSet, votingProof, blockNumber, previousBlockHash) {
-        let brickBlocksArray = sort(brickBlocksSet);
-        let res = {
-            brickBlocksArray,
-            votingProof,
-            blockNumber,
-            previousBlockHash,
-        };
-        return res;
+    getPBlockProposedForConsensus(pBlock, callback) {
+        callback = $$.makeSaneCallback(callback);
+
+        this.getPBlockProposedForConsensusAsync(pBlock)
+            .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
+    }
+
+    async getPBlockProposedForConsensusAsync(blockNumber) {
+        this._logger.info(`Getting pBlock proprosed for consensus for block number ${blockNumber}...`);
+        const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
+        const currentConsensusBlockNumber = latestVerifiedBlockInfo.number + 1;
+
+        let needToCreateNewPBlock = false;
+
+        if (this._latestPBlock) {
+            // checking which is the latest pBlock which is awaiting consensus
+            const currentBlockNumber = this._latestPBlock.blockNumber;
+            if (blockNumber <= currentBlockNumber) {
+                this._logger.info(
+                    `Wanting to get pBlock proposed for consensus for block number ${blockNumber} but consensus is already at block number ${currentBlockNumber}`
+                );
+                throw new Error(`pBlock proposed for consensus is already at block ${currentBlockNumber}`);
+            }
+
+            const isCurrentlyWaitingForLatestBlockConsensus = currentBlockNumber === blockNumber;
+            if (isCurrentlyWaitingForLatestBlockConsensus) {
+                return JSON.parse(this._latestPBlock.getSerialisation());
+            }
+
+            this._logger.info(
+                `Wanting to get pBlock proposed for consensus for block number ${blockNumber} but latest pBlock is older (at block number ${currentBlockNumber})`
+            );
+
+            const needToCreateNewPBlock = currentBlockNumber < latestVerifiedBlockInfo.number;
+            if (needToCreateNewPBlock) {
+                this._logger.info(
+                    `Latest pBlock (at block number ${currentBlockNumber}) is older than current consensus cycle (${currentConsensusBlockNumber})`
+                );
+            }
+        } else {
+            needToCreateNewPBlock = blockNumber === currentConsensusBlockNumber;
+        }
+
+        if (needToCreateNewPBlock) {
+            const pBlock = this._forceBuildPBlockFromAllCommands();
+            if (pBlock) {
+                this._sendPBlockForConsensus(pBlock);
+            }
+
+            return pBlock;
+        }
+
+        const errorMessage = `Requesting a proposed pBlock for block ${blockNumber} but consensus is running block ${currentConsensusBlockNumber}`;
+        this._logger.warn(errorMessage);
+        throw new Error(errorMessage);
     }
 
     _startBlockTimeCheckTimeout() {
         if (this._blockTimeCheckTimeout) {
             clearTimeout(this._blockTimeCheckTimeout);
         }
-        this._blockTimeCheckTimeout = setTimeout(() => {
-            console.log(`[PBlocksFactory] Reached block time restriction of ${this.maxPBlockTimeMs}ms`);
+        this._blockTimeCheckTimeout = setTimeout(async () => {
+            this._logger.info(`Reached block time restriction of ${this.maxPBlockTimeMs}ms`);
 
             // if we have commands then contruct the pBlock because of the block time restriction has been reached
             if (this.pendingCommands.length !== 0) {
-                this._buildPBlockFromCommands();
+                const pBlock = this._buildPBlockForMaxBlockSize();
+                if (pBlock) {
+                    this._sendPBlockForConsensus(pBlock);
+                }
             }
 
             // start another timeout check
@@ -15371,42 +16176,82 @@ class PBlocksFactory {
         }, this.maxPBlockTimeMs);
     }
 
-    async _buildPBlockFromCommands() {
+    _forceBuildPBlockFromAllCommands() {
+        if (!this.consensusCore.isRunning()) {
+            throw new Error("Cannot build PBlock due to consensus not running");
+        }
+
+        const commands = this.pendingCommands.splice(0, this.pendingCommands.length);
+        return this._buildPBlockFromCommands(commands);
+    }
+
+    _buildPBlockForMaxBlockSize() {
+        if (!this.consensusCore.isRunning()) {
+            throw new Error("Cannot build PBlock due to consensus not running");
+        }
+
         if (this._latestPBlock) {
-            console.log(
-                "[PBlocksFactory] Previous PBlock not yet accepted. Waiting for it to finished before creating another..."
+            const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
+            const currentConsensusBlockNumber = latestVerifiedBlockInfo.number + 1;
+
+            if (this._latestPBlock.blockNumber === currentConsensusBlockNumber) {
+                // the previous block hasn't been confirmed yet,
+                // so we must wait until it's finished before constructing the next one
+
+                this._logger.info("Previous PBlock not yet accepted. Waiting for it to finished before creating another...");
+                return;
+            }
+
+            // somehow the consensus for the latestPBlock has already finished, but PBlocksFactory wasn't notified
+            this._logger.warn(
+                `Consensus is currently at block number ${currentConsensusBlockNumber} and the local current pBlock is at ${this._latestPBlock.number}`
             );
-            // the previous block hasn't been confirmed yet,
-            // so we must wait until it's finished before constructing the next one
-            this._isNextPBlockWaiting = true;
-            return;
+            this._logger.warn(`Removing _latestPBlock in order to continue consensus`, this._latestPBlock);
+            this._latestPBlock = null;
         }
 
         const commands = this.pendingCommands.splice(0, this.maxPBlockSize);
-        const previousBlockInfo = this.consensusCore.getLatestBlockInfo();
-        const blockNumber = previousBlockInfo.number !== -1 ? previousBlockInfo.number + 1 : 1;
+        return this._buildPBlockFromCommands(commands);
+    }
 
-        const pBlock = createPBlock(this.validatorDID, commands, previousBlockInfo.hash, blockNumber);
+    _buildPBlockFromCommands(commands) {
+        if (!commands.length) {
+            throw new Error("Cannot create pBlock with no commands");
+        }
+
+        const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
+
+        const blockNumber = latestVerifiedBlockInfo.number !== -1 ? latestVerifiedBlockInfo.number + 1 : 1;
+
+        this._logger.info(`Constructing pBlock number ${blockNumber} having ${commands.length} command(s)...`);
+        const pBlock = createPBlock(this.validatorDID, commands, latestVerifiedBlockInfo.hash, blockNumber);
+
+        return pBlock;
+    }
+
+    async _sendPBlockForConsensus(pBlock) {
+        this._logger.info(`Sending pBlock to consensus ${pBlock.hash}...`);
         this._latestPBlock = pBlock;
-
-        const pBlockHashLinkSSI = await savePBlockInBricks(pBlock, this.domain, this.brickStorage);
-        pBlock.hashLinkSSI = pBlockHashLinkSSI;
-
         this.broadcaster.broadcastPBlock(pBlock);
 
         try {
+            this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`, typeof pBlock);
+            const pBlockHashLinkSSI = await savePBlockInBricks(pBlock, this.domain, this.brickStorage);
+            pBlock.hashLinkSSI = pBlockHashLinkSSI;
+
             await this.consensusCore.addInConsensusAsync(pBlock);
             this._latestPBlock = null;
 
             const isBlockSizeLimitReached = this.pendingCommands.length >= this.maxPBlockSize;
             if (isBlockSizeLimitReached) {
-                console.log(`[PBlocksFactory] Reached block size restriction of ${this.maxPBlockSize}`);
-                this._buildPBlockFromCommands();
+                this._logger.info(`Reached block size restriction of ${this.maxPBlockSize}...`);
+                const pBlock = this._buildPBlockForMaxBlockSize();
+                this._sendPBlockForConsensus(pBlock);
             } else {
                 this._startBlockTimeCheckTimeout();
             }
         } catch (error) {
-            console.error("[PBlocksFactory] An error has occurred while running the consensus for pBlock", error);
+            this._logger.error("An error has occurred while running the consensus for pBlock", error);
         }
     }
 }
@@ -15419,7 +16264,7 @@ module.exports = {
     create,
 };
 
-},{"./PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js":[function(require,module,exports){
+},{"./Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js":[function(require,module,exports){
 async function getValidatorsForCurrentDomain(executionEngine) {
     const { contracts } = executionEngine;
     const domainInfo = await $$.promisify(contracts.bdns.getDomainInfo)();
@@ -15431,19 +16276,29 @@ module.exports = {
 };
 
 },{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js":[function(require,module,exports){
-async function ensurePathExists(path) {
-    const fs = require("fs");
+async function checkIfPathExists(path) {
     try {
+        const fs = require("fs");
         await $$.promisify(fs.access)(path);
+        return true;
     } catch (error) {
-        // base folder doesn't exists, so we create it
+        return false;
+    }
+}
+
+async function ensurePathExists(path) {
+    const pathExists = await checkIfPathExists(path);
+    if (!pathExists) {
+        const fs = require("fs");
         await $$.promisify(fs.mkdir)(path, { recursive: true });
     }
 }
 
 module.exports = {
-    ensurePathExists
-}
+    checkIfPathExists,
+    ensurePathExists,
+};
+
 },{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js":[function(require,module,exports){
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -21038,9 +21893,25 @@ async function generateNoncedCommand(signerDID, domain, contractName, methodName
     }
 }
 
+function generateSafeCommandForSpecificServer(serverUrl, ...args) {
+    if (!serverUrl || typeof serverUrl !== "string") {
+        throw new Error(`Invalid serverUrl specified`);
+    }
+    generateSafeCommand(...args);
+}
+
+function generateNoncedCommandForSpecificServer(serverUrl, ...args) {
+    if (!serverUrl || typeof serverUrl !== "string") {
+        throw new Error(`Invalid serverUrl specified`);
+    }
+    generateNoncedCommand(...args);
+}
+
 module.exports = {
     generateSafeCommand,
     generateNoncedCommand,
+    generateSafeCommandForSpecificServer,
+    generateNoncedCommandForSpecificServer,
 };
 
 },{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
@@ -24334,9 +25205,9 @@ class DeleteCommand extends Command {
     _runCommand(arg, bar, options, callback){
         if (typeof options === 'function'){
             callback = options;
-            options = {}
+            options = undefined
         }
-        options = options || {ignoreMounts: false};
+        options = options || {ignoreMounts: false, ignoreError: true};
         console.log("Deleting " + arg);
         bar.delete(arg, options, err => err
             ? _err(`Could not delete path '${arg}'`, err, callback)
