@@ -11112,9 +11112,10 @@ const isValidVaultCache = () => {
 }
 
 const isValidBrickHash = async (hashLinkSSI, brickData) => {
+    const ensureIsBuffer = require("swarmutils").ensureIsBuffer;
     const crypto = openDSU.loadAPI("crypto");
     const hashFn = crypto.getCryptoFunctionForKeySSI(hashLinkSSI, "hash");
-    const actualHash = hashFn(brickData);
+    const actualHash = hashFn(ensureIsBuffer(brickData));
     const expectedHash = hashLinkSSI.getHash();
     return actualHash === expectedHash;
 }
@@ -11290,7 +11291,7 @@ const putBrick = (domain, brick, authToken, callback) => {
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -19096,24 +19097,43 @@ function DemoPKDocument(identifier){
         callback(undefined, hash == signature);
     };
 
-    function getApiHubEndpoint(){
-        const opendsu = require("opendsu");
-        const getBaseURL = require("../../utils/getBaseURL");
-        const consts = opendsu.constants;
-        const system = opendsu.loadApi("system");
-        // return system.getEnvironmentVariable(consts.BDNS_ROOT_HOSTS);
-        return getBaseURL();
+    let domainName;
+
+    this.setDomain = function(name) {
+        domainName = name;
     }
 
-    this.sendMessage = (message, toOtherDID, callback) => {
+    function getApiHubEndpoint() {
+        return new Promise(async (resolve, reject) => {
+            const opendsu = require("opendsu");
+            const getBaseURL = require("../../utils/getBaseURL");
+            const consts = opendsu.constants;
+            const system = opendsu.loadApi("system");
+            // return system.getEnvironmentVariable(consts.BDNS_ROOT_HOSTS);
+            if (domainName) {
+                const bdns = opendsu.loadApi('bdns');
+                try {
+                    let mqArray = await $$.promisify(bdns.getMQEndpoints)(domainName);
+                    if (mqArray.length > 0) {
+                        return resolve(mqArray[0]);
+                    }
+                } catch (e) {
+                    resolve(getBaseURL());
+                }
+            }
+            resolve(getBaseURL());
+        });
+    }
+
+    this.sendMessage = async (message, toOtherDID, callback) => {
         const opendsu = require("opendsu");
         const http = opendsu.loadApi("http");
-
-        let url = `${getApiHubEndpoint()}/mq/send-message/${encodeURI(toOtherDID)}`;
+        let apiHubEndpoint = await getApiHubEndpoint();
+        let url = `${apiHubEndpoint}/mq/send-message/${encodeURI(toOtherDID)}`;
         let options = message;
 
-        let request = http.doPost(url, options, (err, response)=>{
-            if(err){
+        let request = http.doPost(url, options, (err, response) => {
+            if (err) {
                 return callback(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to send message`, err)));
             }
 
@@ -19121,8 +19141,8 @@ function DemoPKDocument(identifier){
         });
     };
 
-    this.readMessage = (callback) => {
-        const endpoint = getApiHubEndpoint();
+    this.readMessage = async (callback) => {
+        const endpoint = await getApiHubEndpoint();
         const opendsu = require("opendsu");
         const http = opendsu.loadApi("http");
         let didIdentifier = this.getIdentifier();
@@ -19135,7 +19155,8 @@ function DemoPKDocument(identifier){
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create channel for DID ${didIdentifier}`, err));
                 }
             }
-            function makeRequest(){
+
+            function makeRequest() {
                 let url = `${endpoint}/mq/receive-message/${encodeURI(didIdentifier)}`;
                 let options = {};
 
@@ -19143,7 +19164,7 @@ function DemoPKDocument(identifier){
 
                 request.then((response) => {
                     return response.text();
-                }).then((message)=>{
+                }).then((message) => {
                     return callback(undefined, message);
                 }).catch((err) => {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Unable to read message`, err));
@@ -19175,7 +19196,6 @@ function DEMO_DIDMethod(){
 module.exports.create_demo_DIDMethod = function(){
     return new DEMO_DIDMethod();
 }
-
 },{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
 function ConstDID_Document_Mixin(target, domain, name) {
     let mixin = require("../W3CDID_Mixin");
