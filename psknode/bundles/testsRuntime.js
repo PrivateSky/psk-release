@@ -466,7 +466,7 @@ class ETH {
     }
 
     getAllVersions(callback) {
-        readFromBlockChain(this.commandData, anchorID, callback);
+        readFromBlockChain(this.commandData, this.commandData.anchorId, callback);
     }
 
     getLatestVersion(callback) {
