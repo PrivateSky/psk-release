@@ -10132,13 +10132,28 @@ function BrickMapController(options) {
                     }
 
                     const lastAnchoredHashLink = state.getLastAnchoredHashLink();
-                    if (!lastAnchoredHashLink) {
+                    /*if (!lastAnchoredHashLink) {
                         anchoring.createAnchor(keySSI, (err) => {
                             if (err) {
                                 return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                             }
 
                             anchoring.appendToAnchor(keySSI, signedHashLink, '', updateAnchorCallback);
+                        });
+                    } else {
+                        anchoring.appendToAnchor(keySSI, signedHashLink, lastAnchoredHashLink, updateAnchorCallback);
+                    }*/
+                    //TODO: update the smart contract and after that uncomment the above code and eliminate the following if statement
+                    if (!lastAnchoredHashLink) {
+                        anchoring.getAllVersions(keySSI, (err, versions)=>{
+                            if(err){
+                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
+                            }
+
+                            if (versions && versions.length === 0) {
+                                return anchoring.appendToAnchor(keySSI, signedHashLink, null, updateAnchorCallback);
+                            }
+                            return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                         });
                     } else {
                         anchoring.appendToAnchor(keySSI, signedHashLink, lastAnchoredHashLink, updateAnchorCallback);
@@ -18159,9 +18174,16 @@ function ConstDSUFactory(options) {
         if(typeof options.useSSIAsIdentifier === "undefined" || !options.useSSIAsIdentifier){
             throw Error("Creating a DSU using keySSI from the arraySSI family not allowed. Use the resolver.createDSUForExisting method instead.");
         }
-
-        // enable options.validationRules.preWrite to stop content update
-        this.barFactory.create(keySSI, options, callback);
+        //preventing default mechanism that forces an anchor at the dsu creation
+        options.addLog = false;
+        //testing if a constDSU already exists in order to prevent new instances
+        this.barFactory.load(keySSI, options, (err, loadedInstance)=>{
+            if(!err){
+                return callback(new Error("ConstDSU already exists! Can't be created again."));
+            }
+            // enable options.validationRules.preWrite to stop content update
+            this.barFactory.create(keySSI, options, callback);
+        });
     };
 
     /**
@@ -18236,45 +18258,69 @@ function DSUFactory(options) {
      * @param {object} options
      * @return {Archive}
      */
-    const createInstance = (keySSI, options) => {
-        let identifier = keySSI;
-        if(typeof identifier == "string"){
-            let bar = forcedArchiveSingletonsCache[identifier];
-            if(bar) return bar;
+    const createInstance = (keySSI, options, initializationMethod, callback) => {
+        const INIT = "init";
+        const allowedInitMethods = [INIT, "load"];
+        if(allowedInitMethods.indexOf(initializationMethod) === -1){
+            throw Error("wrong usage of the createInstace method");
         }
 
-        const ArchiveConfigurator = barModule.ArchiveConfigurator;
-        ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
-        const archiveConfigurator = new ArchiveConfigurator();
-        archiveConfigurator.setCache(cache);
-        const envTypes = require("overwrite-require").constants;
-        if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE &&
-            $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE &&
-            $$.environmentType !== envTypes.WEB_WORKER_ENVIRONMENT_TYPE){
-            archiveConfigurator.setFsAdapter("FsAdapter");
-        }
-        archiveConfigurator.setBufferSize(MAX_BRICK_SIZE);
-        archiveConfigurator.setKeySSI(keySSI);
-        let brickMapStrategyName = options.brickMapStrategy;
-        let anchoringOptions = options.anchoringOptions;
-        let brickMapStrategy;
-        try {
-            brickMapStrategy = createBrickMapStrategy(brickMapStrategyName, anchoringOptions);
+        let bar;
+        try{
+            let identifier = keySSI;
+            if(typeof identifier == "string"){
+                let bar = forcedArchiveSingletonsCache[identifier];
+                if(bar) return bar;
+            }
 
+            const ArchiveConfigurator = barModule.ArchiveConfigurator;
+            ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
+            const archiveConfigurator = new ArchiveConfigurator();
+            archiveConfigurator.setCache(cache);
+            const envTypes = require("overwrite-require").constants;
+            if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE &&
+                $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE &&
+                $$.environmentType !== envTypes.WEB_WORKER_ENVIRONMENT_TYPE){
+                archiveConfigurator.setFsAdapter("FsAdapter");
+            }
+            archiveConfigurator.setBufferSize(MAX_BRICK_SIZE);
+            archiveConfigurator.setKeySSI(keySSI);
+            let brickMapStrategyName = options.brickMapStrategy;
+            let anchoringOptions = options.anchoringOptions;
+
+            let brickMapStrategy = createBrickMapStrategy(brickMapStrategyName, anchoringOptions);
             archiveConfigurator.setBrickMapStrategy(brickMapStrategy);
 
             if (options.validationRules) {
                 archiveConfigurator.setValidationRules(options.validationRules);
             }
-        }catch(e) {
-            throw e;
+
+            bar = barModule.createArchive(archiveConfigurator);
+            const DSUBase = require("./mixins/DSUBase");
+            DSUBase(bar);
+            forcedArchiveSingletonsCache[identifier] = bar;
+
+        }catch(err){
+            return callback(err);
         }
 
-        const bar = barModule.createArchive(archiveConfigurator);
-        const DSUBase = require("./mixins/DSUBase");
-        DSUBase(bar);
-        forcedArchiveSingletonsCache[identifier] = bar;
-        return bar;
+        let defaultCallback = err => {
+            callback(err, bar)
+        };
+
+        let initCallback = (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof options === "object" && options.addLog) {
+                return bar.dsuLog("DSU created on " + Date.now(), defaultCallback);
+            }
+
+            callback(err, bar);
+        }
+
+        bar[initializationMethod](initializationMethod === INIT ? initCallback : defaultCallback);
     }
 
     /**
@@ -18331,27 +18377,14 @@ function DSUFactory(options) {
         }
         options = options || {};
         if (options.useSSIAsIdentifier) {
-            let bar;
-            try {
-                bar = createInstance(keySSI, options);
-            } catch (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
-            }
-            return bar.init(err => callback(err, bar));
+            return createInstance(keySSI, options, "init", callback);
         }
 
         initializeKeySSI(keySSI, (err, _keySSI) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to initialize keySSI <${keySSI.getIdentifier(true)}>`, err));
             }
-
-            let bar;
-            try {
-                bar = createInstance(_keySSI, options);
-            } catch (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
-            }
-            bar.init(err => callback(err, bar));
+            return createInstance(_keySSI, options, "init", callback);
         });
     }
 
@@ -18377,13 +18410,7 @@ function DSUFactory(options) {
             options = undefined;
         }
         options = options || {};
-        let bar;
-        try {
-            bar = createInstance(keySSI, options);
-        } catch (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create DSU instance`, err));
-        }
-        bar.load(err => callback(err, bar));
+        createInstance(keySSI, options, "load", callback);
     }
 }
 
@@ -20660,12 +20687,12 @@ const versions = (keySSI, authToken, callback) => {
         const fetchAnchor = (service) => {
             return fetch(`${service}/anchor/${dlDomain}/get-all-versions/${anchorId}`)
                 .then((response) => {
-                    return response.json().then((hlStrings) => {
+                    return response.json().then(async(hlStrings) => {
                         const hashLinks = hlStrings.map((hlString) => {
                             return keyssi.parse(hlString);
                         });
 
-                        const validatedHashLinks = $$.promisify(validateHashLinks)(keySSI, hashLinks);
+                        const validatedHashLinks = await $$.promisify(validateHashLinks)(keySSI, hashLinks);
 
                         // cache.put(anchorId, hlStrings);
                         return validatedHashLinks;
@@ -21273,7 +21300,7 @@ const isValidVaultCache = () => {
     return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
 }
 
-const isValidBrickHash = async (hashLinkSSI, brickData) => {
+const isValidBrickHash = (hashLinkSSI, brickData) => {
     const ensureIsBuffer = require("swarmutils").ensureIsBuffer;
     const crypto = openDSU.loadAPI("crypto");
     const hashFn = crypto.getCryptoFunctionForKeySSI(hashLinkSSI, "hash");
@@ -21328,14 +21355,19 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
             Promise
                 .all(queries)
                 .then(async (responses) => {
+                    let brickContent;
                     for (const response of responses) {
                         const brickData = await response.arrayBuffer();
-                        if (await isValidBrickHash(hashLinkSSI, brickData)) {
+                        if (isValidBrickHash(hashLinkSSI, brickData)) {
                             if (typeof cache !== "undefined") {
                                 cache.put(brickHash, brickData);
                             }
-                            return callback(undefined, brickData);
+                            brickContent = brickData;
+                            break;
                         }
+                    }
+                    if(brickContent){
+                        return callback(undefined, brickContent);
                     }
                     throw Error(`Failed to validate brick <${brickHash}>`);
                 })
@@ -28121,20 +28153,7 @@ const createDSU = (templateKeySSI, options, callback) => {
             }
             addDSUInstanceInCache(dsuInstance, callback);
         }
-
-        dsuInstance.getKeySSIAsObject((err, keySSI) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get SeedSSI`, err));
-            }
-
-            // const sc = require("../sc").getSecurityContext();
-            // sc.registerKeySSI(keySSI);
-            if (typeof options === "object" && options.addLog && keySSI.getTypeName() !== KEY_SSIS.CONST_SSI) {
-                dsuInstance.dsuLog("DSU created on " + Date.now(), addInCache);
-            } else {
-                addInCache(undefined, dsuInstance);
-            }
-        });
+        addInCache(undefined, dsuInstance);
     });
 };
 
