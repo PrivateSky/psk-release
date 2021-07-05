@@ -86,6 +86,14 @@ global.testsRuntimeLoadModules = function(){
 	if(typeof $$.__runtimeModules["bricksledger"] === "undefined"){
 		$$.__runtimeModules["bricksledger"] = require("bricksledger");
 	}
+
+	if(typeof $$.__runtimeModules["zmq_adapter"] === "undefined"){
+		$$.__runtimeModules["zmq_adapter"] = require("zmq_adapter");
+	}
+
+	if(typeof $$.__runtimeModules["dsu-wizard"] === "undefined"){
+		$$.__runtimeModules["dsu-wizard"] = require("dsu-wizard");
+	}
 };
 if (false) {
 	testsRuntimeLoadModules();
@@ -97,7 +105,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
+},{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","dsu-wizard":"dsu-wizard","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
 const { ALIAS_SYNC_ERR_CODE } = require("../utils");
 const { readChannelForLastMessage, readBody, readChannel, publishToChannel } = require("./subscribe-utils");
 
@@ -1847,7 +1855,7 @@ function ChannelsManager(server) {
 module.exports = ChannelsManager;
 }).call(this)}).call(this,"/modules/apihub/components/channelManager")
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","crypto":false,"fs":false,"swarmutils":"swarmutils","zmq_adapter":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","crypto":false,"fs":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js":[function(require,module,exports){
 const config = require("../../config");
 
 function Config(server) {
@@ -2776,12 +2784,17 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 
 			//if queue is empty we should try to deliver the message to a potential subscriber that waits
 			const subs = subscribers[queueName];
-			deliverMessage(subs, message, (err, counter) => {
-				if (err || counter === 0) {
-					storeMessage(queueName, message, callback);
+			storeMessage(queueName, message, (err)=>{
+				if (err) {
+					return callback(err);
 				}
-				callback(undefined);
-			});
+				return _readMessage(queueName, (err, _message) => {
+					if (err) {
+						return callback(err);
+					}
+					deliverMessage(subs, _message, callback);
+				});
+			})
 		});
 	}
 
@@ -2882,7 +2895,8 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 	}
 
 	function takeMessageHandler(request, response) {
-		readMessage(request.params.queueName, (err, message) => {
+		const queueName = request.params.queueName;
+		readMessage(queueName, (err, message) => {
 			if (err) {
 				console.log(`Caught an error during message reading from ${queueName}`, err);
 				send(response, 500);
@@ -3696,7 +3710,7 @@ function requestFactory(virtualMQAddress, zeroMQAddress) {
 }
 
 module.exports = requestFactory;
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js":[function(require,module,exports){
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js":[function(require,module,exports){
 function removeConfigComponent(config) {
     if (config.componentsConfig && config.componentsConfig.config) {
         delete config.componentsConfig.config;
@@ -3836,11 +3850,14 @@ function migrate(oldConfig, configFolderPath) {
     const apihubJsonConfigPath = path.join(configFolderPath, "apihub.json");
     console.log(`Generating apihub.json config file at ${apihubJsonConfigPath}...`);
 
+    if (!fs.existsSync(configFolderPath)) {
+        fs.mkdirSync(configFolderPath, { recursive: true });
+    }
     fs.writeFileSync(apihubJsonConfigPath, JSON.stringify(config, null, 2));
 
     const domainConfigsFolderPath = path.join(configFolderPath, "domains");
     if (!fs.existsSync(domainConfigsFolderPath)) {
-        fs.mkdirSync(domainConfigsFolderPath);
+        fs.mkdirSync(domainConfigsFolderPath, { recursive: true });
     }
 
     Object.keys(domainConfigs).forEach((domain) => {
@@ -16406,7 +16423,7 @@ class Broadcaster {
     broadcastPBlock(pBlock) {
         const validators = getValidatorsForCurrentDomain(this.executionEngine);
         if (!validators || !validators.length) {
-            console.log("[Broadcaster] No validators found for current domain");
+            this._logger.info("[Broadcaster] No validators found for current domain");
             return;
         }
 
@@ -16525,8 +16542,6 @@ class CommandHistoryStorage {
         this.optimisticFilePath = path.join(basePath, "optimistic");
         this.validatedFilePath = path.join(basePath, "validated");
 
-        console.log("!!!!!basePath", basePath);
-
         // this.optimisticStreamWriter = fs.createWriteStream(this.optimisticFilePath, { flags: "a" });
         // this.validatedStreamWriter = fs.createWriteStream(this.validatedFilePath, { flags: "a" });
     }
@@ -16628,10 +16643,6 @@ class ValidatorContractExecutor {
 
     async getPBlockAsync(pBlockHashLinkSSI) {
         return await this._callSafeCommand("consensus", "getPBlock", [pBlockHashLinkSSI]);
-    }
-
-    async getProposedPBlockForBlock(blockNumber) {
-        return await this._callSafeCommand("consensus", "getProposedPBlockForBlock", [blockNumber]);
     }
 
     async proposeValidatorAsync(proposedValidator) {
@@ -16788,7 +16799,6 @@ class ValidatorSynchronizer {
         this._logger.info(`Validator '${validatorDID}' responded with block number ${number} and latest hash ${hash}...`);
 
         const { number: latestBlockNumber, hash: latestBlockHash } = this.getLatestBlockInfo();
-        console.log("this.getLatestBlockInfo()", this.getLatestBlockInfo());
         if (latestBlockNumber < number) {
             this._logger.info(`Starting synchronization with validator '${validatorDID}'...`);
 
@@ -16934,6 +16944,7 @@ const {
 } = require("./utils");
 const Block = require("../Block");
 const ValidatorSynchronizer = require("./ValidatorSynchronizer");
+const PBlockAddedMessage = require("../Broadcaster/PBlockAddedMessage");
 
 class ConsensusCore {
     constructor(
@@ -17046,22 +17057,6 @@ class ConsensusCore {
 
         await this.validatePBlockAsync(pBlock);
 
-        const { blockNumber } = pBlock;
-
-        let pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
-        if (pendingBlock) {
-            if (pendingBlock.isConsensusRunning) {
-                throw new Error(
-                    `Consensus is currently running for block number ${blockNumber}. PBlock ${pBlock.hashLinkSSI} rejected.`
-                );
-            }
-        } else {
-            await this._startConsensusForBlockNumber(blockNumber);
-            pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
-        }
-
-        const { pBlocks, validators } = pendingBlock;
-
         // return a promise when the final consensus is reached
         return new Promise(async (resolve, reject) => {
             pBlock.onConsensusFinished = (error, result) => {
@@ -17071,20 +17066,47 @@ class ConsensusCore {
                 resolve(result);
             };
 
-            pBlocks.push(pBlock);
-
-            const canStartConsensus = validators.length === pBlocks.length;
-            if (canStartConsensus) {
-                pendingBlock.isConsensusRunning = true;
-                clearTimeout(pendingBlock.blockTimeout);
-
-                this._startConsensusForPendingBlock(pendingBlock);
-            } else {
-                this._logger.info(
-                    `Consensus for pBlock ${blockNumber} has received ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`
-                );
+            reject = $$.makeSaneCallback(reject);
+            try {
+                await this._addPBlockToPendingBlock(pBlock);
+            } catch (error) {
+                reject(error);
             }
         });
+    }
+
+    async addExternalPBlockInConsensus(pBlockMessage) {
+        callback = $$.makeSaneCallback(callback);
+
+        this.addExternalPBlockInConsensusAsync(pBlockMessage)
+            .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
+    }
+
+    async addExternalPBlockInConsensusAsync(pBlockMessage) {
+        if (!this._isRunning) {
+            throw new Error("Consensus not yet running");
+        }
+
+        if (!(pBlockMessage instanceof PBlockAddedMessage)) {
+            throw new Error("pBlock not instance of PBlock");
+        }
+
+        let pBlock;
+        if (pBlockMessage.pBlockHashLinkSSI) {
+            this._logger.debug(`Getting external pBlock ${pBlockMessage.pBlockHashLinkSSI} from pBlock message`, pBlockMessage);
+            const { validatorDID, validatorURL, pBlockHashLinkSSI } = pBlockMessage;
+            const validatorContractExecutor = validatorContractExecutorFactory.create(this._domain, validatorDID, validatorURL);
+            pBlock = await validatorContractExecutor.getPBlockAsync(pBlockHashLinkSSI);
+
+            this._logger.debug(`Validating external pBlock ${pBlockMessage.pBlockHashLinkSSI}...`);
+            await this.validatePBlockAsync(pBlock);
+        } else {
+            this._logger.debug(`Received empty external pBlock`, pBlockMessage);
+            pBlock = new PBlock(pBlockMessage);
+        }
+
+        await this._addPBlockToPendingBlock(pBlock);
     }
 
     validatePBlock(pBlock, callback) {
@@ -17119,7 +17141,37 @@ class ConsensusCore {
         }
     }
 
-    async _startConsensusForBlockNumber(blockNumber) {
+    async _addPBlockToPendingBlock(pBlock) {
+        const { blockNumber } = pBlock;
+
+        let pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
+        if (pendingBlock) {
+            if (pendingBlock.isConsensusRunning) {
+                throw new Error(`Consensus is currently running for block number ${blockNumber}.`);
+            }
+        } else {
+            await this._createPendingBlockForBlockNumber(blockNumber);
+            pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
+        }
+
+        const { pBlocks, validators } = pendingBlock;
+
+        pBlocks.push(pBlock);
+
+        const canStartConsensus = validators.length === pBlocks.length;
+        if (canStartConsensus) {
+            pendingBlock.isConsensusRunning = true;
+            clearTimeout(pendingBlock.blockTimeout);
+
+            this._startConsensusForPendingBlock(pendingBlock);
+        } else {
+            this._logger.info(
+                `Consensus for pBlock ${blockNumber} has received ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`
+            );
+        }
+    }
+
+    async _createPendingBlockForBlockNumber(blockNumber) {
         const blockTimeout = setTimeout(() => {
             const pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
             // the block timeout has occured after the consensus has been started, so we ignore the timeout
@@ -17176,10 +17228,11 @@ class ConsensusCore {
     }
 
     async _executePBlocks(pBlocks) {
-        sortPBlocks(pBlocks);
+        const populatedPBlocks = pBlocks.filter((pBlock) => !pBlock.isEmpty);
+        sortPBlocks(populatedPBlocks);
 
-        for (let index = 0; index < pBlocks.length; index++) {
-            const pBlock = pBlocks[index];
+        for (let index = 0; index < populatedPBlocks.length; index++) {
+            const pBlock = populatedPBlocks[index];
             const callback =
                 typeof pBlock.onConsensusFinished === "function" ? $$.makeSaneCallback(pBlock.onConsensusFinished) : () => {};
 
@@ -17221,7 +17274,7 @@ module.exports = {
     create,
 };
 
-},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./ValidatorContractExecutorFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js","./ValidatorSynchronizer":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./ValidatorContractExecutorFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js","./ValidatorSynchronizer":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
 const Block = require("../Block");
 const { checkIfPathExists, ensurePathExists } = require("../utils/fs-utils");
 const { getValidatorsForCurrentDomain } = require("../utils/bdns-utils");
@@ -17401,9 +17454,10 @@ class ExecutionEngine {
         const openDSU = require("opendsu");
         const resolver = openDSU.loadApi("resolver");
 
-        this._logger.debug("Loading DSU...");
+        const constitution = this.domainConfig.contracts.constitution;
+        this._logger.debug(`Loading DSU ${constitution}...`);
         const loadRawDossier = $$.promisify(resolver.loadDSU);
-        const rawDossier = await loadRawDossier(this.domainConfig.contracts.constitution);
+        const rawDossier = await loadRawDossier(constitution);
 
         this._logger.debug("Loading contract configs...");
         const contractConfigs = await getContractConfigs(rawDossier);
@@ -18089,6 +18143,7 @@ class PBlock {
         this.validatorSignature = validatorSignature;
         this.hashLinkSSI = hashLinkSSI;
         this.onConsensusFinished = onConsensusFinished;
+        this.isEmpty = !commands || !commands.length;
     }
 
     sign(validatorDID) {
@@ -21320,7 +21375,798 @@ function AsyncDispatcher(finalCallback) {
 }
 
 module.exports = AsyncDispatcher;
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js":[function(require,module,exports){
+function CommandRegistry(server){
+	const URL_PREFIX = require("./constants").URL_PREFIX;
+
+	this.register = (url, method, commandFactory)=>{
+		const fullUrl = "/dsu-wizard/:domain"+url+"/:transactionId";
+		console.log("Registering url", fullUrl, method);
+		server[method](fullUrl, (req, res)=>{
+			commandFactory(req, (err, command)=>{
+				if(err){
+					console.log(err);
+					res.statusCode = 500;
+					return res.end();
+				}
+
+				const transactionManager = require("./TransactionManager");
+				transactionManager.addCommandToTransaction(req.params.transactionId, command, (err)=>{
+					if(err){
+						console.log(err);
+						res.statusCode = 500;
+						return res.end();
+					}
+
+					res.statusCode = 200;
+					res.end();
+				});
+			});
+		});
+	}
+}
+
+module.exports = {
+	getRegistry : function(server){
+		return new CommandRegistry(server);
+	}
+};
+},{"./TransactionManager":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionManager.js","./constants":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/constants.js"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionManager.js":[function(require,module,exports){
+function TransactionsManager(){
+	const serverConfig = require("apihub").getServerConfig();
+	const config = serverConfig.componentsConfig["dsu-wizard"];
+
+	const WorkerPoolManager = require("./WorkerPoolManager.js");
+
+	const {persistTransaction, getTransaction, getWorkerScript} = require("./TransactionUtils");
+
+	const numberOfWorkers = config.workers || 5;
+	const poolManager = new WorkerPoolManager(getWorkerScript(), numberOfWorkers);
+
+	this.persistTransaction = persistTransaction;
+	this.getTransaction = getTransaction;
+
+	this.beginTransaction = function(req, callback){
+		const crypto = require("pskcrypto");
+		const randSize = require("./constants").transactionIdLength;
+
+		let transactionId = crypto.randomBytes(randSize).toString('hex');
+		let transaction = {
+			id: transactionId,
+			commands: [],
+			context: {
+				result: {},
+				dlDomain: req.params.domain,
+				domain: req.params.domain,
+				options: {useSSIAsIdentifier: false}
+			}
+		};
+
+		persistTransaction(transaction, (err) => {
+			if(err){
+				return callback(err);
+			}
+			callback(undefined, transactionId);
+		});
+	}
+
+	this.addCommandToTransaction = function(transactionId, command, callback){
+		getTransaction(transactionId, (err, transaction)=>{
+			if(!transaction || err){
+				callback('Transaction could not be found');
+			}
+
+			transaction.commands.push(command);
+			persistTransaction(transaction, (err)=>{
+				if(err){
+					return callback(err);
+				}
+				callback();
+			});
+		});
+	}
+
+	this.closeTransaction = function (transactionId, authorization, callback) {
+		getTransaction(transactionId, (err, transaction) => {
+			if (typeof transaction === "undefined" || err) {
+				return callback(Error('Transaction could not be found'));
+			}
+
+			poolManager.runTask({transactionId, authorization}, (err, taskResult)=>{
+				if(err){
+					return callback(err);
+				}
+
+				let {error, result} = taskResult;
+				callback(error, result);
+			});
+		});
+	}
+}
+
+module.exports = new TransactionsManager();
+
+},{"./TransactionUtils":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionUtils.js","./WorkerPoolManager.js":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/WorkerPoolManager.js","./constants":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/constants.js","apihub":"apihub","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionUtils.js":[function(require,module,exports){
+const serverConfig = require("apihub").getServerConfig();
+const config = serverConfig.componentsConfig["dsu-wizard"];
+
+function persistTransaction(transaction, callback){
+	const fs = require("fs");
+	let serialization = JSON.stringify(transaction, function(key, value) {
+		return typeof value === "function" ? value.toString() : value;
+	});
+	fs.writeFile(getFileForTransaction(transaction.id), serialization, callback);
+}
+
+function clearTransaction(transaction, callback){
+	const fs = require("fs");
+	fs.unlink(getFileForTransaction(transaction.id), callback);
+}
+
+function getFileForTransaction(transactionId){
+	let path = require("path");
+	const storage = path.join(serverConfig.storage, config.storage);
+
+	const fs = require("fs");
+	if (!fs.existsSync(storage)) {
+		console.log(`[DSU-Wizard] Creating storage folder at path: <${storage}>`);
+		fs.mkdirSync(storage, {recursive: true});
+	}
+
+	return path.join(storage, transactionId);
+}
+
+function getTransaction(transactionId, callback){
+	function testIfFunction(value) {
+		return /^function.*?\(.*?\)\s*\{(\s*|.*)*\}$/.test(value);
+	}
+
+	function convertStringIntoFunction(value) {
+		return eval(`(${value})`);
+	}
+
+	const fs = require("fs");
+	fs.readFile(getFileForTransaction(transactionId), (err, transactionBuffer)=>{
+		let serialization = transactionBuffer.toString();
+		let transaction;
+		try{
+			transaction = JSON.parse(serialization, function(key, value) {
+				if (testIfFunction(value)) {
+					return convertStringIntoFunction(value);
+				} else {
+					return value;
+				}
+			});
+		}catch(err){
+			return callback(err);
+		}
+		return callback(undefined, transaction);
+	});
+}
+
+function initializeWorker(){
+
+	function TransactionWorker(){
+		const { parentPort, isMainThread } = require('worker_threads');
+
+		if(isMainThread){
+			throw Error("This script is not meant to be ran in a main thread!");
+		}
+
+		let busy = false;
+		function deliverMessage(message){
+			busy = false;
+			parentPort.postMessage(message);
+		}
+
+		parentPort.on('message', (message) => {
+			//console.log("Received message", message);
+			if(busy){
+				return parentPort.postMessage({ error: Error("Worker still busy...") });
+			}
+			if(typeof message.transactionId !== "undefined"){
+				busy = true;
+				const {transactionId, authorization} = message;
+
+				return getTransaction(transactionId, (err, transaction)=>{
+					if(err){
+						return deliverMessage({error: err});
+					}
+					processTransaction(transaction, authorization, (err, result)=>{
+						deliverMessage({ error: err, result });
+					});
+				});
+			}
+			deliverMessage({ error: Error("Unknown message type") });
+		});
+
+		function processTransaction(transaction, authorization, callback){
+			let newKeySSIJustInitialised = false;
+			if (typeof transaction === "undefined") {
+				callback(Error('Transaction could not be found'));
+			}
+
+			function authInterceptor(target, callback){
+				const {url, headers} = target;
+				if(typeof authorization !== "undefined"){
+					headers['authorization'] = authorization;
+				}else{
+					console.log(`Missing authorization info. Not able to set authorization header for req ${url}. Request could fail if authorization not provided!`);
+				}
+
+				//console.log("Setting authorization header for url", headers, url);
+				return callback(undefined, target);
+			}
+
+			function enableAuthorization(){
+				let http = require("opendsu").loadApi("http");
+				http.registerInterceptor(authInterceptor);
+			}
+
+			function resetAuthorization(){
+				let http = require("opendsu").loadApi("http");
+				http.unregisterInterceptor(authInterceptor);
+			}
+
+			const executeCommand = () => {
+				let command = transaction.commands.pop();
+				//console.log("Preparing to execute command", command);
+				if (!command) {
+					if (transaction.commands.length === 0) {
+						// Anchor all changes in this transaction
+						return transaction.context.dsu.doAnchoring((err, result) => {
+							if (err) {
+								return callback(new Error(`Failed to anchor DSU`, err));
+							}
+							return transaction.context.dsu.getKeySSIAsString((err, keySSI)=>{
+								resetAuthorization();
+								callback(err, keySSI);
+							});
+						});
+					}
+				}
+
+				let commandMethod = command.method(...command.args);
+				commandMethod.execute(transaction.context, (err) => {
+					if (err) {
+						return callback(new Error(`Failed to execute command ${command.type} with args [${command.args}]`, err));
+					}
+
+					executeCommand();
+				});
+			}
+
+			if(typeof config.bundle !== "undefined"){
+				require(config.bundle);
+			}
+
+			const openDSU = require("opendsu");
+			const keyssi = openDSU.loadApi("keyssi");
+
+			let resolverMethod = 'loadDSU';
+			if (typeof transaction.context.keySSI === "undefined") {
+				transaction.context.keySSI = keyssi.createTemplateSeedSSI(transaction.context.domain);
+				resolverMethod = 'createDSU';
+				newKeySSIJustInitialised = true;
+			}
+
+			if (transaction.context.forceNewDSU) {
+				resolverMethod = 'createDSU';
+			}
+
+			const dsuOptions = transaction.context.options || {};
+			if (typeof dsuOptions.anchoringOptions === 'undefined') {
+				dsuOptions.anchoringOptions = {};
+			}
+
+			if (typeof dsuOptions.anchoringOptions.decisionFn !== 'function') {
+				dsuOptions.anchoringOptions.decisionFn = (brickMap, callback) => {
+					// Prevent "auto anchoring" each file
+					// Anchoring will be manually triggered
+					// when closing the transaction
+					callback(false);
+				};
+			}
+			let resolver = openDSU.loadApi("resolver");
+			let keyssiutil = openDSU.loadApi("keyssi");
+
+			let initialiseContextDSU = () => {
+				enableAuthorization();
+				const keyssiSpace = require("opendsu").loadApi("keyssi");
+				let ssi = transaction.context.keySSI;
+				if(typeof ssi === "string"){
+					ssi = keyssiSpace.parse(ssi);
+				}
+				resolver[resolverMethod](ssi, dsuOptions, (err, dsu) => {
+					if (err) {
+						return callback(new Error(`Failed to initialize context DSU`, err));
+					}
+					transaction.context.dsu = dsu;
+					//start executing the stored commands from transaction
+					executeCommand();
+				});
+			}
+
+			if (resolverMethod === "createDSU" && !newKeySSIJustInitialised) {
+				let testSSI = transaction.context.keySSI;
+				if(typeof testSSI === "string"){
+					testSSI = keyssiutil.parse(testSSI);
+				}
+				resolver.loadDSU(testSSI, dsuOptions, (err, dsu) => {
+					if (!err && dsu) {
+						return callback(new Error("DSU already exist, refusing to overwrite"));
+					}
+					//a DSU with this Seed does not exist, so it is safe to create one
+					initialiseContextDSU();
+				});
+			} else {
+				initialiseContextDSU();
+			}
+		}
+	}
+
+	new TransactionWorker();
+}
+
+function getWorkerScript(){
+	let script = "";
+
+	script += "const serverConfig = JSON.parse(\'"+JSON.stringify(serverConfig)+"\'); \n";
+	script += "const config = serverConfig.componentsConfig[\"dsu-wizard\"]; \n";
+	script += `${getTransaction.toString()} ${getFileForTransaction.toString()} (${initializeWorker.toString()})()`;
+
+	return script;
+}
+
+module.exports = {getTransaction, getFileForTransaction, clearTransaction, persistTransaction, getWorkerScript};
+
+},{"apihub":"apihub","fs":false,"opendsu":"opendsu","path":false,"worker_threads":false}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/WorkerPoolManager.js":[function(require,module,exports){
+const workers = {};
+const busyWorkers = {};
+const retryIntervalTimeout = 1000;
+
+function WorkerPoolManager(script, workerLimit = 5){
+
+	 function getWorker(callback){
+		const { Worker } = require('worker_threads');
+
+		function createNewWorker(cb){
+			let numberOfWorkers = Object.keys(workers).length;
+			if(numberOfWorkers === workerLimit){
+				setTimeout(()=>{
+					this.getWorker(callback);
+				}, retryIntervalTimeout);
+			}
+			//console.log("Creating a worker for script", script);
+			const worker = new Worker(script, { eval: true });
+			workers[worker.threadId] = worker;
+			return cb(undefined, worker);
+		}
+
+		function reserveWorker(){
+			const ws = Object.keys(workers);
+			const numberOfWorkers = ws.length;
+			const busy = Object.keys(busyWorkers);
+			const numberOfBusyWorkers = busy.length;
+
+			if((numberOfWorkers === 0 || numberOfWorkers === numberOfBusyWorkers) && numberOfWorkers < workerLimit){
+				// no worker available and the workerLimit not reached
+				return createNewWorker((err, worker)=>{
+					return callback(undefined, worker);
+				});
+			}
+
+			//searching for a free worker
+			for(let i=0; i<numberOfWorkers; i++){
+				const workerId = ws[i];
+				if(typeof busyWorkers[workerId] === "undefined"){
+					const worker = workers[workerId];
+					busyWorkers[workerId] = worker;
+					return callback(undefined, worker);
+				}
+			}
+
+			//no free worker available... retrying later
+			setTimeout(()=>{
+				reserveWorker();
+			}, retryIntervalTimeout);
+		}
+
+		reserveWorker();
+	}
+
+	function releaseWorker(worker){
+		busyWorkers[worker.threadId] = undefined;
+		delete busyWorkers[worker.threadId];
+	}
+
+	this.runTask = function(task, callback){
+		getWorker((err, worker) => {
+			if(err){
+				return callback(err);
+			}
+
+			let delivered = false;
+			function deliverMessage(err, result){
+				if(!delivered){
+					delivered = true;
+					releaseWorker(worker);
+					callback(err, result);
+				}else{
+					console.log("Something wrong happened during task execution.");
+				}
+			}
+
+			function messageHandler(message){
+				worker.off("message", messageHandler);
+				deliverMessage(undefined, message);
+			}
+
+			function errorHandler(err){
+				//console.log("Caught error", err);
+				worker.off("error", errorHandler);
+				//if the worker is in unstable state is better to remove it from the workers list
+				workers[worker.threadId] = undefined;
+				delete workers[worker.threadId];
+
+				deliverMessage(err);
+			}
+
+			worker.on("message", messageHandler);
+			worker.on("error", errorHandler);
+
+			worker.postMessage(task);
+
+		});
+	}
+}
+
+module.exports = WorkerPoolManager;
+},{"worker_threads":false}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/addFile.js":[function(require,module,exports){
+function AddFile(server){
+	const pathName = "path";
+	const path = require(pathName);
+	const fsName = "fs";
+	const fs = require(fsName);
+	const osName = "os";
+	const os = require(osName);
+
+	const utils = require("../utils");
+
+	function createAddFileCommand(filePath, dossierPath){
+		const command = {
+			execute: function(context, callback){
+				context.dsu.addFile(filePath, dossierPath, (err)=>{
+					if(err){
+						return callback(err);
+					}
+					//once the file is added into dossier we remove it.
+					const fs = require("fs");
+					fs.unlink(filePath, ()=>{
+						//we ignore errors that can appear during unlink on windows machines
+						return callback();
+					});
+				});
+			}
+		}
+
+		return command;
+	}
+
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+	commandRegistry.register("/addFile", "post", (req, callback)=>{
+		utils.formDataParser(req, (err, formData)=>{
+			if(err){
+				return callback(err);
+			}
+			if(formData.length === 0){
+				return callback('No files found');
+			}
+
+			let fileContent = formData[0].content;
+			const crypto = require("pskcrypto");
+
+			const dossierPath = req.headers["x-dossier-path"];
+			let tempFileName = crypto.randomBytes(10).toString('hex');
+
+			fs.mkdtemp(path.join(os.tmpdir(), req.params.transactionId), (err, directory) => {
+				if (err){
+					return callback(err);
+				}
+
+				const tempFilePath = path.join(directory, tempFileName);
+				const file = fs.createWriteStream(tempFilePath);
+
+				file.write(fileContent);
+
+				let cmd = {
+					args: [tempFilePath, dossierPath],
+					type: "addFile",
+					method: createAddFileCommand
+				}
+
+				return callback(undefined, cmd);
+			});
+		});
+	});
+}
+
+module.exports = AddFile;
+},{"../CommandRegistry":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js","../utils":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/utils.js","fs":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/copy.js":[function(require,module,exports){
+function Copy(server) {
+    function createCopyCommand(src, dest) {
+        const command = {
+            execute: function (context, callback) {
+                context.dsu.cloneFolder(src, dest, callback);
+            }
+        }
+
+        return command;
+    }
+
+    const commandRegistry = require("../CommandRegistry").getRegistry(server);
+    commandRegistry.register("/copy", "post", (req, callback) => {
+        const src = req.headers["x-src-path"];
+        const dest = req.headers["x-dest-path"];
+
+        let cmd = {
+            args: [src, dest],
+            type: "copy",
+            method: createCopyCommand
+        }
+
+        return callback(undefined, cmd);
+    });
+}
+
+module.exports = Copy;
+},{"../CommandRegistry":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/dummyCommand.js":[function(require,module,exports){
+module.exports.create = function(name){
+	function createExecutableCommand(){
+		const command = {
+			execute : function(context, callback){
+				return callback();
+			}
+		}
+		return command;
+	}
+
+	let cmd = {
+		args: [],
+		type: name,
+		method: createExecutableCommand
+	}
+	return cmd;
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/index.js":[function(require,module,exports){
+const addFile = require("./addFile");
+const mount = require("./mount");
+const setKeySSI = require("./setKeySSI");
+const copy = require("./copy");
+
+module.exports = {
+	addFile,
+	mount,
+	setKeySSI,
+	copy
+}
+},{"./addFile":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/addFile.js","./copy":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/copy.js","./mount":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/mount.js","./setKeySSI":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/setKeySSI.js"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/mount.js":[function(require,module,exports){
+function mount(server){
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+
+	commandRegistry.register("/mount", "post", (req, callback)=>{
+		const path = req.headers['x-mount-path'];
+		const keySSI = req.headers['x-mounted-dossier-seed'];
+
+		if(typeof path === "undefined" || typeof keySSI === "undefined"){
+			return callback('Wrong usage of the command');
+		}
+
+		function createExecutableCommand(path, keySSI){
+			const command = {
+				execute : function(context, callback){
+					context.dsu.mount(path, keySSI, callback);
+				}
+			}
+			return command;
+		}
+
+		let cmd = {
+			args: [path, keySSI],
+			type: "mount",
+			method: createExecutableCommand
+		}
+
+		return callback(undefined, cmd);
+	});
+}
+
+module.exports = mount;
+},{"../CommandRegistry":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/setKeySSI.js":[function(require,module,exports){
+
+
+function setKeySSI(server){
+	const commandRegistry = require("../CommandRegistry").getRegistry(server);
+	const utils = require("../utils");
+
+	commandRegistry.register("/setKeySSI", "post", (req, callback)=>{
+		const transactionManager = require("../TransactionManager");
+		utils.bodyParser(req, (err)=>{
+			if(err){
+				return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to parse body`, err));
+			}
+
+			transactionManager.getTransaction(req.params.transactionId, (err, transaction) => {
+				if (err || !transaction) {
+					return callback(err);
+				}
+				transaction.context.keySSI = req.body;
+				transaction.context.options.useSSIAsIdentifier = true;
+				transaction.context.forceNewDSU = req.headers['x-force-dsu-create'];
+				transactionManager.persistTransaction(transaction, (err) => {
+					if (err) {
+						return callback(err);
+					}
+
+					const command = require("./dummyCommand").create("setKeySSI");
+					return callback(undefined, command);
+				});
+			});
+		});
+	});
+}
+
+module.exports = setKeySSI;
+},{"../CommandRegistry":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js","../TransactionManager":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionManager.js","../utils":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/utils.js","./dummyCommand":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/dummyCommand.js"}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/constants.js":[function(require,module,exports){
+const URL_PREFIX = '/dsu-wizard';
+const transactionIdLength = 32;
+
+module.exports = { URL_PREFIX, transactionIdLength};
+},{}],"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/utils.js":[function(require,module,exports){
+function bodyParser(req, callback) {
+    let bodyContent = '';
+
+    req.on('data', function (dataChunk) {
+        bodyContent += dataChunk;
+    });
+
+    req.on('end', function () {
+        req.body = bodyContent;
+        callback(undefined, req.body);
+    });
+
+    req.on('error', function (err) {
+        callback(err);
+    });
+}
+
+function formDataParser(req, callback) {
+    const buffers = [];
+    let formData = [];
+
+    req.on('data', function (dataChunk) {
+        buffers.push(dataChunk);
+    });
+
+    req.on('end', function () {
+        const dataBuf = $$.Buffer.concat(buffers);
+        newFormParser(dataBuf, retrieveBoundaryIdentifier(req));
+        req.formData = formData;
+        callback(undefined, req.formData);
+    });
+
+    req.on('error', function (err) {
+        callback(err);
+    });
+
+    function retrieveBoundaryIdentifier(req){
+        let contentType = req.headers["content-type"];
+        if(!contentType){
+            return;
+        }
+        const identifier = "boundary=";
+        let boundaryIndex = contentType.indexOf(identifier);
+
+        if(boundaryIndex !== -1){
+            return contentType.slice(boundaryIndex+identifier.length);
+        }
+    }
+
+    function newFormParser(data, boundary) {
+        //console.log("Read boundary", boundary);
+        let boundaryIndexes = [];
+        let offset = 0;
+        let indexCorrection = 0;
+
+        while(true){
+            let index = data.indexOf(boundary, offset);
+            if(offset===0 && index > 0){
+                //this mechanism is trying to solve the issue when into the header the boundary starts with "----" and
+                // into the body starts with "------"
+                indexCorrection = index;
+            }
+            if(index !== -1){
+                boundaryIndexes.push(index-indexCorrection);
+                offset = index + boundary.length + indexCorrection;
+            }else{
+                //we need to escape this index discovery loop because we can't find any other boundary so we are done
+                break;
+            }
+        }
+
+        let formItems = [];
+        for(let i=0; i<boundaryIndexes.length; i++){
+            if(i+1 >= boundaryIndexes.length){
+                break;
+            }
+            let f = data.slice(boundaryIndexes[i]+indexCorrection+boundary.length+"\r\n".length, boundaryIndexes[i+1]);
+
+            //console.log("item", f.toString());
+            formItems.push(f);
+        }
+
+        for(let i=0; i<formItems.length; i++){
+            let parsedItem = {};
+            let formItem = formItems[i];
+
+            let testContentDisposition = formItem.indexOf("Content-Disposition:") === 0;
+
+            if(testContentDisposition){
+                //we extract the content disposition until the first appearance of the group "\r\n"
+                let contentDisposition = formItem.slice(0, formItem.indexOf("\r\n"));
+                formItem = formItem.slice(contentDisposition.length+"\r\n".length);
+
+                let metas = contentDisposition.toString().split("; ");
+                metas.forEach(meta=>{
+                    if(meta.indexOf("name=") === 0){
+                        parsedItem.type = meta.replace("name=", "").replace(/\"|'/g, "");
+                    }
+                    if(meta.indexOf("filename=") === 0){
+                        parsedItem.fileName = meta.replace("filename=", "").replace(/\"|'/g, "");
+                    }
+                })
+            }
+
+            let testContentType = formItem.indexOf("Content-Type:") === 0;
+
+            if(testContentType){
+                let contentType = formItem.slice(0, formItem.indexOf("\r\n"));
+                formItem = formItem.slice(contentType.length+"\r\n".length);
+
+                parsedItem.contentType = contentType.toString().replace("Content-Type: ", "").replace(/\r\n/g, "");
+            }
+
+            //no matter if content type line exists or not there is a \r\n before the content
+            formItem = formItem.slice("\r\n".length);
+
+            parsedItem.content = formItem.slice(0, formItem.byteLength-"\r\n".length);
+            //console.log("ParsedItem", parsedItem);
+
+            formData.push(parsedItem);
+        }
+    }
+}
+
+function redirect(req, res) {
+    const URL_PREFIX = require("./constants").URL_PREFIX;
+    res.statusCode = 303;
+    let redirectLocation = 'index.html';
+
+    if (!req.url.endsWith('/')) {
+        redirectLocation = `${URL_PREFIX}/` + redirectLocation;
+    }
+
+    res.setHeader("Location", redirectLocation);
+    res.end();
+}
+
+module.exports = {
+    bodyParser,
+    formDataParser,
+    redirect
+}
+
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/constants.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
 function CryptoAlgorithmsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -32002,7 +32848,6 @@ function SecurityContext(keySSI) {
 
     this.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
         const privateKeyObj = {privateKeys: [privateKey]}
-
         storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
             if (err || !res) {
                 return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
@@ -32031,7 +32876,13 @@ function SecurityContext(keySSI) {
                 return callback(err);
             }
 
-            const privateKeysAsBuff = record.privateKeys.map(privateKey => $$.Buffer.from(privateKey));
+            const privateKeysAsBuff = record.privateKeys.map(privateKey => {
+                if(privateKey){
+                    return $$.Buffer.from(privateKey)
+                }
+
+                return privateKey;
+            });
             callback(undefined, privateKeysAsBuff);
         });
     };
@@ -32659,16 +33510,16 @@ function W3CDID_Mixin(target) {
         securityContext.decryptAsDID(target, encryptedMessage, callback);
     };
 
-    const saveNewKeyPairInSC = async (receiverDIDDocument, compatibleSSI) => {
+    const saveNewKeyPairInSC = async (didDocument, compatibleSSI) => {
         try {
-            await $$.promisify(securityContext.addPrivateKeyForDID)(receiverDIDDocument, compatibleSSI.getPrivateKey("raw"));
-            await $$.promisify(securityContext.addPublicKeyForDID)(receiverDIDDocument, compatibleSSI.getPublicKey("raw"));
+            await $$.promisify(securityContext.addPrivateKeyForDID)(didDocument, compatibleSSI.getPrivateKey("raw"));
+            await $$.promisify(securityContext.addPublicKeyForDID)(didDocument, compatibleSSI.getPublicKey("raw"));
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
         }
 
         try {
-            await $$.promisify(receiverDIDDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
+            await $$.promisify(didDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
         }
@@ -32685,10 +33536,10 @@ function W3CDID_Mixin(target) {
 
             const publicKeySSI = keySSISpace.createPublicKeySSI("seed", receiverPublicKey);
 
-            const encryptMessage = (receiverKeySSI) => {
+            const encryptMessage = (senderKeySSI) => {
                 let encryptedMessage;
                 try {
-                    encryptedMessage = crypto.ecies_encrypt_ds(senderSeedSSI, receiverKeySSI, message);
+                    encryptedMessage = crypto.ecies_encrypt_ds(senderKeySSI, publicKeySSI, message);
                 } catch (e) {
                     return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, e));
                 }
@@ -32704,7 +33555,7 @@ function W3CDID_Mixin(target) {
             }
 
             try {
-                await saveNewKeyPairInSC(receiverDIDDocument, compatibleSSI);
+                await saveNewKeyPairInSC(target, compatibleSSI);
             } catch (e) {
                 return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
             }
@@ -32714,7 +33565,7 @@ function W3CDID_Mixin(target) {
     };
 
     target.decryptMessageImpl = function (privateKeys, encryptedMessage, callback) {
-        let decryptedMessage;
+        let decryptedMessageObj;
         const decryptMessageRecursively = (privateKeyIndex) => {
             const privateKey = privateKeys[privateKeyIndex];
             if (typeof privateKey === "undefined") {
@@ -32724,12 +33575,12 @@ function W3CDID_Mixin(target) {
             const receiverSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
             receiverSeedSSI.initialize(target.getDomain(), privateKey);
             try {
-                decryptedMessage = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
+                decryptedMessageObj = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
             } catch (e) {
                 return decryptMessageRecursively(privateKeyIndex + 1);
             }
 
-            callback(undefined, decryptedMessage);
+            callback(undefined, decryptedMessageObj.message.toString());
         }
 
         decryptMessageRecursively(0);
@@ -32750,18 +33601,24 @@ function W3CDID_Mixin(target) {
                 return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, err));
             }
 
-            mqHandler.writeMessage(encryptedMessage, callback);
+            mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
         });
     };
 
-    target.readMessage = function ( callback) {
+    target.readMessage = function (callback) {
         const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(target);
-        mqHandler.previewMessage((err, encryptedMessage) => {
+        mqHandler.readMessage((err, encryptedMessage) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
             }
 
-            target.decryptMessage(encryptedMessage.message, callback);
+            let message;
+            try {
+                message = JSON.parse(encryptedMessage.message);
+            } catch (e) {
+              return callback(e);
+            }
+            target.decryptMessage(message, callback);
         });
     };
 
@@ -32994,7 +33851,7 @@ function ConstDID_Document_Mixin(target, domain, name) {
     }
 
     target.getPrivateKeys = () => {
-        return target.privateKey;
+        return [target.privateKey];
     };
 
     target.getPublicKey = (format, callback) => {
@@ -33140,7 +33997,8 @@ function GroupDID_Document(domain, groupName) {
             for (let i = 0; i < noMembers; i++) {
                 if (membersIds[i] !== message.getSender()) {
                     try {
-                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), membersIds[i])
+                        const receiverDIDDocument = await $$.promisify(w3cDID.resolveDID)(membersIds[i]);
+                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), receiverDIDDocument)
                     } catch (e) {
                         return callback(e);
                     }
@@ -33279,7 +34137,7 @@ function KeyDID_Document(isInitialisation, seedSSI) {
     };
 
     this.getPrivateKeys = () => {
-        return seedSSI.getPrivateKey()
+        return [seedSSI.getPrivateKey()];
     };
 
     return this;
@@ -35382,7 +36240,14 @@ const sig = require('./digitalsig')
 const crypto = require('crypto')
 
 module.exports = {
-    timingSafeEqual: crypto.timingSafeEqual,
+    timingSafeEqual: function(a, b){
+        const hashA = crypto.createHash("sha256");
+        const digestA = hashA.update(a).digest("hex");
+
+        const hashB = crypto.createHash("sha256");
+        const digestB = hashB.update(b).digest("hex");
+        return digestA === digestB;
+    },
     getRandomBytes: crypto.randomBytes,
     computeDigitalSignature: sig.computeDigitalSignature,
     verifyDigitalSignature: sig.verifyDigitalSignature,
@@ -45238,6 +46103,8 @@ module.exports = require('./moduleExports');
 
 
 },{"./blockchainSwarmTypes/asset_swarm_template":"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleExports.js","callflow":"callflow"}],"bricksledger":[function(require,module,exports){
+const Logger = require("./src/Logger");
+
 function BricksLedger(
     domain,
     validatorDID,
@@ -45249,13 +46116,14 @@ function BricksLedger(
     commandHistoryStorage
 ) {
     const Command = require("./src/Command");
-    const Logger = require("./src/Logger");
+    const PBlockAddedMessage = require("./src/Broadcaster/PBlockAddedMessage");
 
     const logger = new Logger(`[Bricksledger][${domain}][${validatorDID.getIdentifier()}]`);
 
     this.boot = async function () {
         logger.info("Booting BricksLedger...");
         await consensusCore.boot();
+        logger.info("Booting BricksLedger finished...");
     };
 
     this.getLatestBlockInfo = function (callback) {
@@ -45328,18 +46196,18 @@ function BricksLedger(
         }
     };
 
-    this.checkPBlockFromNetwork = async function (pBlock, callback) {
+    this.validatePBlockFromNetwork = async function (pBlockMessage, callback) {
         callback = $$.makeSaneCallback(callback);
 
-        if (!pBlock) {
-            return callback("pBlock not provided");
+        if (!pBlockMessage) {
+            return callback("pBlockMessage not provided");
         }
 
+        pBlockMessage = new PBlockAddedMessage(pBlockMessage);
+
         try {
-            pBlock = new PBlock(pBlock);
-            await consensusCore.validatePBlock(pBlock);
-            await consensusCore.addInConsensusAsync(pBlock);
-            pBlocksFactory.sendCurrentCommandsForConsensus();
+            await pBlockMessage.validateSignature();
+            await consensusCore.addExternalPBlockInConsensusAsync(pBlockMessage);
         } catch (error) {
             callback(error);
         }
@@ -45362,6 +46230,10 @@ const initiliseBrickLedger = async (
     }
 
     callback = $$.makeSaneCallback(callback);
+
+    const validatorDIDString = validatorDID && typeof validatorDID === "object" ? validatorDID.getIdentifier() : validatorDID;
+    const logger = new Logger(`[Bricksledger][${domain}][${validatorDIDString}]`);
+    logger.debug(`Starting initialization...`, { validatorURL, rootFolder, domainConfig: JSON.stringify(domainConfig) });
 
     try {
         if (typeof validatorDID === "string") {
@@ -45425,7 +46297,7 @@ const initiliseBrickLedger = async (
 
         callback(null, bricksLedger);
     } catch (error) {
-        console.log("error");
+        logger.log("Error initializing", error);
         callback(error);
     }
 };
@@ -45445,7 +46317,7 @@ module.exports = {
     createFSBrickStorage,
 };
 
-},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"buffer-crc32":[function(require,module,exports){
+},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js","./src/Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"buffer-crc32":[function(require,module,exports){
 
 var CRC_TABLE = [
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419,
@@ -46016,7 +46888,73 @@ Object.assign(module.exports, {
     deleteFoldersSync
 });
 
-},{"../utils/AsyncDispatcher":"/home/runner/work/privatesky/privatesky/modules/double-check/utils/AsyncDispatcher.js","./runner.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/runner.js","./standardAsserts.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardAsserts.js","./standardChecks.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardChecks.js","./standardExceptions.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardExceptions.js","./standardLogs.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardLogs.js","crypto":false,"fs":false,"os":false,"path":false}],"key-ssi-resolver":[function(require,module,exports){
+},{"../utils/AsyncDispatcher":"/home/runner/work/privatesky/privatesky/modules/double-check/utils/AsyncDispatcher.js","./runner.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/runner.js","./standardAsserts.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardAsserts.js","./standardChecks.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardChecks.js","./standardExceptions.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardExceptions.js","./standardLogs.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardLogs.js","crypto":false,"fs":false,"os":false,"path":false}],"dsu-wizard":[function(require,module,exports){
+(function (__dirname){(function (){
+function initWizard(server) {
+	const transactionManager = require("./TransactionManager");
+
+	server.post(`/dsu-wizard/:domain/begin`, (req, res)=>{
+		transactionManager.beginTransaction(req, (err, transactionId)=>{
+			if(err){
+				res.statusCode = 500;
+				return res.end();
+			}
+			res.write(transactionId);
+			res.end();
+		});
+	});
+
+	server.post(`/dsu-wizard/:domain/build/:transactionId`, (req, res)=>{
+		let authorization = req.headers['authorization'];
+		transactionManager.closeTransaction(req.params.transactionId, authorization,(err, result)=>{
+			if(err){
+				console.log(err);
+				res.statusCode = 500;
+				res.write(err.toString());
+				return res.end();
+			}
+			res.write(result);
+			res.end();
+		});
+	});
+
+	const commands = require("./commands");
+	Object.keys(commands).forEach((commandName)=>{
+		commands[commandName](server);
+	});
+
+	server.use(`/dsu-wizard`, require("./utils").redirect);
+
+	const pathName = "path";
+	const path = require(pathName);
+	if (!process.env.PSK_ROOT_INSTALATION_FOLDER) {
+		process.env.PSK_ROOT_INSTALATION_FOLDER = require("path").resolve("." + __dirname + "/../..");
+	}
+
+	const VirtualMQ = require('apihub');
+	const httpWrapper = VirtualMQ.getHttpWrapper();
+	const httpUtils = httpWrapper.httpUtils;
+	setTimeout(()=>{
+		server.use(`/dsu-wizard/:domain/*`, httpUtils.serveStaticFile(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, 'modules/dsu-wizard/web'), `dsu-wizard/`));
+	}, 1000);
+}
+
+module.exports = {
+	initWizard,
+	getTransactionManager : function(){
+		return require("./TransactionManager");
+	},
+	getCommandRegistry: function(server){
+		return require("./CommandRegistry").getRegistry(server);
+	},
+	getDummyCommand: function(){
+		return require("./commands/dummyCommand");
+	},
+	utils: require("./utils")
+}
+}).call(this)}).call(this,"/modules/dsu-wizard")
+
+},{"./CommandRegistry":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/CommandRegistry.js","./TransactionManager":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/TransactionManager.js","./commands":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/index.js","./commands/dummyCommand":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/commands/dummyCommand.js","./utils":"/home/runner/work/privatesky/privatesky/modules/dsu-wizard/utils.js","apihub":"apihub","path":false}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 
@@ -46842,7 +47780,256 @@ module.exports = {
     registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/testsRuntime.js"])
+},{"./lib/Pool-Isolates":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"zmq_adapter":[function(require,module,exports){
+const defaultForwardAddress = process.env.vmq_zeromq_forward_address || "tcp://127.0.0.1:5001";
+const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1:5000";
+const defaultPubAddress = process.env.vmq_zeromq_pub_address || "tcp://127.0.0.1:5001";
+
+const zeroMQModuleName = "zeromq";
+let zmq;
+
+try{
+    zmq = require(zeroMQModuleName);
+}catch(err){
+    console.log("zeroMQ not available at this moment.");
+}
+
+function registerKiller(children){
+    const events = ["SIGINT", "SIGUSR1", "SIGUSR2", "uncaughtException", "SIGTERM", "SIGHUP"];
+
+    events.forEach(function(event){
+        process.on(event, function(...args){
+            children.forEach(function(child){
+                console.log("Something bad happened.", event, ...args);
+                try{
+                    child.close();
+                }catch(err){
+                    //..
+                    console.log(err);
+                }
+            });
+        });
+    });
+}
+
+function ZeromqForwarder(bindAddress){
+
+    let socket = zmq.socket("pub");
+    let initialized = false;
+
+    function connect(){
+        socket.monitor();
+        socket.connect(bindAddress);
+
+        socket.on("connect",(fd)=>{
+            console.log(`[Forwarder] connected on ${bindAddress}`);
+            initialized = true;
+            sendBuffered();
+        });
+    }
+
+    connect();
+
+    registerKiller([socket]);
+
+    const Queue = require("swarmutils").Queue;
+    let buffered = new Queue();
+
+    let sendBuffered = ()=>{
+        while(buffered.length>0){
+            this.send(...buffered.pop());
+        }
+    };
+
+    this.send = function(channel, ...args){
+        if(initialized){
+            //console.log("[Forwarder] Putting message on socket", args);
+            socket.send([channel, ...args], undefined, (...args)=>{
+                //console.log("[Forwarder] message sent");
+            });
+        }else{
+            //console.log("[Forwarder] Saving it for later");
+            buffered.push([channel, ...args]);
+        }
+    }
+}
+
+function ZeromqProxyNode(subAddress, pubAddress, signatureChecker){
+
+    const publishersNode = zmq.createSocket('xsub');
+    const subscribersNode = zmq.createSocket('xpub');
+
+    // By default xpub only signals new subscriptions
+    // Settings it to verbose = 1 , will signal on every new subscribe
+    // uncomment next lines if messages are lost
+    subscribersNode.setsockopt(zmq.ZMQ_XPUB_VERBOSE, 1);
+
+    publishersNode.on('message', deliverMessage);
+
+    function deliverMessage(channel, message){
+        //console.log(`[Proxy] - Received message on channel ${channel.toString()}`);
+        let ch = channelTranslationDictionary[channel.toString()];
+        if(ch){
+            //console.log("[Proxy] - Sending message on channel", ch);
+            subscribersNode.send([$$.Buffer.from(ch), message]);
+        }else{
+            //console.log(`[Proxy] - message dropped!`);
+        }
+        //subscribersNode.send([channel, message]);
+    }
+
+    let channelTranslationDictionary = {};
+
+    subscribersNode.on('message', manageSubscriptions);
+
+    function manageSubscriptions(subscription){
+        //console.log("[Proxy] - manage message", subscription.toString());
+
+        let message = subscription.toString();
+        let type = subscription[0];
+        message = message.substr(1);
+
+        //console.log(`[Proxy] - Trying to send ${type==1?"subscribe":"unsubscribe"} type of message`);
+
+        if(typeof signatureChecker === "undefined"){
+            //console.log("[Proxy] - No signature checker defined then transparent proxy...", subscription);
+            publishersNode.send(subscription);
+            return;
+        }
+
+        try{
+            //console.log("[Proxy] - let's deserialize and start analize");
+            let deserializedData = JSON.parse(message);
+            //TODO: check deserializedData.signature
+            //console.log("[Proxy] - Start checking message signature");
+            signatureChecker(deserializedData.channelName, deserializedData.signature, (err, res)=>{
+                if(err){
+                    //...
+                    //console.log("Err", err);
+                }else{
+                    let newSub = $$.Buffer.alloc(deserializedData.channelName.length+1);
+                    let ch = $$.Buffer.from(deserializedData.channelName);
+                    if(type===1){
+                        newSub.write("01", 0, 1, "hex");
+                    }else{
+                        newSub.write("00", 0, 1, "hex");
+                    }
+
+                    ch.copy(newSub, 1);
+                    //console.log("[Proxy] - sending subscription", /*"\n\t\t", subscription.toString('hex'), "\n\t\t", newSub.toString('hex'),*/ newSub);
+                    channelTranslationDictionary[deserializedData.channelName] = message;
+                    publishersNode.send(newSub);
+                    return;
+                }
+            });
+        }catch(err){
+            if(message.toString()!==""){
+                //console.log("Something went wrong. Subscription will not be made.", err);
+            }
+        }
+    }
+
+    try{
+        publishersNode.bindSync(pubAddress);
+        subscribersNode.bindSync(subAddress);
+        console.log(`\nStarting ZeroMQ proxy on [subs:${subAddress}] [pubs:${pubAddress}]\n`);
+    }catch(err){
+        console.log("Caught error on binding", err);
+        throw new Error("No zeromq!!!");
+    }
+
+    registerKiller([publishersNode, subscribersNode]);
+}
+
+function ZeromqConsumer(bindAddress, monitorFunction){
+
+    let socket = zmq.socket("sub");
+
+    if(typeof monitorFunction === "function"){
+        let events = ["connect", "connect_delay", "connect_retry", "listen", "bind_error", "accept", "accept_error", "close", "close_error", "disconnect"];
+        socket.monitor();
+        events.forEach((eventType)=>{
+            socket.on(eventType, (...args)=>{
+                monitorFunction(eventType, ...args);
+            });
+        });
+    }
+
+    function connect(callback){
+        socket.connect(bindAddress);
+        socket.on("connect", callback);
+    }
+
+    let subscriptions = {};
+    let connected = false;
+
+    this.subscribe = function(channelName, signature, callback){
+        let subscription = JSON.stringify({channelName, signature:signature});
+        if(!subscriptions[subscription]){
+            subscriptions[subscription] = [];
+        }
+
+        subscriptions[subscription].push(callback);
+
+        if(!connected){
+            connect(()=>{
+                connected = true;
+                for(var subscription in subscriptions){
+                    socket.subscribe(subscription);
+                }
+            });
+        }else{
+            socket.subscribe(subscription);
+        }
+    };
+
+    this.close = function(){
+        socket.close();
+    };
+
+    socket.on("message", (channel, receivedMessage)=>{
+        let callbacks = subscriptions[channel];
+        if(!callbacks || callbacks.length === 0){
+            return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
+        }
+        for(let i = 0; i<callbacks.length; i++){
+            let cb = callbacks[i];
+            cb(channel, receivedMessage);
+        }
+    });
+}
+
+let instance;
+function getForwarderInstance(address){
+    if(!instance){
+        address = address || defaultForwardAddress;
+        instance = new ZeromqForwarder(address);
+    }
+    return instance;
+}
+
+function createZeromqProxyNode(subAddress, pubAddress, signatureChecker){
+    subAddress = subAddress || defaultSubAddress;
+    pubAddress = pubAddress || defaultPubAddress;
+    return new ZeromqProxyNode(subAddress, pubAddress, signatureChecker);
+}
+
+function createZeromqConsumer(bindAddress, monitorFunction){
+    return new ZeromqConsumer(bindAddress, monitorFunction);
+}
+
+function testIfAvailable(){
+    return typeof zmq !== "undefined";
+}
+
+module.exports = {
+    getForwarderInstance,
+    createZeromqConsumer,
+    createZeromqProxyNode,
+    testIfAvailable,
+    registerKiller
+};
+},{"swarmutils":"swarmutils"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/testsRuntime.js"])
                     ;(function(global) {
                         global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
                     })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});

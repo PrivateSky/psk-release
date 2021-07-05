@@ -18387,7 +18387,6 @@ function SecurityContext(keySSI) {
 
     this.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
         const privateKeyObj = {privateKeys: [privateKey]}
-
         storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
             if (err || !res) {
                 return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
@@ -18416,7 +18415,13 @@ function SecurityContext(keySSI) {
                 return callback(err);
             }
 
-            const privateKeysAsBuff = record.privateKeys.map(privateKey => $$.Buffer.from(privateKey));
+            const privateKeysAsBuff = record.privateKeys.map(privateKey => {
+                if(privateKey){
+                    return $$.Buffer.from(privateKey)
+                }
+
+                return privateKey;
+            });
             callback(undefined, privateKeysAsBuff);
         });
     };
@@ -19047,16 +19052,16 @@ function W3CDID_Mixin(target) {
         securityContext.decryptAsDID(target, encryptedMessage, callback);
     };
 
-    const saveNewKeyPairInSC = async (receiverDIDDocument, compatibleSSI) => {
+    const saveNewKeyPairInSC = async (didDocument, compatibleSSI) => {
         try {
-            await $$.promisify(securityContext.addPrivateKeyForDID)(receiverDIDDocument, compatibleSSI.getPrivateKey("raw"));
-            await $$.promisify(securityContext.addPublicKeyForDID)(receiverDIDDocument, compatibleSSI.getPublicKey("raw"));
+            await $$.promisify(securityContext.addPrivateKeyForDID)(didDocument, compatibleSSI.getPrivateKey("raw"));
+            await $$.promisify(securityContext.addPublicKeyForDID)(didDocument, compatibleSSI.getPublicKey("raw"));
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
         }
 
         try {
-            await $$.promisify(receiverDIDDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
+            await $$.promisify(didDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
         }
@@ -19073,10 +19078,10 @@ function W3CDID_Mixin(target) {
 
             const publicKeySSI = keySSISpace.createPublicKeySSI("seed", receiverPublicKey);
 
-            const encryptMessage = (receiverKeySSI) => {
+            const encryptMessage = (senderKeySSI) => {
                 let encryptedMessage;
                 try {
-                    encryptedMessage = crypto.ecies_encrypt_ds(senderSeedSSI, receiverKeySSI, message);
+                    encryptedMessage = crypto.ecies_encrypt_ds(senderKeySSI, publicKeySSI, message);
                 } catch (e) {
                     return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, e));
                 }
@@ -19092,7 +19097,7 @@ function W3CDID_Mixin(target) {
             }
 
             try {
-                await saveNewKeyPairInSC(receiverDIDDocument, compatibleSSI);
+                await saveNewKeyPairInSC(target, compatibleSSI);
             } catch (e) {
                 return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
             }
@@ -19102,7 +19107,7 @@ function W3CDID_Mixin(target) {
     };
 
     target.decryptMessageImpl = function (privateKeys, encryptedMessage, callback) {
-        let decryptedMessage;
+        let decryptedMessageObj;
         const decryptMessageRecursively = (privateKeyIndex) => {
             const privateKey = privateKeys[privateKeyIndex];
             if (typeof privateKey === "undefined") {
@@ -19112,12 +19117,12 @@ function W3CDID_Mixin(target) {
             const receiverSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
             receiverSeedSSI.initialize(target.getDomain(), privateKey);
             try {
-                decryptedMessage = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
+                decryptedMessageObj = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
             } catch (e) {
                 return decryptMessageRecursively(privateKeyIndex + 1);
             }
 
-            callback(undefined, decryptedMessage);
+            callback(undefined, decryptedMessageObj.message.toString());
         }
 
         decryptMessageRecursively(0);
@@ -19138,18 +19143,24 @@ function W3CDID_Mixin(target) {
                 return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, err));
             }
 
-            mqHandler.writeMessage(encryptedMessage, callback);
+            mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
         });
     };
 
-    target.readMessage = function ( callback) {
+    target.readMessage = function (callback) {
         const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(target);
-        mqHandler.previewMessage((err, encryptedMessage) => {
+        mqHandler.readMessage((err, encryptedMessage) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
             }
 
-            target.decryptMessage(encryptedMessage.message, callback);
+            let message;
+            try {
+                message = JSON.parse(encryptedMessage.message);
+            } catch (e) {
+              return callback(e);
+            }
+            target.decryptMessage(message, callback);
         });
     };
 
@@ -19382,7 +19393,7 @@ function ConstDID_Document_Mixin(target, domain, name) {
     }
 
     target.getPrivateKeys = () => {
-        return target.privateKey;
+        return [target.privateKey];
     };
 
     target.getPublicKey = (format, callback) => {
@@ -19528,7 +19539,8 @@ function GroupDID_Document(domain, groupName) {
             for (let i = 0; i < noMembers; i++) {
                 if (membersIds[i] !== message.getSender()) {
                     try {
-                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), membersIds[i])
+                        const receiverDIDDocument = await $$.promisify(w3cDID.resolveDID)(membersIds[i]);
+                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), receiverDIDDocument)
                     } catch (e) {
                         return callback(e);
                     }
@@ -19667,7 +19679,7 @@ function KeyDID_Document(isInitialisation, seedSSI) {
     };
 
     this.getPrivateKeys = () => {
-        return seedSSI.getPrivateKey()
+        return [seedSSI.getPrivateKey()];
     };
 
     return this;
@@ -21286,7 +21298,14 @@ const sig = require('./digitalsig')
 const crypto = require('crypto')
 
 module.exports = {
-    timingSafeEqual: crypto.timingSafeEqual,
+    timingSafeEqual: function(a, b){
+        const hashA = crypto.createHash("sha256");
+        const digestA = hashA.update(a).digest("hex");
+
+        const hashB = crypto.createHash("sha256");
+        const digestB = hashB.update(b).digest("hex");
+        return digestA === digestB;
+    },
     getRandomBytes: crypto.randomBytes,
     computeDigitalSignature: sig.computeDigitalSignature,
     verifyDigitalSignature: sig.verifyDigitalSignature,
