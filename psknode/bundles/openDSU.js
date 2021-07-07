@@ -15992,6 +15992,18 @@ const createJWT = (seedSSI, scope, credentials, options, callback) => {
     );
 };
 
+const createJWTForDID = (did, scope, credentials, options, callback) => {
+    jwtUtils.createJWTForDID(
+        {
+            did,
+            scope,
+            credentials,
+            options
+        },
+        callback
+    );
+};
+
 const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
     jwtUtils.verifyJWT(
         {
@@ -16003,19 +16015,37 @@ const verifyJWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
     );
 };
 
+const verifyDID_JWT = (jwt, rootOfTrustVerificationStrategy, callback) => {
+    jwtUtils.verifyDID_JWT(
+        {
+            jwt,
+            rootOfTrustVerificationStrategy
+        },
+        callback
+    );
+};
+
 const createCredential = (issuerSeedSSI, credentialSubjectSReadSSI, callback) => {
     createJWT(issuerSeedSSI, "", null, {subject: credentialSubjectSReadSSI}, callback);
+};
+
+const createCredentialForDID = (did, credentialSubjectDID, callback) => {
+    createJWTForDID(did, "", null, {subject: credentialSubjectDID}, callback);
 };
 
 const createAuthToken = (holderSeedSSI, scope, credential, callback) => {
     createJWT(holderSeedSSI, scope, credential, null, callback);
 };
 
+const createAuthTokenForDID = (holderDID, scope, credential, callback) => {
+    createJWTForDID(holderDID, scope, credential, null, callback);
+};
+
 const createPresentationToken = (holderSeedSSI, scope, credential, callback) => {
     createJWT(holderSeedSSI, scope, credential, null, callback);
 };
 
-const verifyAuthToken = (jwt, listOfIssuers, callback) => {
+function verifyToken(jwt, listOfIssuers, verifyJWTFn, callback) {
     if (!listOfIssuers || !listOfIssuers.length) return callback(JWT_ERRORS.EMPTY_LIST_OF_ISSUERS_PROVIDED);
 
     // checks every credentials from the JWT's body to see if it has at least one JWT issues by one of listOfIssuers for the current subject
@@ -16024,19 +16054,19 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
         // the JWT doesn't have credentials specified so we cannot check for valid authorizarion
         if (!credentials) return verificationCallback(null, false);
 
-        const currentSubject = jwtUtils.getReadableSSI(subject);
+        const currentSubject = jwtUtils.getReadableIdentity(subject);
 
         const credentialVerifiers = credentials.map((credential) => {
             return new Promise((resolve) => {
-                verifyJWT(
+                verifyJWTFn(
                     credential,
                     ({body}, credentialVerificationCallback) => {
                         // check if credential was issued for the JWT that we are verifying the authorization for
-                        const credentialSubject = jwtUtils.getReadableSSI(body.sub);
+                        const credentialSubject = jwtUtils.getReadableIdentity(body.sub);
                         const isCredentialIssuedForSubject = !!credentialSubject && credentialSubject === currentSubject;
                         if (!isCredentialIssuedForSubject) return credentialVerificationCallback(null, false);
 
-                        const credentialIssuer = jwtUtils.getReadableSSI(body.iss);
+                        const credentialIssuer = jwtUtils.getReadableIdentity(body.iss);
 
                         // console.log(`Checking for credentialIssuer ${credentialIssuer} inside `, listOfIssuers);
                         // listOfIssuers.forEach(issuer => {
@@ -16044,7 +16074,7 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
                         // })
 
                         const isValidIssuer = listOfIssuers.some((issuer) => !!credentialIssuer
-                            && jwtUtils.getReadableSSI(issuer) === credentialIssuer);
+                            && jwtUtils.getReadableIdentity(issuer) === credentialIssuer);
                         credentialVerificationCallback(null, isValidIssuer);
                     },
                     (credentialVerifyError, isCredentialValid) => {
@@ -16070,7 +16100,15 @@ const verifyAuthToken = (jwt, listOfIssuers, callback) => {
             });
     };
 
-    verifyJWT(jwt, rootOfTrustVerificationStrategy, callback);
+    verifyJWTFn(jwt, rootOfTrustVerificationStrategy, callback);
+}
+
+const verifyAuthToken = (jwt, listOfIssuers, callback) => {
+    verifyToken(jwt, listOfIssuers, verifyJWT, callback);
+};
+
+const verifyDIDAuthToken = (jwt, listOfIssuers, callback) => {
+    verifyToken(jwt, listOfIssuers, verifyDID_JWT, callback);
 };
 
 
@@ -16102,7 +16140,7 @@ module.exports = {
     createAuthToken,
     verifyAuthToken,
     createPresentationToken,
-    getReadableSSI: jwtUtils.getReadableSSI,
+    getReadableSSI: jwtUtils.getReadableIdentity,
     parseJWTSegments: jwtUtils.parseJWTSegments,
     createBloomFilter,
     JWT_ERRORS,
@@ -16110,7 +16148,12 @@ module.exports = {
     convertPrivateKey,
     convertPublicKey,
     ecies_encrypt_ds,
-    ecies_decrypt_ds
+    ecies_decrypt_ds,
+    createJWTForDID,
+    verifyDID_JWT,
+    verifyDIDAuthToken,
+    createAuthTokenForDID,
+    createCredentialForDID
 };
 
 },{"./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
@@ -16119,7 +16162,8 @@ const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 
-const HEADER_TYPE = "SeedSSIJWT";
+const SEED_SSI_HEADER_TYPE = "SeedSSIJWT";
+const DID_HEADER_TYPE = "DID_JWT";
 const JWT_VALABILITY_SECONDS = 5 * 365 * 24 * 60 * 60; // 5 years default
 
 const JWT_ERRORS = {
@@ -16158,14 +16202,14 @@ function nowEpochSeconds() {
     return Math.floor(new Date().getTime() / 1000);
 }
 
-function getReadableSSI(ssi) {
-    if (typeof ssi === "string" && ssi.indexOf('ssi') === 0) {
+function getReadableIdentity(identity) {
+    if (typeof identity === "string" && (identity.indexOf('ssi') === 0 || identity.indexOf('did') === 0)) {
         // ssi is actually the readable ssi
-        return ssi;
+        return identity;
     }
 
-    ssi = ssi.getIdentifier ? ssi.getIdentifier() : ssi;
-    let readableSSI = decodeBase58(ssi);
+    identity = identity.getIdentifier ? identity.getIdentifier() : identity;
+    let readableSSI = decodeBase58(identity);
     if (!readableSSI) {
         // invalid base58 string
         return null;
@@ -16193,7 +16237,7 @@ function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
     valability = valability || JWT_VALABILITY_SECONDS;
 
     if (subject) {
-        subject = getReadableSSI(subject);
+        subject = getReadableIdentity(subject);
     } else {
         subject = sReadSSI.getIdentifier(true);
     }
@@ -16211,7 +16255,7 @@ function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
     }
 
     const header = {
-        typ: HEADER_TYPE,
+        typ: SEED_SSI_HEADER_TYPE,
     };
 
     const now = nowEpochSeconds();
@@ -16242,6 +16286,72 @@ function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
     });
 }
 
+function createJWTForDID({did, scope, credentials, options}, callback) {
+    let {subject, valability, ...optionsRest} = options || {};
+    valability = valability || JWT_VALABILITY_SECONDS;
+
+    if (!subject) {
+        subject = did;
+    }
+
+    if (!subject) {
+        return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
+    }
+
+    const issuer = did;
+
+    if (!issuer) {
+        return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
+    }
+
+    if (credentials) {
+        credentials = Array.isArray(credentials) ? credentials : [credentials];
+    }
+
+    const header = {
+        typ: DID_HEADER_TYPE,
+    };
+
+    const now = nowEpochSeconds();
+    const w3cDID = require("opendsu").loadAPI("w3cdid");
+    w3cDID.resolveDID(did, (err, didDocument) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to resolve did ${did}`, err));
+        }
+
+        didDocument.getPublicKey("pem", (err, publicKey) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get public key for did ${did}`, err));
+            }
+
+            const body = {
+                sub: subject,
+                // aud: encodeBase58(scope),
+                scope,
+                iss: issuer,
+                publicKey,
+                iat: now,
+                nbf: now,
+                exp: now + valability,
+                credentials,
+                options: optionsRest,
+            };
+
+            const segments = [encodeBase58(JSON.stringify(header)), encodeBase58(JSON.stringify(body))];
+            const jwtToSign = segments.join(".");
+            const crypto = require("opendsu").loadAPI("crypto");
+            const hashResult = crypto.sha256(jwtToSign);
+
+            didDocument.sign(hashResult, (signError, signResult) => {
+                if (signError || !signResult) return callback(signError);
+                const encodedSignResult = encodeBase58(signResult);
+
+                const jwt = `${jwtToSign}.${encodedSignResult}`;
+                callback(null, jwt);
+            });
+        });
+    });
+}
 function safeParseEncodedJson(data, keepBuffer) {
     try {
         const result = JSON.parse(decodeBase58(data, keepBuffer));
@@ -16285,7 +16395,7 @@ function isJwtNotActive(body) {
 function verifyJWTContent(jwtContent, callback) {
     const {header, body} = jwtContent;
 
-    if (header.typ !== HEADER_TYPE) return callback(JWT_ERRORS.INVALID_JWT_HEADER_TYPE);
+    if (header.typ !== SEED_SSI_HEADER_TYPE && header.typ !== DID_HEADER_TYPE) return callback(JWT_ERRORS.INVALID_JWT_HEADER_TYPE);
     if (!body.iss) return callback(JWT_ERRORS.INVALID_JWT_ISSUER);
     if (isJwtExpired(body)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
     if (isJwtNotActive(body)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
@@ -16327,12 +16437,54 @@ const verifyJWT = ({jwt, rootOfTrustVerificationStrategy, verifySignature}, call
     });
 };
 
+const verifyDID_JWT = ({jwt, rootOfTrustVerificationStrategy, verifySignature}, callback) => {
+    parseJWTSegments(jwt, (parseError, jwtContent) => {
+        if (parseError) return callback(parseError);
+
+        verifyJWTContent(jwtContent, (verifyError) => {
+            if (verifyError) return callback(verifyError);
+
+            const {header, body, signatureInput, signature} = jwtContent;
+            const {iss: did, publicKey} = body;
+
+            const openDSU = require("opendsu");
+            const crypto = openDSU.loadAPI("crypto");
+            const hash = crypto.sha256(signatureInput);
+
+            const w3cDID = openDSU.loadAPI("w3cdid");
+            w3cDID.resolveDID(did, (err, didDocument) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to resolve did ${did}`, err));
+                }
+
+                didDocument.verify(hash, signature, (verifyError, verifyResult)=> {
+                    if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+
+                    if (typeof rootOfTrustVerificationStrategy === "function") {
+                        rootOfTrustVerificationStrategy({header, body}, (verificationError, verificationResult) => {
+                            if (verificationError || !verificationResult) {
+                                return callback(JWT_ERRORS.ROOT_OF_TRUST_VERIFICATION_FAILED);
+                            }
+                            callback(null, true);
+                        });
+                        return;
+                    }
+
+                    callback(null, true);
+                });
+            });
+        });
+    });
+};
+
 module.exports = {
     createJWT,
     verifyJWT,
-    getReadableSSI,
+    getReadableIdentity,
     parseJWTSegments,
     JWT_ERRORS,
+    createJWTForDID,
+    verifyDID_JWT
 };
 
 },{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
@@ -23727,7 +23879,11 @@ function NameDID_Method() {
     }
 
     this.resolve = (tokens, callback) => {
-        callback(null, NameDIDDocument.createDIDDocument(tokens))
+        const nameDIDDocument = NameDIDDocument.createDIDDocument(tokens);
+        nameDIDDocument.on("initialised", () => {
+            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+            callback(null, nameDIDDocument)
+        });
     }
 }
 
