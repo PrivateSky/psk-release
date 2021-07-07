@@ -4170,13 +4170,16 @@ const BrickMapMixin = {
                 delete parentNode.items[nodeName].metadata.deletedAt;
             }
 
+            if (typeof parentNode.metadata === 'object') {
+                // remove the "deletedAt" attribute in case we're trying
+                // to add an entry in a previously deleted folder
+                delete parentNode.metadata.deletedAt;
+            }
+
             if (!pathSegments.length) {
                 break;
             }
 
-            // remove the "deletedAt" attribute in case we're trying
-            // to add an entry in a previously deleted location
-            delete parentNode.metadata.deletedAt;
 
             if (!parentNode.items[nodeName]) {
                 this.createDirectoryNode(parentNode, nodeName);
@@ -4348,7 +4351,7 @@ const BrickMapMixin = {
     add: function (filePath, brick) {
         filePath = pskPath.normalize(filePath);
         if (filePath === "") {
-            throw new Error("Invalid path");
+            throw new Error(`File path must not be empty.`);
         }
 
         const brickObj = {
@@ -4375,8 +4378,11 @@ const BrickMapMixin = {
     delete: function (barPath) {
         barPath = pskPath.normalize(barPath);
         const childNode = this.getDeepestNode(barPath);
-        if (!childNode || this.nodeIsDeleted(childNode)) {
-            throw new Error(`Invalid path <${barPath}>`);
+        if (!childNode) {
+            throw new Error(`Unable to delete <${barPath}>. File or directory not found.`);
+        }
+        if (this.nodeIsDeleted(childNode)) {
+            throw new Error(`Unable to delete <${barPath}>. File or directory already deleted.`);
         }
 
         this.deleteNode(childNode);
@@ -4394,12 +4400,12 @@ const BrickMapMixin = {
         const parentDir = this.getDeepestNode(dirPath);
 
         if (!dirName) {
-            throw new Error('Missing folder name');
+            throw new Error('Missing folder name.');
         }
 
         if (dirPath && parentDir) {
             if (!this.nodeIsDirectory(parentDir)) {
-                throw new Error('Unable to create a folder in a file');
+                throw new Error('Unable to create a folder in a file.');
             }
 
             if (typeof parentDir.items[dirName] !== 'undefined' && options.trailingNodeType === "parent") {
@@ -4430,14 +4436,14 @@ const BrickMapMixin = {
     getBricksMeta: function (filePath) {
         const fileNode = this.getDeepestNode(filePath);
         if (!fileNode) {
-            throw new Error(`Path <${filePath}> not found`);
+            throw new Error(`Path <${filePath}> not found.`);
         }
         if (this.nodeIsDirectory(fileNode)) {
-            throw new Error(`Path <${filePath}> is a folder`);
+            throw new Error(`Path <${filePath}> is a folder.`);
         }
 
         if (this.nodeIsDeleted(fileNode)) {
-            throw new Error(`Path <${filePath}> not found`);
+            throw new Error(`Path <${filePath}> not found.`);
         }
 
         return fileNode.hashLinks;
@@ -4450,15 +4456,15 @@ const BrickMapMixin = {
      */
     getHashList: function (filePath) {
         if (filePath === "") {
-            throw new Error(`Invalid path ${filePath}.`);
+            throw new Error(`File path must not be empty.`);
         }
 
         const fileNode = this.getDeepestNode(filePath);
         if (!fileNode) {
-            throw new Error(`Path <${filePath}> not found`);
+            throw new Error(`Path <${filePath}> not found.`);
         }
         if (this.nodeIsDirectory(fileNode)) {
-            throw new Error(`Path <${filePath}> is a folder`);
+            throw new Error(`Path <${filePath}> is a folder.`);
         }
 
         const hashes = fileNode.hashLinks.map(brickObj => brickObj.hashLink);
@@ -4489,7 +4495,7 @@ const BrickMapMixin = {
     emptyList: function (filePath) {
         const node = this.getDeepestNode(filePath);
         if (!node) {
-            throw new Error(`Invalid path ${filePath}`);
+            throw new Error(`Path <${filePath}> not found.`);
         }
 
         this.truncateNode(node);
@@ -4521,7 +4527,7 @@ const BrickMapMixin = {
     copy: function (srcPath, dstPath) {
         const srcNode = this.getDeepestNode(srcPath);
         if (!srcNode) {
-            throw new Error(`Invalid path <${srcPath}>`);
+            throw new Error(`Source path <${srcPath}> not found.`);
         }
 
         const dstNode = this.createNodesFromPath(dstPath, {
@@ -4734,11 +4740,11 @@ const BrickMapMixin = {
     getMetadata: function (path) {
         const node = this.getDeepestNode(path);
         if (!node) {
-            throw new Error(`Invalid path <${path}`);
+            throw new Error(`Path <${path}> not found.`);
         }
 
         if (typeof node.metadata === 'undefined') {
-            throw new Error(`Path dosn't have any metadata associated`);
+            throw new Error(`Path dosn't have any metadata associated.`);
         }
 
         return node.metadata
@@ -4751,7 +4757,7 @@ const BrickMapMixin = {
     setMetadata: function (path, metadata) {
         const node = this.getDeepestNode(path);
         if (!node) {
-            throw new Error(`Invalid path <${path}`);
+            throw new Error(`Path <${path}> not found.`);
         }
         node.metadata = JSON.parse(JSON.stringify(metadata));
     },
@@ -4765,7 +4771,7 @@ const BrickMapMixin = {
     updateMetadata: function (path, key, value) {
         const node = this.getDeepestNode(path);
         if (!node) {
-            throw new Error(`Invalid path <${path}`);
+            throw new Error(`Unable to update metadata. Path <${path}> not found.`);
         }
 
         node.metadata[key] = value;
@@ -14170,12 +14176,29 @@ const DossierBuilder = function(sourceDSU, varStore){
      * @param {function(err, KeySSI)} callback
      */
     let updateDossier = function(bar, cfg, commands, callback) {
-        if (commands.length === 0)
-            return saveDSU(bar, cfg, callback);
+        if (commands.length === 0) {
+            return bar.commitBatch((err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                saveDSU(bar, cfg, callback);
+            })
+        }
+
+        if (!bar.batchInProgress()) {
+            try {
+                bar.beginBatch();
+            } catch (e) {
+                return callback(e);
+            }
+        }
+
         let cmd = commands.shift();
         runCommand(bar, cmd, commands,(err, updated_bar) => {
-            if (err)
+            if (err) {
                 return callback(err);
+            }
             updateDossier(updated_bar, cfg, commands, callback);
         });
     };
@@ -15093,6 +15116,7 @@ class DeleteCommand extends Command {
 }
 
 module.exports = DeleteCommand;
+
 },{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
 /**
  * @module Commands
