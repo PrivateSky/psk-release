@@ -20312,16 +20312,15 @@ module.exports.init = function (sf, logger) {
     let beginWasCalled = false;
 
 
-    if(typeof global.timeoutUntilBegin === "undefined"){
+    if (typeof global.timeoutUntilBegin === "undefined") {
         global.timeoutUntilBegin = setTimeout(function () {
             if (!beginWasCalled) {
                 sf.assert.begin("asset.begin was not called, the exit time for the test is automatically set to 2 seconds. asset.callback can increase this time");
             }
         }, 1000);
-    }else{
+    } else {
         console.trace("DoubleCheck was evaluated atleast 2 times! Maybe it was required from disk instead of bundles.");
     }
-
 
 
     /**
@@ -20553,6 +20552,22 @@ module.exports.init = function (sf, logger) {
         }
     });
 
+
+    /**
+     * Registering assert for evaluating if all the properties from the second object are present in the first object.
+     * Deep comparison between the properties of the object is used.
+     * If check fails, the assertFail is invoked.
+     * @param firstObj {Object}- first object
+     * @param secondObj {Object} - second object
+     * @param explanation {String} - failing reason message in case the assert fails
+     */
+    sf.assert.addCheck("objectsAreEqual", function (firstObj, secondObj, explanation) {
+        const result = objectsAreEqual(firstObj, secondObj);
+        if (!result) {
+            sf.exceptions.assertFail(explanation);
+        }
+    });
+
     // added mainly for test purposes, better test frameworks like mocha could be much better
 
     /**
@@ -20621,7 +20636,7 @@ module.exports.init = function (sf, logger) {
                 recordFail("[Fail (multiple calls)] " + testName);
             }
 
-            if(__assetsCounter === 0){
+            if (__assetsCounter === 0) {
                 //small tweak to eliminate potential not necessary timeout until the test end
                 sf.assert.end(undefined, 0, true);
             }
@@ -34076,12 +34091,12 @@ function GroupDID_Document(domain, groupName) {
     const openDSU = require("opendsu");
     const MEMBERS_FILE = "members";
 
-    this.addMember = (identity, alias, callback) => {
-        if (typeof alias === "function") {
-            callback = alias;
-            alias = identity;
+    this.addMember = (identity, memberInfo, callback) => {
+        if (typeof memberInfo === "function") {
+            callback = memberInfo;
+            memberInfo = identity;
         }
-        updateMembers("add", [identity], [alias], callback);
+        updateMembers("add", [identity], [memberInfo], callback);
     };
 
     this.addMembers = (identities, aliases, callback) => {
@@ -34096,7 +34111,7 @@ function GroupDID_Document(domain, groupName) {
         updateMembers("remove", identities, callback);
     };
 
-    this.listMembersByAlias = (callback) => {
+    this.listMembersInfo = (callback) => {
         readMembers((err, members) => {
             if (err) {
                 return callback(err);
@@ -34116,33 +34131,37 @@ function GroupDID_Document(domain, groupName) {
         });
     };
 
-    this.getMemberIdentity = (alias, callback) => {
+    this.getMemberIdentity = (name, callback) => {
         readMembers((err, members) => {
             if (err) {
                 return callback(err);
             }
 
-            const member = Object.keys(members).find(identifier => members[identifier] === alias);
+            const member = Object.keys(members).find(identifier => members[identifier] === name);
             if (typeof member === "undefined") {
-                return callback(Error(`Failed to find member with alias ${alias}`));
+                return callback(Error(`Failed to find member with alias ${name}`));
             }
             callback(undefined, Object.keys(member)[0]);
         });
     };
 
-    this.getMemberAlias = (identity, callback) => {
+    this.getMemberInfo = (identity, callback) => {
         readMembers((err, members) => {
             if (err) {
                 return callback(err);
             }
 
-            const memberAlias = members[identity];
-            if (typeof memberAlias === "undefined") {
+            const memberInfo = members[identity];
+            if (typeof memberInfo === "undefined") {
                 return callback(Error(`Failed to find member with id ${identity}`));
             }
-            callback(undefined, memberAlias);
+            callback(undefined, memberInfo);
         });
     };
+
+    this.getMembers = (callback)=>{
+        readMembers(callback);
+    }
 
     this.getIdentifier = () => {
         return `did:ssi:group:${domain}:${groupName}`;
@@ -34204,10 +34223,18 @@ function GroupDID_Document(domain, groupName) {
         });
     };
 
-    const updateMembers = (operation, identities, aliases, callback) => {
-        if (typeof aliases === "function") {
-            callback = aliases;
-            aliases = identities;
+    const updateMembers = (operation, identities, info, callback) => {
+        if (typeof info === "function") {
+            callback = info;
+            info = identities;
+        }
+
+        if(!Array.isArray(identities)){
+            return callback(Error(`Invalid format for identities. Expected array.`));
+        }
+
+        if(operation === "remove" && !Array.isArray(info)){
+            return callback(Error(`Invalid format for info. Expected array.`));
         }
 
         readMembers((err, members) => {
@@ -34226,7 +34253,7 @@ function GroupDID_Document(domain, groupName) {
             } else if (operation === "add") {
                 identities.forEach((id, index) => {
                     if (typeof members[id] === "undefined") {
-                        members[id] = aliases[index]
+                        members[id] = info[index]
                     }
                 });
                 return this.dsu.writeFile(MEMBERS_FILE, JSON.stringify(members), callback);
