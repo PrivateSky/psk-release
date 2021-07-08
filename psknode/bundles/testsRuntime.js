@@ -42616,7 +42616,7 @@ function SoundPubSub(){
 				}
 			}
 			if(!gotit){
-				wprint("Unable to unsubscribe a callback that was not subscribed!");
+				console.log("Unable to unsubscribe a callback that was not subscribed!");
 			}
 		}
 	};
@@ -42746,7 +42746,7 @@ function SoundPubSub(){
 				}
 				if(typeof message == 'undefined'){
 					if(!channelsStorage[channelName].isEmpty()){
-						wprint("Can't use as message in a pub/sub channel this object: " + message);
+						console.log("Can't use as message in a pub/sub channel this object: " + message);
 					}
 					executionQueue.pop();
 				} else {
@@ -42763,7 +42763,7 @@ function SoundPubSub(){
 					}
 					//TODO: for immutable objects it will not work also, fix for shape models
 					if(typeof message.__transmisionIndex == 'undefined'){
-						wprint("Can't use as message in a pub/sub channel this object: " + message);
+						console.log("Can't use as message in a pub/sub channel this object: " + message);
 					}
 					subscriber = channelSubscribers[channelName][message.__transmisionIndex];
 					if(typeof subscriber == 'undefined'){
@@ -42781,7 +42781,7 @@ function SoundPubSub(){
 					}
 				}
 			} catch(err){
-				wprint("Event callback failed: "+ subscriber.callBack +"error: " + err.stack);
+				console.log("Event callback failed: "+ subscriber.callBack +"error: " + err.stack);
 			}
 			//
 			if(fromReleaseCallBacks){
@@ -42838,7 +42838,7 @@ function SoundPubSub(){
 		var result = false;
 		if(!name || (typeof name != "string" && typeof name != "number")){
 			result = true;
-			wprint("Invalid channel name: " + name);
+			console.log("Invalid channel name: " + name);
 		}
 
 		return result;
@@ -42848,7 +42848,7 @@ function SoundPubSub(){
 		var result = false;
 		if(!message || typeof message != "object"){
 			result = true;
-			wprint("Invalid messages types: " + message);
+			console.log("Invalid messages types: " + message);
 		}
 		return result;
 	}
@@ -42857,7 +42857,7 @@ function SoundPubSub(){
 		var result = false;
 		if(!callback || typeof callback != "function"){
 			result = true;
-			wprint("Expected to be function but is: " + callback);
+			console.log("Expected to be function but is: " + callback);
 		}
 		return result;
 	}
