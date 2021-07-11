@@ -12408,6 +12408,17 @@ function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
 function createJWTForDID({did, scope, credentials, options}, callback) {
     let {subject, valability, ...optionsRest} = options || {};
     valability = valability || JWT_VALABILITY_SECONDS;
+    const w3cDID = require("opendsu").loadAPI("w3cdid");
+
+    let didDocument;
+    if (typeof did === "object") {
+        try {
+            didDocument = did;
+            did = did.getIdentifier();
+        } catch (e) {
+            return callback(e);
+        }
+    }
 
     if (!subject) {
         subject = did;
@@ -12432,12 +12443,7 @@ function createJWTForDID({did, scope, credentials, options}, callback) {
     };
 
     const now = nowEpochSeconds();
-    const w3cDID = require("opendsu").loadAPI("w3cdid");
-    w3cDID.resolveDID(did, (err, didDocument) => {
-        if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to resolve did ${did}`, err));
-        }
-
+    const __createAndSignJWT = (didDocument) => {
         didDocument.getPublicKey("pem", (err, publicKey) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get public key for did ${did}`, err));
@@ -12469,8 +12475,20 @@ function createJWTForDID({did, scope, credentials, options}, callback) {
                 callback(null, jwt);
             });
         });
-    });
+    }
+    if (didDocument) {
+        __createAndSignJWT(didDocument);
+    } else {
+        w3cDID.resolveDID(did, (err, didDocument) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to resolve did ${did}`, err));
+            }
+
+            __createAndSignJWT(didDocument);
+        });
+    }
 }
+
 function safeParseEncodedJson(data, keepBuffer) {
     try {
         const result = JSON.parse(decodeBase58(data, keepBuffer));
@@ -12576,7 +12594,7 @@ const verifyDID_JWT = ({jwt, rootOfTrustVerificationStrategy, verifySignature}, 
                     return callback(createOpenDSUErrorWrapper(`Failed to resolve did ${did}`, err));
                 }
 
-                didDocument.verify(hash, signature, (verifyError, verifyResult)=> {
+                didDocument.verify(hash, signature, (verifyError, verifyResult) => {
                     if (verifyError || !verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
 
                     if (typeof rootOfTrustVerificationStrategy === "function") {

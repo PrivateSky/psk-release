@@ -2180,6 +2180,8 @@ const Queue = require('queue');
 
 function SoundPubSub(){
 
+	let subscriberCbkRefHandler = new SubscriberCallbackReferenceHandler();
+
 	/**
 	 * publish
 	 *      Publish a message {Object} to a list of subscribers on a specific topic
@@ -2214,13 +2216,12 @@ function SoundPubSub(){
 	 */
 	this.subscribe = function(target, callBack, waitForMore, filter){
 		if(!invalidChannelName(target) && !invalidFunction(callBack)){
-			var subscriber = {"callBack":callBack, "waitForMore":waitForMore, "filter":filter};
-			var arr = channelSubscribers[target];
-			if(typeof arr == 'undefined'){
-				arr = [];
-				channelSubscribers[target] = arr;
+			let subscriber = {"waitForMore": waitForMore, "filter": filter};
+			if(typeof channelSubscribers[target] === 'undefined'){
+				channelSubscribers[target] = [];
 			}
-			arr.push(subscriber);
+			subscriberCbkRefHandler.setSubscriberCallback(subscriber, target, callBack);
+			channelSubscribers[target].push(subscriber);
 		}
 	};
 
@@ -2237,19 +2238,20 @@ function SoundPubSub(){
 	 */
 	this.unsubscribe = function(target, callBack, filter){
 		if(!invalidFunction(callBack)){
-			var gotit = false;
+			let gotIt = false;
 			if(channelSubscribers[target]){
-				for(var i = 0; i < channelSubscribers[target].length;i++){
-					var subscriber =  channelSubscribers[target][i];
-					if(subscriber.callBack === callBack && ( typeof filter === 'undefined' || subscriber.filter === filter )){
-						gotit = true;
+				for(let i = 0; i < channelSubscribers[target].length;i++){
+					let subscriber =  channelSubscribers[target][i];
+					let callback = subscriberCbkRefHandler.getSubscriberCallback(subscriber);
+					if(callback === callBack && ( typeof filter === 'undefined' || subscriber.filter === filter )){
+						gotIt = true;
 						subscriber.forDelete = true;
 						subscriber.callBack = undefined;
 						subscriber.filter = undefined;
 					}
 				}
 			}
-			if(!gotit){
+			if(!gotIt){
 				console.log("Unable to unsubscribe a callback that was not subscribed!");
 			}
 		}
@@ -2405,11 +2407,19 @@ function SoundPubSub(){
 						channelsStorage[channelName].pop();
 					} else{
 						if(subscriber.filter === null || typeof subscriber.filter === "undefined" || (!invalidFunction(subscriber.filter) && subscriber.filter(message))){
-							if(!subscriber.forDelete){
-								subscriber.callBack(message);
-								if(subscriber.waitForMore && !invalidFunction(subscriber.waitForMore) && !subscriber.waitForMore(message)){
+							if (!subscriber.forDelete) {
+								console.log("Dispatching. Subscribers channels size" + Object.keys(channelSubscribers[channelName]).length);
+								let callback = subscriberCbkRefHandler.getSubscriberCallback(subscriber);
+								if (typeof callback === "undefined") {
+									console.log("weak callback is undefined: Channel size is now",channelSubscribers[channelName]);
 									subscriber.forDelete = true;
+								} else {
+									callback(message);
+									if (subscriber.waitForMore && !invalidFunction(subscriber.waitForMore) && !subscriber.waitForMore(message)) {
+										subscriber.forDelete = true;
+									}
 								}
+
 							}
 						}
 					}
@@ -2495,6 +2505,46 @@ function SoundPubSub(){
 		}
 		return result;
 	}
+
+	//weak references are not supported by all browsers
+	function SubscriberCallbackReferenceHandler(){
+		let finalizationRegistry;
+		let hasWeakReferenceSupport = weakReferencesAreSupported();
+
+
+		if (hasWeakReferenceSupport) {
+			finalizationRegistry = new FinalizationRegistry((heldValue) => {
+		   		console.log(`Cleanup ${heldValue}`);
+			});
+		}
+
+		this.setSubscriberCallback  = function (subscriber, target, callback){
+			if(hasWeakReferenceSupport){
+				subscriber.callBack = new WeakRef(callback);
+				finalizationRegistry.register(subscriber.callBack, target);
+			}
+			else{
+				subscriber.callBack = callback;
+			}
+		}
+
+		this.getSubscriberCallback = function (subscriber){
+			if(hasWeakReferenceSupport){
+				if(subscriber.callBack){
+					return subscriber.callBack.deref();
+				}
+				return undefined;
+
+			}
+			return subscriber.callBack;
+		}
+
+		function weakReferencesAreSupported() {
+			return typeof FinalizationRegistry === "function" && typeof WeakRef === "function";
+		}
+	}
+
+
 }
 
 exports.soundPubSub = new SoundPubSub();
