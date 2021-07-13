@@ -39079,22 +39079,24 @@ function SoundPubSub(){
 	 */
 	this.unsubscribe = function(target, callBack, filter){
 		if(!invalidFunction(callBack)){
-			let gotIt = false;
+			//let gotIt = false;
 			if(channelSubscribers[target]){
 				for(let i = 0; i < channelSubscribers[target].length;i++){
 					let subscriber =  channelSubscribers[target][i];
 					let callback = subscriberCbkRefHandler.getSubscriberCallback(subscriber);
+
 					if(callback === callBack && ( typeof filter === 'undefined' || subscriber.filter === filter )){
-						gotIt = true;
+						//gotIt = true;
 						subscriber.forDelete = true;
 						subscriber.callBack = undefined;
 						subscriber.filter = undefined;
 					}
 				}
 			}
-			if(!gotIt){
-				console.log("Unable to unsubscribe a callback that was not subscribed!");
-			}
+			//not valid always since we introduced WeakRef. A subscriber callback could not exists
+			// if(!gotIt){
+			// 	console.log("Unable to unsubscribe a callback that was not subscribed!");
+			// }
 		}
 	};
 
@@ -39249,10 +39251,8 @@ function SoundPubSub(){
 					} else{
 						if(subscriber.filter === null || typeof subscriber.filter === "undefined" || (!invalidFunction(subscriber.filter) && subscriber.filter(message))){
 							if (!subscriber.forDelete) {
-								console.log("Dispatching. Subscribers channels size" + Object.keys(channelSubscribers[channelName]).length);
 								let callback = subscriberCbkRefHandler.getSubscriberCallback(subscriber);
 								if (typeof callback === "undefined") {
-									console.log("weak callback is undefined: Channel size is now",channelSubscribers[channelName]);
 									subscriber.forDelete = true;
 								} else {
 									callback(message);
@@ -39260,7 +39260,6 @@ function SoundPubSub(){
 										subscriber.forDelete = true;
 									}
 								}
-
 							}
 						}
 					}
@@ -39355,7 +39354,7 @@ function SoundPubSub(){
 
 		if (hasWeakReferenceSupport) {
 			finalizationRegistry = new FinalizationRegistry((heldValue) => {
-		   		console.log(`Cleanup ${heldValue}`);
+		   		//console.log(`Cleanup ${heldValue}`);
 			});
 		}
 
