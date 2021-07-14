@@ -107,10 +107,9 @@ if (typeof $$ !== "undefined") {
 
 },{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","dsu-wizard":"dsu-wizard","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
 const { ALIAS_SYNC_ERR_CODE } = require("../utils");
-const { readChannelForLastMessage, readBody, readChannel, publishToChannel } = require("./subscribe-utils");
 
 function getHandlerForAnchorCreateOrAppend(response) {
-    return (err, result) => {
+    return (err, _) => {
         if (err) {
             
             const errorMessage = typeof err === "string" ? err : err.message;
@@ -150,151 +149,34 @@ function getAllVersions(request, response) {
     });
 }
 
-function readHandler(req, res, next) {
-    const channelIdentifier = req.params.channelsIdentifier;
-    const lastMessageKnown = req.params.lastMessage;
-
-    readChannelForLastMessage(channelIdentifier, lastMessageKnown, function (err, anchors) {
-        if (err) {
-            return res.send(err.code === "EPERM" ? 500 : 404);
-        }
-
-        const hasLastMessage = anchors.indexOf(lastMessageKnown);
-
-        if (hasLastMessage !== -1) {
-            anchors = anchors.slice(knownIndex + 1);
-        }
-
-        if (anchors.length === 0) {
-            if (typeof pendingRequests[channelIdentifier] === "undefined") {
-                pendingRequests[channelIdentifier] = [];
-            }
-
-            pendingRequests[channelIdentifier].push({ req, res });
-        } else {
-            return res.send(200, anchors);
-        }
-    });
-}
-
-function publishHandler(request, reponse, next) {
-    const channelIdentifier = request.params.channelsIdentifier;
-    const lastMessage = request.params.lastMessage;
-
-    readBody(request, function (err, newAnchor) {
-        if (newAnchor === "") {
-            return res.send(428);
-        }
-
-        readChannel(channelIdentifier, function (err, anchors) {
-            if (err && typeof lastMessage === "undefined") {
-                // this is a new anchor
-                return publishToChannel(channelIdentifier, newAnchor, function (err) {
-                    if (err) {
-                        return reponse.send(500, "Internal error");
-                    }
-
-                    return reponse.send(201);
-                });
-            }
-
-            if (lastMessage !== anchors.pop()) {
-                return reponse.send(403);
-            }
-
-            return publishToChannel(channelIdentifier, newAnchor, function (err) {
-                if (err) {
-                    return reponse.send(500);
-                }
-
-                reponse.send(201);
-                next();
-            });
-        });
-    });
-}
-
 module.exports = {
     createAnchor,
     appendToAnchor,
-    getAllVersions,
-    readHandler,
-    publishHandler,
+    getAllVersions
 };
 
-},{"../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","./subscribe-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/subscribe-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/subscribe-utils.js":[function(require,module,exports){
-let pendingRequests = {};
-
-const readBody = require("../../../utils").readStringFromStream;
-
-function readChannelForLastMessage(channelIdentifier, lastMessageKnown, callback) {
-    readChannel(channelIdentifier, function (err, anchors) {
-        if (err) {
-            return callback(err);
-        }
-
-        const hasLastMessage = anchors.indexOf(lastMessageKnown);
-
-        if (hasLastMessage !== -1) {
-            anchors = anchors.slice(knownIndex + 1);
-        }
-
-        if (anchors.length === 0) {
-            if (typeof pendingRequests[channelIdentifier] === "undefined") {
-                pendingRequests[channelIdentifier] = [];
-            }
-
-            pendingRequests[channelIdentifier].push({ req, res });
-        } else {
-            return callback(null, anchors);
-        }
-    });
-}
-
-function readChannel(name, callback) {
-    const fs = require("fs");
-    const path = require("swarmutils").path;
-
-    fs.readFile(path.join(storageFolder, name), function (err, content) {
-        let anchors;
-
-        if (!err) {
-            anchors = content.split("m");
-        }
-
-        callback(err, anchors);
-    });
-}
-
-function publishToChannel(name, message, callback) {
-    const fs = require("fs");
-    const path = require("swarmutils").path;
-
-    fs.appendFile(path.join(storageFolder, name), message, function (err) {
-        if (typeof err === "undefined") {
-            //if everything went ok then try to resolve pending requests for that channel
-            tryToResolvePendingRequests(name, message);
-        }
-
-        return OpenDSUSafeCallback(callback)(
-            createOpenDSUErrorWrapper(`Failed append in file <${path.join(storageFolder, name)}>`, err)
-        );
-    });
-}
-
-module.exports = {
-    readBody,
-    readChannelForLastMessage,
-    readChannel,
-    publishToChannel,
-};
-
-},{"../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","fs":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
 const anchoringStrategies = require("./strategies");
+const utils = require('./utils');
 
 function requestStrategyMiddleware(request, response, next) {
-    const receivedDomain = require("./utils").getDomainFromKeySSI(request.params.anchorId);
-    const domainConfig = require("./utils").getAnchoringDomainConfig(receivedDomain);
+    let receivedDomain;
+
+    try {
+        receivedDomain = utils.getDomainFromKeySSI(request.params.anchorId);
+    } catch (e) {
+        const error = `[Anchoring] Unable to parse anchor id`;
+        console.error(error)
+        return response.send(500, error);
+    }
+
+    if (receivedDomain !== request.params.domain) {
+        const error = `[Anchoring] Domain mismatch: '${receivedDomain}' != '${request.params.domain}'`;
+        console.error(error);
+        return response.send(403, error);
+    }
+
+    const domainConfig = utils.getAnchoringDomainConfig(receivedDomain);
     if (!domainConfig) {
         const error = `[Anchoring] Domain '${receivedDomain}' not found`;
         console.error(error);
@@ -311,8 +193,10 @@ function requestStrategyMiddleware(request, response, next) {
     try {
         request.strategy = new StrategyClass(request.server, domainConfig, request.params.anchorId, request.body);
     } catch (e) {
+        const error = `[Anchoring] Unable to initialize anchoring strategy`;
         console.error(error);
-        return response.send(500, 'Unable to initialize anchoring strategy')
+        console.error(e);
+        return response.send(500, error);
     }
 
     next();
@@ -324,7 +208,7 @@ function Anchoring(server) {
         next();
     }
 
-    const { createAnchor, appendToAnchor, getAllVersions, publishHandler } = require("./controllers");
+    const { createAnchor, appendToAnchor, getAllVersions } = require("./controllers");
 
     const { responseModifierMiddleware, requestBodyJSONMiddleware } = require("../../utils/middlewares");
 
@@ -341,12 +225,6 @@ function Anchoring(server) {
 
     server.get(`/anchor/:domain/get-all-versions/:anchorId`, requestStrategyMiddleware);
     server.get(`/anchor/:domain/get-all-versions/:anchorId`, getAllVersions);
-
-    server.get(`/anchor/:domain/subscribe/:keyssi`, publishHandler);
-
-    server.delete(`/anchor/:domain/subscribe/:keyssi`, (request, response, next) => {
-        // delete ANCHOR ?subscribeId=
-    });
 }
 
 module.exports = Anchoring;
@@ -1014,20 +892,22 @@ function BDNS(server) {
            return true;
         }
         init_process_runned = true;
-        try{
-            const fs = require("fs");
-            const path = require("path");
+        const fs = require("fs");
+        const path = require("path");
 
-            const bdnsHostsPath = path.join(process.env.PSK_CONFIG_LOCATION, "bdns.hosts");
+        const bdnsHostsPath = path.join(process.env.PSK_CONFIG_LOCATION, "bdns.hosts");
 
-            bdnsCache = fs.readFileSync(bdnsHostsPath).toString();
-        }catch(e){
-            throw e;
-        }
+        bdnsCache = fs.readFileSync(bdnsHostsPath).toString();
     }
 
     function bdnsHandler(request, response, next) {
-        initialize();
+        try {
+            initialize();
+        } catch (e) {
+            response.statusCode = 500;
+            return response.end('Failed to initialize BDNS');
+        }
+
         if (typeof bdnsCache !== "undefined") {
             response.setHeader('content-type', 'application/json');
             response.statusCode = 200;
@@ -1044,6 +924,7 @@ function BDNS(server) {
 }
 
 module.exports = BDNS;
+
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
 function getBrick(request, response) {
     response.setHeader('content-type', 'application/octet-stream');
@@ -1449,7 +1330,11 @@ function ChannelsManager(server) {
     const rootFolder = path.join(path.resolve(config.storage), config.componentsConfig.virtualMQ.channelsFolderName);
 
     if (!fs.existsSync(rootFolder)) {
-        fs.mkdirSync(rootFolder, { recursive: true });
+        // A possible race condition exists between the call to
+        // `exists` and `mkdir`. Catch the exception if that happens
+        try {
+            fs.mkdirSync(rootFolder, { recursive: true });
+        } catch (_) {}
     }
 
     const channelKeys = {};
@@ -1486,7 +1371,11 @@ function ChannelsManager(server) {
             return callback(e);
         }
 
-        fs.mkdirSync(channelFolder);
+        try {
+            fs.mkdirSync(channelFolder);
+        } catch (e) {
+            return callback(e);
+        }
 
         if (fs.existsSync(keyFile)) {
             let e = new Error("channel exists!");
@@ -1853,6 +1742,7 @@ function ChannelsManager(server) {
 }
 
 module.exports = ChannelsManager;
+
 }).call(this)}).call(this,"/modules/apihub/components/channelManager")
 
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","crypto":false,"fs":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js":[function(require,module,exports){
@@ -3351,7 +3241,9 @@ function mqManager(server) {
 				}
 			}
 			if(!connectionActive){
-				throw "Connection not active with this subscriber.";
+                console.log("Connection not active with this subscriber.");
+                res.end()
+                return;
 			}
 			res.write(message);
 			sendStatus(res, 200);
@@ -5003,7 +4895,13 @@ function MiddlewareRegistry() {
      * @param {Object} res
      */
     this.go = function go(req, res) {
-        execute(0, req.method.toLowerCase(), req.url, req, res);
+        try {
+            execute(0, req.method.toLowerCase(), req.url, req, res);
+        } catch (e) {
+            console.error(e);
+            res.statusCode = 500;
+            res.end("Internal server error");
+        }
     };
 
     /**
@@ -25706,7 +25604,8 @@ function BDNS() {
                 return callback(Error(`The provided domain ${dlDomain} is not configured`));
             }
 
-            return bdnsCache[dlDomain][section] ? bdnsCache[dlDomain][section] : [getBaseURL()];
+            const config = bdnsCache[dlDomain][section] ? bdnsCache[dlDomain][section] : [getBaseURL()];
+            callback(undefined, config);
         }
 
         if (!isInitialized) {
@@ -25714,13 +25613,13 @@ function BDNS() {
                 if (dlDomain === undefined) {
                     return callback(new Error("The domain is not defined"));
                 }
-                callback(undefined, load_or_default());
+                return load_or_default();
             })
         }
         if (dlDomain === undefined) {
             return callback(new Error("The domain is not defined"));
         }
-        callback(undefined, load_or_default());
+        load_or_default();
     }
 
     this.getRawInfo = (dlDomain, callback) => {
@@ -31093,12 +30992,15 @@ module.exports = {
 },{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
-    if((err && err.message) || otherErrors) {
+
+    err = err || {};
+
+    if (err.message || otherErrors) {
         if (err.originalMessage) {
             newErr.originalMessage = err.originalMessage;
-        }else{
+        } else {
             newErr.originalMessage = err.message;
-            if(otherErrors){
+            if (otherErrors) {
                 if (typeof otherErrors === "string") {
                     newErr.originalMessage += otherErrors;
                 }
@@ -31107,30 +31009,31 @@ function ErrorWrapper(message, err, otherErrors){
                     otherErrors.forEach(e => newErr.originalMessage += `[${e.message}]`);
                 }
             }
-            if(typeof newErr.originalMessage === "string") {
+            if (typeof newErr.originalMessage === "string") {
                 newErr.originalMessage = newErr.originalMessage.replace(/\n/g, " ");
             }
         }
+
     }
 
-    try{
+    try {
         if (err.originalMessage) {
             newErr = new Error(message + `(${err.originalMessage})`);
             newErr.originalMessage = err.originalMessage;
-        }else{
+        } else {
             newErr = new Error(newErr.originalMessage);
             newErr.originalMessage = newErr.message;
         }
         throw newErr;
-    }catch (e) {
+    } catch (e) {
         newErr = e;
     }
     newErr.previousError = err;
     newErr.debug_message = message;
-    if(err){
+    if (err.stack) {
         newErr.debug_stack   = err.stack;
     }
-    if(otherErrors){
+    if (otherErrors) {
         newErr.otherErrors = otherErrors;
     }
     return newErr;
@@ -33927,6 +33830,7 @@ module.exports.createObservable = function(){
 }
 },{"./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
 const arrayUtils = require("./array");
+const { OpenDSUSafeCallback, createOpenDSUErrorWrapper } = require('./../error')
 
 function validateMajorityRunAllWithSuccess(successResults, errorResults, totalCount) {
   const successCount = successResults.length;
@@ -33956,7 +33860,7 @@ function runSinglePromise(executePromise, promiseInput) {
     });
 }
 
-function runAll(listEntries, executeEntry, validateResults, callback, debugInfo) {
+async function runAll(listEntries, executeEntry, validateResults, callback, debugInfo) {
   if (typeof validateResults !== "function") {
     validateResults = validateMajorityRunAllWithSuccess;
   }
@@ -33964,34 +33868,37 @@ function runAll(listEntries, executeEntry, validateResults, callback, debugInfo)
   const allInitialExecutions = listEntries.map((entry) => {
     return runSinglePromise(executeEntry, entry);
   });
-  Promise.all(allInitialExecutions)
-    .then((results) => {
-      const successExecutions = results.filter((run) => run.success);
-      let errorExecutions = results.filter((run) => !run.success);
-      errorExecutions = errorExecutions.map(e => {
-        if (e.error && e.error.error) {
-          return e.error.error;
-        }else {
-          return e;
-        }
-      });
-      const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions);
-      if (isConsideredSuccessfulRun) {
-        const successExecutionResults = successExecutions.map((run) => run.result);
-        return callback(null, successExecutionResults);
-      }
 
-      let baseError = debugInfo;
-      if(errorExecutions.length){
-        if(baseError){
-          baseError = createOpenDSUErrorWrapper("Error found during runAll", errorExecutions[0], errorExecutions, debugInfo);
-        }
-      }
-      return callback(createOpenDSUErrorWrapper("FAILED to runAll " , baseError));
-    })
-    .catch(( error) => {
-      callback(error)
-    });
+  let results;
+
+  try {
+    results = await Promise.all(allInitialExecutions)
+  } catch (e) {
+    return callback(e);
+  }
+
+  const successExecutions = results.filter((run) => run.success);
+  let errorExecutions = results.filter((run) => !run.success);
+  errorExecutions = errorExecutions.map(e => {
+    if (e.error && e.error.error) {
+      return e.error.error;
+    }else {
+      return e;
+    }
+  });
+  const isConsideredSuccessfulRun = validateResults(successExecutions, errorExecutions);
+  if (isConsideredSuccessfulRun) {
+    const successExecutionResults = successExecutions.map((run) => run.result);
+    return callback(null, successExecutionResults);
+  }
+
+  let baseError = debugInfo;
+  if(errorExecutions.length){
+    if(baseError){
+      baseError = OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Error found during runAll", errorExecutions[0], errorExecutions));
+    }
+  }
+  return OpenDSUSafeCallback(callback)((createOpenDSUErrorWrapper("FAILED to runAll " , baseError)));
 }
 
 function runOneSuccessful(listEntries, executeEntry, callback, debugInfo) {
@@ -34004,25 +33911,26 @@ function runOneSuccessful(listEntries, executeEntry, callback, debugInfo) {
 
   const entry = availableListEntries.shift();
 
-  const executeForSingleEntry = (entry) => {
-    return executeEntry(entry)
-      .then((result) => {
-        return callback(null, result);
-      })
-      .catch((err) => {
-        if (!availableListEntries.length) {
-          return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
-        }
+  const executeForSingleEntry = async (entry) => {
+      let result;
+      try {
+          result = await executeEntry(entry);
+      } catch (err) {
+          if (!availableListEntries.length) {
+              return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to execute entry`, err));
+          }
 
-        const nextEntry = availableListEntries.shift();
-        executeForSingleEntry(nextEntry);
-      });
+          const nextEntry = availableListEntries.shift();
+          return executeForSingleEntry(nextEntry);
+      }
+
+     return callback(undefined, result);
   };
 
   executeForSingleEntry(entry);
 }
 
-function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback, debugInfo) {
+async function runEnoughForMajority(listEntries, executeEntry, initialRunCount, validateResults, callback, debugInfo) {
   const totalCount = listEntries.length;
 
   if (!initialRunCount || typeof initialRunCount !== "number") {
@@ -34039,7 +33947,7 @@ function runEnoughForMajority(listEntries, executeEntry, initialRunCount, valida
   const initialEntries = listEntries.slice(0, initialRunCount);
   const remainingEntries = listEntries.slice(initialRunCount);
 
-  const checkAllExecutedRunResults = () => {
+  const checkAllExecutedRunResults = async () => {
     const successExecutions = allExecutedRunResults.filter((run) => run.success);
     const errorExecutions = allExecutedRunResults.filter((run) => !run.success);
 
@@ -34055,27 +33963,22 @@ function runEnoughForMajority(listEntries, executeEntry, initialRunCount, valida
     }
 
     const nextEntry = remainingEntries.shift();
-    runSinglePromise(executeEntry, nextEntry)
-      .then((nextEntryResult) => {
-        allExecutedRunResults.push(nextEntryResult);
-        checkAllExecutedRunResults();
-      })
-      .catch(() => {
-        // runSinglePromise already makes sure no catch is thrown
-        // put to ignore nodejs unhandled execution warning
-      });
+
+    const nextEntryResult = await runSinglePromise(executeEntry, nextEntry);
+    allExecutedRunResults.push(nextEntryResult);
+    checkAllExecutedRunResults();
   };
 
   const allInitialExecutions = initialEntries.map((entry) => {
     return runSinglePromise(executeEntry, entry);
   });
 
-  Promise.all(allInitialExecutions)
-    .then((results) => {
-      allExecutedRunResults = results;
-      checkAllExecutedRunResults();
-    })
-    .catch((error) => callback(error));
+  try {
+    allExecutedRunResults = await Promise.all(allInitialExecutions);
+  } catch (e) {
+    return callback(e);
+  }
+  checkAllExecutedRunResults();
 }
 
 module.exports = {
@@ -34084,7 +33987,7 @@ module.exports = {
   runEnoughForMajority,
 };
 
-},{"./array":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
+},{"./../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./array":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
 /*
     W3CDID Minxin is abstracting the DID document for OpenDSU compatible DID methods
 
@@ -34097,192 +34000,256 @@ module.exports = {
  */
 
 function W3CDID_Mixin(target) {
+  const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+  const keySSISpace = require("opendsu").loadAPI("keyssi");
+  const crypto = require("opendsu").loadAPI("crypto");
+  target.findPrivateKeysInSecurityContext = function (callback) {};
 
-    const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-    const keySSISpace = require("opendsu").loadAPI("keyssi");
-    const crypto = require("opendsu").loadAPI("crypto");
-    target.findPrivateKeysInSecurityContext = function (callback) {
+  target.sign = function (hash, callback) {
+    securityContext.signAsDID(target, hash, callback);
+  };
 
-    };
+  target.verify = function (hash, signature, callback) {
+    securityContext.verifyForDID(target, hash, signature, callback);
+  };
 
-    target.sign = function (hash, callback) {
-        securityContext.signAsDID(target, hash, callback);
-    };
+  target.signImpl = (privateKeys, data, callback) => {
+    const keySSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+    keySSI.initialize(keySSI.getDLDomain(), privateKeys[0]);
+    crypto.sign(keySSI, data, callback);
+  };
 
-    target.verify = function (hash, signature, callback) {
-        securityContext.verifyForDID(target, hash, signature, callback);
-    };
+  target.verifyImpl = (data, signature, callback) => {
+    target.getPublicKey("pem", (err, publicKey) => {
+      if (err) {
+        return callback(
+          createOpenDSUErrorWrapper(
+            `Failed to read public key for did ${target.getIdentifier()}`,
+            err
+          )
+        );
+      }
 
-    target.signImpl = (privateKeys, data, callback) => {
-        const keySSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
-        keySSI.initialize(keySSI.getDLDomain(), privateKeys[0]);
-        crypto.sign(keySSI, data, callback);
-    };
+      const templateKeySSI = keySSISpace.createTemplateSeedSSI(
+        target.getDomain()
+      );
+      crypto.verifySignature(
+        templateKeySSI,
+        data,
+        signature,
+        publicKey,
+        callback
+      );
+    });
+  };
+  /*Elliptic Curve Integrated Encryption Scheme
+   * https://github.com/bin-y/standard-ecies/blob/master/main.js
+   * https://www.npmjs.com/package/ecies-lite  //try to use functions from SSI and from crypto
+   * https://github.com/ecies/js
+   * https://github.com/sigp/ecies-parity
+   * https://github.com/pedrouid/eccrypto-js
+   *
+   * annoncrypt  - symertric enc (IES)
+   * authcrypt   -  asymetric enc + sign
+   * plaintext   + asym sign
+   *
+   * A -> B   sign(enc( ASYM_PK_B, M), PK_A)
+   * */
 
-    target.verifyImpl = (data, signature, callback) => {
-        target.getPublicKey("pem", (err, publicKey) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read public key for did ${target.getIdentifier()}`, err));
-            }
+  target.encryptMessage = function (receiverDID, message, callback) {
+    securityContext.encryptForDID(target, receiverDID, message, callback);
+  };
 
-            const templateKeySSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
-            crypto.verifySignature(templateKeySSI, data, signature, publicKey, callback);
-        });
+  target.decryptMessage = function (encryptedMessage, callback) {
+    securityContext.decryptAsDID(target, encryptedMessage, callback);
+  };
+
+  const saveNewKeyPairInSC = async (didDocument, compatibleSSI) => {
+    try {
+      await $$.promisify(securityContext.addPrivateKeyForDID)(
+        didDocument,
+        compatibleSSI.getPrivateKey("raw")
+      );
+      await $$.promisify(securityContext.addPublicKeyForDID)(
+        didDocument,
+        compatibleSSI.getPublicKey("raw")
+      );
+    } catch (e) {
+      throw createOpenDSUErrorWrapper(
+        `Failed to save new private key and public key in security context`,
+        e
+      );
     }
-    /*Elliptic Curve Integrated Encryption Scheme
-    * https://github.com/bin-y/standard-ecies/blob/master/main.js
-    * https://www.npmjs.com/package/ecies-lite  //try to use functions from SSI and from crypto
-    * https://github.com/ecies/js
-    * https://github.com/sigp/ecies-parity
-    * https://github.com/pedrouid/eccrypto-js
-    *
-    * annoncrypt  - symertric enc (IES)
-    * authcrypt   -  asymetric enc + sign
-    * plaintext   + asym sign
-    *
-    * A -> B   sign(enc( ASYM_PK_B, M), PK_A)
+
+    try {
+      await $$.promisify(didDocument.addPublicKey)(
+        compatibleSSI.getPublicKey("raw")
+      );
+    } catch (e) {
+      throw createOpenDSUErrorWrapper(
+        `Failed to save new private key and public key in security context`,
+        e
+      );
+    }
+  };
+
+  target.encryptMessageImpl = function (
+    privateKeys,
+    receiverDIDDocument,
+    message,
+    callback
+  ) {
+    const senderSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
+    senderSeedSSI.initialize(target.getDomain(), privateKeys[0]);
+
+    receiverDIDDocument.getPublicKey("raw", async (err, receiverPublicKey) => {
+      if (err) {
+        return callback(
+          createOpenDSUErrorWrapper(`Failed to get sender publicKey`, err)
+        );
+      }
+
+      const publicKeySSI = keySSISpace.createPublicKeySSI(
+        "seed",
+        receiverPublicKey
+      );
+
+      const encryptMessage = (senderKeySSI) => {
+        let encryptedMessage;
+        try {
+          encryptedMessage = crypto.ecies_encrypt_ds(
+            senderKeySSI,
+            publicKeySSI,
+            message
+          );
+        } catch (e) {
+          return callback(
+            createOpenDSUErrorWrapper(`Failed to encrypt message`, e)
+          );
+        }
+
+        callback(undefined, encryptedMessage);
+      };
+
+      let compatibleSSI;
+      try {
+        compatibleSSI = await $$.promisify(
+          publicKeySSI.generateCompatiblePowerfulKeySSI
+        )();
+      } catch (e) {
+        return callback(
+          createOpenDSUErrorWrapper(`Failed to create compatible seed ssi`, e)
+        );
+      }
+
+      try {
+        await saveNewKeyPairInSC(target, compatibleSSI);
+      } catch (e) {
+        return callback(
+          createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e)
+        );
+      }
+
+      encryptMessage(compatibleSSI);
+    });
+  };
+
+  target.decryptMessageImpl = function (
+    privateKeys,
+    encryptedMessage,
+    callback
+  ) {
+    let decryptedMessageObj;
+    const decryptMessageRecursively = (privateKeyIndex) => {
+      const privateKey = privateKeys[privateKeyIndex];
+      if (typeof privateKey === "undefined") {
+        return callback(
+          createOpenDSUErrorWrapper(
+            `Failed to decrypt message`,
+            Error(`Private key is undefined`)
+          )
+        );
+      }
+
+      const receiverSeedSSI = keySSISpace.createTemplateSeedSSI(
+        target.getDomain()
+      );
+      receiverSeedSSI.initialize(target.getDomain(), privateKey);
+      try {
+        decryptedMessageObj = crypto.ecies_decrypt_ds(
+          receiverSeedSSI,
+          encryptedMessage
+        );
+      } catch (e) {
+        return decryptMessageRecursively(privateKeyIndex + 1);
+      }
+
+      callback(undefined, decryptedMessageObj.message.toString());
+    };
+
+    decryptMessageRecursively(0);
+  };
+
+  /* messages to the APiHUb MQ compatible APIs
+
     * */
 
-    target.encryptMessage = function (receiverDID, message, callback) {
-        securityContext.encryptForDID(target, receiverDID, message, callback);
-    };
+  target.getHash = () => {
+    return crypto.sha256(target.getIdentifier());
+  };
 
-    target.decryptMessage = function (encryptedMessage, callback) {
-        securityContext.decryptAsDID(target, encryptedMessage, callback);
-    };
+  target.sendMessage = function (message, toOtherDID, callback) {
+    if (typeof message === "object") {
+      try {
+        message = message.getSerialisation();
+      } catch (e) {
+        return callback(e);
+      }
+    }
+    const mqHandler = require("opendsu")
+      .loadAPI("mq")
+      .getMQHandlerForDID(toOtherDID);
+    target.encryptMessage(toOtherDID, message, (err, encryptedMessage) => {
+      if (err) {
+        return callback(
+          createOpenDSUErrorWrapper(`Failed to encrypt message`, err)
+        );
+      }
 
-    const saveNewKeyPairInSC = async (didDocument, compatibleSSI) => {
-        try {
-            await $$.promisify(securityContext.addPrivateKeyForDID)(didDocument, compatibleSSI.getPrivateKey("raw"));
-            await $$.promisify(securityContext.addPublicKeyForDID)(didDocument, compatibleSSI.getPublicKey("raw"));
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
-        }
+      mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
+    });
+  };
 
-        try {
-            await $$.promisify(didDocument.addPublicKey)(compatibleSSI.getPublicKey("raw"));
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to save new private key and public key in security context`, e);
-        }
-    };
+  target.readMessage = function (callback) {
+    const mqHandler = require("opendsu")
+      .loadAPI("mq")
+      .getMQHandlerForDID(target);
+    mqHandler.readMessage((err, encryptedMessage) => {
+      if (err) {
+        return callback(
+          createOpenDSUErrorWrapper(`Failed to read message`, err)
+        );
+      }
 
-    target.encryptMessageImpl = function (privateKeys, receiverDIDDocument, message, callback) {
-        const senderSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
-        senderSeedSSI.initialize(target.getDomain(), privateKeys[0]);
+      let message;
+      try {
+        message = JSON.parse(encryptedMessage.message);
+      } catch (e) {
+        return callback(e);
+      }
+      target.decryptMessage(message, callback);
+    });
+  };
 
-        receiverDIDDocument.getPublicKey("raw", async (err, receiverPublicKey) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get sender publicKey`, err));
-            }
+  target.on = function (callback) {};
 
-            const publicKeySSI = keySSISpace.createPublicKeySSI("seed", receiverPublicKey);
+  target.revokeDID = function (callback) {};
 
-            const encryptMessage = (senderKeySSI) => {
-                let encryptedMessage;
-                try {
-                    encryptedMessage = crypto.ecies_encrypt_ds(senderKeySSI, publicKeySSI, message);
-                } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, e));
-                }
+  target.revokeKey = function (key, callback) {};
 
-                callback(undefined, encryptedMessage);
-            }
+  target.getControllerKey = function (callback) {};
 
-            let compatibleSSI;
-            try {
-                compatibleSSI = await $$.promisify(publicKeySSI.generateCompatiblePowerfulKeySSI)();
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create compatible seed ssi`, e));
-            }
-
-            try {
-                await saveNewKeyPairInSC(target, compatibleSSI);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
-            }
-
-            encryptMessage(compatibleSSI);
-        });
-    };
-
-    target.decryptMessageImpl = function (privateKeys, encryptedMessage, callback) {
-        let decryptedMessageObj;
-        const decryptMessageRecursively = (privateKeyIndex) => {
-            const privateKey = privateKeys[privateKeyIndex];
-            if (typeof privateKey === "undefined") {
-                return callback(createOpenDSUErrorWrapper(`Failed to decrypt message`, Error(`Private key is undefined`)));
-            }
-
-            const receiverSeedSSI = keySSISpace.createTemplateSeedSSI(target.getDomain());
-            receiverSeedSSI.initialize(target.getDomain(), privateKey);
-            try {
-                decryptedMessageObj = crypto.ecies_decrypt_ds(receiverSeedSSI, encryptedMessage);
-            } catch (e) {
-                return decryptMessageRecursively(privateKeyIndex + 1);
-            }
-
-            callback(undefined, decryptedMessageObj.message.toString());
-        }
-
-        decryptMessageRecursively(0);
-    };
-
-    /* messages to the APiHUb MQ compatible APIs
-
-    * */
-
-    target.getHash = () => {
-        return crypto.sha256(target.getIdentifier());
-    };
-
-    target.sendMessage = function (message, toOtherDID, callback) {
-        const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(toOtherDID);
-        target.encryptMessage(toOtherDID, message, (err, encryptedMessage) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to encrypt message`, err));
-            }
-
-            mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
-        });
-    };
-
-    target.readMessage = function (callback) {
-        const mqHandler = require("opendsu").loadAPI("mq").getMQHandlerForDID(target);
-        mqHandler.readMessage((err, encryptedMessage) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
-            }
-
-            let message;
-            try {
-                message = JSON.parse(encryptedMessage.message);
-            } catch (e) {
-              return callback(e);
-            }
-            target.decryptMessage(message, callback);
-        });
-    };
-
-    target.on = function (callback) {
-
-    };
-
-    target.revokeDID = function (callback) {
-
-    };
-
-    target.revokeKey = function (key, callback) {
-
-    };
-
-    target.getControllerKey = function (callback) {
-
-    };
-
-    target.getPublicKeys = function (callback) {
-
-    };
-
+  target.getPublicKeys = function (callback) {};
 }
 
 module.exports = W3CDID_Mixin;
@@ -46561,11 +46528,16 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 
 		console.log(`Checking if port ${port} is available. Please wait...`);
 
-		require(commType).request({ port }, (res) => {
-			callback(undefined, true);
-		}).on('error', (err) => {
+		const req = require(commType).request({ port }, (res) => {
+			res.on('data', (_) => {});
+			res.on('end', () => {
+				callback(undefined, true);
+			})
+		});
+		req.on('error', (err) => {
 			callback(undefined, false);
 		});
+		req.end();
 	}
 
 	function bindErrorHandler(error) {
@@ -46750,6 +46722,7 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 };
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
+
 },{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
