@@ -13001,7 +13001,7 @@ function MultiUserStorageStrategy(){
 }
 module.exports = MultiUserStorageStrategy;
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
-function Query(queryArray){
+function Query(queryArray) {
     let conditions = [];
 
     function queryParser(query) {
@@ -13028,7 +13028,7 @@ function Query(queryArray){
 
     }
 
-    this.filterValuesForIndex = (valueArray)=> {
+    this.filterValuesForIndex = (valueArray) => {
         let conds = conditions.filter(cond => cond[0] === this.getIndexName());
         return valueArray.filter(val => {
             for (let i = 0; i < conds.length; i++) {
@@ -13045,14 +13045,14 @@ function Query(queryArray){
         let conds = conditions.filter(cond => cond[0] !== this.getIndexName());
         let filteredRecords = [];
 
-        function getNextRecord(currentIndex){
+        function getNextRecord(currentIndex) {
             if (currentIndex === sortedValues.length) {
                 return callback(undefined, filteredRecords);
             }
             getNextRecordForValue(sortedValues[currentIndex], (err, record) => {
                 if (record === null) {
                     getNextRecord(currentIndex + 1);
-                }else{
+                } else {
                     processRecord(record);
                     if (currentIndex === sortedValues.length || filteredRecords.length === limit) {
                         return callback(undefined, filteredRecords);
@@ -13104,6 +13104,12 @@ function Query(queryArray){
         },
         "==": function (x, y) {
             return x == y
+        },
+        "!=": function (x, y) {
+            if (y === "undefined") {
+                y = undefined;
+            }
+            return x != y;
         },
         "like": function (str, regex) {
             if (typeof regex === "string") {
