@@ -1802,16 +1802,16 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
         const bricksledgerInstance = await initiliseBrickLedger(validatorDID, serverUrl, domain, domainConfig, rootFolder, storageFolder);
 
         const handleCommand = async (command, callback) => {
-            const args = command.args || [];
+            const params = command.params || [];
 
             if (command.type === "latestBlockInfo") {
                 return bricksledgerInstance.getLatestBlockInfo(callback);
             }
             if (command.type === "validatePBlockFromNetwork") {
-                return bricksledgerInstance.validatePBlockFromNetwork(...args, callback);
+                return bricksledgerInstance.validatePBlockFromNetwork(...params, callback);
             }
             if (command.type === "setValidatorNonInclusion") {
-                return bricksledgerInstance.setValidatorNonInclusion(...args, callback);
+                return bricksledgerInstance.setValidatorNonInclusion(...params, callback);
             }
 
             const commandExecutionCallback = async (error, commandExecution) => {
@@ -1878,6 +1878,7 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
 module.exports = boot;
 
 },{"bricksledger":"bricksledger"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const {
     ensureContractConstitutionIsPresent,
     getNodeWorkerBootScript,
@@ -1905,10 +1906,10 @@ function Contract(server) {
 
         console.log(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
 
-        // temporary create the validator here
-        // TODO: move the validator did inside a config
+        // temporary create the validator here in case the config doesn't have one specified
         const w3cDID = require("opendsu").loadApi("w3cdid");
-        const validatorDID = (await $$.promisify(w3cDID.createIdentity)("demo", "id")).getIdentifier();
+        const validatorDID =
+            config.getConfig("validatorDID") || (await $$.promisify(w3cDID.createIdentity)("demo", "id")).getIdentifier();
 
         const { rootFolder } = server;
         const externalStorageFolder = require("path").join(rootFolder, config.getConfig("externalStorage"));
@@ -1930,7 +1931,7 @@ function Contract(server) {
                 return response.send(400, err);
             }
 
-            // console.log("[Contracts] Sending command to worker", command);
+            // console.log(`[${config.getConfig("validatorDID")}][Contracts] api worker sending`, command);
             workerPool.addTask(command, (err, message) => {
                 if (err) {
                     return response.send(500, err);
@@ -1939,7 +1940,13 @@ function Contract(server) {
                 let { error, result } = message;
 
                 if (error) {
+                    console.log("@ command error", error, command);
                     return response.send(500, error);
+                }
+
+                if (result && result.optimisticResult && result.optimisticResult instanceof Uint8Array) {
+                    // convert Buffers to String to that the result could be send correctly
+                    result.optimisticResult = Buffer.from(result.optimisticResult).toString("utf-8");
                 }
 
                 return response.send(200, result);
@@ -1968,14 +1975,14 @@ function Contract(server) {
     const sendPBlockToValidateToWorker = (request, response) => {
         const { domain } = request.params;
         const message = request.body;
-        const command = { domain, type: "validatePBlockFromNetwork", args: [message] };
+        const command = { domain, type: "validatePBlockFromNetwork", params: [message] };
         sendCommandToWorker(command, response);
     };
 
     const sendValidatorNonInclusionToWorker = (request, response) => {
         const { domain } = request.params;
         const message = request.body;
-        const command = { domain, type: "setValidatorNonInclusion", args: [message] };
+        const command = { domain, type: "setValidatorNonInclusion", params: [message] };
         sendCommandToWorker(command, response);
     };
 
@@ -1993,7 +2000,9 @@ function Contract(server) {
 
 module.exports = Contract;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js","opendsu":"opendsu","path":false,"syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js","buffer":false,"opendsu":"opendsu","path":false,"syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js":[function(require,module,exports){
 (function (global,__dirname){(function (){
 function escapePath(path) {
     return path ? path.replace(/\\/g, "\\\\").replace(".js", "") : "";
@@ -16238,16 +16247,15 @@ class Block {
             throw "Block must be specified";
         }
 
-        const { pbs, blockNumber, previousBlock, hashLinkSSI } = block;
+        const { pbs, blockNumber, previousBlock } = block;
         this.pbs = pbs;
         this.blockNumber = blockNumber;
         this.previousBlock = previousBlock;
-        this.hashLinkSSI = hashLinkSSI;
     }
 
     getSerialisation() {
-        const { pbs, blockNumber, previousBlock, hashLinkSSI } = this;
-        const block = { pbs, blockNumber, previousBlock, hashLinkSSI };
+        const { pbs, blockNumber, previousBlock } = this;
+        const block = { pbs, blockNumber, previousBlock };
         return JSON.stringify(block);
     }
 }
@@ -16288,7 +16296,7 @@ class PBlockAddedMessage {
 
     sign(validatorDID) {
         const hash = this.computeHash();
-        this.validateSignature = validatorDID.sign(hash);
+        this.validatorSignature = validatorDID.sign(hash);
     }
 
     async validateSignature() {
@@ -16314,6 +16322,7 @@ class PBlockAddedMessage {
             blockNumber,
             pBlockHashLinkSSI,
             validatorSignature,
+            hash: this.computeHash(),
         };
         return content;
     }
@@ -16354,7 +16363,7 @@ class ValidatorNonInclusionMessage {
 
     sign(validatorDID) {
         const hash = this.computeHash();
-        this.validateSignature = validatorDID.sign(hash);
+        this.validatorSignature = validatorDID.sign(hash);
     }
 
     async validateSignature() {
@@ -16372,7 +16381,7 @@ class ValidatorNonInclusionMessage {
     }
 
     getContent() {
-        const { validatorDID, validatorURL, blockNumber, unreachableValidators, validatorSignature } = body;
+        const { validatorDID, validatorURL, blockNumber, unreachableValidators, validatorSignature } = this;
 
         const content = {
             validatorDID,
@@ -16413,9 +16422,10 @@ class Broadcaster {
             blockNumber,
             pBlockHashLinkSSI: hashLinkSSI,
         });
+        message.sign(validatorDID);
         this._broadcastMessageToAllValidatorsExceptSelf("pblock-added", message.getContent());
     }
-
+    
     broadcastValidatorNonInclusion(blockNumber, unreachableValidators) {
         const { validatorDID, validatorURL } = this;
         const message = new ValidatorNonInclusionMessage({
@@ -16424,17 +16434,19 @@ class Broadcaster {
             blockNumber,
             unreachableValidators,
         });
-        this._broadcastMessageToAllValidatorsExceptSelf("block-unreachable-validators", message.getContent());
+        message.sign(validatorDID);
+        this._broadcastMessageToAllValidatorsExceptSelf("validator-non-inclusion", message.getContent());
     }
 
     async _broadcastMessageToAllValidatorsExceptSelf(endpointSuffix, message) {
-        const validators = getValidatorsForCurrentDomain(this.executionEngine);
+        const validators = await getValidatorsForCurrentDomain(this.executionEngine);
         if (!validators || !validators.length) {
             this._logger.info("[Broadcaster] No validators found for current domain");
             return;
         }
 
-        const validatorsToBroadcastTo = validators.filter((validator) => validator.DID !== pBlock.validatorDID);
+        const validatorDID = this.validatorDID.getIdentifier();
+        const validatorsToBroadcastTo = validators.filter((validator) => validator.DID !== validatorDID);
         this._logger.info(
             `Broadcasting message '${JSON.stringify(message)}' to ${validatorsToBroadcastTo.length} validator(s)...`
         );
@@ -16448,10 +16460,11 @@ class Broadcaster {
 
         const broadcastUrl = `${URL}/contracts/${this.domain}/${endpointSuffix}`;
         try {
+            this._logger.debug(`Broadcasting to /${endpointSuffix} to validator ${DID} at ${broadcastUrl}....`);
             const response = await $$.promisify(doPost)(broadcastUrl, message);
-            this._logger.debug(`Broadcasted to ${endpointSuffix} to validator ${DID} at ${URL}`, response);
+            this._logger.debug(`Broadcasted to /${endpointSuffix} to validator ${DID} at ${broadcastUrl}`, response);
         } catch (error) {
-            this._logger.debug(`Failed to broadcast to ${endpointSuffix} to validator ${DID} at ${URL}`, error);
+            this._logger.debug(`Failed to broadcast to ${endpointSuffix} to validator ${DID} at ${broadcastUrl}`, error);
         }
     }
 }
@@ -16471,7 +16484,6 @@ class Command {
             throw "command must be specified";
         }
 
-        this.command = command;
         const { domain, contractName, methodName, params, type, blockNumber, timestamp, requesterSignature, signerDID } = command;
 
         this.domain = domain;
@@ -16616,15 +16628,348 @@ module.exports = {
     create,
 };
 
-},{"./utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutor.js":[function(require,module,exports){
+},{"./utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/PendingBlock.js":[function(require,module,exports){
+const { CONSENSUS_PHASES, areNonInclusionListsEqual } = require("./utils");
 const Logger = require("../Logger");
+const Block = require("../Block");
+
+function sortPBlocks(pBlocks) {
+    const sortHashes = (a, b) => {
+        if (typeof a === "string" && typeof b === "string") {
+            return a.localeCompare(b);
+        }
+
+        const aHash = typeof a.hashLinkSSI === "string" ? a.hashLinkSSI : a.hashLinkSSI.getIdentifier();
+        const bHash = typeof b.hashLinkSSI === "string" ? b.hashLinkSSI : b.hashLinkSSI.getIdentifier();
+        return aHash.localeCompare(bHash);
+    };
+
+    pBlocks.sort(sortHashes);
+}
+
+class PendingBlock {
+    constructor(domain, validatorDID, blockNumber) {
+        this._logger = new Logger(
+            `[Bricksledger][${domain}][${validatorDID.getIdentifier()}][Consensus][PendingBlock][${blockNumber}]`
+        );
+
+        this.blockNumber = blockNumber;
+
+        this.startTime = Date.now();
+        this.pBlocks = [];
+        this.phase = CONSENSUS_PHASES.PENDING_BLOCKS;
+    }
+
+    setValidators(validators) {
+        this.validators = validators;
+    }
+
+    addPBlock(pBlock) {
+        this.pBlocks.push(pBlock);
+    }
+
+    clearPendingBlockTimeout() {
+        if (this.pendingBlocksTimeout) {
+            clearTimeout(this.pendingBlocksTimeout);
+            this.pendingBlocksTimeout = null;
+        }
+    }
+
+    clearNonInclusionCheckTimeout() {
+        if (this.nonInclusionCheckTimeout) {
+            clearTimeout(this.nonInclusionCheckTimeout);
+            this.nonInclusionCheckTimeout = null;
+        }
+    }
+
+    validateCanReceivePBlock(pBlock) {
+        const { phase, blockNumber } = this;
+        if (phase !== CONSENSUS_PHASES.PENDING_BLOCKS) {
+            const errorMessage = `Pending block number ${blockNumber} is not still at the phase of receiving pBlocks, but at ${phase}`;
+            this._logger.error(errorMessage, "pBlock refused for consensus", pBlock);
+            throw new Error(errorMessage);
+        }
+    }
+
+    validatePBlockValidator(pBlock) {
+        const { validatorDID } = pBlock;
+        this._logger.info(`Checking if pBlock's validator '${validatorDID}' is recognized...`);
+        const isValidatorRecognized = this.validators.some((validator) => validator.DID === validatorDID);
+        if (!isValidatorRecognized) {
+            const errorMessage = `Pblock '${pBlock.hashLinkSSI}' has a nonrecognized validator '${validatorDID}'`;
+            this._logger.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+    }
+
+    validateNoPBlockFromValidator(validatorDID) {
+        const { blockNumber, pBlocks } = this;
+        const isPBlockFromValidatorAlreadyAdded = pBlocks.some((pBlock) => pBlock.validatorDID === validatorDID);
+        if (isPBlockFromValidatorAlreadyAdded) {
+            const errorMessage = `Validator '${validatorDID}' already had a pBlock for blockNumber ${blockNumber}`;
+            this._logger.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+    }
+
+    startPendingBlocksPhase({ timeoutMs, onFinalizeConsensusAsync, onStartNonInclusionPhase }) {
+        this.clearPendingBlockTimeout();
+
+        const pendingBlocksTimeout = setTimeout(async () => {
+            const { phase } = this; // phase can be changed until timeout is run
+
+            this._logger.debug(`pendingBlocksTimeout triggered...`);
+
+            await this.waitForSafeProcessing();
+
+            this._logger.debug(`pendingBlocksTimeout started...`);
+
+            try {
+                // the timeout has occured after the consensus finalization phase started, so we ignore the timeout
+                if (phase === CONSENSUS_PHASES.FINALIZING) {
+                    this._logger.debug(`pendingBlocksTimeout found the phase to be ${phase}, so canceling timeout...`);
+                    return;
+                }
+
+                if (this.canFinalizeConsensus()) {
+                    await onFinalizeConsensusAsync();
+                    return;
+                }
+
+                const { validators, pBlocks } = this;
+                const canProceedToNonInclusionPhase = pBlocks.length >= Math.floor(validators.length / 2) + 1;
+                if (!canProceedToNonInclusionPhase) {
+                    this._logger.info(
+                        `Consensus for pBlock has received only ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`,
+                        `so it cannot proceed to non inclusion phase yet. Waiting another pendingBlocksTimeout`
+                    );
+
+                    this.clearPendingBlockTimeout();
+                    this.startPendingBlocksPhase({ timeoutMs, onFinalizeConsensusAsync, onStartNonInclusionPhase });
+                    return;
+                }
+
+                onStartNonInclusionPhase();
+            } catch (error) {
+                this._logger.error(`An error has occurred while running pendingBlocksTimeout`, error);
+
+                // an error has occured to start another pending blocks phase check
+                this.startPendingBlocksPhase({ timeoutMs, onFinalizeConsensusAsync, onStartNonInclusionPhase });
+            }
+        }, timeoutMs);
+
+        this.pendingBlocksTimeout = pendingBlocksTimeout;
+    }
+
+    canFinalizeConsensus() {
+        const { validators, pBlocks } = this;
+        this._logger.info(`Checking if consensus for pending block can be finalized...`);
+
+        const canFinalizeConsensus = validators.length === pBlocks.length;
+        if (canFinalizeConsensus) {
+            return true;
+        }
+
+        this._logger.info(
+            `Consensus for pBlock has received ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`
+        );
+        return false;
+    }
+
+    finalizeConsensus() {
+        this._logger.info(`Finalizing consensus for pBlock...`);
+
+        this.phase = CONSENSUS_PHASES.FINALIZING;
+        this.clearPendingBlockTimeout();
+        this.clearNonInclusionCheckTimeout();
+    }
+
+    removePBlocksForValidatorDIDs(validatorDIDs) {
+        const { pBlocks } = this;
+        validatorDIDs.forEach((validatorDID) => {
+            const validatorPBlockIndex = pBlocks.findIndex((pBlock) => pBlock.validatorDID === validatorDID);
+            if (validatorPBlockIndex !== -1) {
+                this._logger.debug(`Removing pBlock from validator '${validatorDID}' since it's marked as unreachable...`);
+                pBlocks.splice(validatorPBlockIndex, 1);
+            } else {
+                this._logger.warn(
+                    `Validator '${validatorDID}' it's marked as unreachable but its block is not present in the pending block`
+                );
+            }
+        });
+    }
+
+    startNonInclusionPhase({ timeout, checkForPendingBlockNonInclusionMajorityAsync, broadcastValidatorNonInclusion }) {
+        const { validators, pBlocks } = this;
+
+        this.clearNonInclusionCheckTimeout();
+
+        const nonInclusionCheckTimeout = setTimeout(async () => {
+            const { phase } = this; // phase can be changed until timeout is run
+
+            this._logger.debug(`nonInclusionCheckTimeout triggered...`);
+
+            await this.waitForSafeProcessing();
+
+            this._logger.debug(`nonInclusionCheckTimeout started...`);
+
+            try {
+                // the timeout has occured after the consensus finalization phase started, so we ignore the timeout
+                if (phase === CONSENSUS_PHASES.FINALIZING) {
+                    this._logger.debug(`pendingBlocksTimeout found the phase to be ${phase}, so canceling timeout...`);
+                    return;
+                }
+
+                if (phase === CONSENSUS_PHASES.NON_INCLUSION_CHECK) {
+                    const canNonInclusionPhaseBeClosed = await checkForPendingBlockNonInclusionMajorityAsync();
+                    if (canNonInclusionPhaseBeClosed) {
+                        return;
+                    }
+
+                    this._logger.info(
+                        `non inclusion phase cannot be closed due to missing majority, so starting a new voting phase...`
+                    );
+                    this.startNonInclusionPhase({
+                        timeout,
+                        checkForPendingBlockNonInclusionMajorityAsync,
+                        broadcastValidatorNonInclusion,
+                    });
+                }
+            } catch (error) {
+                this._logger.error(`An error has occurred while running nonInclusionCheckTimeout`, error);
+
+                // an error has occured to start another non inclusion phase check
+                this.startNonInclusionPhase({
+                    timeout,
+                    checkForPendingBlockNonInclusionMajorityAsync,
+                    broadcastValidatorNonInclusion,
+                });
+            }
+        }, timeout);
+
+        this.phase = CONSENSUS_PHASES.NON_INCLUSION_CHECK;
+        this._logger.info(
+            `Consensus timeout for pBlock has been reached. Received only ${pBlocks.length} pBlocks out of ${validators.length} validators. Enter non inclusion phase`
+        );
+        this.nonInclusionCheckTimeout = nonInclusionCheckTimeout;
+        this.validatorNonInclusions = {};
+        this.ownUnreachableValidators = validators.filter((validator) =>
+            pBlocks.every((pBlock) => pBlock.validatorDID !== validator.DID)
+        );
+
+        const unreachableValidators = this.ownUnreachableValidators;
+        this._logger.info(
+            `Consensus detected ${unreachableValidators.length} unreachable validator(s) for pBlock`,
+            JSON.stringify(unreachableValidators)
+        );
+
+        broadcastValidatorNonInclusion(unreachableValidators);
+    }
+
+    setValidatorNonInclusionAsync(validatorNonInclusion) {
+        const { validatorDID, blockNumber, unreachableValidators } = validatorNonInclusion;
+
+        const { phase, validatorNonInclusions } = this;
+        if (phase !== CONSENSUS_PHASES.NON_INCLUSION_CHECK) {
+            const errorMessage = `Block with number ${blockNumber} not in non inclusion phase, but in ${phase}`;
+            this._logger.warn(errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        if (validatorNonInclusions[validatorDID]) {
+            const errorMessage = `Block with number ${blockNumber} has already received a non inclusion response`;
+            this._logger.warn(errorMessage, "existing/new", validatorNonInclusions[validatorDID], unreachableValidators);
+            throw new Error(errorMessage);
+        }
+
+        this._logger.debug(`Received non inclusion message from '${validatorDID}' for block`, unreachableValidators);
+
+        validatorNonInclusions[validatorDID] = unreachableValidators;
+
+        this._checkForPendingBlockNonInclusionMajority(pendingBlock);
+    }
+
+    getNonInclusionMajority() {
+        const { ownUnreachableValidators, validatorNonInclusions } = this;
+        let allNonInclusions = [ownUnreachableValidators, ...Object.values(validatorNonInclusions)];
+        const totalNonInclusionsPresent = allNonInclusions.length;
+        const nonInclusionsWithCount = {};
+
+        while (allNonInclusions.length) {
+            const nonInclusionToSearch = allNonInclusions.shift();
+            const nonInclusionToSearchDIDs = nonInclusionToSearch.map((x) => x.DID);
+            nonInclusionToSearchDIDs.sort();
+            const nonInclusionToSearchKey = nonInclusionToSearchDIDs.join(",");
+
+            const remainingCount = allNonInclusions.length;
+
+            const remainingNonInclusions = allNonInclusions.filter(
+                (nonInclusion) => !areNonInclusionListsEqual(nonInclusionToSearch, nonInclusion)
+            );
+
+            const nonInclusionToSearchMatchCount = remainingCount - remainingNonInclusions.length + 1;
+            nonInclusionsWithCount[nonInclusionToSearchKey] = {
+                unreachableValidators: nonInclusionToSearch,
+                count: nonInclusionToSearchMatchCount,
+            };
+
+            allNonInclusions = remainingNonInclusions;
+        }
+
+        const nonInclusionCounts = Object.values(nonInclusionsWithCount).map((x) => x.count);
+        const sameNonInclusionMaxCount = Math.max(...nonInclusionCounts);
+
+        const isMajorityFound = sameNonInclusionMaxCount >= Math.floor(totalNonInclusionsPresent / 2) + 1;
+        if (!isMajorityFound) {
+            return null;
+        }
+
+        const nonInclusionMajorityKey = Object.keys(nonInclusionsWithCount).find(
+            (nonInclusion) => nonInclusionsWithCount[nonInclusion].count === sameNonInclusionMaxCount
+        );
+        const nonInclusionMajority = nonInclusionsWithCount[nonInclusionMajorityKey];
+
+        return nonInclusionMajority.unreachableValidators;
+    }
+
+    async waitForSafeProcessing() {
+        if (this.processing) {
+            try {
+                await this.processing;
+            } catch (error) {
+                // an error has occured during the previous processing logic, so we can ignore it
+            }
+        }
+    }
+
+    createBlock(latestBlockHash) {
+        const participatingPBlockHashLinks = this.pBlocks.filter((pBlock) => !pBlock.isEmpty).map((pBlock) => pBlock.hashLinkSSI);
+        sortPBlocks(participatingPBlockHashLinks);
+
+        const block = {
+            pbs: participatingPBlockHashLinks,
+            blockNumber: this.blockNumber,
+            previousBlock: latestBlockHash,
+        };
+
+        return new Block(block);
+    }
+}
+
+module.exports = PendingBlock;
+
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutor.js":[function(require,module,exports){
+const Block = require("../Block");
+const Command = require("../Command");
+const Logger = require("../Logger");
+const PBlock = require("../PBlock");
 
 class ValidatorContractExecutor {
-    constructor(domain, validatorDID, validatorURL) {
+    constructor(domain, sourceValidatorDID, validatorDID, validatorURL) {
         this._domain = domain;
         this._validatorDID = validatorDID;
         this._validatorURL = validatorURL;
-        this._logger = new Logger(`[Bricksledger][${domain}][${this._validatorDID}][ValidatorContractExecutor]`);
+        this._logger = new Logger(`[Bricksledger][${domain}][${sourceValidatorDID.getIdentifier()}][ValidatorContractExecutor]`);
     }
 
     async getValidatorsAsync() {
@@ -16636,11 +16981,21 @@ class ValidatorContractExecutor {
     }
 
     async getBlockAsync(blockHashLinkSSI) {
-        return await this._callSafeCommand("consensus", "getBlock", [blockHashLinkSSI]);
+        const blockContent = await this._callSafeCommand("consensus", "getBlock", [blockHashLinkSSI]);
+        const block = new Block(blockContent);
+        return block;
     }
 
     async getPBlockAsync(pBlockHashLinkSSI) {
-        return await this._callSafeCommand("consensus", "getPBlock", [pBlockHashLinkSSI]);
+        const pBlockContent = await this._callSafeCommand("consensus", "getPBlock", [pBlockHashLinkSSI]);
+        const pBlock = new PBlock(pBlockContent);
+        await pBlock.validateSignature();
+
+        if (pBlock.commands && Array.isArray(pBlock.commands)) {
+            pBlock.commands = pBlock.commands.map((command) => new Command(command));
+        }
+
+        return pBlock;
     }
 
     async getPBlockProposedByValidatorAsync(blockNumber, validatorDID) {
@@ -16658,16 +17013,17 @@ class ValidatorContractExecutor {
         const generateSafeCommand = $$.promisify(contractsApi.generateSafeCommandForSpecificServer);
 
         const paramsString = typeof params === "object" ? JSON.stringify(params) : params;
-        const callDebugInfo = `validator '${this._validatorDID}'s contract '${contractName}' - safe - '${methodName}' - params: ${paramsString}`;
+        const callDebugInfo = `validator '${this._validatorDID}'s (${this._validatorURL}) contract '${contractName}' - safe - '${methodName}' - params: ${paramsString}`;
         this._logger.debug(`Calling ${callDebugInfo}`);
 
         try {
             const result = await generateSafeCommand(this._validatorURL, this._domain, contractName, methodName, params);
             this._logger.debug(`Calling validator ${callDebugInfo} responded with:`, result);
 
-            return result;
+            return result.optimisticResult;
         } catch (error) {
             this._logger.debug(`Calling validator ${callDebugInfo} failed with:`, error);
+            throw error;
         }
     }
 
@@ -16701,7 +17057,7 @@ class ValidatorContractExecutor {
 
 module.exports = ValidatorContractExecutor;
 
-},{"../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js":[function(require,module,exports){
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js":[function(require,module,exports){
 const ValidatorContractExecutor = require("./ValidatorContractExecutor");
 
 function create(...params) {
@@ -16764,7 +17120,12 @@ class ValidatorSynchronizer {
         const { domain, validatorDID, validatorURL, validatorContractExecutorFactory } = this;
 
         this._logger.info(`Checking validator '${validatorDID}' for validator list...`);
-        this._validatorContractExecutor = validatorContractExecutorFactory.create(domain, validatorDID, validatorURL);
+        this._validatorContractExecutor = validatorContractExecutorFactory.create(
+            domain,
+            this.currentValidatorDID,
+            validatorDID,
+            validatorURL
+        );
 
         this._blockSyncInterval = setInterval(async () => {
             this._runSyncFlow();
@@ -16826,7 +17187,7 @@ class ValidatorSynchronizer {
             for (let blockIndex = 0; blockIndex < missingBlocks.length; blockIndex++) {
                 const missingBlock = missingBlocks[blockIndex];
                 this._logger.info(
-                    `Getting pblocks for block '${missingBlock.hashLinkSSI}  [${blockIndex + 1}/${missingBlocks.length}]'...`
+                    `Getting pblocks for block number ${missingBlock.blockNumber} [${blockIndex + 1}/${missingBlocks.length}]'...`
                 );
 
                 // loading pblock for block
@@ -16891,6 +17252,7 @@ class ValidatorSynchronizer {
 
             this._logger.info(`Checking if self is part of self's validator list by getting local validators...`);
             const localValidators = await this.getLocalValidators();
+            this._logger.debug(`Got ${localValidators.length} local validator(s),`, localValidators);
             const isSelfPresentInLocalValidators = localValidators.some((validator) => validator.DID === currentValidatorDID);
             if (isSelfPresentInLocalValidators) {
                 this._logger.info(`Self is part of self's validator list. Synchronization completed.`);
@@ -16898,7 +17260,6 @@ class ValidatorSynchronizer {
                 this.onSyncFinished();
             }
         } else if (this._validatorProposalBlockNumber == null || this._validatorProposalBlockNumber < number) {
-            console.trace("Sending proposal", this._validatorProposalBlockNumber);
             this._logger.info(`Self is not part of the validator's '${this.validatorDID}' validators list. Sending proposal...`);
 
             const { currentValidatorURL } = this;
@@ -16932,85 +17293,24 @@ A configurable consensus core that can have 3 consensus strategies
  - OBAC - Other Blockchain Adapter Consensus: Delegates Consensus to a blockchain adapter that is using other blockchain network for consensus regrading the blocks of commands 
 */
 
+const PendingBlock = require("./PendingBlock");
 const PBlock = require("../PBlock");
 const Logger = require("../Logger");
 const { clone } = require("../utils/object-utils");
 const {
     getLocalLatestBlockInfo,
     getValidatedBlocksWriteStream,
-    createNewBlock,
     saveBlockInBricks,
     appendValidatedBlockHash,
     loadValidatorsFromBdns,
-    sortPBlocks,
+    savePBlockInBricks,
+    areNonInclusionListsEqual,
 } = require("./utils");
 const ValidatorSynchronizer = require("./ValidatorSynchronizer");
 const PBlockAddedMessage = require("../Broadcaster/PBlockAddedMessage");
 
-const CONSENSUS_PHASES = {
-    PENDING_BLOCKS: "PENDING_BLOCKS",
-    NON_INCLUSION_CHECK: "NON_INCLUSION_CHECK",
-    FINALIZING: "FINALIZING",
-};
-
 const DEFAULT_PENDING_BLOCKS_TIMEOUT_MS = 1000 * 60; // 1 minute
 const DEFAULT_NON_INCLUSION_CHECK_TIMEOUT_MS = 1000 * 60; // 1 minute
-
-function areNonInclusionListsEqual(array1, array2) {
-    if (array1.length !== array2.length) {
-        return false;
-    }
-    const array1ValidatorDIDs = array1.map((x) => x.validatorDID);
-    array1ValidatorDIDs.sort();
-
-    const array2ValidatorDIDs = array2.map((x) => x.validatorDID);
-    array2ValidatorDIDs.sort();
-
-    return array1ValidatorDIDs.join(",") === array2ValidatorDIDs.join(",");
-}
-
-function getPendingBlockNonInclusionMajority(pendingBlock) {
-    const { ownUnreachableValidators, validatorNonInclusions } = pendingBlock;
-    let allNonInclusions = [ownUnreachableValidators, ...Object.values(validatorNonInclusions)];
-    const totalNonInclusionsPresent = allNonInclusions.length;
-    const nonInclusionsWithCount = {};
-
-    while (allNonInclusions.length) {
-        const nonInclusionToSearch = allNonInclusions.shift();
-        const nonInclusionToSearchDIDs = nonInclusionToSearch.map((x) => x.DID);
-        nonInclusionToSearchDIDs.sort();
-        const nonInclusionToSearchKey = nonInclusionToSearchDIDs.join(",");
-
-        const remainingCount = allNonInclusions.length;
-
-        const remainingNonInclusions = allNonInclusions.filter(
-            (nonInclusion) => !areNonInclusionListsEqual(nonInclusionToSearch, nonInclusion)
-        );
-
-        const nonInclusionToSearchMatchCount = remainingCount - remainingNonInclusions.length + 1;
-        nonInclusionsWithCount[nonInclusionToSearchKey] = {
-            unreachableValidators: nonInclusionToSearch,
-            count: nonInclusionToSearchMatchCount,
-        };
-
-        allNonInclusions = remainingNonInclusions;
-    }
-
-    const nonInclusionCounts = Object.values(nonInclusionsWithCount).map((x) => x.count);
-    const sameNonInclusionMaxCount = Math.max(...nonInclusionCounts);
-
-    const isMajorityFound = sameNonInclusionMaxCount > Math.floor(totalNonInclusionsPresent / 2) + 1;
-    if (!isMajorityFound) {
-        return null;
-    }
-
-    const nonInclusionMajorityKey = Object.keys(nonInclusionsWithCount).find(
-        (nonInclusion) => nonInclusionsWithCount[nonInclusion].count === sameNonInclusionMaxCount
-    );
-    const nonInclusionMajority = nonInclusionsWithCount[nonInclusionMajorityKey];
-
-    return nonInclusionMajority.unreachableValidators;
-}
 
 class ConsensusCore {
     constructor(
@@ -17053,7 +17353,7 @@ class ConsensusCore {
     async boot() {
         this._logger.info(`Booting consensus...`);
 
-        await this._loadValidators();
+        this.validators = await this._loadValidators();
 
         this._logger.info(`Checking local blocks history...`);
         const latestBlockInfo = await getLocalLatestBlockInfo(this._storageFolder, this._domain);
@@ -17164,8 +17464,14 @@ class ConsensusCore {
         if (pBlockMessage.pBlockHashLinkSSI) {
             this._logger.debug(`Getting external pBlock ${pBlockMessage.pBlockHashLinkSSI} from pBlock message`, pBlockMessage);
             const { validatorDID, validatorURL, pBlockHashLinkSSI } = pBlockMessage;
-            const validatorContractExecutor = validatorContractExecutorFactory.create(this._domain, validatorDID, validatorURL);
+            const validatorContractExecutor = this._validatorContractExecutorFactory.create(
+                this._domain,
+                this._validatorDID,
+                validatorDID,
+                validatorURL
+            );
             pBlock = await validatorContractExecutor.getPBlockAsync(pBlockHashLinkSSI);
+            pBlock.hashLinkSSI = await savePBlockInBricks(pBlock, this._domain, this._brickStorage);
         } else {
             this._logger.debug(`Received empty external pBlock`, pBlockMessage);
             pBlock = new PBlock(pBlockMessage);
@@ -17173,7 +17479,8 @@ class ConsensusCore {
         this._logger.debug(`Validating external pBlock...`);
         await this.validatePBlockAsync(pBlock);
 
-        await this._addPBlockToPendingBlock(pBlock);
+        // dont' await processing finish in order to return to calling mmember
+        this._addPBlockToPendingBlock(pBlock);
     }
 
     validatePBlock(pBlock, callback) {
@@ -17217,7 +17524,7 @@ class ConsensusCore {
             throw new Error("Consensus not yet running");
         }
 
-        const { validatorDID, blockNumber, unreachableValidators } = validatorNonInclusion;
+        const { blockNumber } = validatorNonInclusion;
 
         const pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
         if (!pendingBlock) {
@@ -17226,27 +17533,10 @@ class ConsensusCore {
             throw new Error(errorMessage);
         }
 
-        const { phase, validatorNonInclusions } = pendingBlock;
-        if (phase !== CONSENSUS_PHASES.NON_INCLUSION_CHECK) {
-            const errorMessage = `Block with number ${blockNumber} not in non inclusion phase, but in ${phase}`;
-            this._logger.warn(errorMessage);
-            throw new Error(errorMessage);
-        }
+        await pendingBlock.waitForSafeProcessing();
 
-        if (validatorNonInclusions[validatorDID]) {
-            const errorMessage = `Block with number ${blockNumber} has already received a non inclusion response`;
-            this._logger.warn(errorMessage, "existing/new", validatorNonInclusions[validatorDID], unreachableValidators);
-            throw new Error(errorMessage);
-        }
-
-        this._logger.debug(
-            `Received non inclusion message from '${validatorDID}' for block number ${blockNumber}`,
-            unreachableValidators
-        );
-
-        validatorNonInclusions[validatorDID] = unreachableValidators;
-
-        this._checkForPendingBlockNonInclusionMajority(pendingBlock);
+        pendingBlock.setValidatorNonInclusionAsync(validatorNonInclusion);
+        this._checkForPendingBlockNonInclusionMajorityAsync(pendingBlock);
     }
 
     getPBlockProposedForConsensus(blockNumber, validatorDID, callback) {
@@ -17279,124 +17569,74 @@ class ConsensusCore {
         const { validatorDID, blockNumber } = pBlock;
 
         let pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
-        if (pendingBlock) {
-            if (pendingBlock.phase !== CONSENSUS_PHASES.PENDING_BLOCKS) {
-                const errorMessage = `Pending block number ${blockNumber} is not still at the phase of receiving pBlocks, but at ${pendingBlock.phase}`;
-                this._logger.error(errorMessage, "pBlock refused for consensus", pBlock);
-                throw new Error(errorMessage);
-            }
-        } else {
+
+        if (!pendingBlock) {
             await this._createPendingBlockForBlockNumber(blockNumber);
             pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
         }
 
-        const { pBlocks, validators } = pendingBlock;
+        await pendingBlock.waitForSafeProcessing();
 
-        this._logger.info(`Checking if pBlock's validator '${validatorDID}' is recognized...`);
-        const isValidatorRecognized = validators.some((validator) => validator.DID === validatorDID);
-        if (!isValidatorRecognized) {
-            const errorMessage = `Pblock '${pBlock.hashLinkSSI}' has a nonrecognized validator '${validatorDID}'`;
-            this._logger.error(errorMessage);
-            throw new Error(errorMessage);
-        }
+        pendingBlock.processing = new Promise(async (resolve, reject) => {
+            try {
+                pendingBlock.validateCanReceivePBlock(pBlock);
+                pendingBlock.validatePBlockValidator(pBlock);
+                pendingBlock.validateNoPBlockFromValidator(validatorDID);
 
-        const isPBlockFromValidatorAlreadyAdded = pBlocks.some((pBlock) => pBlock.validatorDID === validatorDID);
-        if (isPBlockFromValidatorAlreadyAdded) {
-            const errorMessage = `Validator '${validatorDID}' already had a pBlock for blockNumber ${blockNumber}`;
-            this._logger.error(errorMessage);
-            throw new Error(errorMessage);
-        }
+                pendingBlock.addPBlock(pBlock);
 
-        pBlocks.push(pBlock);
+                if (pendingBlock.canFinalizeConsensus()) {
+                    this._finalizeConsensusForPendingBlockAsync(pendingBlock); // no need to await in order to finish processing
+                }
+            } catch (error) {
+                this._logger.error(
+                    `A processing error has occurred while adding a pBlock to pending block number ${blockNumber}`,
+                    pBlock,
+                    error
+                );
+                return reject(error);
+            }
 
-        if (await this._checkForPendingBlockConsensusFinalization(pendingBlock)) {
-            this._finalizeConsensusForPendingBlock(pendingBlock);
-        }
+            resolve(); // mark processing finished
+        });
+
+        await pendingBlock.processing;
     }
 
     async _createPendingBlockForBlockNumber(blockNumber) {
-        const pendingBlocksTimeout = setTimeout(async () => {
-            this._logger.debug(`pendingBlocksTimeout triggered for block number ${blockNumber}...`);
-            const pendingBlock = this._pendingBlocksByBlockNumber[blockNumber];
-            // the timeout has occured after the consensus finalization phase started, so we ignore the timeout
-            if (pendingBlock.phase === CONSENSUS_PHASES.FINALIZING) {
-                this._logger.debug(
-                    `pendingBlocksTimeout found the block number ${blockNumber} phase to be ${pendingBlock.phase}, so canceling timeout...`
-                );
-                return;
-            }
-
-            if (await this._checkForPendingBlockConsensusFinalization(pendingBlock)) {
-                await this._finalizeConsensusForPendingBlock(pendingBlock);
-                return;
-            }
-
-            this._startNonInclusionPhase(pendingBlock);
-        }, this._pendingBlocksTimeoutMs);
-
-        const pendingBlock = {
-            blockNumber,
-            startTime: Date.now(),
-            pBlocks: [],
-            pendingBlocksTimeout,
-            phase: CONSENSUS_PHASES.PENDING_BLOCKS,
-        };
+        const pendingBlock = new PendingBlock(this._domain, this._validatorDID, blockNumber);
         this._pendingBlocksByBlockNumber[blockNumber] = pendingBlock;
 
+        pendingBlock.startPendingBlocksPhase({
+            timeoutMs: this._pendingBlocksTimeoutMs,
+            onFinalizeConsensusAsync: () => {
+                return this._finalizeConsensusForPendingBlockAsync(pendingBlock);
+            },
+            onStartNonInclusionPhase: () => {
+                pendingBlock.startNonInclusionPhase({
+                    timeout: this._nonInclusionCheckTimeoutMs,
+                    checkForPendingBlockNonInclusionMajorityAsync: () => {
+                        return this._checkForPendingBlockNonInclusionMajorityAsync(pendingBlock);
+                    },
+                    broadcastValidatorNonInclusion: (unreachableValidators) => {
+                        this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
+                    },
+                });
+
+                // this._startNonInclusionPhase(pendingBlock);
+            },
+        });
+
         // add validators after setting pendingBlock in order to avoid race condition issues
-        await this._loadValidators();
-        pendingBlock.validators = clone(this.validators);
+        this.validators = await this._loadValidators();
+        pendingBlock.setValidators(clone(this.validators));
     }
 
-    _startNonInclusionPhase(pendingBlock) {
-        const { blockNumber, validators, pBlocks } = pendingBlock;
-
-        const nonInclusionCheckTimeout = setTimeout(async () => {
-            this._logger.debug(`nonInclusionCheckTimeout triggered for block number ${blockNumber}...`);
-            // the timeout has occured after the consensus finalization phase started, so we ignore the timeout
-            if (pendingBlock.phase === CONSENSUS_PHASES.FINALIZING) {
-                this._logger.debug(
-                    `pendingBlocksTimeout found the block number ${blockNumber} phase to be ${pendingBlock.phase}, so canceling timeout...`
-                );
-                return;
-            }
-
-            if (pendingBlock.phase === CONSENSUS_PHASES.NON_INCLUSION_CHECK) {
-                const canNonInclusionPhaseBeClosed = await this._checkForPendingBlockNonInclusionMajority(pendingBlock);
-                if (canNonInclusionPhaseBeClosed) {
-                    return;
-                }
-
-                this._logger.info(
-                    `block number ${blockNumber} non inclusion phase cannot be closed due to missing majority, so starting a new voting phase...`
-                );
-                this._startNonInclusionPhase(pendingBlock);
-            }
-        }, this._nonInclusionCheckTimeoutMs);
-
-        pendingBlock.phase = CONSENSUS_PHASES.NON_INCLUSION_CHECK;
-        this._logger.info(
-            `Consensus timeout for pBlock ${blockNumber} has been reached. Received only ${pBlocks.length} pBlocks out of ${validators.length} validators. Enter non inclusion phase`
-        );
-        pendingBlock.nonInclusionCheckTimeout = nonInclusionCheckTimeout;
-        pendingBlock.validatorNonInclusions = {};
-        pendingBlock.ownUnreachableValidators = validators.filter((validator) =>
-            pBlocks.every((pBlock) => pBlock.validatorDID !== validator.DID)
-        );
-
-        const unreachableValidators = pendingBlock.ownUnreachableValidators;
-        this._logger.info(
-            `Consensus detected ${unreachableValidators.length} unreachable validator(s) for pBlock ${blockNumber}`,
-            JSON.stringify(unreachableValidators)
-        );
-        this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
-    }
-
-    async _checkForPendingBlockNonInclusionMajority(pendingBlock) {
+    async _checkForPendingBlockNonInclusionMajorityAsync(pendingBlock) {
         const { blockNumber } = pendingBlock;
-        this._logger.info(`Checking is consensus for pending block ${blockNumber} has a non inclusion majority...`);
+        this._logger.info(`Checking if consensus for pending block ${blockNumber} has a non inclusion majority...`);
 
-        const nonInclusionMajority = getPendingBlockNonInclusionMajority(pendingBlock);
+        const nonInclusionMajority = pendingBlock.getNonInclusionMajority();
         if (!nonInclusionMajority) {
             this._logger.info(`No non inclusion majority found for pending block ${blockNumber}`);
             return false;
@@ -17411,8 +17651,8 @@ class ConsensusCore {
         if (areNonInclusionListsEqual(ownUnreachableValidators, nonInclusionMajority)) {
             this._logger.info(`The pending block own's non inclusion validators is the same as the non inclusion majority`);
 
-            clearTimeout(pendingBlock.nonInclusionCheckTimeout);
-            this._finalizeConsensusForPendingBlock(pendingBlock);
+            pendingBlock.clearNonInclusionCheckTimeout();
+            this._finalizeConsensusForPendingBlockAsync(pendingBlock); // no need to await in order to finish processing
             return true;
         }
 
@@ -17434,18 +17674,7 @@ class ConsensusCore {
                 pendingBlockExtraValidatorDIDs
             );
 
-            pendingBlockExtraValidatorDIDs.forEach((validatorDID) => {
-                const { pBlocks } = pendingBlock;
-                const validatorPBlockIndex = pBlocks.findIndex((pBlock) => pBlock.validatorDID === validatorDID);
-                if (validatorPBlockIndex !== -1) {
-                    this._logger.debug(`Removing pBlock from validator '${validatorDID}' since it's marked as unreachable...`);
-                    pBlocks.splice(validatorPBlockIndex, 1);
-                } else {
-                    this._logger.warn(
-                        `Validator '${validatorDID}' it's marked as unreachable but its block is not present in the pending block`
-                    );
-                }
-            });
+            pendingBlock.removePBlocksForValidatorDIDs(pendingBlockExtraValidatorDIDs);
         }
 
         const pendingBlockMissingValidatorDIDs = [...ownUnreachableValidatorDIDsSet].filter(
@@ -17457,7 +17686,6 @@ class ConsensusCore {
                 `The pending block has missing pBlocks as compared by the non inclusion majority`,
                 pendingBlockMissingValidatorDIDs
             );
-            // to do: get missing pblocks
             const { pBlocks, validators, validatorNonInclusions } = pendingBlock;
             const reachableValidatorDIDs = pBlocks.map((pBlock) => pBlock.validatorDID);
 
@@ -17483,6 +17711,7 @@ class ConsensusCore {
                     const validatorURL = validators.find((validator) => validator.DID === validatorDID);
                     const validatorContractExecutor = this._validatorContractExecutorFactory.create(
                         this._domain,
+                        this._validatorDID,
                         validatorDID,
                         validatorURL
                     );
@@ -17511,7 +17740,7 @@ class ConsensusCore {
 
             if (wereAllMissingPBlocksLoaded) {
                 this._logger.info("All missing pBlocks were successfully loaded, so the consensus can be finalized");
-                this._finalizeConsensusForPendingBlock(pendingBlock);
+                this._finalizeConsensusForPendingBlockAsync(pendingBlock); // no need to await in order to finish processing
                 return true;
             } else {
                 this._logger.warn("Not all missing pBlocks were successfully loaded!");
@@ -17521,30 +17750,12 @@ class ConsensusCore {
         return false;
     }
 
-    async _checkForPendingBlockConsensusFinalization(pendingBlock) {
-        const { validators, pBlocks, blockNumber } = pendingBlock;
-        this._logger.info(`Checking is consensus for pending block ${blockNumber} can be finalized...`);
-
-        const canFinalizeConsensus = validators.length === pBlocks.length;
-        if (canFinalizeConsensus) {
-            return true;
-        }
-
-        this._logger.info(
-            `Consensus for pBlock ${blockNumber} has received ${pBlocks.length} pBlock(s) from a total of ${validators.length} validators`
-        );
-        return false;
-    }
-
-    async _finalizeConsensusForPendingBlock(pendingBlock) {
-        this._logger.info(`Finalizing consensus for pBlock ${pendingBlock.blockNumber}...`);
-
-        pendingBlock.phase = CONSENSUS_PHASES.FINALIZING;
-        clearTimeout(pendingBlock.pendingBlocksTimeout);
+    async _finalizeConsensusForPendingBlockAsync(pendingBlock) {
+        pendingBlock.finalizeConsensus();
 
         try {
             // consensus finished with success, so generate block and broadcast it
-            const block = createNewBlock(pendingBlock, this._latestBlockHash);
+            const block = pendingBlock.createBlock(this._latestBlockHash);
             this._logger.info(`Created block for block number ${pendingBlock.blockNumber}...`, block);
             this._executeBlock(block, pendingBlock.pBlocks);
         } catch (error) {
@@ -17562,12 +17773,11 @@ class ConsensusCore {
     async _storeBlock(block) {
         this._logger.info("Storing block", block);
         const blockHashLinkSSI = await saveBlockInBricks(block, this._domain, this._brickStorage);
-        block.hashLinkSSI = blockHashLinkSSI.getIdentifier();
+        block.hashLinkSSI = blockHashLinkSSI;
     }
 
     async _executePBlocks(pBlocks) {
         const populatedPBlocks = pBlocks.filter((pBlock) => !pBlock.isEmpty);
-        sortPBlocks(populatedPBlocks);
 
         for (let index = 0; index < populatedPBlocks.length; index++) {
             const pBlock = populatedPBlocks[index];
@@ -17575,7 +17785,11 @@ class ConsensusCore {
                 typeof pBlock.onConsensusFinished === "function" ? $$.makeSaneCallback(pBlock.onConsensusFinished) : () => {};
 
             try {
-                await this._executionEngine.executePBlock(pBlock);
+                if (pBlock.validatorDID !== this._validatorDID.getIdentifier()) {
+                    // we don't need to execute the current validator's own PBlock since it was executed when the commands were executed
+                    // so we just need to call the callback
+                    await this._executionEngine.executePBlock(pBlock);
+                }
 
                 callback();
             } catch (error) {
@@ -17598,9 +17812,11 @@ class ConsensusCore {
 
     async _loadValidators() {
         this._logger.info(`Loading validators...`);
-        this.validators = await loadValidatorsFromBdns(this._domain, this._executionEngine);
-        this._logger.info(`Found ${this.validators.length} validator(s) from BDNS`);
-        this._logger.debug(`Validator(s) from BDNS: ${this.validators.map((validator) => validator.DID).join(", ")}`);
+        const validators = await loadValidatorsFromBdns(this._domain, this._executionEngine);
+        this._logger.info(`Found ${validators.length} validator(s) from BDNS`);
+        this._logger.debug(`Validator(s) from BDNS: ${validators.map((validator) => validator.DID).join(", ")}`);
+
+        return validators;
     }
 }
 
@@ -17612,10 +17828,15 @@ module.exports = {
     create,
 };
 
-},{"../Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./ValidatorContractExecutorFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js","./ValidatorSynchronizer":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
-const Block = require("../Block");
+},{"../Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","../utils/object-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/object-utils.js","./PendingBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/PendingBlock.js","./ValidatorContractExecutorFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutorFactory.js","./ValidatorSynchronizer":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js","./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/utils.js":[function(require,module,exports){
 const { checkIfPathExists, ensurePathExists } = require("../utils/fs-utils");
 const { getValidatorsForCurrentDomain } = require("../utils/bdns-utils");
+
+const CONSENSUS_PHASES = {
+    PENDING_BLOCKS: "PENDING_BLOCKS",
+    NON_INCLUSION_CHECK: "NON_INCLUSION_CHECK",
+    FINALIZING: "FINALIZING",
+};
 
 async function getCachedBlocksFolderPath(storageFolder, domain) {
     const path = require("path");
@@ -17693,21 +17914,6 @@ async function getValidatedBlocksWriteStream(storageFolder, domain) {
     return validatedBlocksWriteStream;
 }
 
-function createNewBlock(pendingBlock, latestBlockHash) {
-    const participatingPBlockHashLinks = pendingBlock.pBlocks.map((pBlock) =>
-        typeof pBlock.hashLinkSSI === "string" ? pBlock.hashLinkSSI : pBlock.hashLinkSSI.getIdentifier()
-    );
-    sortPBlocks(participatingPBlockHashLinks);
-
-    const block = {
-        pbs: participatingPBlockHashLinks,
-        blockNumber: pendingBlock.blockNumber,
-        previousBlock: latestBlockHash,
-    };
-
-    return new Block(block);
-}
-
 async function saveBlockInBricks(block, domain, brickStorage) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadApi("keyssi");
@@ -17715,7 +17921,17 @@ async function saveBlockInBricks(block, domain, brickStorage) {
     const brickHash = await brickStorage.addBrickAsync(block.getSerialisation());
 
     const hashLinkSSI = keySSISpace.createHashLinkSSI(domain, brickHash);
-    return hashLinkSSI;
+    return hashLinkSSI.getIdentifier();
+}
+
+async function savePBlockInBricks(pBlock, domain, brickStorage) {
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadApi("keyssi");
+
+    const pBlockBrickHash = await brickStorage.addBrickAsync(pBlock.getSerialisation());
+
+    const hashLinkSSI = keySSISpace.createHashLinkSSI(domain, pBlockBrickHash);
+    return hashLinkSSI.getIdentifier();
 }
 
 async function appendValidatedBlockHash(blockHash, writeStream) {
@@ -17735,32 +17951,32 @@ async function loadValidatorsFromBdns(domain, executionEngine) {
     return validators;
 }
 
-function sortPBlocks(pBlocks) {
-    const sortHashes = (a, b) => {
-        if (typeof a === "string" && typeof b === "string") {
-            return a.localeCompare(b);
-        }
+function areNonInclusionListsEqual(array1, array2) {
+    if (array1.length !== array2.length) {
+        return false;
+    }
+    const array1ValidatorDIDs = array1.map((x) => x.validatorDID);
+    array1ValidatorDIDs.sort();
 
-        const aHash = typeof a.hashLinkSSI === "string" ? a.hashLinkSSI : a.hashLinkSSI.getIdentifier();
-        const bHash = typeof b.hashLinkSSI === "string" ? b.hashLinkSSI : b.hashLinkSSI.getIdentifier();
-        return aHash.localeCompare(bHash);
-    };
+    const array2ValidatorDIDs = array2.map((x) => x.validatorDID);
+    array2ValidatorDIDs.sort();
 
-    pBlocks.sort(sortHashes);
+    return array1ValidatorDIDs.join(",") === array2ValidatorDIDs.join(",");
 }
 
 module.exports = {
+    CONSENSUS_PHASES,
     getCachedBlocksFolderPath,
     getLocalLatestBlockInfo,
     getValidatedBlocksWriteStream,
-    createNewBlock,
     saveBlockInBricks,
+    savePBlockInBricks,
     appendValidatedBlockHash,
     loadValidatorsFromBdns,
-    sortPBlocks,
+    areNonInclusionListsEqual,
 };
 
-},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":false,"opendsu":"opendsu","os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js":[function(require,module,exports){
+},{"../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":false,"opendsu":"opendsu","os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js":[function(require,module,exports){
 const Logger = require("../Logger");
 const {
     getContractMethodExecutionPromise,
@@ -18536,7 +18752,7 @@ async function savePBlockInBricks(pBlock, domain, brickStorage) {
     const pBlockBrickHash = await brickStorage.addBrickAsync(pBlock.getSerialisation());
 
     const hashLinkSSI = keySSISpace.createHashLinkSSI(domain, pBlockBrickHash);
-    return hashLinkSSI;
+    return hashLinkSSI.getIdentifier();
 }
 
 function createPBlock(validatorDID, commands, previousBlockHash, blockNumber) {
@@ -18591,93 +18807,111 @@ class PBlocksFactory {
     async addCommandForConsensusAsync(command) {
         this._logger.info(`Adding command for consensus with hash ${command.getHash()}...`);
 
-        this.pendingCommands.push(command);
-
-        const isBlockSizeLimitReached = this.pendingCommands.length >= this.maxPBlockSize;
-        if (isBlockSizeLimitReached) {
-            this._logger.info(`Reached block size restriction of ${this.maxPBlockSize}`);
-            const pBlock = this._buildPBlockForMaxBlockSize();
-            if (pBlock) {
-                this._sendPBlockForConsensus(pBlock);
-            }
+        if (this._commandProcessing) {
+            await this._commandProcessing;
         }
+
+        this._commandProcessing = new Promise((resolve) => {
+            try {
+                this.pendingCommands.push(command);
+                this._constructPBlockIfBlockSizeRestrictionReached();
+            } catch (error) {
+                this._logger.error(`Failed to add command with hash ${command.getHash()}`, error);
+            }
+
+            resolve(); // mark processing finished
+        });
     }
 
-    // getPBlockProposedForConsensus(pBlock, callback) {
-    //     callback = $$.makeSaneCallback(callback);
+    forcePBlockCreationForBlockNumberIfAbsent(blockNumber, callback) {
+        callback = $$.makeSaneCallback(callback);
 
-    //     this.getPBlockProposedForConsensusAsync(pBlock)
-    //         .then((result) => callback(undefined, result))
-    //         .catch((error) => callback(error));
-    // }
+        this.forcePBlockCreationForBlockNumberIfAbsentAsync(blockNumber)
+            .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
+    }
 
-    // async getPBlockProposedForConsensusAsync(blockNumber, validatorDID) {
-    //     this._logger.info(
-    //         `Getting pBlock proprosed for consensus by validator '${validatorDID}' for block number ${blockNumber}...`
-    //     );
-    //     const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
-    //     const currentConsensusBlockNumber = latestVerifiedBlockInfo.number + 1;
+    async forcePBlockCreationForBlockNumberIfAbsentAsync(blockNumber) {
+        this._logger.info(`Trying to force PBlock creation for block number ${blockNumber}...`);
 
-    //     if (this._latestPBlock) {
-    //         // checking which is the latest pBlock which is awaiting consensus
-    //         const currentBlockNumber = this._latestPBlock.blockNumber;
-    //         if (blockNumber <= currentBlockNumber) {
-    //             this._logger.info(
-    //                 `Wanting to get pBlock proposed for consensus for block number ${blockNumber} but consensus is already at block number ${currentBlockNumber}`
-    //             );
-    //             throw new Error(`pBlock proposed for consensus is already at block ${currentBlockNumber}`);
-    //         }
+        if (this._commandProcessing) {
+            await this._commandProcessing;
+        }
 
-    //         const isCurrentlyWaitingForLatestBlockConsensus = currentBlockNumber === blockNumber;
-    //         if (isCurrentlyWaitingForLatestBlockConsensus) {
-    //             return JSON.parse(this._latestPBlock.getSerialisation());
-    //         }
+        this._commandProcessing = new Promise(async (resolve) => {
+            try {
+                if (this._latestPBlock) {
+                    this._logger.debug(`Found existing _latestPBlock`);
+                    const currentBlockNumber = this._latestPBlock.blockNumber;
+                    if (blockNumber < currentBlockNumber) {
+                        this._logger.warn(
+                            `Wanting to force pBlock creation for block number ${blockNumber} but consensus is already at block number ${currentBlockNumber}`
+                        );
+                        return resolve();
+                    }
 
-    //         this._logger.info(
-    //             `Wanting to get pBlock proposed for consensus for block number ${blockNumber} but latest pBlock is older (at block number ${currentBlockNumber})`
-    //         );
+                    if (blockNumber === currentBlockNumber) {
+                        this._logger.debug(
+                            `Latest pBlock is already destinated for block number ${blockNumber}, so skipping force creation...`
+                        );
+                        return resolve();
+                    }
 
-    //         const needToCreateNewPBlock = currentBlockNumber < latestVerifiedBlockInfo.number;
-    //         if (needToCreateNewPBlock) {
-    //             this._logger.info(
-    //                 `Latest pBlock (at block number ${currentBlockNumber}) is older than current consensus cycle (${currentConsensusBlockNumber})`
-    //             );
-    //         }
-    //     } else {
-    //         needToCreateNewPBlock = blockNumber === currentConsensusBlockNumber;
-    //     }
+                    this._logger.debug(
+                        `Latest pBlock (block number ${currentBlockNumber}) is older than requested forced creation for number ${blockNumber}, so creating it`
+                    );
+                }
 
-    //     if (needToCreateNewPBlock) {
-    //         const pBlock = this._forceBuildPBlockFromAllCommands();
-    //         if (pBlock) {
-    //             this._sendPBlockForConsensus(pBlock);
-    //         }
+                // restart timeout check
+                this._startBlockTimeCheckTimeout();
 
-    //         return pBlock;
-    //     }
+                let pBlock = this._forceBuildPBlockFromAllCommands();
+                if (pBlock) {
+                    this._logger.debug(`Created pBlock for block number ${blockNumber}`, pBlock);
+                } else {
+                    this._logger.debug(`Created empty pBlock`);
+                    pBlock = this._buildPBlock();
+                }
 
-    //     const errorMessage = `Requesting a proposed pBlock for block ${blockNumber} but consensus is running block ${currentConsensusBlockNumber}`;
-    //     this._logger.warn(errorMessage);
-    //     throw new Error(errorMessage);
-    // }
+                this._sendPBlockForConsensus(pBlock);
+            } catch (error) {
+                this._logger.error(`Failed to force pBlock creation for block number ${blockNumber}`, error);
+            }
+
+            resolve(); // mark processing finished
+        });
+    }
 
     _startBlockTimeCheckTimeout() {
-        if (this._blockTimeCheckTimeout) {
-            clearTimeout(this._blockTimeCheckTimeout);
-        }
+        this._clearBlockTimeCheckTimeout();
+
         this._blockTimeCheckTimeout = setTimeout(async () => {
             this._logger.info(`Reached block time restriction of ${this.maxPBlockTimeMs}ms`);
 
-            // if we have commands then contruct the pBlock because of the block time restriction has been reached
-            if (this.pendingCommands.length !== 0) {
-                const pBlock = this._buildPBlockForMaxBlockSize();
-                if (pBlock) {
-                    this._sendPBlockForConsensus(pBlock);
-                }
+            if (this._commandProcessing) {
+                await this._commandProcessing;
             }
 
-            // start another timeout check
-            this._startBlockTimeCheckTimeout();
+            this._clearBlockTimeCheckTimeout();
+
+            this._commandProcessing = new Promise(async (resolve) => {
+                try {
+                    // if we have commands then contruct the pBlock because of the block time restriction has been reached
+                    if (this.pendingCommands.length !== 0) {
+                        const pBlock = this._buildPBlockForMaxBlockSize();
+                        if (pBlock) {
+                            this._sendPBlockForConsensus(pBlock);
+                        }
+                    }
+                } catch (error) {
+                    this._logger.error(`Failed to add command with hash ${command.getHash()}`, error);
+                }
+
+                resolve(); // mark processing finished
+
+                // start another timeout check
+                this._startBlockTimeCheckTimeout();
+            });
         }, this.maxPBlockTimeMs);
     }
 
@@ -18687,7 +18921,7 @@ class PBlocksFactory {
         }
 
         const commands = this.pendingCommands.splice(0, this.pendingCommands.length);
-        return this._buildPBlockFromCommands(commands);
+        return this._buildPBlock(commands);
     }
 
     _buildPBlockForMaxBlockSize() {
@@ -18709,7 +18943,7 @@ class PBlocksFactory {
 
             // somehow the consensus for the latestPBlock has already finished, but PBlocksFactory wasn't notified
             this._logger.warn(
-                `Consensus is currently at block number ${currentConsensusBlockNumber} and the local current pBlock is at ${this._latestPBlock.number}`
+                `Consensus is currently at block number ${currentConsensusBlockNumber} and the local current pBlock is at ${this._latestPBlock.blockNumber}`
             );
             this._logger.warn(`Removing _latestPBlock in order to continue consensus`, this._latestPBlock);
             this._latestPBlock = null;
@@ -18723,7 +18957,10 @@ class PBlocksFactory {
         if (!commands.length) {
             throw new Error("Cannot create pBlock with no commands");
         }
+        return this._buildPBlock(commands);
+    }
 
+    _buildPBlock(commands = []) {
         const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
 
         const blockNumber = latestVerifiedBlockInfo.number !== -1 ? latestVerifiedBlockInfo.number + 1 : 1;
@@ -18737,26 +18974,44 @@ class PBlocksFactory {
     async _sendPBlockForConsensus(pBlock) {
         this._logger.info(`Sending pBlock to consensus ${pBlock.hash}...`);
         this._latestPBlock = pBlock;
-        this.broadcaster.broadcastPBlockAdded(pBlock);
 
         try {
-            this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`, typeof pBlock);
+            this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`, pBlock);
             const pBlockHashLinkSSI = await savePBlockInBricks(pBlock, this.domain, this.brickStorage);
             pBlock.hashLinkSSI = pBlockHashLinkSSI;
+
+            this.broadcaster.broadcastPBlockAdded(pBlock);
 
             await this.consensusCore.addInConsensusAsync(pBlock);
             this._latestPBlock = null;
 
-            const isBlockSizeLimitReached = this.pendingCommands.length >= this.maxPBlockSize;
-            if (isBlockSizeLimitReached) {
-                this._logger.info(`Reached block size restriction of ${this.maxPBlockSize}...`);
-                const pBlock = this._buildPBlockForMaxBlockSize();
-                this._sendPBlockForConsensus(pBlock);
-            } else {
+            const isPlockConstructed = this._constructPBlockIfBlockSizeRestrictionReached();
+            if (!isPlockConstructed) {
                 this._startBlockTimeCheckTimeout();
             }
         } catch (error) {
             this._logger.error("An error has occurred while running the consensus for pBlock", error);
+        }
+    }
+
+    _constructPBlockIfBlockSizeRestrictionReached() {
+        const isBlockSizeLimitReached = this.pendingCommands.length >= this.maxPBlockSize;
+        if (isBlockSizeLimitReached) {
+            this._logger.info(`Reached block size restriction of ${this.maxPBlockSize}`);
+            const pBlock = this._buildPBlockForMaxBlockSize();
+            if (pBlock) {
+                this._sendPBlockForConsensus(pBlock);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    _clearBlockTimeCheckTimeout() {
+        if (this._blockTimeCheckTimeout) {
+            clearTimeout(this._blockTimeCheckTimeout);
+            this._blockTimeCheckTimeout = null;
         }
     }
 }
@@ -26567,104 +26822,132 @@ const {
     callContractEndpointUsingBdns,
 } = require("./utils");
 
-async function sendCommand(method, contractEndpointPrefix, domain, commandBody, callback) {
-    if (typeof commandBody === "function") {
-        callback = commandBody;
-        commandBody = null;
+class CommandSender {
+    constructor(baseUrl, fallbackToUrlFromBDNS) {
+        this.baseUrl = baseUrl;
+        this.fallbackToUrlFromBDNS = fallbackToUrlFromBDNS;
     }
 
-    callback = $$.makeSaneCallback(callback);
-
-    try {
-        try {
-            // try to send the command to the current apihub endpoint
-            const currentApihubUrl = getContractEndpointUrl(getBaseURL(), domain, contractEndpointPrefix);
-            const response = await callContractEndpoint(currentApihubUrl, method, domain, commandBody);
-            callback(null, response);
-        } catch (error) {
-            // if the current apihub endpoint doesn't handle the current domain, then send the command using BDNS
-            if (error instanceof DomainNotSupportedError) {
-                callContractEndpointUsingBdns(method, contractEndpointPrefix, domain, commandBody, callback);
-                return;
-            }
-            throw error;
+    async sendCommand(method, contractEndpointPrefix, domain, commandBody, callback) {
+        if (typeof commandBody === "function") {
+            callback = commandBody;
+            commandBody = null;
         }
-    } catch (error) {
-        OpenDSUSafeCallback(callback)(
-            createOpenDSUErrorWrapper(`Failed to execute domain contract method: ${JSON.stringify(commandBody)}`, error)
-        );
+
+        callback = $$.makeSaneCallback(callback);
+
+        try {
+            try {
+                // try to send the command to the current apihub endpoint
+                const currentApihubUrl = getContractEndpointUrl(this.baseUrl, domain, contractEndpointPrefix);
+                const response = await callContractEndpoint(currentApihubUrl, method, domain, commandBody);
+                callback(null, response);
+            } catch (error) {
+                // if the current apihub endpoint doesn't handle the current domain, then send the command using BDNS
+                if (this.fallbackToUrlFromBDNS && error instanceof DomainNotSupportedError) {
+                    callContractEndpointUsingBdns(method, contractEndpointPrefix, domain, commandBody, callback);
+                    return;
+                }
+                throw error;
+            }
+        } catch (error) {
+            OpenDSUSafeCallback(callback)(
+                createOpenDSUErrorWrapper(`Failed to execute domain contract method: ${JSON.stringify(commandBody)}`, error)
+            );
+        }
+    }
+
+    generateSafeCommand(domain, contractName, methodName, params, callback) {
+        if (typeof params === "function") {
+            callback = params;
+            params = null;
+        }
+
+        try {
+            const commandBody = getSafeCommandBody(domain, contractName, methodName, params);
+            this.sendCommand("POST", "safe-command", domain, commandBody, callback);
+        } catch (error) {
+            callback(error);
+        }
+    }
+
+    async generateNoncedCommand(signerDID, domain, contractName, methodName, params, timestamp, callback) {
+        if (typeof timestamp === "function") {
+            callback = timestamp;
+
+            // check if the param before provided callback is either the timestamp or the params, since both are optional
+            if (typeof params === "number") {
+                timestamp = params;
+                params = null;
+            } else {
+                timestamp = null;
+            }
+        }
+
+        if (typeof params === "function") {
+            callback = params;
+            params = null;
+            timestamp = null;
+        }
+        if (!signerDID) {
+            return callback("signerDID not provided");
+        }
+
+        if (!timestamp) {
+            timestamp = Date.now();
+        }
+
+        try {
+            if (typeof signerDID === "string") {
+                // signerDID contains the identifier, so we need to load the DID
+                const w3cDID = require("opendsu").loadAPI("w3cdid");
+                signerDID = await $$.promisify(w3cDID.resolveDID)(signerDID);
+            }
+
+            const latestBlockInfo = await $$.promisify(this.sendCommand.bind(this))("GET", "latest-block-info", domain);
+            const { number: blockNumber } = latestBlockInfo;
+
+            const commandBody = getNoncedCommandBody(domain, contractName, methodName, params, blockNumber, timestamp, signerDID);
+            this.sendCommand("POST", "nonced-command", domain, commandBody, callback);
+        } catch (error) {
+            callback(error);
+        }
     }
 }
 
 function generateSafeCommand(domain, contractName, methodName, params, callback) {
-    if (typeof params === "function") {
-        callback = params;
-        params = null;
-    }
-
-    try {
-        const commandBody = getSafeCommandBody(domain, contractName, methodName, params);
-        sendCommand("POST", "safe-command", domain, commandBody, callback);
-    } catch (error) {
-        callback(error);
-    }
+    const commandSender = new CommandSender(getBaseURL(), true);
+    commandSender.generateSafeCommand(domain, contractName, methodName, params, callback);
 }
 
 async function generateNoncedCommand(signerDID, domain, contractName, methodName, params, timestamp, callback) {
-    if (typeof timestamp === "function") {
-        callback = timestamp;
-
-        // check if the param before provided callback is either the timestamp or the params, since both are optional
-        if (typeof params === "number") {
-            timestamp = params;
-            params = null;
-        } else {
-            timestamp = null;
-        }
-    }
-
-    if (typeof params === "function") {
-        callback = params;
-        params = null;
-        timestamp = null;
-    }
-    if (!signerDID) {
-        return callback("signerDID not provided");
-    }
-
-    if (!timestamp) {
-        timestamp = Date.now();
-    }
-
-    try {
-        if (typeof signerDID === "string") {
-            // signerDID contains the identifier, so we need to load the DID
-            const w3cDID = require("opendsu").loadAPI("w3cdid");
-            signerDID = await $$.promisify(w3cDID.resolveDID)(signerDID);
-        }
-
-        const latestBlockInfo = await $$.promisify(sendCommand)("GET", "latest-block-info", domain);
-        const { number: blockNumber } = latestBlockInfo;
-
-        const commandBody = getNoncedCommandBody(domain, contractName, methodName, params, blockNumber, timestamp, signerDID);
-        sendCommand("POST", "nonced-command", domain, commandBody, callback);
-    } catch (error) {
-        callback(error);
-    }
+    const commandSender = new CommandSender(getBaseURL(), true);
+    commandSender.generateNoncedCommand(signerDID, domain, contractName, methodName, params, timestamp, callback);
 }
 
-function generateSafeCommandForSpecificServer(serverUrl, ...args) {
+function generateSafeCommandForSpecificServer(serverUrl, domain, contractName, methodName, params, callback) {
     if (!serverUrl || typeof serverUrl !== "string") {
         throw new Error(`Invalid serverUrl specified`);
     }
-    generateSafeCommand(...args);
+    const commandSender = new CommandSender(serverUrl);
+    commandSender.generateSafeCommand(domain, contractName, methodName, params, callback);
 }
 
-function generateNoncedCommandForSpecificServer(serverUrl, ...args) {
+function generateNoncedCommandForSpecificServer(
+    serverUrl,
+    signerDID,
+    domain,
+    contractName,
+    methodName,
+    params,
+    timestamp,
+    callback
+) {
     if (!serverUrl || typeof serverUrl !== "string") {
         throw new Error(`Invalid serverUrl specified`);
     }
-    generateNoncedCommand(...args);
+    const commandSender = new CommandSender(serverUrl);
+    commandSender.generateNoncedCommand(signerDID, domain, contractName, methodName, params, timestamp, callback);
 }
 
 module.exports = {
@@ -46809,6 +47092,8 @@ const Logger = require("./src/Logger");
 const PBlockAddedMessage = require("./src/Broadcaster/PBlockAddedMessage");
 const ValidatorNonInclusionMessage = require("./src/Broadcaster/ValidatorNonInclusionMessage");
 
+const NOT_BOOTED_ERROR = "BricksLedger not booted";
+
 function BricksLedger(
     domain,
     validatorDID,
@@ -46820,23 +47105,31 @@ function BricksLedger(
     commandHistoryStorage
 ) {
     const logger = new Logger(`[Bricksledger][${domain}][${validatorDID.getIdentifier()}]`);
+    let isBootFinished = false;
 
     this.boot = async function () {
         logger.info("Booting BricksLedger...");
         await executionEngine.loadContracts(consensusCore);
         await consensusCore.boot();
+        isBootFinished = true;
         logger.info("Booting BricksLedger finished...");
     };
 
     this.getLatestBlockInfo = function (callback) {
+        if (!isBootFinished) {
+            return callback(new Error(NOT_BOOTED_ERROR));
+        }
         const lastestBlockInfo = consensusCore.getLatestBlockInfo();
         callback(undefined, lastestBlockInfo);
     };
 
     this.executeSafeCommand = async function (command, callback) {
+        callback = $$.makeSaneCallback(callback);
         logger.debug(`Received safe command ${command.getHash()}`);
 
-        callback = $$.makeSaneCallback(callback);
+        if (!isBootFinished) {
+            return callback(new Error(NOT_BOOTED_ERROR));
+        }
 
         if (!command || !(command instanceof Command)) {
             return callback("command not instance of Command");
@@ -46865,8 +47158,12 @@ function BricksLedger(
     };
 
     this.executeNoncedCommand = async function (command, callback) {
-        logger.debug(`Received nonced command ${command.getHash()}`);
         callback = $$.makeSaneCallback(callback);
+        logger.debug(`Received nonced command ${command.getHash()}`);
+
+        if (!isBootFinished) {
+            return callback(new Error(NOT_BOOTED_ERROR));
+        }
 
         if (!command || !(command instanceof Command)) {
             return callback("command not instance of Command");
@@ -46901,6 +47198,10 @@ function BricksLedger(
     this.validatePBlockFromNetwork = async function (pBlockMessage, callback) {
         callback = $$.makeSaneCallback(callback);
 
+        if (!isBootFinished) {
+            return callback(new Error(NOT_BOOTED_ERROR));
+        }
+
         if (!pBlockMessage) {
             return callback("pBlockMessage not provided");
         }
@@ -46909,7 +47210,9 @@ function BricksLedger(
 
         try {
             await pBlockMessage.validateSignature();
-            await consensusCore.addExternalPBlockInConsensusAsync(pBlockMessage);
+            pBlocksFactory.forcePBlockCreationForBlockNumberIfAbsentAsync(pBlockMessage.blockNumber);
+            consensusCore.addExternalPBlockInConsensusAsync(pBlockMessage);
+            callback();
         } catch (error) {
             callback(error);
         }
@@ -46917,6 +47220,10 @@ function BricksLedger(
 
     this.setValidatorNonInclusion = async function (validatorNonInclusionMessage, callback) {
         callback = $$.makeSaneCallback(callback);
+
+        if (!isBootFinished) {
+            return callback(new Error(NOT_BOOTED_ERROR));
+        }
 
         if (!validatorNonInclusionMessage) {
             return callback("validatorNonInclusionMessage not provided");
@@ -46927,6 +47234,7 @@ function BricksLedger(
         try {
             await validatorNonInclusionMessage.validateSignature();
             await consensusCore.setValidatorNonInclusionAsync(validatorNonInclusionMessage);
+            callback();
         } catch (error) {
             callback(error);
         }
