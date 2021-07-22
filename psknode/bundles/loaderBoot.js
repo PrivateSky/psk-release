@@ -13157,7 +13157,9 @@ function Query(queryArray) {
                     return;
                 }
             }
-            filteredRecords.push(record);
+            if(!record.__deleted){
+                filteredRecords.push(record);
+            }
         }
 
         getNextRecord(0);
