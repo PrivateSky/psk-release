@@ -1835,6 +1835,9 @@ function Contract(server) {
 
         const domainConfig = { ...(config.getDomainConfig(domain) || {}) };
         ensureContractConstitutionIsPresent(domain, domainConfig);
+        if (!domainConfig.contracts.constitution) {
+            return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing constitution`);
+        }
 
         console.log(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
 
@@ -1857,7 +1860,7 @@ function Contract(server) {
         callback(null, allDomainsWorkerPools[domain]);
     };
 
-    const sendCommandToWorker = (command, response) => {
+    const sendCommandToWorker = (command, response, mapSuccessResponse) => {
         getDomainWorkerPool(command.domain, (err, workerPool) => {
             if (err) {
                 return response.send(400, err);
@@ -1876,14 +1879,42 @@ function Contract(server) {
                     return response.send(500, error);
                 }
 
-                if (result && result.optimisticResult && result.optimisticResult instanceof Uint8Array) {
-                    // convert Buffers to String to that the result could be send correctly
-                    result.optimisticResult = Buffer.from(result.optimisticResult).toString("utf-8");
+                if (result && result.optimisticResult) {
+                    if (result.optimisticResult instanceof Uint8Array) {
+                        // convert Buffers to String to that the result could be send correctly
+                        result.optimisticResult = Buffer.from(result.optimisticResult).toString("utf-8");
+                    } else {
+                        try {
+                            result.optimisticResult = JSON.parse(result.optimisticResult);
+                        } catch (error) {
+                            // the response isn't a JSON so we keep it as it is
+                        }
+                    }
+                }
+
+                if (typeof mapSuccessResponse === "function") {
+                    result = mapSuccessResponse(result);
                 }
 
                 return response.send(200, result);
             });
         });
+    };
+
+    const sendGetBdnsEntryToWorker = (request, response) => {
+        const { domain, entry } = request.params;
+        if (!entry || typeof entry !== "string") {
+            return response.send(400, "Invalid entry specified");
+        }
+        const command = {
+            domain,
+            contractName: "bdns",
+            methodName: "getDomainEntry",
+            params: [entry],
+            type: "safe",
+        };
+        const mapSuccessResponse = (result) => (result ? result.optimisticResult : null);
+        sendCommandToWorker(command, response, mapSuccessResponse);
     };
 
     const sendLatestBlockInfoCommandToWorker = (request, response) => {
@@ -1923,6 +1954,7 @@ function Contract(server) {
     server.use(`/contracts/:domain/*`, validateCommandInput);
     server.post(`/contracts/:domain/*`, validatePostCommandInput);
 
+    server.get(`/contracts/:domain/bdns-entries/:entry`, sendGetBdnsEntryToWorker);
     server.get(`/contracts/:domain/latest-block-info`, sendLatestBlockInfoCommandToWorker);
     server.post(`/contracts/:domain/safe-command`, sendSafeCommandToWorker);
     server.post(`/contracts/:domain/nonced-command`, sendNoncedCommandToWorker);
@@ -1971,7 +2003,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
                 const defaultDomainSeedData = fs.readFileSync(defaultDomainSeedPath);
                 contractsConfig.constitution = defaultDomainSeedData.toString();
             } catch (error) {
-                console.log(`Cannot access default domain-seed at: ${defaultDomainSeedPath}`, error);
+                console.log(`Cannot access default domain-seed at: ${defaultDomainSeedPath}`);
             }
         }
     }
@@ -4533,9 +4565,16 @@ function NotificationsManager(workingFolderPath, storageFolderPath) {
 		let state;
 
 		try {
-			state = require(path.join(workingFolderPath, stateStorageFileName));
+			const path = require("path");
+			const fs = require("fs");
+			const fileLocation = path.join(workingFolderPath, stateStorageFileName);
+			if(!fs.existsSync(fileLocation)){
+				throw `${fileLocation} not found. No previous state available.`;
+			}
+			state = require(fileLocation);
 		} catch (err) {
-			return callback(err);
+			//if the storage file does not exist or invalid json file we will catch an error here
+			return callback();
 		}
 
 		if (typeof state !== 'undefined') {
@@ -4648,7 +4687,7 @@ function NotificationsManager(workingFolderPath, storageFolderPath) {
 
 			for (let i = 0; i < state.queues.length; i++) {
 				let queueName = state.queues[i];
-				let queueStoragePath = path.join(storageFolderPath, queueName);
+				let queueStoragePath = getQueueStoragePath(queueName);
 				fs.readdir(queueStoragePath, (err, messages) => {
 					if (err) {
 						return callback(err);
@@ -4665,6 +4704,7 @@ function NotificationsManager(workingFolderPath, storageFolderPath) {
 					}
 				});
 			}
+			callback();
 		});
 	}
 }
@@ -4683,7 +4723,7 @@ module.exports = {
 	}
 };
 
-},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js":[function(require,module,exports){
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js":[function(require,module,exports){
 /**
  * An implementation of the Token bucket algorithm
  * @param startTokens - maximum number of tokens possible to obtain and the default starting value
@@ -5327,6 +5367,26 @@ function Server(sslOptions) {
         }
         req.end();
     };
+
+    this.makeLocalRequestAsync = async function(method, path, body, headers) {
+        try {
+            const makeLocalRequest = $$.promisify(this.makeLocalRequest.bind(this));
+            let response = await makeLocalRequest(method, path, body, headers);
+    
+            if (response) {
+                try {
+                    response = JSON.parse(response);
+                } catch (error) {
+                    // the response isn't a JSON so we keep it as it is
+                }           
+            }
+    
+            return response;
+        } catch (error) {
+            // console.warn(`Failed to call ${method} on '${path}'`, error);
+            throw error;
+        }
+    }
 
     /* INTERNAL METHODS */
 
@@ -28667,6 +28727,8 @@ module.exports = {
 	DATA_FOLDER: "/data",
 	MANIFEST_FILE: "/manifest",
 	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
+	ENVIRONMENT_PATH: "/environment.json",
+	SECURITY_CONTEXT: "/security_context",
 	CACHE: {
 		FS: "fs",
 		MEMORY: "memory",
@@ -29384,6 +29446,9 @@ module.exports = {
 
  */
 
+const constants = require("../moduleConstants");
+const keySSISpace = require("opendsu").loadAPI("keyssi");
+
 const getMainDSU = () => {
     if (!globalVariableExists("rawDossier")) {
         throw Error("Main DSU does not exist in the current context.");
@@ -29412,8 +29477,34 @@ function SecurityContext(keySSI) {
         keySSI = keySSISpace.parse(keySSI);
     }
 
-    let storageDB = db.getWalletDB(keySSI, DB_NAME);
+    let storageDB;
 
+    const init = async () => {
+        if (typeof keySSI === "undefined") {
+            let mainDSU;
+            try {
+                mainDSU = getMainDSU();
+            } catch (e) {
+                keySSI = keySSISpace.createSeedSSI("default");
+            }
+
+            if (mainDSU) {
+                try {
+                    keySSI = await $$.promisify(loadSecurityContext)()
+                } catch (e) {
+                    try {
+                        keySSI = await $$.promisify(createSecurityContext)();
+                        await $$.promisify(saveSecurityContext)(keySSI);
+                    } catch (e) {
+                        throw createOpenDSUErrorWrapper(`Failed to create security context`, e);
+                    }
+                }
+            }
+        }
+
+        storageDB = db.getWalletDB(keySSI, DB_NAME);
+        this.finishInitialisation();
+    }
 
     this.registerDID = (didDocument, callback) => {
         let privateKeys = didDocument.getPrivateKeys();
@@ -29463,7 +29554,7 @@ function SecurityContext(keySSI) {
             }
 
             const privateKeysAsBuff = record.privateKeys.map(privateKey => {
-                if(privateKey){
+                if (privateKey) {
                     return $$.Buffer.from(privateKey)
                 }
 
@@ -29595,26 +29686,70 @@ function SecurityContext(keySSI) {
         });
     };
 
+    this.getDb = () => {
+        return db;
+    }
+
+    const bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    bindAutoPendingFunctions(this);
+    init();
     return this;
+}
+
+const getVaultDomain = (callback) => {
+    const mainDSU = getMainDSU();
+    mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
+        }
+
+        try {
+            environment = JSON.parse(environment.toString())
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
+        }
+
+        callback(undefined, environment.vaultDomain);
+    })
+}
+
+const loadSecurityContext = (callback) => {
+    const mainDSU = getMainDSU();
+    mainDSU.readFile(constants.SECURITY_CONTEXT, (err, securityContextKeySSI) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to read security context keySSI`, err));
+        }
+
+        callback(undefined, securityContextKeySSI.toString());
+    })
+}
+
+const saveSecurityContext = (scKeySSI, callback) => {
+    if (typeof scKeySSI === "object") {
+        scKeySSI = scKeySSI.getIdentifier();
+    }
+    const mainDSU = getMainDSU();
+    mainDSU.writeFile(constants.SECURITY_CONTEXT, scKeySSI, (err) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to save security context keySSI`, err));
+        }
+
+        callback(undefined);
+    })
+}
+
+const createSecurityContext = (callback) => {
+    getVaultDomain((err, vaultDomain) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to get vault domain`, err));
+        }
+
+        keySSISpace.createSeedSSI(vaultDomain, callback);
+    })
 }
 
 const getSecurityContext = (keySSI) => {
     if (typeof $$.sc === "undefined") {
-        const keySSISpace = require("opendsu").loadAPI("keyssi");
-        if (typeof keySSI === "undefined") {
-            //TODO get sc from main dsu
-            // throw Error(`A keySSI should be provided.`)
-            keySSI = keySSISpace.createSeedSSI("default");
-        }
-
-        if (typeof keySSI === "string") {
-            try {
-                keySSI = keySSISpace.parse(keySSI);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e);
-            }
-        }
-
         $$.sc = new SecurityContext(keySSI);
     }
 
@@ -29626,7 +29761,7 @@ module.exports = {
     getSecurityContext
 };
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 (function (process){(function (){
 const envVariables = {};
 function getEnvironmentVariable(name){
@@ -40531,6 +40666,7 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
             try {
                 this.rawDossier = await loadRawDossier(keySSI);
 				global.rawDossier = this.rawDossier;
+				require("opendsu").loadAPI("sc").getSecurityContext();
             } catch (err) {
                 console.log(err);
             }

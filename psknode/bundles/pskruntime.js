@@ -2882,6 +2882,7 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
             try {
                 this.rawDossier = await loadRawDossier(keySSI);
 				global.rawDossier = this.rawDossier;
+				require("opendsu").loadAPI("sc").getSecurityContext();
             } catch (err) {
                 console.log(err);
             }
