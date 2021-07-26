@@ -518,11 +518,23 @@ function Archive(archiveConfigurator) {
     }
 
     /**
-     * @param {callback} function
+     * Returns the latest anchor
      *
+     * @param {callback} function
      * @return {HashLinkSSI}
      */
     this.getLastHashLinkSSI = (callback) => {
+        console.log("This method is obsolete. Please use `dsu.getLatestAnchoredHashLink()` instead.");
+        return this.getLatestAnchoredHashLink(callback);
+    };
+
+    /**
+     * Returns the latest anchored Hashlink
+     *
+     * @param {callback} function
+     * @return {HashLinkSSI}
+     */
+    this.getLatestAnchoredHashLink = (callback) => {
         archiveConfigurator.getKeySSI((err, keySSI) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get KeySSI", err));
@@ -535,8 +547,16 @@ function Archive(archiveConfigurator) {
                 return callback(undefined, hashlinksArray[hashlinksArray.length - 1])
             })
         })
+    }
 
-    };
+    /**
+     * Returns the current anchor
+     *
+     * @return {HashLinkSSI}
+     */
+    this.getCurrentAnchoredHashLink = () => {
+        return brickMapController.getCurrentAnchoredHashLink();
+    }
 
     /**
      * @return {string}
@@ -1065,7 +1085,10 @@ function Archive(archiveConfigurator) {
 
     const getManifest = (callback) => {
         if (typeof manifestHandler === "undefined") {
-            Manifest.getManifest(this, (err, handler) => {
+            const options = {
+                skipCache: archiveConfigurator.dsuCachingEnabled()
+            };
+            Manifest.getManifest(this, options, (err, handler) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get manifest handler`, err));
                 }
@@ -1996,7 +2019,7 @@ function Archive(archiveConfigurator) {
                         return;
                     }
 
-                    if (brickMapController.getLastAnchoredHashLink().getAnchorId() === message.payload) {
+                    if (brickMapController.getCurrentAnchoredHashLink().getAnchorId() === message.payload) {
                         // Nothing to do: we're up to date
                         return;
                     }
@@ -2113,6 +2136,7 @@ const fsAdapters = {};
 
 function ArchiveConfigurator() {
     const config = {};
+    let dsuCaching = true;
     let cache;
     let keySSI;
 
@@ -2291,6 +2315,14 @@ function ArchiveConfigurator() {
     this.getCache = () => {
         return cache;
     };
+
+    this.disableDSUCaching = () => {
+        dsuCaching = false;
+    }
+
+    this.dsuCachingEnabled = () => {
+        return dsuCaching;
+    }
 }
 
 // @TODO: obsolete
@@ -2895,7 +2927,7 @@ function State() {
         current: undefined, // A reference to the current BrickMapDiff
         latestHash: undefined // Used for chaining multiple BrickMapDiff objects
     };
-    let lastAnchoredHashLink = undefined;
+    let currentAnchoredHashLink = undefined;
 
     this.init = (anchoredBrickMap, latestHashLink, callback) => {
         if (typeof latestHashLink === 'function') {
@@ -2909,7 +2941,10 @@ function State() {
                 return callback(err);
             }
             brickMap.dirty = clone;
-            lastAnchoredHashLink = latestHashLink;
+            currentAnchoredHashLink = latestHashLink;
+            diffs.inAnchoring = [];
+            diffs.new = [];
+            diffs.current = undefined;
             diffs.latestHash = latestHashLink;
             callback();
         });
@@ -2988,12 +3023,12 @@ function State() {
         diffs.new.push(diff);
     }
 
-    this.getLastAnchoredHashLink = () => {
-        return lastAnchoredHashLink;
+    this.getCurrentAnchoredHashLink = () => {
+        return currentAnchoredHashLink;
     }
 
-    this.setLastAnchoredHashLink = (hashLink) => {
-        lastAnchoredHashLink = hashLink;
+    this.setCurrentAnchoredHashLink = (hashLink) => {
+        currentAnchoredHashLink = hashLink;
     }
 
     this.getLatestDiffHashLink = () => {
@@ -3345,7 +3380,7 @@ function BrickMapController(options) {
             }
 
 
-            state.init(brickMap, strategy.getLastHashLink(), callback);
+            state.init(brickMap, strategy.getCurrentHashLink(), callback);
         });
     }
 
@@ -3756,8 +3791,8 @@ function BrickMapController(options) {
                 const timestamp = Date.now();
                 const hashLink = keyssi.createHashLinkSSI(bricksDomain, hash, keySSI.getVn(), keySSI.getHint());
                 let dataToSign = timestamp;
-                if (state.getLastAnchoredHashLink()) {
-                    dataToSign = state.getLastAnchoredHashLink().getIdentifier() + timestamp;
+                if (state.getCurrentAnchoredHashLink()) {
+                    dataToSign = state.getCurrentAnchoredHashLink().getIdentifier() + timestamp;
                 }
                 dataToSign += keySSI.getAnchorId();
                 keySSI.sign(dataToSign, (err, signature) => {
@@ -3802,8 +3837,8 @@ function BrickMapController(options) {
                         });
                     }
 
-                    const lastAnchoredHashLink = state.getLastAnchoredHashLink();
-                    /*if (!lastAnchoredHashLink) {
+                    const currentAnchoredHashLink = state.getCurrentAnchoredHashLink();
+                    /*if (!currentAnchoredHashLink) {
                         anchoring.createAnchor(keySSI, (err) => {
                             if (err) {
                                 return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
@@ -3812,10 +3847,10 @@ function BrickMapController(options) {
                             anchoring.appendToAnchor(keySSI, signedHashLink, '', updateAnchorCallback);
                         });
                     } else {
-                        anchoring.appendToAnchor(keySSI, signedHashLink, lastAnchoredHashLink, updateAnchorCallback);
+                        anchoring.appendToAnchor(keySSI, signedHashLink, currentAnchoredHashLink, updateAnchorCallback);
                     }*/
                     //TODO: update the smart contract and after that uncomment the above code and eliminate the following if statement
-                    if (!lastAnchoredHashLink) {
+                    if (!currentAnchoredHashLink) {
                         anchoring.getAllVersions(keySSI, (err, versions)=>{
                             if(err){
                                 return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
@@ -3827,7 +3862,7 @@ function BrickMapController(options) {
                             return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                         });
                     } else {
-                        anchoring.appendToAnchor(keySSI, signedHashLink, lastAnchoredHashLink, updateAnchorCallback);
+                        anchoring.appendToAnchor(keySSI, signedHashLink, currentAnchoredHashLink, updateAnchorCallback);
                     }
                 })
             })
@@ -3842,12 +3877,12 @@ function BrickMapController(options) {
      * @param {callback} listener
      */
     this.handleAnchoringConflict = (listener) => {
-        const currentAnchoredHashLinkSSI = strategy.getLastHashLink();
+        const currentAnchoredHashLinkSSI = strategy.getCurrentHashLink();
         strategy.load(keySSI, (err, brickMap) => {
             if (err) {
                 return endAnchoring(listener, anchoringStatus.BRICKMAP_LOAD_ERR, err);
             }
-            state.setLastAnchoredHashLink(strategy.getLastHashLink());
+            state.setCurrentAnchoredHashLink(strategy.getCurrentHashLink());
 
             // Try and merge our changes
             strategy.reconcile(brickMap, currentAnchoredHashLinkSSI, (err, result) => {
@@ -3879,8 +3914,8 @@ function BrickMapController(options) {
         return state;
     }
 
-    this.getLastAnchoredHashLink = () => {
-        return state.getLastAnchoredHashLink();
+    this.getCurrentAnchoredHashLink = () => {
+        return state.getCurrentAnchoredHashLink();
     }
 
 
@@ -3905,7 +3940,7 @@ function BrickMapController(options) {
      * @param {function} callback
      */
     this.mergeUpstreamChanges = (callback) => {
-        const currentAnchoredHashLinkSSI = strategy.getLastHashLink();
+        const currentAnchoredHashLinkSSI = strategy.getCurrentHashLink();
         strategy.load(keySSI, (err, brickMap) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load brickMap`, err));
@@ -4818,7 +4853,7 @@ const BrickMapStrategyMixin = {
     decisionFunction: null,
     signingFunction: null,
     cache: null,
-    lastHashLink: null,
+    currentHashLink: null,
     validator: null,
     delay: null,
     anchoringTimeout: null,
@@ -4979,8 +5014,8 @@ const BrickMapStrategyMixin = {
     /**
      * @return {string|null}
      */
-    getLastHashLink: function () {
-        return this.lastHashLink;
+    getCurrentHashLink: function () {
+        return this.currentHashLink;
     },
 
     afterBrickMapAnchoring: function (diff, diffHash, callback) {
@@ -5036,7 +5071,7 @@ const BrickMapStrategyMixin = {
             conflicts = {
                 files: filesInConflict,
                 ourHashLinkSSI: ourHashLinkSSI.getIdentifier(),
-                theirHashLinkSSI: this.brickMapState.getLastAnchoredHashLink().getIdentifier()
+                theirHashLinkSSI: this.brickMapState.getCurrentAnchoredHashLink().getIdentifier()
             };
         }
         return conflicts;
@@ -5116,7 +5151,7 @@ const BrickMapStrategyMixin = {
 
                 state.setDirtyBrickMap(dirtyBrickMap);
                 state.setAnchoredBrickMap(brickMap);
-                state.setLastAnchoredHashLink(this.getLastHashLink());
+                state.setCurrentAnchoredHashLink(this.getCurrentHashLink());
                 return callback(undefined, {
                     status: true
                 });
@@ -5278,7 +5313,7 @@ function DiffStrategy(options) {
      * @param {callback} callback
      */
     const assembleBrickMap = (hashLinks, callback) => {
-        this.lastHashLink = hashLinks[hashLinks.length - 1];
+        this.currentHashLink = hashLinks[hashLinks.length - 1];
         getBrickMapDiffs(hashLinks, (err, brickMapDiffs) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve brickMap diffs`, err));
@@ -5373,9 +5408,9 @@ function DiffStrategy(options) {
         } catch (e) {
             return callback(e);
         }
-        this.lastHashLink = diffHash;
+        this.currentHashLink = diffHash;
         this.lastAnchorTimestamp = new Date().getTime();
-        this.brickMapState.setLastAnchoredHashLink(diffHash);
+        this.brickMapState.setCurrentAnchoredHashLink(diffHash);
         callback(undefined, diffHash);
     }
 
@@ -5562,9 +5597,9 @@ function LatestVersionStrategy(options) {
      * @param {function} callback
      */
     const getLatestVersion = (hashes, callback) => {
-        this.lastHashLink = hashes[hashes.length - 1];
+        this.currentHashLink = hashes[hashes.length - 1];
 
-        createBrickMapsFromHistory([this.lastHashLink], (err, brickMaps) => {
+        createBrickMapsFromHistory([this.currentHashLink], (err, brickMaps) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create BrickMaps from history`, err));
             }
@@ -5647,10 +5682,10 @@ function LatestVersionStrategy(options) {
      * @param {function} callback
      */
     this.afterBrickMapAnchoring = (brickMap, brickMapHashLink, callback) => {
-        this.lastHashLink = brickMapHashLink;
+        this.currentHashLink = brickMapHashLink;
         this.lastAnchorTimestamp = new Date().getTime();
         this.brickMapState.setAnchoredBrickMap(brickMap);
-        this.brickMapState.setLastAnchoredHashLink(brickMapHashLink);
+        this.brickMapState.setCurrentAnchoredHashLink(brickMapHashLink);
         callback(undefined, brickMapHashLink);
     }
 
@@ -6885,11 +6920,18 @@ module.exports = {
 },{"./Service":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
-function Manifest(archive, callback) {
+function Manifest(archive, options, callback) {
     const pskPath = require("swarmutils").path;
     let manifest;
     let temporary = {};
     let manifestHandler = {};
+
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
+
+    options = options || {};
 
 
     manifestHandler.mount = function (path, archiveIdentifier, options, callback) {
@@ -7009,8 +7051,15 @@ function Manifest(archive, callback) {
 
     function getArchive(seed, callback) {
         const resolver = require("opendsu").loadApi("resolver");
+        let loadOptions;
 
-        resolver.loadDSU(seed, (err, dossier) => {
+        if (typeof options.skipCache === 'boolean' && !options.skipCache) {
+            loadOptions = {
+                skipCache: true
+            };
+        }
+
+        resolver.loadDSU(seed, loadOptions, (err, dossier) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU from keySSI ${seed}`, err));
             }
@@ -7041,8 +7090,8 @@ function Manifest(archive, callback) {
     init(callback);
 }
 
-module.exports.getManifest = function getManifest(archive, callback) {
-    Manifest(archive, callback);
+module.exports.getManifest = function getManifest(archive, options, callback) {
+    Manifest(archive, options, callback);
 };
 
 
@@ -8197,6 +8246,10 @@ function DSUFactory(options) {
                 archiveConfigurator.setValidationRules(options.validationRules);
             }
 
+            if (options.skipCache) {
+                archiveConfigurator.disableDSUCaching()
+            }
+
             bar = barModule.createArchive(archiveConfigurator);
             const DSUBase = require("./mixins/DSUBase");
             DSUBase(bar);
@@ -8811,6 +8864,7 @@ function KeySSIResolver(options) {
      * @param {callback} options.anchoringOptions.signingFn  A function which will sign the new alias
      * @param {object} options.validationRules
      * @param {object} options.validationRules.preWrite An object capable of validating operations done in the "preWrite" stage of the BrickMap
+     * @param {boolean} options.skipCache If `true` the DSU will skip caching when loading any mounted DSUs
      * @param {callback} callback
      */
     this.loadDSU = (keySSI, options, callback) => {
@@ -18843,7 +18897,7 @@ function SecurityContext(keySSI) {
     };
 
     this.getDb = () => {
-        return db;
+        return storageDB;
     }
 
     const bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
