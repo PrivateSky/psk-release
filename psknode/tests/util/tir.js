@@ -11,7 +11,7 @@ const os = require("os");
 const fs = require("fs");
 const pskPath = require("swarmutils").path;
 
-const { getRandomPort, createKey, createConstitution, whenAllFinished, buildConstitution } = require("./tir-utils");
+const { getRandomPort, createKey, createConstitution, whenAllFinished, buildConstitution, getRandomAvailablePortAsync } = require("./tir-utils");
 const ApiHubTestNodeLauncher = require("./ApiHubTestNodeLauncher");
 
 const Tir = function () {
@@ -494,6 +494,8 @@ const Tir = function () {
         return rest;
     };
 
+    this.getRandomAvailablePortAsync = getRandomAvailablePortAsync;
+
     this.launchApiHubTestNodeWithContract = (contractBuildFilePath, domain, config, callback) => {
         if (typeof config === "function") {
             callback = config;
@@ -541,7 +543,7 @@ const Tir = function () {
         const domainConfig =
             config.domains && config.domains[0] && typeof config.domains[0] === "object" ? config.domains[0].config : {};
         domainConfig.contracts = domainConfig.contracts || {};
-        domainConfig.contracts.constitution = rest.domainSeed;
+        domainConfig.contracts.constitution = rest.contractConstitution;
 
         const result = {
             ...rest,
