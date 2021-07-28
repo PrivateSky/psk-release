@@ -1665,7 +1665,11 @@ function enableForEnvironment(envType){
     $$.makeSaneCallback = function makeSaneCallback(fn) {
         let alreadyCalled = false;
         let prevErr;
-        return (err, res, ...args) => {
+        if(fn.alreadyWrapped){
+            return fn;
+        }
+
+        const newFn = (err, res, ...args) => {
             if (alreadyCalled) {
                 if (err) {
                     console.log('Sane callback error:', err);
@@ -1679,6 +1683,9 @@ function enableForEnvironment(envType){
             }
             return fn(err, res, ...args);
         };
+
+        newFn.alreadyWrapped = true;
+        return newFn;
     };
 }
 

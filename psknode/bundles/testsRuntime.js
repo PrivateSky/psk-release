@@ -107,11 +107,15 @@ if (typeof $$ !== "undefined") {
 
 },{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","dsu-wizard":"dsu-wizard","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
 const { ALIAS_SYNC_ERR_CODE } = require("../utils");
+const { getDomainConfig } = require("../../../config");
+const { getLocalBdnsEntryListExcludingSelfAsync, getHeadersWithExcludedProvidersIncludingSelf } = require("../../../utils/request-utils");
+const { shuffle } = require("../../../utils/array");
+
+const DEFAULT_MAX_SAMPLING_ANCHORING_ENTRIES = 10;
 
 function getHandlerForAnchorCreateOrAppend(response) {
     return (err, _) => {
         if (err) {
-            
             const errorMessage = typeof err === "string" ? err : err.message;
             if (err.code === "EACCES") {
                 return response.send(409, errorMessage);
@@ -129,6 +133,70 @@ function getHandlerForAnchorCreateOrAppend(response) {
     };
 }
 
+async function getAllVersionsFromExternalProviders(request) {
+    const { domain, anchorId } = request.params;
+    console.log("[Anchoring] Getting external providers...");
+    let anchoringProviders = await getLocalBdnsEntryListExcludingSelfAsync(request, domain, "anchoringServices");
+    console.log(`[Anchoring] Found ${anchoringProviders.length} external provider(s)`);
+    if (!anchoringProviders || !anchoringProviders.length) {
+        throw new Error(`[Anchoring] Found no fallback anchoring providers!`);
+    }
+
+    // shuffle the providers and take maxSamplingAnchoringEntries of them
+    const maxSamplingAnchoringEntries =
+        getDomainConfig(domain, "anchoring", "maxSamplingAnchoringEntries") || DEFAULT_MAX_SAMPLING_ANCHORING_ENTRIES;
+    shuffle(anchoringProviders);
+    anchoringProviders = anchoringProviders.slice(0, maxSamplingAnchoringEntries);
+
+    // we need to get the versions from all the external providers and compute the common versions as the end result
+    const allExternalVersions = [];
+
+    const http = require("opendsu").loadApi("http");
+    for (let i = 0; i < anchoringProviders.length; i++) {
+        const providerUrl = anchoringProviders[i];
+        try {
+            const anchorUrl = `${providerUrl}/anchor/${domain}/get-all-versions/${anchorId}`;
+            let providerResponse = await http.fetch(anchorUrl, {
+                headers: getHeadersWithExcludedProvidersIncludingSelf(request),
+            });
+            let providerVersions = await providerResponse.json();
+
+            providerVersions = providerVersions || []; // consider we have no version when the anchor is not created
+            allExternalVersions.push(providerVersions);
+        } catch (error) {
+            console.warn(`[Anchoring] Failed to get anchor ${anchorId} from ${providerUrl}!`, error);
+        }
+    }
+
+    const existingExternalVersions = allExternalVersions.filter((versions) => versions && versions.length);
+    const existingVersionsCount = existingExternalVersions.length;
+
+    console.log(
+        `[Anchoring] Queried ${anchoringProviders.length} provider(s), out of which ${existingVersionsCount} have versions`
+    );
+
+    if (!existingVersionsCount) {
+        // none of the queried providers have the anchor
+        return [];
+    }
+
+    const minVersionsLength = Math.min(...existingExternalVersions.map((versions) => versions.length));
+    const firstProviderVersions = existingExternalVersions[0];
+    const commonVersions = [];
+    for (let i = 0; i < minVersionsLength; i++) {
+        const version = firstProviderVersions[i];
+        const isVersionPresentInAllProviders = existingExternalVersions.every((versions) => versions.includes(version));
+        if (isVersionPresentInAllProviders) {
+            commonVersions.push(version);
+        } else {
+            break;
+        }
+    }
+
+    console.log(`[Anchoring] Anchor ${anchorId} has ${commonVersions.length} version(s) based on computation`);
+    return commonVersions;
+}
+
 function createAnchor(request, response) {
     request.strategy.createAnchor(getHandlerForAnchorCreateOrAppend(response));
 }
@@ -138,24 +206,36 @@ function appendToAnchor(request, response) {
 }
 
 function getAllVersions(request, response) {
-    request.strategy.getAllVersions((err, fileHashes) => {
+    request.strategy.getAllVersions(async (err, fileHashes) => {
+        response.setHeader("Content-Type", "application/json");
+
         if (err) {
             return response.send(404, "Anchor not found");
         }
 
-        response.setHeader("Content-Type", "application/json");
+        if (fileHashes) {
+            return response.send(200, fileHashes);
+        }
 
-        return response.send(200, fileHashes);
+        try {
+            const allVersions = await getAllVersionsFromExternalProviders(request);
+            return response.send(200, allVersions);
+        } catch (error) {
+            console.warn(`[Anchoring] Error while trying to get missing anchor from fallback providers!`, error);
+        }
+
+        // signal that the anchor doesn't exist
+        response.send(200, null);
     });
 }
 
 module.exports = {
     createAnchor,
     appendToAnchor,
-    getAllVersions
+    getAllVersions,
 };
 
-},{"../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils/array":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/array.js","../../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
 const anchoringStrategies = require("./strategies");
 const utils = require('./utils');
 
@@ -180,7 +260,7 @@ function requestStrategyMiddleware(request, response, next) {
     if (!domainConfig) {
         const error = `[Anchoring] Domain '${receivedDomain}' not found`;
         console.error(error);
-        return response.send(500, error);
+        return response.send(404, error);
     }
 
     const StrategyClass = anchoringStrategies[domainConfig.type];
@@ -316,7 +396,7 @@ class Contract {
 
             callback(null, response);
         } catch (err) {
-            console.error(`[Anchoring] Failed to call method '${method}' for contract 'anchoring' for domain '${domain}'`);
+            console.warn(`[Anchoring] Failed to call method '${method}' for contract 'anchoring' for domain '${domain}'`);
             callback(err);
         }
     }
@@ -689,7 +769,8 @@ class FS {
         fs.readFile(filePath, (err, fileHashes) => {
             if (err) {
                 if (err.code === "ENOENT") {
-                    return callback(undefined, []);
+                    // by returning undefined we notify the calling function that the anchor doesn't exist
+                    return callback(undefined, undefined);
                 }
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${filePath}>`, err));
             }
@@ -708,7 +789,7 @@ class FS {
                 );
             }
 
-            if (SSIs.length === 0) {
+            if (!SSIs || SSIs.length === 0) {
                 return callback(undefined, true);
             }
 
@@ -847,16 +928,25 @@ const { clone } = require("../../../utils");
 
 const getAnchoringDomainConfig = (domain) => {
     const config = require("../../../config");
-    let domainConfig = config.getDomainConfig(domain, "anchoring");
+    const domainConfiguration = config.getDomainConfig(domain);
+
+    if (!domainConfiguration) {
+        return;
+    }
+
+    let domainConfig = domainConfiguration.anchoring;
 
     if (!domainConfig) {
         // try to get the anchoring strategy based on the anchoring component config
         const anchoringConfig = config.getConfig("componentsConfig", "anchoring");
+
         if (anchoringConfig) {
             const { anchoringStrategy } = anchoringConfig;
             domainConfig = {
                 type: anchoringStrategy,
             };
+        } else {
+            return;
         }
     }
 
@@ -926,32 +1016,34 @@ function BDNS(server) {
 module.exports = BDNS;
 
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
-function getBrick(request, response) {
-    response.setHeader('content-type', 'application/octet-stream');
-    response.setHeader('Cache-control', 'max-age=31536000'); // set brick cache to expire in 1 year
+const { getBrickWithExternalProvidersFallbackAsync } = require("./utils");
 
-    request.fsBrickStorage.getBrick(request.params.hashLink, (error, result) => {
-        if (error) {
-            return response.send(404, 'Brick not found');
-        }
+async function getBrick(request, response) {
+    response.setHeader("content-type", "application/octet-stream");
+    response.setHeader("Cache-control", "max-age=31536000"); // set brick cache to expire in 1 year
 
-        response.write(result);
+    try {
+        const { domain, hashLink } = request.params;
+        const brick = await getBrickWithExternalProvidersFallbackAsync(request, domain, hashLink, request.fsBrickStorage);
+        response.write(brick);
         return response.send(200);
-    });
+    } catch (error) {
+        return response.send(404, "Brick not found");
+    }
 }
 
 function putBrick(request, response) {
     const utils = require("./utils");
     utils.convertReadableStreamToBuffer(request, (error, brickData) => {
         if (error) {
-            console.error('[Bricking] Fail to convert Stream to Buffer!', error.message);
+            console.error("[Bricking] Fail to convert Stream to Buffer!", error.message);
             return response.send(500);
         }
 
         request.fsBrickStorage.addBrick(brickData, (error, brickHash) => {
             if (error) {
-                console.error('[Bricking] Fail to manage current brick!', error.message);
-                return response.send(error.code === 'EACCES' ? 409 : 500);
+                console.error("[Bricking] Fail to manage current brick!", error.message);
+                return response.send(error.code === "EACCES" ? 409 : 500);
             }
 
             return response.send(201, brickHash);
@@ -960,23 +1052,26 @@ function putBrick(request, response) {
 }
 
 function downloadMultipleBricks(request, response) {
-    response.setHeader('content-type', 'application/octet-stream');
-    response.setHeader('Cache-control', 'max-age=31536000'); // set brick cache to expire in 1 year
+    response.setHeader("content-type", "application/octet-stream");
+    response.setHeader("Cache-control", "max-age=31536000"); // set brick cache to expire in 1 year
 
+    const { domain } = request.params;
     let { hashes } = request.query;
 
     if (!Array.isArray(hashes)) {
         hashes = [hashes];
     }
 
-    const responses = hashes.map(hash => request.fsBrickStorage.getBrickAsync(hash))
+    const responses = hashes.map((hash) =>
+        getBrickWithExternalProvidersFallbackAsync(request, domain, hash, request.fsBrickStorage)
+    );
     Promise.all(responses)
         .then((bricks) => {
-            const data = bricks.map(brick => brick.toString())
+            const data = bricks.map((brick) => brick.toString());
             return response.send(200, data);
         })
         .catch((error) => {
-            console.error('[Bricking] Fail to get multiple bricks!', error.message);
+            console.error("[Bricking] Fail to get multiple bricks!", error.message);
             return response.send(500);
         });
 }
@@ -984,7 +1079,7 @@ function downloadMultipleBricks(request, response) {
 module.exports = {
     getBrick,
     putBrick,
-    downloadMultipleBricks
+    downloadMultipleBricks,
 };
 
 },{"./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js":[function(require,module,exports){
@@ -1040,20 +1135,26 @@ module.exports = {
 
 },{"./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js","bricksledger":"bricksledger"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js":[function(require,module,exports){
 const { clone } = require("../../utils");
+const { getLocalBdnsEntryListExcludingSelfAsync, getHeadersWithExcludedProvidersIncludingSelf } = require("../../utils/request-utils");
 
 function convertReadableStreamToBuffer(readStream, callback) {
     let buffers = [];
 
-    readStream.on('data', (chunk) => buffers.push(chunk));
+    readStream.on("data", (chunk) => buffers.push(chunk));
 
-    readStream.on('error', (error) => callback(error));
+    readStream.on("error", (error) => callback(error));
 
-    readStream.on('end', () => callback(undefined, $$.Buffer.concat(buffers)));
+    readStream.on("end", () => callback(undefined, $$.Buffer.concat(buffers)));
 }
 
 function getBricksDomainConfig(domain) {
     const config = require("../../config");
-    let domainConfig = config.getDomainConfig(domain, "bricking");
+    const domainConfiguration = config.getDomainConfig(domain);
+    if (!domainConfiguration) {
+        return;
+    }
+
+    let domainConfig = domainConfiguration.bricking;
 
     domainConfig = clone(domainConfig || {});
     domainConfig.path = require("path").join(config.getConfig("externalStorage"), `domains/${domain}/brick-storage`);
@@ -1061,12 +1162,69 @@ function getBricksDomainConfig(domain) {
     return domainConfig;
 }
 
+async function getBrickFromExternalProvidersAsync(request, domain, hashLink) {
+    let brickingProviders = await getLocalBdnsEntryListExcludingSelfAsync(request, domain, "brickStorages");
+
+    if (!brickingProviders || !brickingProviders.length) {
+        throw new Error(`[Bricking] Found no fallback bricking providers!`);
+    }
+
+    const http = require("opendsu").loadApi("http");
+    for (let i = 0; i < brickingProviders.length; i++) {
+        const providerUrl = brickingProviders[i];
+        try {
+            const brickUrl = `${providerUrl}/bricking/${domain}/get-brick/${hashLink}`;
+            let providerResponse = await http.fetch(brickUrl, {
+                headers: getHeadersWithExcludedProvidersIncludingSelf(request),
+            });
+            providerResponse = await providerResponse.text();
+            return providerResponse;
+        } catch (error) {
+            // console.warn(`[Bricking] Failed to get brick ${hashLink} from ${providerUrl}!`, error);
+        }
+    }
+
+    throw new Error(`[Bricking] Could not load brick ${hashLink} from external providers`);
+}
+
+async function getBrickWithExternalProvidersFallbackAsync(request, domain, hashLink, fsBrickStorage) {
+    try {
+        const brick = await fsBrickStorage.getBrickAsync(hashLink);
+        if (brick) {
+            return brick;
+        }
+    } catch (error) {
+        console.warn(`[Bricking] Brick ${hashLink} not found. Trying to fallback to other providers...`);
+    }
+
+    try {
+        const externalBrick = await getBrickFromExternalProvidersAsync(request, domain, hashLink);
+
+        // saving the brick in the next cycle in order to not block the get brick request
+        setTimeout(async () => {
+            try {
+                console.info(`[Bricking] Saving external brick ${hashLink} to own storage...`);
+                await fsBrickStorage.addBrickAsync(externalBrick);
+                console.info(`[Bricking] Saved external brick ${hashLink} to own storage`);
+            } catch (error) {
+                console.warn("[Bricking] Fail to manage external brick saving!", error);
+            }
+        });
+
+        return externalBrick;
+    } catch (error) {
+        console.warn(`[Bricking] Error while trying to get missing brick from fallback providers!`, error);
+        throw error;
+    }
+}
+
 module.exports = {
     convertReadableStreamToBuffer,
-    getBricksDomainConfig
+    getBricksDomainConfig,
+    getBrickWithExternalProvidersFallbackAsync,
 };
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
 const URL_PREFIX='/bricksFabric';
 
 module.exports = {URL_PREFIX};
@@ -1107,6 +1265,10 @@ function BricksFabric(server) {
     require('./strategies/BrickStorage.js');
 
     const bricksFabricStrategy = require('./utils').getBricksFabricStrategy();
+    if (!bricksFabricStrategy) {
+        console.log("Unable to initialized 'bricksFabrick' component. Strategy not found!");
+        return;
+    }
     const rootFolder = require('./utils').getRootFolder();
     //options
     const noOfTran = bricksFabricStrategy.option.transactionsPerBlock;
@@ -1142,6 +1304,7 @@ function BricksFabric(server) {
 
 
 module.exports = BricksFabric;
+
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./constants.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/controllers.js","./strategies/BrickStorage.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/strategies/BrickStorage.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/strategies/BrickStorage.js":[function(require,module,exports){
 const fs = require('fs');
 const path = require('swarmutils').path;
@@ -1285,7 +1448,12 @@ const { clone } = require("../../../utils");
 
 const getBricksFabricStrategy = () => {
     const config = require("../../../config");
-    let domainConfig = config.getDomainConfig("default", "bricksFabric");
+    const domainConfiguration = config.getDomainConfig("default");
+    if (!domainConfiguration) {
+        return;
+    }
+
+    let domainConfig = domainConfiguration.bricksFabric;
 
     if (!domainConfig) {
         // try to get the bricks strategy based on the bricksFabric component config
@@ -1296,6 +1464,8 @@ const getBricksFabricStrategy = () => {
                 name: bricksFabricStrategy,
                 option: bricksFabricStrategyOption,
             };
+        } else {
+            return;
         }
     }
     domainConfig = clone(domainConfig || {});
@@ -1754,6 +1924,10 @@ function Config(server) {
     function getDomainConfig(request, response) {
         const { domain } = request.params;
         const domainConfig = config.getDomainConfig(domain);
+
+        if (!domainConfig) {
+            return response.send(404, "Domain not found");
+        }
         response.send(200, domainConfig);
     }
 
@@ -1919,7 +2093,12 @@ function Contract(server) {
             return callback(null, allDomainsWorkerPools[domain].pool);
         }
 
-        const domainConfig = { ...(config.getDomainConfig(domain) || {}) };
+        let domainConfig = config.getDomainConfig(domain);
+        if (!domainConfig) {
+            return callback(new Error('Domain is not configured'));
+        }
+
+        domainConfig = { ...domainConfig }
         ensureContractConstitutionIsPresent(domain, domainConfig);
         if (!domainConfig.contracts.constitution) {
             return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing constitution`);
@@ -3191,7 +3370,7 @@ function MQHub(server) {
 			let domain = confDomains[i];
 			let domainConfig = config.getDomainConfig(domain);
 
-			if (domainConfig.enable && domainConfig.enable.indexOf("mq") !== -1) {
+			if (domainConfig && domainConfig.enable && domainConfig.enable.indexOf("mq") !== -1) {
 				const adapterTypeName = domainConfig["mq_type"] || "local";
 				const adapter = adapterImpls[adapterTypeName];
 				if (!adapter) {
@@ -3219,6 +3398,7 @@ function MQHub(server) {
 module.exports = {
 	MQHub
 };
+
 },{"./../../config/index":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./adapters/localMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js","./adapters/solaceMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js","./auth/JWTIssuer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/auth/JWTIssuer.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js":[function(require,module,exports){
 const URL_PREFIX = '/mq';
 
@@ -4169,7 +4349,7 @@ function getDomainConfig(domain, ...configKeys) {
     }
 
     const loadedDomainConfig = domainConfigs[domain];
-    if(loadedDomainConfig) {
+    if(typeof loadedDomainConfig !== 'undefined') {
         return getConfigResult(loadedDomainConfig);
     }
 
@@ -4186,11 +4366,11 @@ function getDomainConfig(domain, ...configKeys) {
         const domainConfigContent = require(fsName).readFileSync(domainConfigPath);
         const domainConfig = JSON.parse(domainConfigContent);
         domainConfigs[domain] = domainConfig;
-        return getConfigResult(domainConfig);        
+        return getConfigResult(domainConfig);
     } catch (error) {
-        console.log(`Config for domain '${domain}' cannot be loaded from location: ${domainConfigPath}. Using default configuration.`);
+        console.log(`Config for domain '${domain}' cannot be loaded from location: ${domainConfigPath}.`);
         domainConfigs[domain] = null;
-        return getConfigResult(domainConfigs[domain]);
+        return domainConfigs[domain];
     }
 }
 
@@ -5649,7 +5829,17 @@ function Logger(server) {
 
 module.exports = Logger;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/array.js":[function(require,module,exports){
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+module.exports.shuffle = shuffle;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js":[function(require,module,exports){
 module.exports.clone = function(data) {
     return JSON.parse(JSON.stringify(data));
 }
@@ -5992,7 +6182,84 @@ module.exports = function (extension) {
     }
     return defaultMimeType;
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/requests.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js":[function(require,module,exports){
+function getCurrentApiHubUrl(server) {
+    const config = require("../config");
+    const currentApiHubUrl = `${server.protocol}://${config.getConfig("host")}:${config.getConfig("port")}`;
+    return currentApiHubUrl;
+}
+
+function getExcludedProvidersFromRequest(request) {
+    let excludedProviders = request.headers["excluded-providers"];
+    if (!excludedProviders) {
+        return [];
+    }
+
+    excludedProviders = excludedProviders
+        .split(",")
+        .map((provider) => provider.trim())
+        .filter((provider) => provider);
+    return excludedProviders;
+}
+
+function getHeadersWithExcludedProvidersIncludingSelf(request) {
+    let excludedProviders = request.headers["excluded-providers"] || "";
+    if (excludedProviders) {
+        excludedProviders += ",";
+    }
+    const currentApiHubUrl = getCurrentApiHubUrl(request.server);
+    excludedProviders = `${excludedProviders}${currentApiHubUrl}`;
+
+    return {
+        "Excluded-Providers": excludedProviders,
+    };
+}
+
+async function getLocalBdnsEntryListExcludingSelfAsync(request, domain, entryName) {
+    const { server } = request;
+    let entries;
+
+    try {
+        // trying to get the entries via contract call
+        const entriesUrl = `/contracts/${domain}/bdns-entries/anchoringServices`;
+        entries = await server.makeLocalRequestAsync("GET", entriesUrl);
+    } catch (error) {
+        console.log(`[${entryName}] Failed to call contract to get ${entryName}. Falling back to local bdns check`);
+
+        try {
+            const bdnsUrl = `/bdns`;
+            const bdns = await server.makeLocalRequestAsync("GET", bdnsUrl);
+            if (bdns && bdns[domain]) {
+                entries = bdns[domain][entryName];
+            }
+        } catch (error) {
+            console.log(`[${entryName}] Failed to call BDNS to get ${entryName}`);
+        }
+    }
+
+    if (entries && Array.isArray(entries)) {
+        // remove self url from the list
+        const currentApiHubUrl = getCurrentApiHubUrl(server);
+        entries = entries.filter((url) => url && url.indexOf(currentApiHubUrl) === -1);
+
+        // remove providers specified in the Excluded-Providers headers in order to avoid cyclic calls
+        const excludedProviders = getExcludedProvidersFromRequest(request);
+        if (excludedProviders.length) {
+            entries = entries.filter(
+                (provider) => !excludedProviders.some((excludedProvider) => excludedProvider.indexOf(provider) !== -1)
+            );
+        }
+    }
+
+    return entries;
+}
+
+module.exports = {
+    getLocalBdnsEntryListExcludingSelfAsync,
+    getHeadersWithExcludedProvidersIncludingSelf,
+};
+
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/requests.js":[function(require,module,exports){
 
 const http = require("http");
 const https = require("https");
@@ -6685,23 +6952,6 @@ function Archive(archiveConfigurator) {
      * @param {callback} callback
      */
     const _writeFile = (barPath, data, options, callback) => {
-        if (typeof data === "function") {
-            callback = data;
-            data = undefined;
-            options = undefined;
-        }
-        if (typeof options === "function") {
-            callback = options;
-            options = {
-                encrypt: true
-            };
-        }
-        if (typeof options === "undefined") {
-            options = {
-                encrypt: true
-            };
-        }
-
         barPath = pskPth.normalize(barPath);
 
         if (typeof data === "undefined") {
@@ -7338,9 +7588,21 @@ function Archive(archiveConfigurator) {
 
     this.writeFile = (path, data, options, callback) => {
         const defaultOpts = {encrypt: true, ignoreMounts: false};
+        if (typeof data === "function") {
+            callback = data;
+            data = undefined;
+            options = undefined;
+        }
         if (typeof options === "function") {
             callback = options;
-            options = {};
+            options = {
+                encrypt: true
+            };
+        }
+        if (typeof options === "undefined") {
+            options = {
+                encrypt: true
+            };
         }
 
         callback = $$.makeSaneCallback(callback);
@@ -33892,14 +34154,104 @@ module.exports = {
  */
 
 const constants = require("../moduleConstants");
-const keySSISpace = require("opendsu").loadAPI("keyssi");
+const openDSU = require("opendsu");
+const http = openDSU.loadAPI("http")
+const keySSISpace = openDSU.loadAPI("keyssi");
+const resolver = openDSU.loadAPI("resolver");
+const {getURLForSsappContext} = require("../utils/getURLForSsappContext");
+const fs = require("fs");
 
-const getMainDSU = () => {
-    if (!globalVariableExists("rawDossier")) {
-        throw Error("Main DSU does not exist in the current context.");
+function getMainDSU(callback) {
+    callback = $$.makeSaneCallback(callback);
+    if (globalVariableExists("rawDossier")) {
+        return callback(undefined, getGlobalVariable("rawDossier"));
     }
-    return getGlobalVariable("rawDossier");
-};
+    switch ($$.environmentType) {
+        case constants.ENVIRONMENT_TYPES.WEB_WORKER_ENVIRONMENT_TYPE:
+        case constants.ENVIRONMENT_TYPES.SERVICE_WORKER_ENVIRONMENT_TYPE:
+
+        function __getMainDSUFromSw() {
+            if (!globalVariableExists("rawDossier")) {
+                setTimeout(() => {
+                    __getMainDSUFromSw()
+                }, 100);
+                return;
+            }
+            return callback(undefined, getGlobalVariable("rawDossier"));
+        }
+
+            return __getMainDSUFromSw();
+        case constants.ENVIRONMENT_TYPES.BROWSER_ENVIRONMENT_TYPE:
+            return getMainDSUForIframe(callback);
+        case constants.ENVIRONMENT_TYPES.NODEJS_ENVIRONMENT_TYPE:
+            return getMainDSUForNode(callback);
+        default:
+            return callback(Error("Main DSU does not exist in the current context."));
+    }
+}
+
+function getMainDSUForNode(callback) {
+    const path = require("path");
+    const MAIN_DSU_PATH = path.join(require("os").tmpdir(), "wallet");
+    const DOMAIN = "vault";
+    const fs = require("fs");
+    const resolver = require("opendsu").loadAPI("resolver");
+
+    fs.readFile(MAIN_DSU_PATH, (err, mainDSUSSI) => {
+        if (err) {
+            resolver.createSeedDSU(DOMAIN, (err, seedDSU) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                seedDSU.writeFile("/environment.json", JSON.stringify({domain: "vault"}), (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    seedDSU.getKeySSIAsString((err, seedSSI) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        fs.writeFile(MAIN_DSU_PATH, seedSSI, (err) => callback(err, seedDSU));
+                    });
+                })
+            })
+
+            return;
+        }
+
+        resolver.loadDSU(mainDSUSSI.toString(), callback);
+    })
+}
+
+function getMainDSUForIframe(callback) {
+    let mainDSU = getGlobalVariable("rawDossier");
+    if (mainDSU) {
+        return callback(undefined, mainDSU);
+    }
+
+    http.doGet(getURLForSsappContext("/getSSIForMainDSU"), (err, res) => {
+        if (err || res.length === 0) {
+            return callback(createOpenDSUErrorWrapper("Failed to get main DSU SSI", err));
+        }
+
+        let config = openDSU.loadApi("config");
+
+        let mainSSI = keySSISpace.parse(res);
+        if (mainSSI.getHint() === "server") {
+            config.disableLocalVault();
+        }
+        resolver.loadDSU(mainSSI, (err, mainDSU) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper("Failed to load main DSU ", err));
+            }
+
+            setMainDSU(mainDSU);
+            callback(undefined, mainDSU);
+        });
+    });
+}
 
 const setMainDSU = (mainDSU) => {
     return setGlobalVariable("rawDossier", mainDSU);
@@ -33923,16 +34275,27 @@ function SecurityContext(keySSI) {
     }
 
     let storageDB;
+    let initialised = false;
+
+    function apiIsAvailable(callback) {
+        if (typeof storageDB === "undefined") {
+            callback(Error(`API unavailable because storageDB is unable to be initialised.`))
+            return false;
+        }
+
+        return true;
+    }
 
     const init = async () => {
         if (typeof keySSI === "undefined") {
             let mainDSU;
             try {
-                mainDSU = getMainDSU();
+                mainDSU = await $$.promisify(getMainDSU)();
             } catch (e) {
-                keySSI = keySSISpace.createSeedSSI("default");
+
             }
 
+            initialised = true;
             if (mainDSU) {
                 try {
                     keySSI = await $$.promisify(loadSecurityContext)()
@@ -33944,14 +34307,20 @@ function SecurityContext(keySSI) {
                         throw createOpenDSUErrorWrapper(`Failed to create security context`, e);
                     }
                 }
+                storageDB = db.getWalletDB(keySSI, DB_NAME);
             }
-        }
+            this.finishInitialisation();
 
-        storageDB = db.getWalletDB(keySSI, DB_NAME);
-        this.finishInitialisation();
+        } else {
+            storageDB = db.getWalletDB(keySSI, DB_NAME);
+            this.finishInitialisation();
+        }
     }
 
     this.registerDID = (didDocument, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         let privateKeys = didDocument.getPrivateKeys();
         if (!Array.isArray(privateKeys)) {
             privateKeys = [privateKeys]
@@ -33969,6 +34338,9 @@ function SecurityContext(keySSI) {
     };
 
     this.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         const privateKeyObj = {privateKeys: [privateKey]}
         storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
             if (err || !res) {
@@ -33981,6 +34353,9 @@ function SecurityContext(keySSI) {
     }
 
     this.addPublicKeyForDID = (didDocument, publicKey, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         const publicKeyObj = {publicKeys: [publicKey]}
         storageDB.getRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), (err, res) => {
             if (err || !res) {
@@ -33993,6 +34368,9 @@ function SecurityContext(keySSI) {
     }
 
     this.getPrivateInfoForDID = (did, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
             if (err) {
                 return callback(err);
@@ -34010,6 +34388,9 @@ function SecurityContext(keySSI) {
     };
 
     this.registerKeySSI = (keySSI, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         if (typeof keySSI === "undefined") {
             return callback(Error(`A SeedSSI should be specified.`));
         }
@@ -34044,6 +34425,9 @@ function SecurityContext(keySSI) {
     };
 
     this.getCapableOfSigningKeySSI = (keySSI, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         if (typeof keySSI === "undefined") {
             return callback(Error(`A SeedSSI should be specified.`));
         }
@@ -34098,6 +34482,9 @@ function SecurityContext(keySSI) {
     }
 
     this.signAsDID = (didDocument, data, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKey) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
@@ -34107,11 +34494,17 @@ function SecurityContext(keySSI) {
     }
 
     this.verifyForDID = (didDocument, data, signature, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         didDocument.verifyImpl(data, signature, callback);
     }
 
 
     this.encryptForDID = (senderDIDDocument, receiverDIDDocument, message, callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         this.getPrivateInfoForDID(senderDIDDocument.getIdentifier(), (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${senderDIDDocument.getIdentifier()}`, err));
@@ -34121,7 +34514,11 @@ function SecurityContext(keySSI) {
         });
     };
 
-    this.decryptAsDID = (didDocument, encryptedMessage, callback) => {
+    this.decryptAsDID = (didDocument, encryptedMessage, callback) => { // throw e;
+                // keySSI = keySSISpace.createSeedSSI("default");
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
         this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
@@ -34131,8 +34528,13 @@ function SecurityContext(keySSI) {
         });
     };
 
-    this.getDb = () => {
-        return storageDB;
+    this.getDb = (callback) => {
+        if (!apiIsAvailable(callback)) {
+            return;
+        }
+        storageDB.on("initialised", () => {
+            callback(undefined, storageDB);
+        })
     }
 
     const bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
@@ -34142,30 +34544,40 @@ function SecurityContext(keySSI) {
 }
 
 const getVaultDomain = (callback) => {
-    const mainDSU = getMainDSU();
-    mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
+    getMainDSU((err, mainDSU) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
+            return callback(err);
         }
 
-        try {
-            environment = JSON.parse(environment.toString())
-        } catch (e) {
-            return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
-        }
+        mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
+            }
 
-        callback(undefined, environment.domain);
+            try {
+                environment = JSON.parse(environment.toString())
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
+            }
+
+            callback(undefined, environment.domain);
+        })
     })
 }
 
 const loadSecurityContext = (callback) => {
-    const mainDSU = getMainDSU();
-    mainDSU.readFile(constants.SECURITY_CONTEXT, (err, securityContextKeySSI) => {
+    getMainDSU((err, mainDSU) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to read security context keySSI`, err));
+            return callback(err);
         }
 
-        callback(undefined, securityContextKeySSI.toString());
+        mainDSU.readFile(constants.SECURITY_CONTEXT, (err, securityContextKeySSI) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read security context keySSI`, err));
+            }
+
+            callback(undefined, securityContextKeySSI.toString());
+        })
     })
 }
 
@@ -34173,13 +34585,18 @@ const saveSecurityContext = (scKeySSI, callback) => {
     if (typeof scKeySSI === "object") {
         scKeySSI = scKeySSI.getIdentifier();
     }
-    const mainDSU = getMainDSU();
-    mainDSU.writeFile(constants.SECURITY_CONTEXT, scKeySSI, (err) => {
+    getMainDSU((err, mainDSU) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to save security context keySSI`, err));
+            return callback(err);
         }
 
-        callback(undefined);
+        mainDSU.writeFile(constants.SECURITY_CONTEXT, scKeySSI, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to save security context keySSI`, err));
+            }
+
+            callback(undefined);
+        })
     })
 }
 
@@ -34206,7 +34623,7 @@ module.exports = {
     getSecurityContext
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
     if (typeof envVariables[name] !== "undefined") {
@@ -34394,15 +34811,7 @@ function PendingCallMixin(target) {
 
 module.exports = PendingCallMixin;
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
-module.exports.shuffle = shuffle;
-
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/apihub/utils/array.js"][0].apply(exports,arguments)
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const system = require("../system");
@@ -34442,7 +34851,22 @@ function getBaseURL(){
 }
 
 module.exports = getBaseURL;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js":[function(require,module,exports){
+function getURLForSsappContext(relativePath) {
+    if (window["$$"] && $$.SSAPP_CONTEXT && $$.SSAPP_CONTEXT.BASE_URL && $$.SSAPP_CONTEXT.SEED) {
+        // if we have a BASE_URL then we prefix the fetch url with BASE_URL
+        return `${new URL($$.SSAPP_CONTEXT.BASE_URL).pathname}${
+            relativePath.indexOf("/") === 0 ? relativePath.substring(1) : relativePath
+        }`;
+    }
+    return relativePath;
+}
+
+module.exports = {
+    getURLForSsappContext
+}
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -48840,7 +49264,11 @@ function enableForEnvironment(envType){
     $$.makeSaneCallback = function makeSaneCallback(fn) {
         let alreadyCalled = false;
         let prevErr;
-        return (err, res, ...args) => {
+        if(fn.alreadyWrapped){
+            return fn;
+        }
+
+        const newFn = (err, res, ...args) => {
             if (alreadyCalled) {
                 if (err) {
                     console.log('Sane callback error:', err);
@@ -48854,6 +49282,9 @@ function enableForEnvironment(envType){
             }
             return fn(err, res, ...args);
         };
+
+        newFn.alreadyWrapped = true;
+        return newFn;
     };
 }
 
