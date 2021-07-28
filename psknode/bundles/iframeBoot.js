@@ -1686,6 +1686,13 @@ function Config(server) {
         response.send(200, domainConfig);
     }
 
+    function getDomainKeySSI(request, response) {
+        const { domain } = request.params;
+        const domainConfig = config.getDomainConfig(domain);
+        const domainKeySSI = domainConfig && domainConfig.contracts ? domainConfig.contracts.constitution : null;
+        response.send(200, domainKeySSI);
+    }
+
     function validateDomainConfigInput(request, response, next) {
         if (!request.body || typeof request.body !== "object") {
             return response(400, "Invalid domain config specified");
@@ -1707,6 +1714,7 @@ function Config(server) {
     server.use(`/config/:domain/*`, responseModifierMiddleware);
 
     server.get(`/config/:domain`, getDomainConfig);
+    server.get(`/config/:domain/keyssi`, getDomainKeySSI);
 
     server.put(`/config/:domain`, requestBodyJSONMiddleware);
     server.put(`/config/:domain`, validateDomainConfigInput);
@@ -1718,8 +1726,9 @@ module.exports = Config;
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/boot.js":[function(require,module,exports){
 (function (process){(function (){
 async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, storageFolder) {
+    const logPrefix = `[contract-worker][${validatorDID}][domain]`;
     console.log(
-        `[contract-worker] booting contracts for domain ${domain} and domainConfig ${JSON.stringify(domainConfig)} booting...`,
+        `${logPrefix} Booting contracts for domain ${domain} and domainConfig ${JSON.stringify(domainConfig)} booting...`,
         domainConfig
     );
 
@@ -1729,7 +1738,14 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
 
     try {
         const initiliseBrickLedger = await $$.promisify(bricksledger.initiliseBrickLedger);
-        const bricksledgerInstance = await initiliseBrickLedger(validatorDID, serverUrl, domain, domainConfig, rootFolder, storageFolder);
+        const bricksledgerInstance = await initiliseBrickLedger(
+            validatorDID,
+            serverUrl,
+            domain,
+            domainConfig,
+            rootFolder,
+            storageFolder
+        );
 
         const handleCommand = async (command, callback) => {
             const params = command.params || [];
@@ -1780,17 +1796,17 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
 
         parentPort.on("message", (message) => {
             if (!message) {
-                return callback("[contract-worker] Received empty message!");
+                return callback(`${logPrefix} Received empty message!`);
             }
 
             const command = bricksledger.createCommand(message);
             handleCommand(command, (error, result) => {
-                console.log(`[contract-worker] Finished work ${message}`, error, result);
+                console.log(`${logPrefix} Finished work ${message}`, error, result);
                 parentPort.postMessage({ error, result });
             });
         });
 
-        console.log("[contract-worker] ready");
+        console.log(`${logPrefix} ready`);
         parentPort.postMessage("ready");
     } catch (error) {
         parentPort.postMessage({ error });
@@ -1798,7 +1814,7 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
     }
 
     process.on("uncaughtException", (err) => {
-        console.error("[contract-worker] unchaughtException inside worker", err);
+        console.error(`${logPrefix} unchaughtException inside worker`, err);
         setTimeout(() => {
             process.exit(1);
         }, 100);
@@ -1828,9 +1844,11 @@ function Contract(server) {
 
     const allDomainsWorkerPools = {};
 
+    const isWorkerPoolRunningForDomain = (domain) => allDomainsWorkerPools[domain] && allDomainsWorkerPools[domain].isRunning;
+
     const getDomainWorkerPool = async (domain, callback) => {
         if (allDomainsWorkerPools[domain]) {
-            return callback(null, allDomainsWorkerPools[domain]);
+            return callback(null, allDomainsWorkerPools[domain].pool);
         }
 
         const domainConfig = { ...(config.getDomainConfig(domain) || {}) };
@@ -1839,25 +1857,29 @@ function Contract(server) {
             return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing constitution`);
         }
 
-        console.log(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
+        const validatorDID = config.getConfig("validatorDID");
+        if (!validatorDID) {
+            return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing validatorDID`);
+        }
 
-        // temporary create the validator here in case the config doesn't have one specified
-        const w3cDID = require("opendsu").loadApi("w3cdid");
-        const validatorDID =
-            config.getConfig("validatorDID") || (await $$.promisify(w3cDID.createIdentity)("demo", "id")).getIdentifier();
+        console.log(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
 
         const { rootFolder } = server;
         const externalStorageFolder = require("path").join(rootFolder, config.getConfig("externalStorage"));
         const script = getNodeWorkerBootScript(validatorDID, domain, domainConfig, rootFolder, externalStorageFolder, serverUrl);
-        allDomainsWorkerPools[domain] = syndicate.createWorkerPool({
+        const pool = syndicate.createWorkerPool({
             bootScript: script,
             maximumNumberOfWorkers: 1,
             workerOptions: {
                 eval: true,
             },
         });
+        allDomainsWorkerPools[domain] = {
+            pool,
+            isRunning: false,
+        };
 
-        callback(null, allDomainsWorkerPools[domain]);
+        callback(null, pool);
     };
 
     const sendCommandToWorker = (command, response, mapSuccessResponse) => {
@@ -1866,8 +1888,10 @@ function Contract(server) {
                 return response.send(400, err);
             }
 
-            // console.log(`[${config.getConfig("validatorDID")}][Contracts] api worker sending`, command);
+            console.log(`[${config.getConfig("validatorDID")}][Contracts] api worker sending`, command);
             workerPool.addTask(command, (err, message) => {
+                allDomainsWorkerPools[command.domain].isRunning = true;
+
                 if (err) {
                     return response.send(500, err);
                 }
@@ -1906,6 +1930,10 @@ function Contract(server) {
         if (!entry || typeof entry !== "string") {
             return response.send(400, "Invalid entry specified");
         }
+        if (!isWorkerPoolRunningForDomain(domain)) {
+            return response.send(500, "Contracts not booted");
+        }
+
         const command = {
             domain,
             contractName: "bdns",
@@ -1966,7 +1994,7 @@ module.exports = Contract;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js":[function(require,module,exports){
 (function (process,global,__dirname){(function (){
 function escapePath(path) {
     return path ? path.replace(/\\/g, "\\\\").replace(".js", "") : "";
@@ -5815,12 +5843,15 @@ module.exports = IframeHandler;
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js":[function(require,module,exports){
 (function (process){(function (){
 function Logger(server) {
-  console.log(`Registering Logger middleware`);
-
-  const getRequestDuration = (start) => {
-    const diff = process.hrtime(start);
-    return (diff[0] * 1e9 + diff[1]) / 1e6;
-  };
+    console.log(`Registering Logger middleware`);
+    
+    const getRequestDuration = (start) => {
+        const diff = process.hrtime(start);
+        return (diff[0] * 1e9 + diff[1]) / 1e6;
+    };
+    
+  const { getConfig } = require("../../config");
+  const port = getConfig('port');
 
   server.use(function (req, res, next) {
     const {
@@ -5836,7 +5867,7 @@ function Logger(server) {
     res.on('finish', () => {
       const { statusCode } = res;
       durationInMilliseconds = getRequestDuration(start);
-      let log = `${remoteAddress} - [${datetime}] ${method}:${url} ${statusCode} ${durationInMilliseconds.toLocaleString()}ms`;
+      let log = `${remoteAddress}:${port} - [${datetime}] ${method}:${url} ${statusCode} ${durationInMilliseconds.toLocaleString()}ms`;
       console.log(log);
     });
 
@@ -5848,7 +5879,7 @@ module.exports = Logger;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js":[function(require,module,exports){
 module.exports.clone = function(data) {
     return JSON.parse(JSON.stringify(data));
 }
