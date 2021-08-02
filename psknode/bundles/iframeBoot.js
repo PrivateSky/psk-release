@@ -1975,7 +1975,6 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
 
             const command = bricksledger.createCommand(message);
             handleCommand(command, (error, result) => {
-                console.log(`${logPrefix} Finished work ${message}`, error, result);
                 parentPort.postMessage({ error, result });
             });
         });
@@ -2067,7 +2066,6 @@ function Contract(server) {
                 return response.send(400, err);
             }
 
-            console.log(`[${config.getConfig("validatorDID")}][Contracts] api worker sending`, command);
             workerPool.addTask(command, (err, message) => {
                 allDomainsWorkerPools[command.domain].isRunning = true;
 
@@ -2078,7 +2076,6 @@ function Contract(server) {
                 let { error, result } = message;
 
                 if (error) {
-                    console.log("@ command error", error, command);
                     return response.send(500, error);
                 }
 
@@ -14390,9 +14387,11 @@ function BricksLedger(
             }
 
             if (await execution.requireConsensus()) {
-                logger.debug(`Executing safe command optimistically still requires consensus`);
+                logger.debug(`[safe-command-${command.getHash()}] Executing safe command optimistically still requires consensus`);
                 await commandHistoryStorage.addOptimisticComand(command);
                 pBlocksFactory.addCommandForConsensusAsync(command);
+            } else {
+                logger.debug(`[safe-command-${command.getHash()}] Executing safe command optimistically doesn't requires consensus`);
             }
         } catch (error) {
             callback(error);
@@ -14440,6 +14439,8 @@ function BricksLedger(
     this.validatePBlockFromNetwork = async function (pBlockMessage, callback) {
         callback = $$.makeSaneCallback(callback);
 
+        logger.debug("Received pBlock message from network", pBlockMessage);
+
         if (!isBootFinished) {
             return callback(new Error(NOT_BOOTED_ERROR));
         }
@@ -14453,7 +14454,15 @@ function BricksLedger(
         try {
             await pBlockMessage.validateSignature();
             pBlocksFactory.forcePBlockCreationForBlockNumberIfAbsentAsync(pBlockMessage.blockNumber);
-            consensusCore.addExternalPBlockInConsensusAsync(pBlockMessage);
+
+            // add the pBlock in consensus on the next cycle in order to not block the request
+            setTimeout(async () => {
+                try {
+                    await consensusCore.addExternalPBlockInConsensusAsync(pBlockMessage);
+                } catch (error) {
+                    // errors logged in detail in addExternalPBlockInConsensusAsync
+                }
+            });
             callback();
         } catch (error) {
             callback(error);
@@ -14522,6 +14531,7 @@ const initiliseBrickLedger = async (validatorDID, validatorURL, domain, domainCo
         );
 
         let broadcaster = require("./src/Broadcaster").create(domain, validatorDID, validatorURL, executionEngine);
+        let notifier = require("./src/Notifier").create(domain, validatorDID);
 
         let consensusCore = require("./src/ConsensusCore").create(
             validatorDID,
@@ -14531,6 +14541,7 @@ const initiliseBrickLedger = async (validatorDID, validatorURL, domain, domainCo
             brickStorage,
             executionEngine,
             broadcaster,
+            notifier,
             pendingBlocksTimeoutMs,
             nonInclusionCheckTimeoutMs
         );
@@ -14580,7 +14591,7 @@ module.exports = {
     createFSBrickStorage,
 };
 
-},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js","./src/Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","./src/Broadcaster/ValidatorNonInclusionMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/ValidatorNonInclusionMessage.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js":[function(require,module,exports){
+},{"./src/Broadcaster":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/index.js","./src/Broadcaster/PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","./src/Broadcaster/ValidatorNonInclusionMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/ValidatorNonInclusionMessage.js","./src/Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","./src/CommandHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js","./src/ConsensusCore":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js","./src/ExecutionEngine":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ExecutionEngine/index.js","./src/FSBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js","./src/FSKeyValueStorage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/index.js","./src/Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./src/Notifier":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Notifier.js","./src/PBlocksFactory":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js":[function(require,module,exports){
 class Block {
     constructor(block) {
         if (!block) {
@@ -14649,7 +14660,7 @@ class PBlockAddedMessage {
         const isValidSignature = await $$.promisify(validatorDID.verify)(hash, validatorSignature);
 
         if (!isValidSignature) {
-            throw new Error("Invalid signature specified");
+            throw new Error("Invalid signature specified for PBlockAddedMessage");
         }
     }
 
@@ -14716,7 +14727,7 @@ class ValidatorNonInclusionMessage {
         const isValidSignature = await $$.promisify(validatorDID.verify)(hash, validatorSignature);
 
         if (!isValidSignature) {
-            throw new Error("Invalid signature specified");
+            throw new Error("Invalid signature specified for ValidatorNonInclusionMessage");
         }
     }
 
@@ -14868,8 +14879,19 @@ class Command {
         const isValidSignature = await $$.promisify(signerDID.verify)(hash, requesterSignature);
 
         if (!isValidSignature) {
-            throw "Invalid signature specified";
+            throw "Invalid signature specified for Command";
         }
+    }
+
+    getForSerialisation() {
+        const { domain, contractName, methodName, params, type } = this;
+        return {
+            domain,
+            contractName,
+            methodName,
+            params,
+            type,
+        };
     }
 }
 
@@ -15076,7 +15098,8 @@ class PendingBlock {
                     return;
                 }
 
-                const { validators, pBlocks } = this;
+                const { pBlocks } = this;
+                const validators = this.getValidValidators();
                 const canProceedToNonInclusionPhase = pBlocks.length >= Math.floor(validators.length / 2) + 1;
                 if (!canProceedToNonInclusionPhase) {
                     this._logger.info(
@@ -15101,11 +15124,16 @@ class PendingBlock {
         this.pendingBlocksTimeout = pendingBlocksTimeout;
     }
 
+    isConsensusRunning() {
+        return this.phase !== CONSENSUS_PHASES.FINALIZED;
+    }
+
     canFinalizeConsensus() {
-        const { validators, pBlocks } = this;
+        const { pBlocks, phase } = this;
         this._logger.info(`Checking if consensus for pending block can be finalized...`);
 
-        const canFinalizeConsensus = validators.length === pBlocks.length;
+        const validators = this.getValidValidators();
+        const canFinalizeConsensus = phase !== CONSENSUS_PHASES.FINALIZED && validators.length === pBlocks.length;
         if (canFinalizeConsensus) {
             return true;
         }
@@ -15116,10 +15144,15 @@ class PendingBlock {
         return false;
     }
 
-    finalizeConsensus() {
-        this._logger.info(`Finalizing consensus for pBlock...`);
-
+    startFinalizeConsensus() {
+        this._logger.info(`Finalizing consensus for pBlock started...`);
         this.phase = CONSENSUS_PHASES.FINALIZING;
+    }
+
+    endFinalizeConsensus() {
+        this._logger.info(`Finalizing consensus for pBlock ending...`);
+
+        this.phase = CONSENSUS_PHASES.FINALIZED;
         this.clearPendingBlockTimeout();
         this.clearNonInclusionCheckTimeout();
     }
@@ -15294,6 +15327,32 @@ class PendingBlock {
 
         return new Block(block);
     }
+
+    getValidValidators() {
+        const { validators, pBlocks } = this;
+
+        let validatorsProposedInCurrentBlock = pBlocks.map((pBlock) => {
+            if (pBlock.isEmpty) {
+                return [];
+            }
+
+            const proposedValidators = pBlock.commands
+                .filter((command) => command.contractName === "bdns" && command.methodName === "addDomainValidator")
+                .map((command) => (command.params ? command.params[0] : null))
+                .filter((validator) => validator);
+            return proposedValidators || [];
+        });
+        validatorsProposedInCurrentBlock = [].concat.apply([], validatorsProposedInCurrentBlock); // flatten the array
+
+        const validValidators = validators.filter((validator) => {
+            const isValidatorProposedInCurrentBlock = validatorsProposedInCurrentBlock.some(
+                (proposedValidator) => proposedValidator.DID === validator.DID && proposedValidator.URL === validator.URL
+            );
+            return !isValidatorProposedInCurrentBlock;
+        });
+
+        return validValidators;
+    }
 }
 
 module.exports = PendingBlock;
@@ -15410,17 +15469,10 @@ module.exports = {
 },{"./ValidatorContractExecutor":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorContractExecutor.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/ValidatorSynchronizer.js":[function(require,module,exports){
 const Logger = require("../Logger");
 const Block = require("../Block");
-const { checkIfPathExists, ensurePathExists } = require("../utils/fs-utils");
-
-async function getCachedPBlocksFolderPath(storageFolder, domain) {
-    const path = require("path");
-    const folderPath = path.join(storageFolder, "domains", domain, "cache/pblocks");
-    try {
-        await ensurePathExists(folderPath);
-    } catch (error) {
-        console.log(error);
-    }
-    return folderPath;
+function getHashFromHashLinkSSI(hashLinkSSI) {
+    const keySSI = require("opendsu").loadApi("keyssi");
+    hashLinkSSI = keySSI.parse(hashLinkSSI);
+    return hashLinkSSI.getHash();
 }
 
 const VALIDATOR_SYNC_INTERVAL_MS = 10 * 1000;
@@ -15431,7 +15483,7 @@ class ValidatorSynchronizer {
         currentValidatorDID,
         currentValidatorURL,
         validator,
-        storageFolder,
+        brickStorage,
         getLatestBlockInfo,
         getLocalValidators,
         validatorContractExecutorFactory,
@@ -15443,7 +15495,7 @@ class ValidatorSynchronizer {
         this.currentValidatorURL = currentValidatorURL;
         this.validatorDID = validator.DID;
         this.validatorURL = validator.URL;
-        this.storageFolder = storageFolder;
+        this.brickStorage = brickStorage;
         this.getLatestBlockInfo = getLatestBlockInfo;
         this.getLocalValidators = getLocalValidators;
         this.validatorContractExecutorFactory = validatorContractExecutorFactory;
@@ -15510,8 +15562,10 @@ class ValidatorSynchronizer {
             let queriedBlockHash = hash;
             while (true) {
                 this._logger.info(`Getting block with hash '${queriedBlockHash}' from validator '${validatorDID}'...`);
-                const block = await this._validatorContractExecutor.getBlockAsync(queriedBlockHash);
-                missingBlocks.unshift(new Block(block));
+                const blockInfo = await this._validatorContractExecutor.getBlockAsync(queriedBlockHash);
+                const block = new Block(blockInfo);
+                block.hashLinkSSI = queriedBlockHash;
+                missingBlocks.unshift(block);
 
                 if (!block.previousBlock || block.previousBlock === latestBlockHash) {
                     this._logger.info(
@@ -15523,7 +15577,6 @@ class ValidatorSynchronizer {
                 queriedBlockHash = block.previousBlock;
             }
 
-            const cachedPBlocksFolder = await getCachedPBlocksFolderPath(this.storageFolder, domain);
             for (let blockIndex = 0; blockIndex < missingBlocks.length; blockIndex++) {
                 const missingBlock = missingBlocks[blockIndex];
                 this._logger.info(
@@ -15536,30 +15589,37 @@ class ValidatorSynchronizer {
                     const pBlockHash = missingBlock.pbs[pBlockIndex];
                     this._logger.debug(`Checking pblock '${pBlockHash}' [${pBlockIndex + 1}/${missingBlock.pbs.length}]...`);
 
-                    const cachedPBlockFilePath = require("path").join(cachedPBlocksFolder, pBlockHash);
-                    const isPBlockAlreadyDownloaded = await checkIfPathExists(cachedPBlockFilePath);
+                    const pBlockBrickHash = getHashFromHashLinkSSI(pBlockHash);
+                    let pBlock;
 
-                    const fs = require("fs");
-                    if (isPBlockAlreadyDownloaded) {
-                        this._logger.debug(`Getting pblock '${pBlockHash}' from cache (${cachedPBlockFilePath})...`);
-                        const pBlock = JSON.parse(await $$.promisify(fs.readFile)(cachedPBlockFilePath));
-                        pBlocks.push(pBlock);
-                    } else {
+                    try {
+                        this._logger.debug(`Getting pblock '${pBlockHash}' from brickstorage (hash: ${pBlockBrickHash})...`);
+                        pBlock = await this.brickStorage.getBrickAsync(pBlockBrickHash);
+                    } catch (error) {
+                        this._logger.debug(`Pblock '${pBlockHash}' not present in brickstorage, so adding it...`, error);
+
                         this._logger.debug(`Getting pblock '${pBlockHash}'...`);
-                        const pBlock = await this._validatorContractExecutor.getPBlockAsync(pBlockHash);
-                        pBlocks.push(pBlock);
+                        pBlock = await this._validatorContractExecutor.getPBlockAsync(pBlockHash);
 
-                        this._logger.debug(`Storing pblock '${pBlockHash}' to local cache (${cachedPBlockFilePath})...`);
+                        this._logger.debug(`Storing pblock '${pBlockHash}' in brickstorage...`);
                         try {
-                            await $$.promisify(fs.writeFile)(cachedPBlockFilePath, JSON.stringify(pBlock));
+                            const hash = await this.brickStorage.addBrickAsync(pBlock.getSerialisation());
+                            if (hash !== pBlockBrickHash) {
+                                this._logger.error(
+                                    `PBlock '${pBlockHash}' has it's hash equal to '${pBlockBrickHash}', but saving it locally has returned a hash of '${hash}'`
+                                );
+                            }
                         } catch (error) {
                             // we can continue the boot even if the pblock cache storage failed
-                            this._logger.debug(`Storing pblock '${pBlockHash}' to local cache failed`, error);
+                            this._logger.debug(`Storing pblock '${pBlockHash}' in brickstorage failed`, error);
+                            throw error;
                         }
                     }
+
+                    pBlocks.push(pBlock);
                 }
 
-                this._logger.info(`Executing block for block '${missingBlock.hashLinkSSI}'...`);
+                this._logger.info(`Executing block with hash '${missingBlock.hashLinkSSI}'...`);
                 await this.executeBlock(missingBlock, pBlocks);
             }
         } else {
@@ -15625,7 +15685,7 @@ class ValidatorSynchronizer {
 
 module.exports = ValidatorSynchronizer;
 
-},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../utils/fs-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/fs-utils.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js":[function(require,module,exports){
+},{"../Block":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Block.js","../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/ConsensusCore/index.js":[function(require,module,exports){
 /*
 A configurable consensus core that can have 3 consensus strategies
  - SVBC - Single Validator BrickLedger Consensus:  Only one node is accepting commands and propose BrickBlocks. A block has only one BrickBlock.
@@ -15661,6 +15721,7 @@ class ConsensusCore {
         brickStorage,
         executionEngine,
         broadcaster,
+        notifier,
         pendingBlocksTimeoutMs,
         nonInclusionCheckTimeoutMs,
         validatorContractExecutorFactory
@@ -15676,6 +15737,7 @@ class ConsensusCore {
         this._brickStorage = brickStorage;
         this._executionEngine = executionEngine;
         this._broadcaster = broadcaster;
+        this._notifier = notifier;
         this._validatorContractExecutorFactory =
             validatorContractExecutorFactory || require("./ValidatorContractExecutorFactory");
 
@@ -15720,7 +15782,7 @@ class ConsensusCore {
                     this._validatorDID,
                     this._validatorURL,
                     validator,
-                    this._storageFolder,
+                    this._brickStorage,
                     this.getLatestBlockInfo.bind(this),
                     loadValidatorsFromBdns.bind(null, this._domain, this._executionEngine),
                     this._validatorContractExecutorFactory,
@@ -15783,7 +15845,7 @@ class ConsensusCore {
         });
     }
 
-    async addExternalPBlockInConsensus(pBlockMessage) {
+    async addExternalPBlockInConsensus(pBlockMessage, callback) {
         callback = $$.makeSaneCallback(callback);
 
         this.addExternalPBlockInConsensusAsync(pBlockMessage)
@@ -15843,8 +15905,9 @@ class ConsensusCore {
         const { blockNumber, validatorDID } = pBlock;
 
         if (blockNumber <= this._latestBlockNumber) {
+            this._logger.error("Wanting to validate old PBlock", pBlock);
             throw new Error(
-                `pBlock has block number ${blockNumber} less than or equal to the  latest block number ${this._latestBlockNumber}`
+                `pBlock has block number ${blockNumber} less than or equal to the latest block number ${this._latestBlockNumber}`
             );
         }
 
@@ -15905,6 +15968,12 @@ class ConsensusCore {
         return validatorPBlock;
     }
 
+    isConsensusRunningForBlockNumber(blockNumber) {
+        return (
+            this._pendingBlocksByBlockNumber[blockNumber] && this._pendingBlocksByBlockNumber[blockNumber].isConsensusRunning()
+        );
+    }
+
     async _addPBlockToPendingBlock(pBlock) {
         const { validatorDID, blockNumber } = pBlock;
 
@@ -15947,29 +16016,36 @@ class ConsensusCore {
         const pendingBlock = new PendingBlock(this._domain, this._validatorDID, blockNumber);
         this._pendingBlocksByBlockNumber[blockNumber] = pendingBlock;
 
-        pendingBlock.startPendingBlocksPhase({
-            timeoutMs: this._pendingBlocksTimeoutMs,
-            onFinalizeConsensusAsync: () => {
-                return this._finalizeConsensusForPendingBlockAsync(pendingBlock);
-            },
-            onStartNonInclusionPhase: () => {
-                pendingBlock.startNonInclusionPhase({
-                    timeout: this._nonInclusionCheckTimeoutMs,
-                    checkForPendingBlockNonInclusionMajorityAsync: () => {
-                        return this._checkForPendingBlockNonInclusionMajorityAsync(pendingBlock);
+        pendingBlock.processing = new Promise(async (resolve, reject) => {
+            try {
+                // add validators after setting pendingBlock in order to avoid race condition issues
+                const validators = await this._loadValidators();
+                pendingBlock.setValidators(validators);
+
+                pendingBlock.startPendingBlocksPhase({
+                    timeoutMs: this._pendingBlocksTimeoutMs,
+                    onFinalizeConsensusAsync: () => {
+                        return this._finalizeConsensusForPendingBlockAsync(pendingBlock);
                     },
-                    broadcastValidatorNonInclusion: (unreachableValidators) => {
-                        this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
+                    onStartNonInclusionPhase: () => {
+                        pendingBlock.startNonInclusionPhase({
+                            timeout: this._nonInclusionCheckTimeoutMs,
+                            checkForPendingBlockNonInclusionMajorityAsync: () => {
+                                return this._checkForPendingBlockNonInclusionMajorityAsync(pendingBlock);
+                            },
+                            broadcastValidatorNonInclusion: (unreachableValidators) => {
+                                this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
+                            },
+                        });
                     },
                 });
+            } catch (error) {
+                this._logger.error(`A processing error has occurred while creating pending block number ${blockNumber}`, error);
+                return reject(error);
+            }
 
-                // this._startNonInclusionPhase(pendingBlock);
-            },
+            resolve(); // mark processing finished
         });
-
-        // add validators after setting pendingBlock in order to avoid race condition issues
-        this.validators = await this._loadValidators();
-        pendingBlock.setValidators(clone(this.validators));
     }
 
     async _checkForPendingBlockNonInclusionMajorityAsync(pendingBlock) {
@@ -16091,13 +16167,15 @@ class ConsensusCore {
     }
 
     async _finalizeConsensusForPendingBlockAsync(pendingBlock) {
-        pendingBlock.finalizeConsensus();
+        pendingBlock.startFinalizeConsensus();
 
         try {
             // consensus finished with success, so generate block and broadcast it
             const block = pendingBlock.createBlock(this._latestBlockHash);
             this._logger.info(`Created block for block number ${pendingBlock.blockNumber}...`, block);
-            this._executeBlock(block, pendingBlock.pBlocks);
+            await this._executeBlock(block, pendingBlock.pBlocks);
+            pendingBlock.endFinalizeConsensus();
+            await this._notifyPBlocksConsensusFinished(pendingBlock.pBlocks);
         } catch (error) {
             this._logger.error("Error while finalizing pBlock consensus", error, pendingBlock);
             throw error;
@@ -16117,12 +16195,11 @@ class ConsensusCore {
     }
 
     async _executePBlocks(pBlocks) {
+        this._logger.debug("Executing pBlocks...");
         const populatedPBlocks = pBlocks.filter((pBlock) => !pBlock.isEmpty);
 
         for (let index = 0; index < populatedPBlocks.length; index++) {
             const pBlock = populatedPBlocks[index];
-            const callback =
-                typeof pBlock.onConsensusFinished === "function" ? $$.makeSaneCallback(pBlock.onConsensusFinished) : () => {};
 
             try {
                 if (pBlock.validatorDID !== this._validatorDID.getIdentifier()) {
@@ -16130,14 +16207,24 @@ class ConsensusCore {
                     // so we just need to call the callback
                     await this._executionEngine.executePBlock(pBlock);
                 }
-
-                callback();
             } catch (error) {
                 this._logger.error("Failed to execute pBlock", pBlock);
-                callback(error);
-                throw error;
+                // throw error; // todo: find best approach in this situation
             }
         }
+    }
+
+    async _notifyPBlocksConsensusFinished(pBlocks) {
+        this._logger.debug("Notifying pBlocks of consensus finished...");
+        pBlocks
+            .filter((pBlock) => typeof pBlock.onConsensusFinished === "function")
+            .forEach((pBlock) => {
+                try {
+                    pBlock.onConsensusFinished();
+                } catch (error) {
+                    // we just notify the pblock that the consensus has finished
+                }
+            });
     }
 
     async _updateLatestBlockInfo(block) {
@@ -16148,6 +16235,8 @@ class ConsensusCore {
         const validatedBlocksWriteStream = await getValidatedBlocksWriteStream(this._storageFolder, this._domain);
         await appendValidatedBlockHash(this._latestBlockHash, validatedBlocksWriteStream);
         validatedBlocksWriteStream.close();
+
+        this._notifier.notifyNewBlock({ number: block.blockNumber, hash: block.hashLinkSSI });
     }
 
     async _loadValidators() {
@@ -16176,6 +16265,7 @@ const CONSENSUS_PHASES = {
     PENDING_BLOCKS: "PENDING_BLOCKS",
     NON_INCLUSION_CHECK: "NON_INCLUSION_CHECK",
     FINALIZING: "FINALIZING",
+    FINALIZED: "FINALIZED",
 };
 
 async function getCachedBlocksFolderPath(storageFolder, domain) {
@@ -16387,7 +16477,8 @@ class ExecutionEngine {
             // run initialization step if the init function is defined
             if (typeof contract.init === "function") {
                 this._logger.debug(`Initializing contract '${contractName}'...`);
-                await $$.promisify(contract.init)();
+                // need to bind context to contract
+                await $$.promisify(contract.init.bind(contract))();
             }
         }
 
@@ -16521,9 +16612,21 @@ function getContractMethodExecutionPromise(command, contracts, keyValueStorage, 
                 await markNoncedCommandAsExecuted(command, commandHistoryStorage, isValidatedMode);
             }
 
-            contract.keyValueStorage = keyValueStorage;
+            // need to bind context to contract, in order to ensure that keyValueStorage is only used for this command
+            // in order to properly detect if consensus is needed,
+            // so we "extend" the contract and attach the keyValueStorage
+            const context = { ...contract };
+            const contractPrototype = Object.getPrototypeOf(contract);
+            const classMethodNames = Object.getOwnPropertyNames(contractPrototype).filter(
+                (methodName) => methodName && methodName !== "constructor" && typeof contractPrototype[methodName] === "function"
+            );
+            classMethodNames.forEach((methodName) => {
+                context[methodName] = contract[methodName];
+            });
 
-            contract[methodName].call(contract, ...(params || []), callback);
+            context.keyValueStorage = keyValueStorage;
+
+            contract[methodName].call(context, ...(params || []), callback);
         } catch (error) {
             callback(error);
         }
@@ -16561,17 +16664,18 @@ async function loadContract(rawDossier, contractConfig) {
         const ContractClass = eval(`(${fileContent.toString()})`);
         contract = new ContractClass();
 
-        // ensure that all contract methods (invarious of how there are called) have "this" bound to the contract instance
-        const classMethodNames = Object.getOwnPropertyNames(ContractClass.prototype).filter(
-            (methodName) =>
-                methodName &&
-                methodName[0] !== "_" &&
-                methodName !== "constructor" &&
-                typeof ContractClass.prototype[methodName] === "function"
-        );
-        classMethodNames.forEach((methodName) => {
-            contract[methodName] = contract[methodName].bind(contract);
-        });
+        // disabling the automatic context set in order for keyValueStorage consensus detection to work correctly
+        // // ensure that all contract methods (invarious of how there are called) have "this" bound to the contract instance
+        // const classMethodNames = Object.getOwnPropertyNames(ContractClass.prototype).filter(
+        //     (methodName) =>
+        //         methodName &&
+        //         methodName[0] !== "_" &&
+        //         methodName !== "constructor" &&
+        //         typeof ContractClass.prototype[methodName] === "function"
+        // );
+        // classMethodNames.forEach((methodName) => {
+        //     contract[methodName] = contract[methodName].bind(contract);
+        // });
 
         return contract;
     } catch (e) {
@@ -16989,7 +17093,7 @@ module.exports = {
 };
 
 },{"./StorageValue":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSKeyValueStorage/StorageValue.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js":[function(require,module,exports){
-const ENABLE_DEBUG = true;
+const ENABLE_DEBUG = false;
 
 class Logger {
     constructor(prefix) {
@@ -17021,7 +17125,53 @@ class Logger {
 
 module.exports = Logger;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Notifier.js":[function(require,module,exports){
+const Logger = require("./Logger");
+
+class Notifier {
+    constructor(domain, validatorDID) {
+        this.domain = domain;
+        this.validatorDID = validatorDID;
+
+        this._logger = new Logger(`[Bricksledger][${this.domain}][${this.validatorDID.getIdentifier()}][Notifier]`);
+        this._logger.info("Create finished");
+    }
+
+    notifyNewBlock(blockInfo) {
+        const openDSU = require("opendsu");
+        const notificationsApi = openDSU.loadApi("notifications");
+
+        const validatorSSI = {
+            getDLDomain: () => this.domain,
+            getAnchorId: () => this.validatorDID.getIdentifier(),
+        };
+
+        const message = {
+            type: "newBlock",
+            payload: blockInfo,
+        };
+
+        this._logger.debug(`Publishing new block notification: ${JSON.stringify(message)}...`);
+        notificationsApi.publish(validatorSSI, message, (error, response) => {
+            if (error) {
+                return this._logger.error(`Failed to publish new block notification`, error);
+            }
+            this._logger.debug(`Received new block notification response`, response);
+        });
+    }
+}
+
+function create(...params) {
+    return new Notifier(...params);
+}
+
+module.exports = {
+    create,
+};
+
+},{"./Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js":[function(require,module,exports){
+const Command = require("./Command");
+
 class PBlock {
     constructor(pBlock, onConsensusFinished) {
         if (!pBlock) {
@@ -17047,7 +17197,8 @@ class PBlock {
     }
 
     computeHash() {
-        const { commands, previousBlockHash, blockNumber } = this;
+        const { previousBlockHash, blockNumber } = this;
+        const commands = this.getCommandsForSerialisation();
 
         const objectToHash = {
             commands,
@@ -17071,20 +17222,29 @@ class PBlock {
         const isValidSignature = await $$.promisify(validatorDID.verify)(hash, validatorSignature);
 
         if (!isValidSignature) {
-            throw "Invalid signature specified";
+            throw "Invalid signature specified for PBlock";
         }
     }
 
     getSerialisation() {
-        const { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI } = this;
+        const { validatorDID, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI } = this;
+        const commands = this.getCommandsForSerialisation();
         const pBlock = { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI };
         return JSON.stringify(pBlock);
+    }
+
+    getCommandsForSerialisation() {
+        let commands = this.commands;
+        if (commands) {
+            commands = commands.map((command) => (command instanceof Command ? command.getForSerialisation() : command));
+        }
+        return commands;
     }
 }
 
 module.exports = PBlock;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js":[function(require,module,exports){
 const Logger = require("./Logger");
 const PBlock = require("./PBlock");
 
@@ -17132,6 +17292,7 @@ class PBlocksFactory {
         this.maxPBlockTimeMs = maxPBlockTimeMs;
 
         this._latestPBlock = null;
+        this._forceRequestedBlockNumbers = {};
 
         this._logger = new Logger(`[Bricksledger][${this.domain}][${this.validatorDID.getIdentifier()}][PBlocksFactory]`);
         this._logger.info("Create finished");
@@ -17183,6 +17344,17 @@ class PBlocksFactory {
 
         this._commandProcessing = new Promise(async (resolve) => {
             try {
+                const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
+                const latestVerifiedBlockNumber = latestVerifiedBlockInfo.number;
+                if (blockNumber <= latestVerifiedBlockNumber) {
+                    this._logger.warn(
+                        `Wanting to force pBlock creation for block number ${blockNumber} but latest confirmed consensus is already at block number ${latestVerifiedBlockNumber}`
+                    );
+                    return resolve();
+                }
+
+                let canForceCreateBlockNow = false;
+
                 if (this._latestPBlock) {
                     this._logger.debug(`Found existing _latestPBlock`);
                     const currentBlockNumber = this._latestPBlock.blockNumber;
@@ -17200,23 +17372,68 @@ class PBlocksFactory {
                         return resolve();
                     }
 
-                    this._logger.debug(
-                        `Latest pBlock (block number ${currentBlockNumber}) is older than requested forced creation for number ${blockNumber}, so creating it`
-                    );
-                }
+                    const isConsensusStillRunningForCurrentBlockNumber = latestVerifiedBlockNumber === currentBlockNumber - 1;
+                    if (isConsensusStillRunningForCurrentBlockNumber) {
+                        if (this.consensusCore.isConsensusRunningForBlockNumber(currentBlockNumber)) {
+                            this._forceRequestedBlockNumbers[blockNumber] = true;
+                            this._logger.info(
+                                `Latest pBlock (block number ${currentBlockNumber}) is currently awaiting consensus finalization, so keep force request for block number ${blockNumber}`
+                            );
+                        } else {
+                            this._logger.warn(
+                                `Latest pBlock (block number ${currentBlockNumber}) is in consensus status finalized, but not removed from pBlocksFactory, so removing it`
+                            );
+                            this._latestPBlock = null;
+                            canForceCreateBlockNow = true;
+                        }
+                    } else {
+                        const isPBlocksFactoryGoingToBeNotifiedOfCurrentConsensusEnd =
+                            latestVerifiedBlockNumber === this._latestPBlock.blockNumber &&
+                            !this.consensusCore.isConsensusRunningForBlockNumber(latestVerifiedBlockNumber + 1);
+                        if (isPBlocksFactoryGoingToBeNotifiedOfCurrentConsensusEnd) {
+                            this._forceRequestedBlockNumbers[blockNumber] = true;
+                            this._logger.info(
+                                `PBlocksFactory is waiting to be notified when processing for current pBlock is finished (since the next block is not yet started)...`
+                            );
+                            return resolve();
+                        }
 
-                // restart timeout check
-                this._startBlockTimeCheckTimeout();
-
-                let pBlock = this._forceBuildPBlockFromAllCommands();
-                if (pBlock) {
-                    this._logger.debug(`Created pBlock for block number ${blockNumber}`, pBlock);
+                        canForceCreateBlockNow = true;
+                        if (currentBlockNumber <= latestVerifiedBlockNumber) {
+                            this._logger.warn(
+                                `Latest pBlock (block number ${currentBlockNumber}) is older than latest verified block number of ${latestVerifiedBlockNumber}, but not removed from pBlocksFactory, so removing it`
+                            );
+                            this._latestPBlock = null;
+                        }
+                    }
                 } else {
-                    this._logger.debug(`Created empty pBlock`);
-                    pBlock = this._buildPBlock();
+                    this._logger.debug(`Didn't find existing _latestPBlock`);
+                    if (latestVerifiedBlockNumber == blockNumber - 1) {
+                        this._logger.debug(
+                            `Wanting to force pBlock creation for block number ${blockNumber} and latest confirmed block is the previous one, so continuing`
+                        );
+                        canForceCreateBlockNow = true;
+                    } else {
+                        this._logger.debug(
+                            `Wanting to force pBlock creation for block number ${blockNumber}, but latest confirmed block is at block number ${latestVerifiedBlockNumber}, so skipping it`
+                        );
+                    }
                 }
 
-                this._sendPBlockForConsensus(pBlock);
+                if (canForceCreateBlockNow) {
+                    // restart timeout check
+                    this._startBlockTimeCheckTimeout();
+
+                    let pBlock = this._forceBuildPBlockFromAllCommands();
+                    if (pBlock) {
+                        this._logger.debug(`Created pBlock for block number ${blockNumber}`, pBlock);
+                    } else {
+                        this._logger.debug(`Created empty pBlock`);
+                        pBlock = this._buildPBlock();
+                    }
+
+                    this._sendPBlockForConsensus(pBlock);
+                }
             } catch (error) {
                 this._logger.error(`Failed to force pBlock creation for block number ${blockNumber}`, error);
             }
@@ -17280,7 +17497,24 @@ class PBlocksFactory {
                 // the previous block hasn't been confirmed yet,
                 // so we must wait until it's finished before constructing the next one
 
-                this._logger.info("Previous PBlock not yet accepted. Waiting for it to finished before creating another...");
+                this._logger.info(
+                    "Previous PBlock not yet accepted. Waiting for it to finished before creating another...",
+                    this._latestPBlock
+                );
+                return;
+            }
+
+            this._logger.info(
+                `Consensus is currently at block number ${currentConsensusBlockNumber} and the local current pBlock is at ${this._latestPBlock.blockNumber}`
+            );
+
+            const isPBlocksFactoryGoingToBeNotifiedOfCurrentConsensusEnd =
+                currentConsensusBlockNumber === this._latestPBlock.blockNumber + 1 &&
+                !this.consensusCore.isConsensusRunningForBlockNumber(currentConsensusBlockNumber + 1);
+            if (isPBlocksFactoryGoingToBeNotifiedOfCurrentConsensusEnd) {
+                this._logger.info(
+                    `PBlocksFactory is waiting to be notified when processing for current pBlock is finished (since the next block is not yet started)...`
+                );
                 return;
             }
 
@@ -17305,7 +17539,6 @@ class PBlocksFactory {
 
     _buildPBlock(commands = []) {
         const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
-
         const blockNumber = latestVerifiedBlockInfo.number !== -1 ? latestVerifiedBlockInfo.number + 1 : 1;
 
         this._logger.info(`Constructing pBlock number ${blockNumber} having ${commands.length} command(s)...`);
@@ -17319,14 +17552,42 @@ class PBlocksFactory {
         this._latestPBlock = pBlock;
 
         try {
-            this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`, pBlock);
+            this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`);
             const pBlockHashLinkSSI = await savePBlockInBricks(pBlock, this.domain, this.brickStorage);
             pBlock.hashLinkSSI = pBlockHashLinkSSI;
 
             this.broadcaster.broadcastPBlockAdded(pBlock);
 
-            await this.consensusCore.addInConsensusAsync(pBlock);
+            try {
+                await this.consensusCore.addInConsensusAsync(pBlock);
+                this._logger.info(`Consensus finished for block number ${pBlock.blockNumber}`);
+            } catch (error) {
+                this._logger.error(`Consensus failed for block number ${pBlock.blockNumber}`, error);
+            }
+
             this._latestPBlock = null;
+
+            if (this._commandProcessing) {
+                await this._commandProcessing;
+            }
+
+            const latestVerifiedBlockInfo = this.consensusCore.getLatestBlockInfo();
+            const latestVerifiedBlockNumber = latestVerifiedBlockInfo.number;
+            const isNextBlockAlreadyForceRequested = !!this._forceRequestedBlockNumbers[latestVerifiedBlockNumber + 1];
+            if (isNextBlockAlreadyForceRequested) {
+                const forceBlockNumber = latestVerifiedBlockNumber + 1;
+                this._logger.info(`Block number ${forceBlockNumber} was force requested before, so trying to create it`);
+                let pBlock = this._forceBuildPBlockFromAllCommands();
+                if (pBlock) {
+                    this._logger.debug(`Created pBlock for block number ${forceBlockNumber}`, pBlock);
+                } else {
+                    this._logger.debug(`Created empty pBlock for block number ${forceBlockNumber}`);
+                    pBlock = this._buildPBlock();
+                }
+
+                this._sendPBlockForConsensus(pBlock);
+                return;
+            }
 
             const isPlockConstructed = this._constructPBlockIfBlockSizeRestrictionReached();
             if (!isPlockConstructed) {
@@ -17370,7 +17631,7 @@ module.exports = {
 },{"./Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","./PBlock":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js":[function(require,module,exports){
 async function getValidatorsForCurrentDomain(executionEngine) {
     const { contracts } = executionEngine;
-    const domainInfo = await $$.promisify(contracts.bdns.getDomainInfo)();
+    const domainInfo = await $$.promisify(contracts.bdns.getDomainInfo.bind(contracts.bdns))();
     return domainInfo.validators;
 }
 
