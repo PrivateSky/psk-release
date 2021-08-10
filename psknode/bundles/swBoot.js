@@ -20549,9 +20549,11 @@ const getSecurityContext = (keySSI) => {
 
     return $$.sc;
 };
+
 module.exports = {
     getMainDSU,
     setMainDSU,
+    getVaultDomain,
     getSecurityContext
 };
 

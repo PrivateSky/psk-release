@@ -18681,20 +18681,18 @@ function getContractMethodExecutionPromise(command, contracts, keyValueStorage, 
 }
 
 async function getContractConfigs(rawDossier) {
-    const openDSU = require("opendsu");
-    const { constants } = openDSU;
-
     const listFiles = $$.promisify(rawDossier.listFiles);
-    const codeFolderFiles = await listFiles(constants.CODE_FOLDER);
+    const contractsFolderPath = "/";
+    const contractFiles = await listFiles(contractsFolderPath);
 
-    const contractConfigs = codeFolderFiles
+    const contractConfigs = contractFiles
         .filter((file) => file)
         .map((file) => file.split("/"))
         .filter((fileParts) => fileParts.length === 2 && fileParts[1].endsWith(".js"))
         .map((fileParts) => {
             return {
                 name: fileParts[0],
-                filePath: [constants.CODE_FOLDER, ...fileParts].join("/"),
+                filePath: [contractsFolderPath, ...fileParts].join("/"),
             };
         });
     return contractConfigs;
@@ -18849,7 +18847,7 @@ module.exports = {
     validateNoncedCommandExecution,
 };
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/index.js":[function(require,module,exports){
 class FSBrickPathsManager {
     constructor() {
         this.brickPaths = {};
@@ -34864,9 +34862,11 @@ const getSecurityContext = (keySSI) => {
 
     return $$.sc;
 };
+
 module.exports = {
     getMainDSU,
     setMainDSU,
+    getVaultDomain,
     getSecurityContext
 };
 
