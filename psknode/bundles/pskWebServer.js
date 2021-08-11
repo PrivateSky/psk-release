@@ -29934,7 +29934,669 @@ module.exports = {
 	isSubscribed
 }
 
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/DSUStorage.js":[function(require,module,exports){
+const { fetch } = require("./utils");
+
+// helpers
+
+function doDownload(url, expectedResultType, callback) {
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      response[expectedResultType]()
+        .then((data) => {
+          return callback(undefined, data);
+        })
+        .catch((err) => {
+          throw err;
+        });
+    })
+    .catch((err) => {
+      return callback(err);
+    });
+}
+
+function doUpload(url, data, callback) {
+  fetch(url, {
+    method: "POST",
+    body: data,
+  })
+    .then((response) => {
+      return response.json().then((data) => {
+        if (!response.ok || response.status != 201) {
+          let errorMessage = "";
+          if (Array.isArray(data) && data.length) {
+            errorMessage = `${data[0].error.message}. Code: ${data[0].error.code}`;
+          } else if (typeof data === "object") {
+            errorMessage = data.message ? data.message : JSON.stringify(data);
+          }
+
+          let error = new Error(errorMessage);
+          error.data = data;
+          throw error;
+        }
+
+        if (Array.isArray(data)) {
+          let responses = [];
+          for (const item of data) {
+            console.log(`Uploaded ${item.file.name} to ${item.result.path}`);
+            responses.push(item.result.path);
+          }
+          callback(undefined, responses.length > 1 ? responses : responses[0]);
+        }
+      });
+    })
+    .catch((err) => {
+      return callback(err);
+    });
+}
+
+function doFileUpload(path, files, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = undefined;
+  }
+
+  const formData = new FormData();
+  let inputType = "file";
+
+  if (Array.isArray(files)) {
+    for (const attachment of files) {
+      inputType = "files[]";
+      formData.append(inputType, attachment);
+    }
+  } else {
+    formData.append(inputType, files);
+  }
+
+  let url = `/upload?path=${path}&input=${inputType}`;
+  if (typeof options !== "undefined" && options.preventOverwrite) {
+    url += "&preventOverwrite=true";
+  }
+  doUpload(url, formData, callback);
+}
+
+function doRemoveFile(url, callback) {
+  fetch(url, { method: "DELETE" })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      callback();
+    })
+    .catch((err) => {
+      return callback(err);
+    });
+}
+
+function performRemoval(filePathList, callback) {
+  if (!Array.isArray(filePathList)) {
+    filePathList = [filePathList];
+  }
+
+  let errors = [];
+  let deletedFiles = [];
+
+  let deleteFile = (path) => {
+    let filename = path;
+    if (path[0] !== "/") {
+      path = "/" + path;
+    }
+    let url = "/delete" + path;
+    doRemoveFile(url, (err) => {
+      if (err) {
+        //console.log(err);
+        errors.push({
+          filename: filename,
+          message: err.message,
+        });
+      } else {
+        deletedFiles.push(filename);
+      }
+
+      if (filePathList.length > 0) {
+        return deleteFile(filePathList.shift());
+      }
+      callback(errors.length ? errors : undefined, deletedFiles);
+    });
+  };
+
+  deleteFile(filePathList.shift());
+}
+
+// service
+
+class DSUStorage {
+  constructor() {
+    this.directAccessEnabled = false;
+  }
+
+  enableDirectAccess(callback) {
+    let self = this;
+
+    function addFunctionsFromMainDSU() {
+      if (!self.directAccessEnabled) {
+        let sc = require("opendsu").loadAPI("sc");
+        let availableFunctions = [
+          "addFile",
+          "addFiles",
+          "addFolder",
+          "appendToFile",
+          "createFolder",
+          "delete",
+          "extractFile",
+          "extractFolder",
+          "getArchiveForPath",
+          "getCreationSSI",
+          "getKeySSI",
+          "listFiles",
+          "listFolders",
+          "mount",
+          "readDir",
+          "readFile",
+          "rename",
+          "unmount",
+          "writeFile",
+          "listMountedDSUs",
+          "beginBatch",
+          "commitBatch",
+          "cancelBatch",
+        ];
+
+        sc.getMainDSU((err, mainDSU) => {
+          for (let f of availableFunctions) {
+            self[f] = mainDSU[f];
+          }
+          self.directAccessEnabled = true;
+          callback(undefined, true);
+        });
+      } else {
+        callback(undefined, true);
+      }
+    }
+
+    addFunctionsFromMainDSU();
+  }
+
+  call(name, ...args) {
+    if (args.length === 0) {
+      throw Error(
+        "Missing arguments. Usage: call(functionName, arg1, arg2 ... callback)"
+      );
+    }
+
+    const callback = args.pop();
+    const url =
+      "/api?" +
+      new URLSearchParams({ name: name, arguments: JSON.stringify(args) });
+    fetch(url, { method: "GET" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        callback(...result);
+      })
+      .catch((err) => {
+        return callback(err);
+      });
+  }
+
+  setObject(path, data, callback) {
+    try {
+      let dataSerialized = JSON.stringify(data);
+      this.setItem(path, dataSerialized, callback);
+    } catch (e) {
+      callback(createOpenDSUErrorWrapper("setObject failed", e));
+    }
+  }
+
+  getObject(path, callback) {
+    this.getItem(path, "json", function (err, res) {
+      if (err || !res) {
+        return callback(undefined, undefined);
+      }
+      callback(undefined, res);
+    });
+  }
+
+  setItem(path, data, callback) {
+    if (!this.directAccessEnabled) {
+      let segments = path.split("/");
+      let fileName = segments.splice(segments.length - 1, 1)[0];
+      path = segments.join("/");
+      if (!path) {
+        path = "/";
+      }
+      let url = `/upload?path=${path}&filename=${fileName}`;
+      doUpload(url, data, callback);
+    } else {
+      this.writeFile(path, data, callback);
+    }
+  }
+
+  getItem(path, expectedResultType, callback) {
+    if (typeof expectedResultType === "function") {
+      callback = expectedResultType;
+      expectedResultType = "arrayBuffer";
+    }
+
+    if (!this.directAccessEnabled) {
+      if (path[0] !== "/") {
+        path = "/" + path;
+      }
+
+      path = "/download" + path;
+      doDownload(path, expectedResultType, callback);
+    } else {
+      this.readFile(path, function (err, res) {
+        if (err) {
+          return callback(err);
+        }
+        try {
+          if (expectedResultType == "json") {
+            res = JSON.parse(res.toString());
+          }
+        } catch (err) {
+          return callback(err);
+        }
+        callback(undefined, res);
+      });
+    }
+  }
+
+  uploadFile(path, file, options, callback) {
+    doFileUpload(...arguments);
+  }
+
+  uploadMultipleFiles(path, files, options, callback) {
+    doFileUpload(...arguments);
+  }
+
+  deleteObjects(objects, callback) {
+    performRemoval(objects, callback);
+  }
+
+  removeFile(filePath, callback) {
+    console.log("[Warning] - obsolete. Use DSU.deleteObjects");
+    performRemoval([filePath], callback);
+  }
+
+  removeFiles(filePathList, callback) {
+    console.log("[Warning] - obsolete. Use DSU.deleteObjects");
+    performRemoval(filePathList, callback);
+  }
+}
+
+let dsuStorageInstance;
+
+function getDSUStorage() {
+  if (typeof dsuStorageInstance === "undefined") {
+    dsuStorageInstance = new DSUStorage();
+  }
+
+  return dsuStorageInstance;
+}
+
+module.exports = getDSUStorage;
+
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/WalletStorage.js":[function(require,module,exports){
+const getDSUStorage = require("./DSUStorage");
+const { promisify } = require("./utils");
+
+const SC_PATH = "/security-context";
+const DB_PATH = "/databases/config";
+const DB_DEFAULT = "mainDB";
+
+// helpers
+
+async function createSSI(domainName) {
+  return new Promise((resolve, reject) => {
+    const keySSISpace = require("opendsu").loadAPI("keyssi");
+
+    keySSISpace.createSeedSSI(domainName, (err, keySSI) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(keySSI.getIdentifier());
+    });
+  });
+}
+
+async function loadSecurityContext(dsuStorage, domainName) {
+  const getKeySSIForSecurityContext = async () => {
+    return new Promise((resolve, reject) => {
+      dsuStorage.getObject(SC_PATH, (err, keySSI) => {
+        if (err || !keySSI) {
+          return reject();
+        }
+
+        return resolve(keySSI);
+      });
+    });
+  };
+  const setKeySSIForSecurityContext = async (scKeySSI) => {
+    return new Promise((resolve, reject) => {
+      dsuStorage.setObject(SC_PATH, { keySSI: scKeySSI }, (err) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve();
+      });
+    });
+  };
+
+  let scKeySSI;
+
+  try {
+    scKeySSI = await getKeySSIForSecurityContext();
+  } catch (err) {
+    scKeySSI = await createSSI(domainName);
+    await setKeySSIForSecurityContext(scKeySSI);
+  }
+
+  if (!scKeySSI) {
+    throw Error(`Failed to load security context`);
+  }
+
+  const sc = require("opendsu").loadAPI("sc");
+  sc.getSecurityContext(scKeySSI);
+}
+
+async function loadWalletDatabase(dsuStorage, domainName, databaseName) {
+  try {
+    await loadSecurityContext(dsuStorage, domainName);
+  } catch (err) {
+    console.log(err);
+  }
+
+  const dbPath = `${DB_PATH}/${domainName}`;
+  let dbConfig = await dsuStorage.getObjectAsync(dbPath);
+
+  if (!dbConfig) {
+    dbConfig = {};
+  }
+
+  if (!dbConfig[databaseName]) {
+    dbConfig[databaseName] = await createSSI(domainName);
+    await dsuStorage.setObjectAsync(dbPath, dbConfig);
+  }
+
+  const openDSU = require("opendsu");
+  const dbAPI = openDSU.loadAPI("db");
+  const keySSISpace = openDSU.loadAPI("keyssi");
+  const dbKeySSI = dbConfig[databaseName];
+
+  return dbAPI.getWalletDB(keySSISpace.parse(dbKeySSI), databaseName);
+}
+
+function promisifyDSUStorage(dsuStorage) {
+  for (const f of ["setObject", "getObject"]) {
+    dsuStorage[`${f}Async`] = promisify(dsuStorage[f]);
+  }
+  return dsuStorage;
+}
+
+function promisifyWalletStorage(walletStorage) {
+  for (const f of [
+    "filter",
+    "getRecord",
+    "insertRecord",
+    "updateRecord",
+    "commitBatch",
+    "cancelBatch",
+    "setObject",
+    "getObject",
+    "deleteObjects",
+    "setItem",
+    "getItem",
+    "uploadFile",
+    "uploadMultipleFiles",
+  ]) {
+    walletStorage[`${f}Async`] = promisify(walletStorage[f]);
+  }
+  return walletStorage;
+}
+
+// service
+
+class WalletStorage {
+  /**
+   * @param {string} [domainName=${vaultDomain form sc}]
+   * @param {string} [databaseName=mainDB]
+   * @param {object} [config]
+   * @param {boolean} [config.useDirectAccess=false]
+   */
+  constructor(domainName, databaseName, config) {
+    if (!databaseName) {
+      databaseName = DB_DEFAULT;
+    }
+
+    if (!config) {
+      config = {};
+    }
+
+    if (typeof config.useDirectAccess !== "boolean") {
+      config.useDirectAccess = true;
+    }
+
+    this.isDirectAccessEnabled = false;
+
+    let db;
+    const dsuStorage = promisifyDSUStorage(getDSUStorage());
+
+    const initializeDatabase = async () => {
+      db = "initialising";
+
+      try {
+        db = await loadWalletDatabase(
+            dsuStorage,
+            this.domainName,
+            databaseName
+        );
+        this.databaseName = databaseName;
+        this.isDirectAccessEnabled = dsuStorage.directAccessEnabled;
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    const loadDatabase = () => {
+      if (config.useDirectAccess) {
+        dsuStorage.enableDirectAccess(initializeDatabase);
+      } else {
+        setTimeout(initializeDatabase);
+      }
+    }
+
+    const waitForDatabase = (fun, args) => {
+      let func = fun.bind(this);
+      setTimeout(function () {
+        func(...args);
+      }, 10);
+    };
+
+    const isDatabaseReady = () => {
+      return db !== undefined && db !== "initialising";
+    };
+
+    if (!domainName) {
+      const sc = require("opendsu").loadAPI("sc");
+      sc.getVaultDomain((err, vaultDomain) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+
+        this.domainName = vaultDomain;
+        loadDatabase();
+      });
+    } else {
+      this.domainName = domainName;
+      loadDatabase();
+    }
+
+    /**
+     * @param {'db'|'dsuStorage'} nameSpace
+     * @param {string} functionName
+     * @param {*} args
+     */
+    this.call = (nameSpace, functionName, ...args) => {
+      if (nameSpace === "db") {
+        if (isDatabaseReady()) {
+          db[functionName](...args);
+        } else {
+          waitForDatabase(this[functionName], args);
+        }
+      } else if (nameSpace === "dsuStorage") {
+        dsuStorage[functionName](...args);
+      } else {
+        console.log(
+          `Unknown namespace: '${nameSpace}' (values: 'db', 'dsuStorage')`
+        );
+      }
+    };
+  }
+
+  // Database specific functions (Storage Service)
+
+  filter(tableName, query, sort, limit, callback) {
+    this.call("db", "filter", tableName, query, sort, limit, callback);
+  }
+
+  getRecord(tableName, key, callback) {
+    this.call("db", "getRecord", tableName, key, callback);
+  }
+
+  insertRecord(tableName, key, record, callback) {
+    this.call("db", "insertRecord", tableName, key, record, callback);
+  }
+
+  updateRecord(tableName, key, record, callback) {
+    this.call("db", "updateRecord", tableName, key, record, callback);
+  }
+
+  beginBatch() {
+    this.call("db", "beginBatch");
+  }
+
+  cancelBatch(callback) {
+    this.call("db", "cancelBatch", callback);
+  }
+
+  commitBatch(callback) {
+    this.call("db", "commitBatch", callback);
+  }
+
+  // DSU specific functions (DSUStorage)
+
+  setObject(path, data, callback) {
+    this.call("dsuStorage", "setObject", path, data, callback);
+  }
+
+  getObject(path, callback) {
+    this.call("dsuStorage", "getObject", path, callback);
+  }
+
+  deleteObjects(objects, callback) {
+    this.call("dsuStorage", "deleteObjects", objects, callback);
+  }
+
+  setItem(path, data, callback) {
+    this.call("dsuStorage", "setItem", path, data, callback);
+  }
+
+  getItem(path, expectedResultType, callback) {
+    this.call("dsuStorage", "getItem", path, expectedResultType, callback);
+  }
+
+  uploadFile(path, file, options, callback) {
+    this.call("dsuStorage", "uploadFile", path, file, options, callback);
+  }
+
+  uploadMultipleFiles(path, files, options, callback) {
+    this.call(
+      "dsuStorage",
+      "uploadMultipleFiles",
+      path,
+      files,
+      options,
+      callback
+    );
+  }
+}
+
+let walletStorageInstance;
+
+function getWalletStorage(domainName, databaseName, config) {
+  if (
+    typeof walletStorageInstance === "undefined" ||
+    walletStorageInstance.domainName !== domainName ||
+    walletStorageInstance.databaseName !== databaseName
+  ) {
+    walletStorageInstance = promisifyWalletStorage(
+      new WalletStorage(domainName, databaseName, config)
+    );
+  }
+
+  return walletStorageInstance;
+}
+
+module.exports = getWalletStorage;
+
+},{"./DSUStorage":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/DSUStorage.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/index.js":[function(require,module,exports){
+module.exports = {
+  getWalletStorage: require("./WalletStorage"),
+  getDSUStorage: require("./DSUStorage"),
+};
+
+},{"./DSUStorage":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/DSUStorage.js","./WalletStorage":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/WalletStorage.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/utils.js":[function(require,module,exports){
+function promisify(fun) {
+  return function (...args) {
+    return new Promise((resolve, reject) => {
+      function callback(err, result) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+
+      args.push(callback);
+
+      fun.call(this, ...args);
+    });
+  };
+}
+
+function executeFetch(url, options) {
+  // check if we need to add the BASE_URL to the prefix of the url
+  const isBaseUrlSet =
+    $$ &&
+    $$.SSAPP_CONTEXT &&
+    $$.SSAPP_CONTEXT.BASE_URL &&
+    $$.SSAPP_CONTEXT.SEED &&
+    url.indexOf($$.SSAPP_CONTEXT.BASE_URL) !== 0;
+  if (isBaseUrlSet && url.indexOf("data:image") !== 0) {
+    // BASE_URL ends with / so make sure that url doesn't already start with /
+    url = `${$$.SSAPP_CONTEXT.BASE_URL}${
+      url.indexOf("/") === 0 ? url.substr(1) : url
+    }`;
+  }
+
+  return fetch(url, options);
+}
+
+module.exports = {
+  promisify,
+  fetch: executeFetch,
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
@@ -43630,6 +44292,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "error":return require("./error"); break;
             case "m2dsu":return require("./m2dsu"); break;
             case "workers":return require("./workers"); break;
+            case "persistence": return require("./persistence"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
@@ -43703,7 +44366,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./persistence":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
