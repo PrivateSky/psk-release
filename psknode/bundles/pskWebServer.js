@@ -29145,9 +29145,128 @@ async function digestMessage(message){
 }
 
 mappingRegistry.defineMapping(validateMessage, digestMessage);
-},{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
+},{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
+const openDSU = require("opendsu");
+
+errorTypes = {
+  "UNKNOWN": {
+    errorCode: 0,
+    message: "Unknown error",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "INVALID_MESSAGE_FORMAT": {
+    errorCode: 1,
+    message: "Invalid message format",
+    getDetails: function (data) {
+      let errors = [];
+      data.forEach(item => {
+        errors.push({
+          errorType: this.errorCode,
+          errorMessage: this.message,
+          errorDetails: `${item.field} - ${item.message}`
+        })
+      })
+      return errors;
+    }
+  },
+  "NOT_IMPLEMENTED": {
+    errorCode: 2,
+    message: "This case is not implemented",
+    getDetails: function (data) {
+      return {detailsMessage: "Missing from the wallet database or database is corrupted"}
+    }
+  },
+  "MESSAGE_IS_NOT_AN_OBJECT": {
+    errorCode: 3,
+    message: "Message is not an Object",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "DIGESTING_MESSAGES": {
+    errorCode: 4,
+    message: "Mapping Engine is digesting messages for the moment",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "MISSING_MAPPING": {
+    errorCode: 5,
+    message: "Not able to digest message due to missing suitable mapping",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "MAPPING_ERROR": {
+    errorCode: 6,
+    message: "Caught error during mapping",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "PRODUCT_NOT_FOUND": {
+    errorCode: 7,
+    message: "Product not found",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+  "BATCH_MISSING_PRODUCT": {
+    errorCode: 8,
+    message: "Fail to create a batch for a missing product",
+    getDetails: function (data) {
+      return {detailsMessage: ""}
+    }
+  },
+
+}
+
+function getErrorKeyByCode(errCode) {
+  try {
+    let errObj = Object.values(errorTypes).find(item => item.errorCode === errCode)
+    if (errObj) {
+      return errObj;
+    }
+  } catch (e) {
+
+  }
+
+  return errorTypes.UNKNOWN
+}
+
+function getErrorKeyByMessage(errMessage) {
+  try {
+    let errObj = Object.values(errorTypes).find(item => item.message === errMessage);
+    if (errObj) {
+      return errObj
+    }
+  } catch (e) {
+    console.log('Could not find mapping for ', errMessage);
+  }
+
+  return errorTypes.UNKNOWN.defaultDetails.detailsMessage = errMessage;
+}
+
+function newCustomError(errorObj, detailsObj) {
+  return createOpenDSUErrorWrapper(errorObj.message, null, {
+    code: errorObj.errorCode,
+    details: errorObj.getDetails(detailsObj)
+  });
+}
+
+module.exports = {
+  errorTypes,
+  newCustomError,
+  getErrorKeyByCode,
+  getErrorKeyByMessage
+}
+
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
 const mappingRegistry = require("./mappingRegistry.js");
 const apisRegistry = require("./apisRegistry.js");
+const errMap = require("./errorsMap.js")
 
 //loading defaultApis
 require("./defaultApis");
@@ -29223,9 +29342,12 @@ function MappingEngine(storageService, options) {
 							).catch(err => {
 							return reject(errorHandler.createOpenDSUErrorWrapper(`Caught error during commit batch on registered DSUs`, err));
 						});
-						}
-						catch(err){
-							reject(errorHandler.createOpenDSUErrorWrapper(`Caught error during mapping`, err));
+						} catch (err) {
+							if (err.debug_message) {
+								reject(err);
+							} else {
+								reject(errorHandler.createOpenDSUErrorWrapper(`Caught error during mapping`, err));
+							}
 						}
 						messageDigested = true;
 						//we apply only the first mapping found to be suited for the message that we try to digest
@@ -29277,7 +29399,7 @@ function MappingEngine(storageService, options) {
 
 		return new Promise((resolve, reject) => {
 				if (inProgress) {
-					throw Error("Mapping Engine is digesting messages for the moment.");
+					throw errMap.newCustomError(errMap.errorTypes.DIGESTING_MESSAGES);
 				}
 				inProgress = true;
 				storageService.beginBatch();
@@ -29286,10 +29408,10 @@ function MappingEngine(storageService, options) {
 				let digests = [];
 
 				for (let i = 0; i < messages.length; i++) {
-					let message = messages[i];
-					if (typeof message !== "object") {
-						throw Error(`Message is not an Object is :${typeof message} and has the value: ${message}`);
-					}
+          let message = messages[i];
+          if (typeof message !== "object") {
+            throw errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, {detailsMessage: `Found type: ${typeof message} and has the value: ${message}`})
+          }
 
 					function handleErrorsDuringPromiseResolving(err) {
 						reject(err);
@@ -29313,14 +29435,16 @@ function MappingEngine(storageService, options) {
 								// message digest failed
 								failedMessages.push({
 									message: messages[index],
-									reason: `Not able to digest message due to missing suitable mapping`
+									reason: `Not able to digest message due to missing suitable mapping`,
+									error: errMap.errorTypes.MISSING_MAPPING
 								});
 							}
 							break;
 						case "rejected" :
 							failedMessages.push({
 								message: messages[index],
-								reason: result.reason
+								reason: result.reason,
+								error: result.reason
 							});
 							break;
 					}
@@ -29334,7 +29458,6 @@ function MappingEngine(storageService, options) {
 				});
 			}
 
-
 				Promise.allSettled(digests)
 				.then(digestConfirmation)
 				.catch(handleErrorsDuringPromiseResolving);
@@ -29347,16 +29470,20 @@ function MappingEngine(storageService, options) {
 }
 
 module.exports = {
-	getMappingEngine: function (persistenceDSU, options) {
-		return new MappingEngine(persistenceDSU, options);
-	},
-	getMessagesPipe:function (){
-		return require("./messagesPipe");
-	},
-	defineMapping: mappingRegistry.defineMapping,
-	defineApi: apisRegistry.defineApi
+  getMappingEngine: function (persistenceDSU, options) {
+    return new MappingEngine(persistenceDSU, options);
+  },
+  getMessagesPipe: function () {
+    return require("./messagesPipe");
+  },
+  getErrorsMap: function () {
+    return errMap;
+  },
+  defineMapping: mappingRegistry.defineMapping,
+  defineApi: apisRegistry.defineApi
 }
-},{"./apisRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
+
+},{"./apisRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./errorsMap.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js","./mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
 const mappingRegistry = [];
 function defineMapping(matchFunction, mappingFunction){
 	mappingRegistry.push({matchFunction, mappingFunction});
