@@ -16881,9 +16881,9 @@ function generateMethodForRequestWithData(httpMethod) {
 					if (error) {
 						let response = rawData;
 						try {
-							response = JSON.parse(rawData);
-						} catch (error) {
-							console.log('parse error', error);
+							response = response !== '' ? JSON.parse(rawData) : response;
+						} catch (e) {
+							console.log('May or not be important, for safety check it! Failed to parse the error from the response due to', e);
 							// the received response is not a JSON, so we keep it as it is
 						}
 
@@ -16924,6 +16924,7 @@ module.exports = {
 	doPost: generateMethodForRequestWithData('POST'),
 	doPut: generateMethodForRequestWithData('PUT')
 }
+
 }).call(this)}).call(this,require('_process'))
 
 },{"./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","https":"/home/runner/work/privatesky/privatesky/node_modules/https-browserify/index.js","url":"/home/runner/work/privatesky/privatesky/node_modules/url/url.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
