@@ -13482,8 +13482,16 @@ function SingleDSUStorageStrategy() {
                     if (err) {
                         return callback(createOpenDSUErrorWrapper(`No primary key found for value ${value}`, err));
                     }
+                    let uniquePks = [];
+                    pks.forEach(function (item) {
+                        if (uniquePks.indexOf(item) < 0) {
+                            uniquePks.push(item);
+                        } else {
+                            console.warn(`Record with pk ${item} already indexed on field ${fieldName}`);
+                        }
+                    });
 
-                    pksArray = pks;
+                    pksArray = uniquePks;
                     currentPosition = 0;
                     currentValue = value
 
@@ -18800,13 +18808,13 @@ async function loadSecurityContext(dsuStorage, domainName) {
           return reject();
         }
 
-        return resolve(keySSI);
+        return resolve(keySSI.identifier);
       });
     });
   };
   const setKeySSIForSecurityContext = async (scKeySSI) => {
     return new Promise((resolve, reject) => {
-      dsuStorage.setObject(SC_PATH, { keySSI: scKeySSI }, (err) => {
+      dsuStorage.setObject(SC_PATH, { identifier: scKeySSI }, (err) => {
         if (err) {
           return reject(err);
         }
@@ -18828,8 +18836,11 @@ async function loadSecurityContext(dsuStorage, domainName) {
     throw Error(`Failed to load security context`);
   }
 
-  const sc = require("opendsu").loadAPI("sc");
-  sc.getSecurityContext(scKeySSI);
+  const openDSU = require("opendsu");
+  const sc = openDSU.loadAPI("sc");
+  const keySSI = openDSU.loadAPI("keyssi");
+
+  sc.getSecurityContext(keySSI.parse(scKeySSI));
 }
 
 async function loadWalletDatabase(dsuStorage, domainName, databaseName) {
@@ -77109,9 +77120,12 @@ function enableForEnvironment(envType){
 
     }
 
-    $$.promisify = function promisify(fn) {
-        const promisifiedFn =  function (...args) {
+    $$.promisify = function promisify(fn, instance) {
+        const promisifiedFn = function (...args) {
             return new Promise((resolve, reject) => {
+                if (instance) {
+                    fn = fn.bind(instance);
+                }
                 fn(...args, (err, ...res) => {
                     if (err) {
                         reject(err);
@@ -77121,7 +77135,7 @@ function enableForEnvironment(envType){
                 });
             });
         };
-        if(promisifiedFn.toString() === fn.toString()){
+        if (promisifiedFn.toString() === fn.toString()) {
             console.log("Function already promisified");
             return fn;
         }
