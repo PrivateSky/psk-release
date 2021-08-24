@@ -34578,6 +34578,7 @@ function promisifyWalletStorage(walletStorage) {
     "getRecord",
     "insertRecord",
     "updateRecord",
+    "deleteRecord",
     "commitBatch",
     "cancelBatch",
     "setObject",
@@ -34709,6 +34710,10 @@ class WalletStorage {
 
   updateRecord(tableName, key, record, callback) {
     this.call("db", "updateRecord", tableName, key, record, callback);
+  }
+
+  deleteRecord(tableName, key, callback) {
+    this.call("db", "deleteRecord", tableName, key, callback);
   }
 
   beginBatch() {
