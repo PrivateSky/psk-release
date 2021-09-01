@@ -669,7 +669,13 @@ class FS {
                 return;
             }
 
-            if (createWithoutVersion) {
+            let anchorKeySSI;
+            try {
+                anchorKeySSI = parse(anchorId);
+            } catch (e) {
+                return callback({ error: e, code: 500 });
+            }
+            if (createWithoutVersion || anchorKeySSI.getTypeName() === openDSU.constants.KEY_SSIS.CONSTANT_ZERO_ACCESS_SSI) {
                 // the anchor file already exists, so we cannot create another file for the same anchor
                 return callback({
                     code: ANCHOR_ALREADY_EXISTS_ERR_CODE,
@@ -9520,6 +9526,7 @@ module.exports = BrickMap;
 
 // HTTP error code returned by the anchoring middleware
 // when trying to anchor outdated changes
+const {anchoringStatus} = require("./constants");
 const ALIAS_SYNC_ERR_CODE = 428;
 
 
@@ -10407,13 +10414,9 @@ function BrickMapController(options) {
                     dataToSign = state.getCurrentAnchoredHashLink().getIdentifier() + timestamp;
                 }
                 dataToSign += keySSI.getAnchorId();
-                keySSI.sign(dataToSign, (err, signature) => {
-                    if (err) {
-                        return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
-                    }
 
+                const __storeAnchor = (hlSSI) => {
                     //signedHashLink should not contain any hint because is not trusted
-                    const signedHashLink = keyssi.createSignedHashLinkSSI(bricksDomain, hashLink.getHash(), timestamp, signature, keySSI.getVn());
 
                     const updateAnchorCallback = (err) => {
                         if (err) {
@@ -10434,7 +10437,7 @@ function BrickMapController(options) {
 
                         // After the alias is updated, the strategy is tasked
                         // with updating our anchored BrickMap with the new changes
-                        strategy.afterBrickMapAnchoring(brickMap, signedHashLink, (err, hashLink) => {
+                        strategy.afterBrickMapAnchoring(brickMap, hlSSI, (err, hashLink) => {
                             if (err) {
                                 return endAnchoring(listener, anchoringStatus.BRICKMAP_UPDATE_ERR, err);
                             }
@@ -10463,20 +10466,33 @@ function BrickMapController(options) {
                     }*/
                     //TODO: update the smart contract and after that uncomment the above code and eliminate the following if statement
                     if (!currentAnchoredHashLink) {
-                        anchoring.getAllVersions(keySSI, (err, versions)=>{
-                            if(err){
+                        anchoring.getAllVersions(keySSI, (err, versions) => {
+                            if (err) {
                                 return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
                             }
 
                             if (versions && versions.length === 0) {
-                                return anchoring.appendToAnchor(keySSI, signedHashLink, null, updateAnchorCallback);
+                                return anchoring.appendToAnchor(keySSI, hlSSI, null, updateAnchorCallback);
                             }
                             return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                         });
                     } else {
-                        anchoring.appendToAnchor(keySSI, signedHashLink, currentAnchoredHashLink, updateAnchorCallback);
+                        anchoring.appendToAnchor(keySSI, hlSSI, currentAnchoredHashLink, updateAnchorCallback);
                     }
-                })
+                }
+
+                const constants = require("opendsu").constants;
+                if (keySSI.getTypeName() === constants.KEY_SSIS.CONST_SSI || keySSI.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || keySSI.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
+                    __storeAnchor(hashLink);
+                } else {
+                    keySSI.sign(dataToSign, (err, signature) => {
+                        if (err) {
+                            return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
+                        }
+                        const signedHashLink = keyssi.createSignedHashLinkSSI(bricksDomain, hashLink.getHash(), timestamp, signature, keySSI.getVn());
+                        __storeAnchor(signedHashLink);
+                    })
+                }
             })
         });
     }
@@ -19876,7 +19892,7 @@ function WalletFactory(options) {
         options = defaultOpts;
 
         let createWritableDSU = () => {
-            let templateSSI = require("opendsu").loadApi("keyssi").createTemplateSeedSSI(keySSI.getDLDomain(),undefined,undefined,undefined,keySSI.getHint());
+            let templateSSI = require("opendsu").loadApi("keyssi").createTemplateSeedSSI(keySSI.getDLDomain(), undefined, undefined, undefined, keySSI.getHint());
             this.dsuFactory.create(templateSSI, (err, writableDSU) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create writable using templateSSI <${templateSSI.getIdentifier(true)}>`, err));
@@ -19886,7 +19902,7 @@ function WalletFactory(options) {
             })
         }
 
-        let mountDSUType = () =>{
+        let mountDSUType = () => {
             writableWallet.mount("/code", options.dsuTypeSSI, (err => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to mount constitution in writable DSU`, err));
@@ -19896,13 +19912,15 @@ function WalletFactory(options) {
         }
 
         let createConstDSU = () => {
-                this.dsuFactory.create(keySSI, options, (err, constWallet) => {
+            const newOptions = JSON.parse(JSON.stringify(options));
+            newOptions.addLog = false;
+            this.dsuFactory.create(keySSI, newOptions, (err, constWallet) => {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create ConstDSU using keySSI <${keySSI.getIdentifier(true)}>`, err));
                 }
 
                 constDSUWallet = constWallet;
-                constDSUWallet.getWritableDSU = function(){
+                constDSUWallet.getWritableDSU = function () {
                     return writableWallet;
                 }
                 mountWritableWallet();
@@ -19939,8 +19957,6 @@ function WalletFactory(options) {
     };
 
 
-
-
     /**
      * @param {string} keySSI
      * @param {object} options
@@ -19968,10 +19984,10 @@ function WalletFactory(options) {
         let writableDSU;
         let writableSSI;
 
-        let loadConstDSU = () =>{
+        let loadConstDSU = () => {
             this.dsuFactory.load(keySSI, options, (err, dsu) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load ConstDSU",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load ConstDSU", err));
                 }
                 constDSU = dsu;
                 getSSIFromMountPoint();
@@ -19979,10 +19995,10 @@ function WalletFactory(options) {
         }
 
 
-        let  getSSIFromMountPoint = () => {
+        let getSSIFromMountPoint = () => {
             constDSU.getSSIForMount(WALLET_MOUNT_POINT, (err, ssi) => {
                 if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU",err));
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to get mount point in ConstDSU", err));
                 }
                 writableSSI = require("opendsu").loadApi("keyssi").parse(ssi);
                 loadWritableDSU();
@@ -19995,7 +20011,7 @@ function WalletFactory(options) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load writable DSU from ConstDSU Wallet", err));
                 }
                 writableDSU = dsu;
-                constDSU.getWritableDSU = function(){
+                constDSU.getWritableDSU = function () {
                     return writableDSU;
                 }
                 return callback(undefined, constDSU);
@@ -22167,7 +22183,11 @@ function createDigitalProof(SSICapableOfSigning, newSSIIdentifier, lastSSIIdenti
         return SSICapableOfSigning.sign(dataToSign, callback);
     }
 
-    callback(undefined, {signature: "", publicKey: ""});
+    if(SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.CONST_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.WALLET_SSI){
+        return callback(undefined, {signature: "", publicKey: ""});
+    }
+
+    callback(Error(`The provided SSI does not grant writing rights`));
 }
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
