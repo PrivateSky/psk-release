@@ -49464,7 +49464,6 @@ CipherBase.prototype._toString = function (value, enc, fin) {
 module.exports = CipherBase
 
 },{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","string_decoder":"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
-(function (Buffer){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -49567,15 +49566,13 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = Buffer.isBuffer;
+exports.isBuffer = require('buffer').Buffer.isBuffer;
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-}).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-
-},{"../../is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var elliptic = require('elliptic')
 var BN = require('bn.js')
@@ -59453,29 +59450,6 @@ if (typeof Object.create === 'function') {
       ctor.prototype.constructor = ctor
     }
   }
-}
-
-},{}],"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
 },{}],"/home/runner/work/privatesky/privatesky/node_modules/isarray/index.js":[function(require,module,exports){
