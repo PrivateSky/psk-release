@@ -29686,7 +29686,7 @@ function keySSIMixin(target) {
 
     target.sign = (dataToSign, callback) => {
         const sc = require("opendsu").loadAPI("sc").getSecurityContext();
-        sc.sign(target, dataToSign, callback);
+        sc.signForKeySSI(undefined, target, dataToSign, callback);
     };
 
     target.verify = (data, digitalProof) => {
@@ -30847,8 +30847,8 @@ const versions = (keySSI, authToken, callback) => {
         const fetchAnchor = (service) => {
             return fetch(`${service}/anchor/${dlDomain}/get-all-versions/${anchorId}`)
                 .then((response) => {
-                    return response.json().then(async(hlStrings) => {
-                        if(!hlStrings) {
+                    return response.json().then(async (hlStrings) => {
+                        if (!hlStrings) {
                             throw new Error(NO_VERSIONS_ERROR);
                         }
                         const hashLinks = hlStrings.map((hlString) => {
@@ -30864,12 +30864,12 @@ const versions = (keySSI, authToken, callback) => {
         };
 
         const runnerCallback = (error, result) => {
-            if(error && error.message === NO_VERSIONS_ERROR) {
+            if (error && error.message === NO_VERSIONS_ERROR) {
                 // the requested anchor doesn't exist on any of the queried anchoring services,
                 // so return an empty versions list in order to now break the existing code in this situation
-               return callback(null, []);
+                return callback(null, []);
             }
-            
+
             callback(error, result);
         }
 
@@ -30923,7 +30923,7 @@ const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) =>
 
         const hashLinkIds = {
             last: lastSSI ? lastSSI.getIdentifier() : null,
-            new: newSSI ? newSSI.getIdentifier(): null
+            new: newSSI ? newSSI.getIdentifier() : null
         };
 
         createDigitalProof(SSICapableOfSigning, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
@@ -30959,8 +30959,8 @@ const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) =>
 };
 
 function createDigitalProof(SSICapableOfSigning, newSSIIdentifier, lastSSIIdentifier, zkp, callback) {
-     // when the anchor is first created, no version is created yet
-    if(!newSSIIdentifier) {
+    // when the anchor is first created, no version is created yet
+    if (!newSSIIdentifier) {
         newSSIIdentifier = "";
     }
 
@@ -30970,15 +30970,11 @@ function createDigitalProof(SSICapableOfSigning, newSSIIdentifier, lastSSIIdenti
         dataToSign += lastSSIIdentifier;
     }
 
-    if (SSICapableOfSigning.canSign() === true) {
-        return SSICapableOfSigning.sign(dataToSign, callback);
-    }
-
-    if(SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.CONST_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.WALLET_SSI){
+    if (SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.CONST_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
         return callback(undefined, {signature: "", publicKey: ""});
     }
 
-    callback(Error(`The provided SSI does not grant writing rights`));
+    return SSICapableOfSigning.sign(dataToSign, callback);
 }
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
@@ -31985,7 +31981,9 @@ module.exports = function(environment){
         console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
 }
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
 const config = {};
+
 function set(key, value) {
     config[key] = value;
 }
@@ -31994,24 +31992,83 @@ function get(key) {
     return config[key];
 }
 
+function readEnvFile(callback) {
+    const sc = require("opendsu").loadAPI("sc");
+    sc.getMainDSU((err, mainDSU) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to get main DSU`, err));
+        }
 
+        mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, env) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get main DSU`, err));
+            }
+
+            try {
+                env = JSON.parse(env.toString());
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed parse env file`, e));
+            }
+
+            callback(undefined, env);
+        });
+    });
+}
+
+function writeEnvFile(env, callback) {
+    const sc = require("opendsu").loadAPI("sc");
+    sc.getMainDSU((err, mainDSU) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to get main DSU`, err));
+        }
+        mainDSU.writeFile(constants.ENVIRONMENT_PATH, JSON.stringify(env), (err)=>{
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to write env`, err));
+            }
+            callback();
+        });
+    });
+}
+
+
+function setEnv(key, value, callback) {
+    //update environment.json
+    readEnvFile((err, env) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to read env file`, err));
+        }
+        env[key] = value;
+        writeEnvFile(env, callback);
+    });
+}
+
+function getEnv(key, callback) {
+    readEnvFile((err, env) => {
+        if (err) {
+            return callback(createOpenDSUErrorWrapper(`Failed to read env file`, err));
+        }
+
+        callback(undefined, env[key]);
+    });
+}
 
 const autoconfigFromEnvironment = require("./autoConfigFromEnvironment");
 
-function disableLocalVault(){
-    const constants = require("../moduleConstants");
+function disableLocalVault() {
     set(constants.CACHE.VAULT_TYPE, constants.CACHE.NO_CACHE);
 }
 
 module.exports = {
     set,
     get,
+    setEnv,
+    getEnv,
     autoconfigFromEnvironment,
     disableLocalVault
 };
 
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
 const getBaseURL = require("../utils/getBaseURL");
 
 const {
@@ -33333,14 +33390,158 @@ let getSharedDB = function(keySSI, dbName){
     return db;
 };
 
+const getInMemoryDB = ()=>{
+    const MemoryStorageStrategy = require("./storageStrategies/MemoryStorageStrategy");
+    const storageStrategy = new MemoryStorageStrategy();
+    return getBasicDB(storageStrategy);
+}
+
 module.exports = {
     getBasicDB,
     getWalletDB: getSharedDB,
     getMultiUserDB,
-    getSharedDB
+    getSharedDB,
+    getInMemoryDB
 }
 
-},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
+function SingleDSUStorageStrategy(){
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    let volatileMemory = {}
+    let self = this
+    let storageDSU, afterInitialisation;
+    let dbName;
+
+    ObservableMixin(this);
+    function getTable(tableName){
+        let table = volatileMemory[tableName];
+        if(!table){
+            table = volatileMemory[tableName] = {};
+        }
+        return table;
+    }
+
+    /*
+       Get the whole content of the table and asynchronously returns an array with all the  records satisfying the condition tested by the filterFunction
+    */
+    this.filterTable = function(tableName, filterFunction, callback){
+        let tbl = getTable(tableName);
+        let result = [];
+        for(let n in tbl){
+            let item = tbl[n];
+            if(filterFunction(item)){
+                item.__key = n;
+                result.push(item);
+            }
+        }
+        callback(undefined,result);
+    };
+
+    /*
+      Insert a record, return error if already exists
+    */
+    this.insertRecord = function(tableName, key, record, callback, reInsert = false){
+        let currentParent = getTable(tableName)
+
+        function _insertRecord(currentParent, currentKey) {
+            if (!reInsert && currentParent[currentKey] != undefined) {
+                return callback(new Error("Can't insert a new record for currentKey " + currentKey))
+            }
+
+            currentParent[currentKey] = record;
+            callback(undefined, record);
+        }
+
+        if (typeof key === 'string') {
+            _insertRecord(currentParent, key)
+        }
+        else {
+            let currentKey = key[0];
+            for (let i = 1; i <= key.length; i++) {
+                if (currentParent[currentKey] == undefined){
+                    currentParent[currentKey] = i === key.length ? undefined : {}
+                }
+
+                if (i === key.length) {
+                    break
+                }
+                else {
+                    currentParent = currentParent[currentKey]
+                    currentKey = key[i];
+                }
+            }
+
+            _insertRecord(currentParent, currentKey)
+        }
+    };
+
+    /*
+        Update a record, return error if does not exists
+     */
+    this.updateRecord = function(tableName, key, record, currentRecord, callback){
+        function _updateRecord(record, previousRecord, callback) {
+            if (!previousRecord) {
+                return callback(new Error("Can't update a record for key " + key))
+            }
+
+            record.__previousRecord = previousRecord;
+            self.insertRecord(tableName, key, record, callback, true);
+        }
+
+        if (typeof currentRecord === 'function') {
+            callback = currentRecord
+
+            this.getRecord(tableName, key, (err, previousRecord) => {
+                if (err) {
+                    return callback(err)
+                }
+                _updateRecord(record, previousRecord, callback)
+            })
+        }
+        else {
+            _updateRecord(record, currentRecord, callback)
+        }
+    };
+
+    /*
+        Get a single row from a table
+     */
+    this.getRecord = function(tableName, key, callback){
+        let tbl = getTable(tableName);
+        let record;
+        if (typeof key === 'string') {
+            record = tbl[key];
+            if( record == undefined){
+                return callback(new Error("Can't retrieve a record for key " + key))
+            }
+            callback(undefined, record);
+        }
+        else {
+            record = tbl[key[0]]
+            for (let i = 1; i <= key.length; i++) {
+                if (record == undefined){
+                    return callback(new Error("Can't retrieve a record for key " + key.concat(".")))
+                }
+
+                if (i === key.length) {
+                    break
+                }
+                else {
+                    record = record[key[i]];
+                }
+            }
+
+            callback(undefined, record);
+        }
+    };
+
+    setTimeout(()=>{
+        this.dispatchEvent("initialised");
+    })
+}
+
+module.exports = SingleDSUStorageStrategy;
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
 
 function MultiUserStorageStrategy(){
 
@@ -36493,7 +36694,313 @@ module.exports = {
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+
+function Enclave_Mixin(target) {
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi")
+    const KEY_SSIS_TABLE = "keyssis";
+    const SEED_SSIS_TABLE = "seedssis";
+    const DIDS_PRIVATE_KEYS = "dids_private";
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    ObservableMixin(target);
+
+    let enclaveDID;
+
+    const getPrivateInfoForDID = (did, callback) => {
+        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const privateKeysAsBuff = record.privateKeys.map(privateKey => {
+                if (privateKey) {
+                    return $$.Buffer.from(privateKey)
+                }
+
+                return privateKey;
+            });
+            callback(undefined, privateKeysAsBuff);
+        });
+    }
+
+    const getCapableOfSigningKeySSI = (keySSI, callback) => {
+        if (typeof keySSI === "undefined") {
+            return callback(Error(`A SeedSSI should be specified.`));
+        }
+
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
+            }
+        }
+
+        target.storageDB.getRecord(KEY_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`No capable of signing keySSI found for keySSI ${keySSI.getIdentifier()}`, err));
+            }
+
+            let capableOfSigningKeySSI;
+            try {
+                capableOfSigningKeySSI = keySSISpace.parse(record.capableOfSigningKeySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${record.capableOfSigningKeySSI}`, e))
+            }
+
+            callback(undefined, capableOfSigningKeySSI);
+        });
+    };
+
+
+    target.getEnclaveDID = () => {
+
+    }
+
+    target.insertRecord = (forDID, table, pk, encryptedObject, indexableFieldsNotEncrypted, callback) => {
+        target.storageDB.insertRecord(table, pk, indexableFieldsNotEncrypted, callback);
+    }
+
+    target.updateRecord = (forDID, table, pk, encryptedObject, indexableFieldsNotEncrypted, callback) => {
+        target.storageDB.updateRecord(table, pk, indexableFieldsNotEncrypted, callback);
+    }
+
+    target.getRecord = (forDID, table, pk, callback) => {
+        target.storageDB.getRecord(table, pk, callback);
+    };
+
+    target.filter = (forDID, table, filter, sort, limit, callback) => {
+        target.storageDB.filter(table, filter, sort, limit, callback);
+    }
+
+    target.deleteRecord = (forDID, table, pk, callback) => {
+        target.storageDB.deleteRecord(table, pk, callback);
+    }
+
+
+    target.storeSeedSSI = (forDID, seedSSI, alias, callback) => {
+        if (typeof seedSSI === "string") {
+            try {
+                seedSSI = keySSISpace.parse(seedSSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${seedSSI}`, e))
+            }
+        }
+
+        const keySSIIdentifier = seedSSI.getIdentifier();
+
+        function registerDerivedKeySSIs(derivedKeySSI) {
+            target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                try {
+                    derivedKeySSI = derivedKeySSI.derive();
+                } catch (e) {
+                    return callback();
+                }
+
+                registerDerivedKeySSIs(derivedKeySSI);
+            });
+        }
+
+        target.storageDB.insertRecord(SEED_SSIS_TABLE, alias, {seedSSI: keySSIIdentifier}, (err) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return registerDerivedKeySSIs(seedSSI);
+        })
+    }
+
+    target.storeDID = (forDID, storedDID, privateKeys, callback) => {
+        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), (err, res) => {
+            if (err || !res) {
+                return target.storageDB.insertRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), {privateKeys: privateKeys}, callback);
+            }
+
+            privateKeys.forEach(privateKey => {
+                res.privateKeys.push(privateKey);
+            })
+            target.storageDB.updateRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), res, callback);
+        });
+    }
+
+    target.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
+        const privateKeyObj = {privateKeys: [privateKey]}
+        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
+            if (err || !res) {
+                return target.storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
+            }
+
+            res.privateKeys.push(privateKey);
+            target.storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
+        });
+    }
+
+    target.generateDID = (forDID, didMethod, ...args) => {
+
+    }
+
+    target.storePrivateKey = (forDID, privateKey, type, alias, callback) => {
+
+    }
+
+    target.storeSecretKey = (forDID, secretKey, alias, callback) => {
+
+    };
+
+    target.generateSecretKey = (forDID, secretKeyAlias, callback) => {
+
+    }
+
+    target.signForDID = (forDID, didThatIsSigning, hash, callback) => {
+        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), (err, privateKey) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
+            }
+            didThatIsSigning.signImpl(privateKey, hash, callback);
+        });
+    }
+
+    target.signForKeySSI = (forDID, keySSI, hash, callback) => {
+        getCapableOfSigningKeySSI(keySSI, (err, capableOfSigningKeySSI) => {
+            if (err) {
+                return callback(err);
+            }
+            if (typeof capableOfSigningKeySSI === "undefined") {
+                return callback(Error(`The provided SSI does not grant writing rights`));
+            }
+
+            capableOfSigningKeySSI.sign(hash, callback);
+        });
+    }
+
+    target.encryptAES = (forDID, secretKeyAlias, message, AESParams, callback) => {
+
+    }
+
+    target.encryptMessage = (forDID, didFrom, didTo, message, callback) => {
+        getPrivateInfoForDID(didFrom.getIdentifier(), (err, privateKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didFrom.getIdentifier()}`, err));
+            }
+
+            didFrom.encryptMessageImpl(privateKeys, didTo, message, callback);
+        });
+    }
+
+    target.decryptMessage = (forDID, didTo, encryptedMessage, callback) => {
+        getPrivateInfoForDID(didTo.getIdentifier(), (err, privateKeys) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didTo.getIdentifier()}`, err));
+            }
+
+            didTo.decryptMessageImpl(privateKeys, encryptedMessage, callback);
+        });
+    };
+}
+
+module.exports = Enclave_Mixin;
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
+function MemoryEnclave() {
+    const EnclaveMixin = require("./Enclave_Mixin");
+    EnclaveMixin(this);
+    const db = require("opendsu").loadAPI("db");
+    const init = () => {
+        this.storageDB = db.getInMemoryDB();
+        setTimeout(() => {
+            this.dispatchEvent("initialised");
+        })
+    }
+
+    init();
+}
+
+module.exports = MemoryEnclave;
+},{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+function WalletDBEnclave() {
+    const openDSU = require("opendsu");
+    const db = openDSU.loadAPI("db")
+    const keySSISpace = openDSU.loadAPI("keyssi")
+    const scAPI = openDSU.loadAPI("sc");
+
+    const DB_NAME = "walletdb_enclave";
+    const KEY_SSIS_TABLE = "keyssis";
+    const SEED_SSIS_TABLE = "seedssis";
+    const DIDS_PRIVATE_KEYS = "dids_private";
+    const DIDS_PUBLIC_KEYS = "dids_public";
+
+    const EnclaveMixin = require("./Enclave_Mixin");
+
+
+    EnclaveMixin(this);
+
+    let enclaveDID;
+    const init = () => {
+        scAPI.getMainDSU(async (err, mainDSU) => {
+            if (err) {
+                throw createOpenDSUErrorWrapper(`Failed to get mainDSU`, err);
+            }
+            let keySSI;
+            try {
+                keySSI = await $$.promisify(mainDSU.getKeySSIAsObject)();
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to get mainDSU's keySSI`, e);
+            }
+            this.storageDB = db.getWalletDB(keySSI, DB_NAME);
+            this.storageDB.on("initialised", () => {
+                this.finishInitialisation();
+                this.dispatchEvent("initialised");
+            })
+        })
+
+    };
+
+    const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    bindAutoPendingFunctions(this, ["on", "off"]);
+
+    init();
+}
+
+module.exports = WalletDBEnclave;
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+const WalletDBEnclave = require("./impl/WalletDBEnclave");
+
+function initialiseWalletDBEnclave(){
+    const WalletDBEnclave = require("./impl/WalletDBEnclave");
+    return new WalletDBEnclave();
+}
+
+function initialiseMemoryEnclave(){
+    const MemoryEnclave = require("./impl/MemoryEnclave");
+    return new MemoryEnclave();
+}
+
+function initialiseAPIHUBEnclave(adminDID) {
+    throw Error("Not implemented");
+}
+
+
+function initialiseHighSecurityEnclave(adminDID){
+    throw Error("Not implemented");
+}
+
+function connectEnclave(forDID, enclaveDID, ...args){
+    throw Error("Not implemented");
+}
+
+module.exports = {
+    initialiseWalletDBEnclave,
+    initialiseMemoryEnclave,
+    initialiseAPIHUBEnclave,
+    initialiseHighSecurityEnclave,
+    connectEnclave
+}
+
+},{"./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -38319,7 +38826,15 @@ module.exports = {
 	MANIFEST_FILE: "/manifest",
 	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
 	ENVIRONMENT_PATH: "/environment.json",
-	SECURITY_CONTEXT: "/security_context",
+	SECURITY_CONTEXT_KEY_SSI: "scKeySSI",
+	VAULT_DOMAIN: "domain",
+	ENCLAVE_TYPE: "enclaveType",
+	ENCLAVE_TYPES: {
+		WALLET_DB_ENCLAVE: "WalletDBEnclave",
+		MEMORY_ENCLAVE: "MemoryEnclave",
+		APIHUB_ENCLAVE: "ApihubEnclave",
+		HIGH_SECURITY_ENCLAVE: "HighSecurityEnclave"
+	},
 	CACHE: {
 		FS: "fs",
 		MEMORY: "memory",
@@ -39381,11 +39896,11 @@ const createDSU = (templateKeySSI, options, callback) => {
         options = {addLog: true};
     }
 
-    if(typeof options === "undefined"){
+    if (typeof options === "undefined") {
         options = {};
     }
 
-    if(typeof options.addLog === "undefined"){
+    if (typeof options.addLog === "undefined") {
         options.addLog = true;
     }
 
@@ -39409,7 +39924,26 @@ const createDSU = (templateKeySSI, options, callback) => {
             }
             addDSUInstanceInCache(dsuInstance, callback);
         }
-        addInCache(undefined, dsuInstance);
+
+        const sc = require("opendsu").loadAPI("sc").getSecurityContext();
+        if (sc.isInitialised()) {
+            dsuInstance.getKeySSIAsObject((err, seedSSI) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get seed SSI`, err));
+                }
+
+                sc.registerKeySSI(undefined, seedSSI, (err) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to register seed ssi`, err));
+                    }
+
+
+                    addInCache(undefined, dsuInstance);
+                })
+            });
+        } else {
+            addInCache(undefined, dsuInstance);
+        }
     });
 };
 
@@ -39506,7 +40040,6 @@ const loadDSU = (keySSI, options, callback) => {
     }
 
     const keySSIResolver = initializeResolver(options);
-
     keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
@@ -39760,7 +40293,6 @@ const http = openDSU.loadAPI("http")
 const keySSISpace = openDSU.loadAPI("keyssi");
 const resolver = openDSU.loadAPI("resolver");
 const {getURLForSsappContext} = require("../utils/getURLForSsappContext");
-const fs = require("fs");
 
 function getMainDSU(callback) {
     callback = $$.makeSaneCallback(callback);
@@ -39793,7 +40325,10 @@ function getMainDSU(callback) {
 
 function getMainDSUForNode(callback) {
     const path = require("path");
-    const MAIN_DSU_PATH = path.join(require("os").tmpdir(), "wallet");
+    const crypto = require("opendsu").loadAPI("crypto");
+    const uid = crypto.generateRandom(5).toString("hex");
+    const BASE_DIR_PATH = path.join(require("os").tmpdir(), uid);
+    const MAIN_DSU_PATH = path.join(BASE_DIR_PATH, "wallet");
     const DOMAIN = "vault";
     const fs = require("fs");
     const resolver = require("opendsu").loadAPI("resolver");
@@ -39814,6 +40349,7 @@ function getMainDSUForNode(callback) {
                             return callback(err);
                         }
 
+                        fs.mkdirSync(BASE_DIR_PATH, {recursive: true});
                         fs.writeFile(MAIN_DSU_PATH, seedSSI, (err) => callback(err, seedDSU));
                     });
                 })
@@ -39858,288 +40394,159 @@ const setMainDSU = (mainDSU) => {
     return setGlobalVariable("rawDossier", mainDSU);
 };
 
-function SecurityContext(keySSI) {
+function SecurityContext() {
+    const ObservableMixin = require("../utils/ObservableMixin");
+    ObservableMixin(this);
     const openDSU = require("opendsu");
     const crypto = openDSU.loadAPI("crypto");
-    const db = openDSU.loadAPI("db")
     const keySSISpace = openDSU.loadAPI("keyssi")
-
-    const DB_NAME = "security_context";
-    const KEY_SSIS_TABLE = "keyssis";
-    const DIDS_PRIVATE_KEYS = "dids_private";
-    const DIDS_PUBLIC_KEYS = "dids_public";
-
-    let isInitialized = false;
-
-    if (typeof keySSI === "string") {
-        keySSI = keySSISpace.parse(keySSI);
-    }
-
-    let storageDB;
+    const resolver = openDSU.loadAPI("resolver")
+    const config = openDSU.loadAPI("config");
+    const enclaveAPI = openDSU.loadAPI("enclave");
+    let enclave;
+    let storageDSU;
     let initialised = false;
 
-    function apiIsAvailable(callback) {
-        if (typeof storageDB === "undefined") {
-            callback(Error(`API unavailable because storageDB is unable to be initialised.`))
-            return false;
+    const getEnclaveInstance = (enclaveType) => {
+        switch (enclaveType) {
+            case constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE:
+                return enclaveAPI.initialiseWalletDBEnclave();
+            case constants.ENCLAVE_TYPES.APIHUB_ENCLAVE:
+                return enclaveAPI.initialiseAPIHUBEnclave();
+            case constants.ENCLAVE_TYPES.HIGH_SECURITY_ENCLAVE:
+                return enclaveAPI.initialiseHighSecurityEnclave();
+            case constants.ENCLAVE_TYPES.MEMORY_ENCLAVE:
+                return enclaveAPI.initialiseMemoryEnclave();
+            default:
+                throw Error(`Invalid enclave type ${enclaveType}`)
         }
-
-        return true;
-    }
+    };
 
     const init = async () => {
-        if (typeof keySSI === "undefined") {
-            let mainDSU;
-            try {
-                mainDSU = await $$.promisify(getMainDSU)();
-            } catch (e) {
-
-            }
-
-            initialised = true;
-            if (mainDSU) {
-                try {
-                    keySSI = await $$.promisify(loadSecurityContext)()
-                } catch (e) {
-                    try {
-                        keySSI = await $$.promisify(createSecurityContext)();
-                        await $$.promisify(saveSecurityContext)(keySSI);
-                    } catch (e) {
-                        throw createOpenDSUErrorWrapper(`Failed to create security context`, e);
-                    }
-                }
-                storageDB = db.getWalletDB(keySSI, DB_NAME);
-            }
-            this.finishInitialisation();
-
-        } else {
-            storageDB = db.getWalletDB(keySSI, DB_NAME);
-            this.finishInitialisation();
+        let enclaveType;
+        let scDSUKeySSI;
+        try {
+            enclaveType = await $$.promisify(config.getEnv)(constants.ENCLAVE_TYPE);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to get env enclaveType`, e);
         }
+
+        if (typeof enclaveType === "undefined") {
+            enclaveType = constants.ENCLAVE_TYPES.MEMORY_ENCLAVE;
+            try {
+                await $$.promisify(config.setEnv)(constants.ENCLAVE_TYPE, enclaveType)
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to set env enclaveType`, e);
+            }
+        }
+
+        try {
+            scDSUKeySSI = await $$.promisify(config.getEnv)(constants.SECURITY_CONTEXT_KEY_SSI);
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to get env scKeySSI`, e);
+        }
+
+
+        if (typeof scDSUKeySSI === "undefined") {
+            try {
+                const vaultDomain = await $$.promisify(getVaultDomain)();
+                const seedDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
+                scDSUKeySSI = await $$.promisify(seedDSU.getKeySSIAsString)();
+                storageDSU = seedDSU;
+                await $$.promisify(config.setEnv)(constants.SECURITY_CONTEXT_KEY_SSI, scDSUKeySSI)
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to create SeedDSU for sc`, e);
+            }
+        } else {
+            try {
+                storageDSU = await $$.promisify(resolver.loadDSU)(scDSUKeySSI);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to load sc DSU`, e);
+            }
+        }
+
+        enclave = getEnclaveInstance(enclaveType);
+        enclave.on("initialised", () => {
+            initialised = true;
+            this.finishInitialisation();
+            this.dispatchEvent("initialised")
+        });
     }
 
     this.registerDID = (didDocument, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
         let privateKeys = didDocument.getPrivateKeys();
         if (!Array.isArray(privateKeys)) {
             privateKeys = [privateKeys]
         }
-        storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
-            if (err || !res) {
-                return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), {privateKeys: privateKeys}, callback);
-            }
-
-            privateKeys.forEach(privateKey => {
-                res.privateKeys.push(privateKey);
-            })
-            storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
-        });
+        enclave.storeDID(didDocument, didDocument, privateKeys, callback);
     };
 
     this.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        const privateKeyObj = {privateKeys: [privateKey]}
-        storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
-            if (err || !res) {
-                return storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
-            }
-
-            res.privateKeys.push(privateKey);
-            storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
-        });
+        enclave.addPrivateKeyForDID(didDocument, privateKey, callback);
     }
 
-    this.addPublicKeyForDID = (didDocument, publicKey, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        const publicKeyObj = {publicKeys: [publicKey]}
-        storageDB.getRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), (err, res) => {
-            if (err || !res) {
-                return storageDB.insertRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), publicKeyObj, callback);
-            }
-
-            res.publicKeys.push(publicKey);
-            return storageDB.updateRecord(DIDS_PUBLIC_KEYS, didDocument.getIdentifier(), res, callback);
-        });
-    }
-
-    this.getPrivateInfoForDID = (did, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
+    this.registerKeySSI = (forDID, keySSI, callback) => {
+        const generateUid = require("swarmutils").generateUid;
+        const alias = generateUid(10).toString("hex");
+        enclave.storeSeedSSI(forDID, keySSI, alias, err => {
             if (err) {
                 return callback(err);
             }
 
-            const privateKeysAsBuff = record.privateKeys.map(privateKey => {
-                if (privateKey) {
-                    return $$.Buffer.from(privateKey)
-                }
-
-                return privateKey;
-            });
-            callback(undefined, privateKeysAsBuff);
-        });
+            callback(undefined, alias);
+        })
     };
 
-    this.registerKeySSI = (keySSI, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        if (typeof keySSI === "undefined") {
-            return callback(Error(`A SeedSSI should be specified.`));
-        }
-
-        if (typeof keySSI === "string") {
-            try {
-                keySSI = keySSISpace.parse(keySSI);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
-            }
-        }
-
-        const keySSIIdentifier = keySSI.getIdentifier();
-
-        function registerDerivedKeySSIs(derivedKeySSI) {
-            storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                try {
-                    derivedKeySSI = derivedKeySSI.derive();
-                } catch (e) {
-                    return callback();
-                }
-
-                registerDerivedKeySSIs(derivedKeySSI);
-            });
-        }
-
-        return registerDerivedKeySSIs(keySSI);
-    };
-
-    this.getCapableOfSigningKeySSI = (keySSI, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        if (typeof keySSI === "undefined") {
-            return callback(Error(`A SeedSSI should be specified.`));
-        }
-
-        if (typeof keySSI === "string") {
-            try {
-                keySSI = keySSISpace.parse(keySSI);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
-            }
-        }
-
-        storageDB.getRecord(KEY_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`No capable of signing keySSI found for keySSI ${keySSI.getIdentifier()}`, err));
-            }
-
-            let keySSI;
-            try {
-                keySSI = keySSISpace.parse(record.capableOfSigningKeySSI);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${record.capableOfSigningKeySSI}`, e))
-            }
-
-            callback(undefined, keySSI);
-        });
-    };
-
-    this.getKeySSI = (keySSI) => {
-        if (typeof keySSI === "undefined") {
-            throw Error(`A KeySSI should be specified.`)
-        }
-
-        if (typeof keySSI !== "string") {
-            keySSI = keySSI.getIdentifier();
-        }
-
-        return keySSISpace.parse(keySSIs[keySSI]);
-    };
-
-    this.sign = (keySSI, data, callback) => {
+    this.signForKeySSI = (forDID, keySSI, data, callback) => {
         // temporary solution until proper implementation
-        return callback(undefined, {signature: "", publicKey: ""});
-        if (!isInitialized) {
-            return this.addPendingCall(() => {
-                this.sign(keySSI, data, callback);
-            });
-        }
+        // return callback(undefined, {signature: "", publicKey: ""});
+        enclave.signForKeySSI(forDID, keySSI, data, callback);
 
-        const powerfulKeySSI = this.getKeySSI(keySSI);
-        crypto.sign(powerfulKeySSI, data, callback);
     }
 
     this.signAsDID = (didDocument, data, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKey) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
-            }
-            didDocument.signImpl(privateKey, data, callback);
-        });
+        enclave.signForDID(didDocument, didDocument, data, callback);
     }
 
     this.verifyForDID = (didDocument, data, signature, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
         didDocument.verifyImpl(data, signature, callback);
     }
 
 
     this.encryptForDID = (senderDIDDocument, receiverDIDDocument, message, callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        this.getPrivateInfoForDID(senderDIDDocument.getIdentifier(), (err, privateKeys) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${senderDIDDocument.getIdentifier()}`, err));
-            }
-
-            senderDIDDocument.encryptMessageImpl(privateKeys, receiverDIDDocument, message, callback);
-        });
+        enclave.encryptMessage(senderDIDDocument, senderDIDDocument, receiverDIDDocument, message, callback);
     };
 
-    this.decryptAsDID = (didDocument, encryptedMessage, callback) => { // throw e;
-                // keySSI = keySSISpace.createSeedSSI("default");
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        this.getPrivateInfoForDID(didDocument.getIdentifier(), (err, privateKeys) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didDocument.getIdentifier()}`, err));
-            }
+    this.decryptAsDID = (didDocument, encryptedMessage, callback) => {
+        enclave.decryptMessage(didDocument, didDocument, encryptedMessage, callback)
+    }
 
-            didDocument.decryptMessageImpl(privateKeys, encryptedMessage, callback);
-        });
-    };
+    this.isInitialised = () => {
+        return initialised;
+    }
 
     this.getDb = (callback) => {
-        if (!apiIsAvailable(callback)) {
-            return;
-        }
-        storageDB.on("initialised", () => {
-            callback(undefined, storageDB);
-        })
+        const dbApi = openDSU.loadAPI("db");
+        getMainDSU((err, mainDSU) => {
+            if (err) {
+                return callback(err);
+            }
+
+            mainDSU.getKeySSIAsObject((err, keySSI) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const db = dbApi.getWalletDB(keySSI, "defaultDB")
+                db.on("initialised", () => {
+                    callback(undefined, db);
+                })
+            })
+        });
     }
 
     const bindAutoPendingFunctions = require("../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this);
+    bindAutoPendingFunctions(this, ["on", "off", "enclaveInitialised"]);
     init();
     return this;
 }
@@ -40211,9 +40618,9 @@ const createSecurityContext = (callback) => {
     })
 }
 
-const getSecurityContext = (keySSI) => {
+const getSecurityContext = () => {
     if (typeof $$.sc === "undefined") {
-        $$.sc = new SecurityContext(keySSI);
+        $$.sc = new SecurityContext();
     }
 
     return $$.sc;
@@ -40226,7 +40633,7 @@ module.exports = {
     getSecurityContext
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
     if (typeof envVariables[name] !== "undefined") {
@@ -40728,10 +41135,10 @@ function W3CDID_Mixin(target) {
         didDocument,
         compatibleSSI.getPrivateKey("raw")
       );
-      await $$.promisify(securityContext.addPublicKeyForDID)(
-        didDocument,
-        compatibleSSI.getPublicKey("raw")
-      );
+      // await $$.promisify(securityContext.addPublicKeyForDID)(
+      //   didDocument,
+      //   compatibleSSI.getPublicKey("raw")
+      // );
     } catch (e) {
       throw createOpenDSUErrorWrapper(
         `Failed to save new private key and public key in security context`,
@@ -40916,9 +41323,6 @@ module.exports = W3CDID_Mixin;
 
 
 function DemoPKDocument(identifier){
-    let mixin =  require("../W3CDID_Mixin");
-    mixin(this);
-
     this.sign = function(hash, callback){
         return hash;
     };
@@ -41026,7 +41430,7 @@ function DEMO_DIDMethod(){
 module.exports.create_demo_DIDMethod = function(){
     return new DEMO_DIDMethod();
 }
-},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
+},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function ConstDID_Document_Mixin(target, domain, name) {
     let mixin = require("../W3CDID_Mixin");
@@ -53247,6 +53651,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "boot":return require("./boot"); break;
             case "dc":return require("./dc"); break;
             case "dt":return require("./dt"); break;
+            case "enclave":return require("./enclave"); break;
             case "keyssi":return require("./keyssi"); break;
             case "mq":return require("./mq"); break;
             case "notifications":return require("./notifications"); break;
@@ -53335,7 +53740,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./persistence":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./persistence":"/home/runner/work/privatesky/privatesky/modules/opendsu/persistence/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
