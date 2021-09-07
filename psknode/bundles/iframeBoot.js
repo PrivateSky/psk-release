@@ -2460,12 +2460,8 @@ CommandsFactory.prototype.registerCommand(commandsNames.DELETE_OBJECT_FROM_QUEUE
 module.exports = new CommandsFactory();
 },{"./commandsNames":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/commandsNames.js","./db/DeleteRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/DeleteRecordCommand.js","./db/FilterCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/FilterCommand.js","./db/GetRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/GetRecordCommand.js","./db/InsertRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/InsertRecordCommand.js","./db/UpdateRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/UpdateRecordCommand.js","./queue/AddInQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/AddInQueueCommand.js","./queue/DeleteObjectFromQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/DeleteObjectFromQueueCommand.js","./queue/GetObjectFromQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/GetObjectFromQueueCommand.js","./queue/ListQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/ListQueueCommand.js","./queue/QueueSizeCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/QueueSizeCommand.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js":[function(require,module,exports){
 const getDefaultEnclave = (storageFolder) => {
-    if (typeof $$.defaultEnclave === "undefined") {
-        const DefaultEnclave = require("default-enclave");
-        $$.defaultEnclave = new DefaultEnclave(storageFolder)
-    }
-
-    return $$.defaultEnclave;
+    const DefaultEnclave = require("default-enclave");
+    return new DefaultEnclave(storageFolder)
 }
 
 module.exports = {
@@ -2635,16 +2631,28 @@ const createQueueSizeCommand = (params) => {
 
 module.exports = createQueueSizeCommand;
 },{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const config = require("../../config");
+const {headersMiddleware, responseModifierMiddleware, requestBodyJSONMiddleware} = require("../../utils/middlewares");
+
 function DefaultEnclave(server) {
-    const { headersMiddleware, responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
+    const {
+        headersMiddleware,
+        responseModifierMiddleware,
+        requestBodyJSONMiddleware,
+        bodyReaderMiddleware
+    } = require('../../utils/middlewares');
     const domains = [];
     const path = require("path");
     const fs = require("fs");
+    const openDSU = require("opendsu");
+    const w3cDID = openDSU.loadAPI("w3cdid");
+    const crypto = openDSU.loadAPI("crypto");
+
     const storageFolder = path.join(server.rootFolder, "enclave");
     try {
         fs.mkdirSync(storageFolder, {recursive: true})
-    }catch (e) {
+    } catch (e) {
         console.log(`Failed to create folder ${storageFolder}`, e);
     }
 
@@ -2653,21 +2661,65 @@ function DefaultEnclave(server) {
         next();
     }
 
-    function runEnclaveCommand(request, response) {
+    function domainIsConfigured(request, response) {
         const domainName = request.params.domain;
         if (domains.indexOf(domainName) === -1) {
             console.log(`Caught an request to the enclave for domain ${domainName}. Looks like the domain doesn't have enclave component enabled.`);
             response.statusCode = 405;
             response.end();
+            return false;
+        }
+        return true;
+    }
+
+    function runEnclaveEncryptedCommand(request, response) {
+        if (!domainIsConfigured(request, response)) {
             return;
         }
 
+        const enclaveDID = request.params.enclaveDID;
+
+        w3cDID.resolveDID(enclaveDID, (err, didDocument) => {
+            if (err) {
+                response.statusCode = 500;
+                response.end();
+                return;
+            }
+
+            didDocument.getPublicKey("raw", (err, publicKey) => {
+                if (err) {
+                    response.statusCode = 500;
+                    response.end();
+                    return;
+                }
+
+                const encryptionKey = crypto.deriveEncryptionKey(publicKey);
+                let decryptedCommand;
+                try {
+                    decryptedCommand = crypto.decrypt(request.body, encryptionKey);
+                    decryptedCommand = JSON.parse(decryptedCommand.toString());
+                } catch (e) {
+                    response.statusCode = 500;
+                    response.end();
+                    return;
+                }
+
+                request.body = decryptedCommand;
+                runEnclaveCommand(request, response);
+            })
+        })
+    }
+
+    function runEnclaveCommand(request, response) {
+        if (!domainIsConfigured(request, response)) {
+            return;
+        }
         response.setHeader("Content-Type", "application/json");
 
         const CommandFactory = require("./commands/CommandsFactory")
-        request.body.params.storageFolder = storageFolder;
+        request.body.params.storageFolder = path.join(storageFolder, crypto.encodeBase58(Buffer.from(request.params.enclaveDID)));
         const command = CommandFactory.createCommand(request.body.commandName, request.body.params);
-        command.execute((err, data)=>{
+        command.execute((err, data) => {
             if (err) {
                 console.log(err);
                 return response.send(500, `Failed to execute command ${request.body.commandName}`);
@@ -2697,13 +2749,21 @@ function DefaultEnclave(server) {
     server.use(`/runEnclaveCommand/:domain/*`, requestBodyJSONMiddleware);
     server.use(`/runEnclaveCommand/:domain/*`, requestServerMiddleware);
     server.put("/runEnclaveCommand/:domain/:enclaveDID", runEnclaveCommand);
+
+    server.use(`/runEnclaveEncryptedCommand/:domain/*`, headersMiddleware);
+    server.use(`/runEnclaveEncryptedCommand/:domain/*`, responseModifierMiddleware);
+    server.use(`/runEnclaveEncryptedCommand/:domain/*`, bodyReaderMiddleware);
+    server.use(`/runEnclaveEncryptedCommand/:domain/*`, requestServerMiddleware);
+    server.put("/runEnclaveEncryptedCommand/:domain/:enclaveDID", runEnclaveEncryptedCommand);
 }
 
 module.exports = {
     DefaultEnclave
 };
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./commands/CommandsFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/CommandsFactory.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./commands/CommandsFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/CommandsFactory.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
 function sendResult(resHandler, resultStream) {
     resHandler.statusCode = 200;
     resultStream.pipe(resHandler);
@@ -6377,6 +6437,7 @@ module.exports.requests = require("./requests");
 module.exports.responseWrapper = require("./responseWrapper");
 module.exports.getMimeTypeFromExtension = require("./mimeType");
 },{"./mimeType":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/mimeType.js","./requests":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/requests.js","./responseWrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/responseWrapper.js","./streams":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/streams.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const responseWrapper = require('../responseWrapper');
 
 function requestBodyJSONMiddleware(request, response, next) {
@@ -6437,9 +6498,23 @@ function headersMiddleware(req, res, next) {
     next();
 }
 
-module.exports = { requestBodyJSONMiddleware, responseModifierMiddleware, headersMiddleware };
+function bodyReaderMiddleware(req, res, next) {
+    const data = [];
 
-},{"../responseWrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/responseWrapper.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/mimeType.js":[function(require,module,exports){
+    req.on('data', (chunk) => {
+        data.push(chunk);
+    });
+
+    req.on('end', () => {
+        req.body = Buffer.concat(data);
+        next();
+    });
+}
+module.exports = { requestBodyJSONMiddleware, responseModifierMiddleware, headersMiddleware , bodyReaderMiddleware};
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../responseWrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/responseWrapper.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/mimeType.js":[function(require,module,exports){
 const extensionsMimeTypes = {
     "aac": {
         name: "audio/aac",
@@ -19378,7 +19453,7 @@ function DefaultEnclave(rootFolder) {
     if (typeof rootFolder === "undefined") {
         throw Error("Root folder was not specified for DefaultEnclave");
     }
-    let db = new loki(path.join(rootFolder, DEFAULT_NAME), {
+    let db = new loki(rootFolder, {
         adapter: adapter,
         autoload: true,
         autoloadCallback: initialized.bind(this),
@@ -37181,149 +37256,46 @@ module.exports = {
 }
 
 },{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
-function APIHUBProxy(domain, enclaveDID) {
-    const http = require("opendsu").loadAPI("http");
-    const system = require("opendsu").loadAPI("system");
-    const url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${enclaveDID}`;
+const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
+const {createCommandObject} = require("./lib/createCommandObject");
 
-    this.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
-        const command = {
-            commandName: "insertRecord",
-            params: {
-                forDID: forDID,
-                tableName: table,
-                pk: pk,
-                plainRecord,
-                encryptedRecord
-            }
+function APIHUBProxy(domain,did) {
+    const openDSU = require("opendsu");
+    const http = openDSU.loadAPI("http");
+    const system = openDSU.loadAPI("system");
+    const w3cDID = openDSU.loadAPI("w3cdid");
+    const ProxyMixin = require("./ProxyMixin");
+    ProxyMixin(this);
+    let didDocument;
+    let url;
+    const init = async ()=>{
+        if (typeof did === "undefined") {
+            didDocument = await $$.promisify(w3cDID.createIdentity)("key");
+        } else {
+            didDocument = await $$.promisify(w3cDID.resolveDID)(did);
         }
+        did = didDocument.getIdentifier();
+        url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+        this.finishInitialisation();
+    }
 
+    this.getDID = (callback) => {
+        callback(undefined, did);
+    }
+
+    this.__putCommandObject = (commandName, ...args) => {
+        const callback = args.pop();
+        const command = createCommandObject(commandName, ...args);
         http.doPut(url, JSON.stringify(command), callback);
     }
 
-    this.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
-        const command = {
-            commandName: "updateRecord",
-            params: {
-                forDID: forDID,
-                tableName: table,
-                pk: pk,
-                plainRecord,
-                encryptedRecord
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-
-    this.getRecord = (forDID, table, pk, callback) => {
-        const command = {
-            commandName: "getRecord",
-            params: {
-                forDID: forDID,
-                tableName: table,
-                pk: pk
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    };
-
-    this.filter = (forDID, table, filter, sort, limit, callback) => {
-        const command = {
-            commandName: "updateRecord",
-            params: {
-                forDID: forDID,
-                tableName: table,
-                query: filter,
-                sort,
-                limit
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-
-    this.deleteRecord = (forDID, table, pk, callback) => {
-        const command = {
-            commandName: "deleteRecord",
-            params: {
-                forDID: forDID,
-                tableName: table,
-                pk: pk
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-
-
-    this.addInQueue = (forDID, queueName, encryptedObject, callback) => {
-        const command = {
-            commandName: "addInQueue",
-            params: {
-                forDID: forDID,
-                queueName: queueName,
-                encryptedObject
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-    this.queueSize = (forDID, queueName, callback) => {
-        const command = {
-            commandName: "queueSize",
-            params: {
-                forDID: forDID,
-                queueName: queueName
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-
-    this.listQueue = (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) => {
-        const command = {
-            commandName: "listQueue",
-            params: {
-                forDID: forDID,
-                queueName: queueName,
-                sortAfterInsertTime,
-                onlyFirstN
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    };
-
-    this.getObjectFromQueue = (forDID, queueName, hash, callback) => {
-        const command = {
-            commandName: "getObjectFromQueue",
-            params: {
-                forDID: forDID,
-                queueName: queueName,
-                hash
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
-    this.deleteObjectFromQueue = (forDID, queueName, hash, callback) => {
-        const command = {
-            commandName: "deleteObjectFromQueue",
-            params: {
-                forDID: forDID,
-                queueName: queueName,
-                hash
-            }
-        }
-
-        http.doPut(url, JSON.stringify(command), callback);
-    }
+    const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    bindAutoPendingFunctions(this, "__putCommandObject");
+    init();
 }
 
 module.exports = APIHUBProxy;
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 function Enclave_Mixin(target) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
@@ -37554,7 +37526,58 @@ function Enclave_Mixin(target) {
 }
 
 module.exports = Enclave_Mixin;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
+(function (Buffer){(function (){
+const {createCommandObject} = require("./lib/createCommandObject");
+
+function HighSecurityProxy(domain, did) {
+    const openDSU = require("opendsu");
+    const system = openDSU.loadAPI("system");
+    const w3cDID = openDSU.loadAPI("w3cdid");
+    const http = openDSU.loadAPI("http");
+    const crypto = openDSU.loadAPI("crypto");
+    let didDocument;
+    const ProxyMixin = require("./ProxyMixin");
+    ProxyMixin(this);
+
+    const init = async () => {
+        if (typeof did === "undefined") {
+            didDocument = await $$.promisify(w3cDID.createIdentity)("key");
+        } else {
+            didDocument = await $$.promisify(w3cDID.resolveDID)(did);
+        }
+        did = didDocument.getIdentifier();
+        this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
+        this.finishInitialisation();
+    }
+
+    this.getDID = (callback) => {
+        callback(undefined, did);
+    }
+
+    this.__putCommandObject = (commandName, ...args) => {
+        const callback = args.pop();
+        const command = createCommandObject(commandName, ...args);
+        didDocument.getPublicKey("raw", (err, publicKey)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            const encryptionKey = crypto.deriveEncryptionKey(publicKey);
+            const encryptedCommand = crypto.encrypt(Buffer.from(JSON.stringify(command)), encryptionKey);
+            http.doPut(this.url, encryptedCommand, callback);
+        })
+    }
+
+    const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
+    bindAutoPendingFunctions(this, "__putCommandObject");
+    init();
+}
+
+module.exports = HighSecurityProxy;
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
 function MemoryEnclave() {
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this);
@@ -37571,7 +37594,98 @@ function MemoryEnclave() {
 }
 
 module.exports = MemoryEnclave;
-},{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
+const {createOpenDSUErrorWrapper} = require("../../error");
+
+function ProxyMixin(target) {
+    const openDSU = require("opendsu");
+    const commandNames = require("./lib/commandsNames");
+    const {createCommandObject} = require("./lib/createCommandObject");
+
+    target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, encryptedRecord, callback);
+    }
+
+    target.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        target.__putCommandObject(commandNames.UPDATE_RECORD, forDID, table, pk, plainRecord, encryptedRecord, callback);
+    }
+
+    target.getRecord = (forDID, table, pk, callback) => {
+        target.__putCommandObject(commandNames.GET_RECORD, forDID, table, pk, (err, record) => {
+            if (err) {
+                return createOpenDSUErrorWrapper(`Failed to get record with pk ${pk}`, err);
+            }
+
+            try {
+                record = JSON.parse(record);
+            } catch (e) {
+                return createOpenDSUErrorWrapper(`Failed to parse record with pk ${pk}`, e);
+            }
+
+            callback(undefined, record);
+        });
+    };
+
+    target.filter = (forDID, table, filter, sort, limit, callback) => {
+        if (typeof filter === "function") {
+            callback = filter;
+            filter = undefined;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof sort === "function") {
+            callback = sort;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof limit === "function") {
+            callback = limit;
+            limit = undefined;
+        }
+        target.__putCommandObject(commandNames.FILTER_RECORDS, forDID, table, filter, sort, limit, (err, records) => {
+            if (err) {
+                return createOpenDSUErrorWrapper(`Failed to filter records in table ${table}`, err);
+            }
+
+            try {
+                records = JSON.parse(records);
+            } catch (e) {
+                return createOpenDSUErrorWrapper(`Failed to parse record `, e);
+            }
+
+            callback(undefined, records);
+        });
+    }
+
+    target.deleteRecord = (forDID, table, pk, callback) => {
+        target.__putCommandObject(commandNames.DELETE_RECORD, forDID, table, pk, callback);
+    }
+
+    target.addInQueue = (forDID, queueName, encryptedObject, callback) => {
+        target.__putCommandObject(commandNames.ADD_IN_QUEUE, forDID, queueName, encryptedObject, callback);
+    }
+
+    target.queueSize = (forDID, queueName, callback) => {
+        target.__putCommandObject(commandNames.QUEUE_SIZE, forDID, queueName, callback);
+    }
+
+    target.listQueue = (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) => {
+        target.__putCommandObject(commandNames.LIST_QUEUE, forDID, queueName, sortAfterInsertTime, onlyFirstN, callback);
+    };
+
+    target.getObjectFromQueue = (forDID, queueName, hash, callback) => {
+        target.__putCommandObject(commandNames.GET_OBJECT_FROM_QUEUE, forDID, queueName, hash, callback);
+    }
+
+    target.deleteObjectFromQueue = (forDID, queueName, hash, callback) => {
+        target.__putCommandObject(commandNames.DELETE_OBJECT_FROM_QUEUE, forDID, queueName, hash, callback);
+    }
+}
+
+module.exports = ProxyMixin;
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave() {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -37609,8 +37723,64 @@ function WalletDBEnclave() {
 }
 
 module.exports = WalletDBEnclave;
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/commandsNames.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
+const commandNames = require("./commandsNames");
+const createCommandObject = (commandName, ...args) => {
+    let command = {
+        commandName,
+        params: {
+            forDID: args[0]
+        }
+    };
+    switch (commandName) {
+        case commandNames.INSERT_RECORD:
+        case commandNames.UPDATE_RECORD:
+            command.params.tableName = args[1];
+            command.params.pk = args[2];
+            command.params.plainRecord = args[3];
+            command.params.encryptedRecord = args[4];
+            return command;
+        case commandNames.GET_RECORD:
+        case commandNames.DELETE_RECORD:
+            command.params.tableName = args[1];
+            command.params.pk = args[2];
+            return command;
+        case commandNames.FILTER_RECORDS:
+            command.params.tableName = args[1];
+            command.params.query = args[2];
+            command.params.sort = args[3];
+            command.params.limit = args[4];
+            return command;
+        case commandNames.ADD_IN_QUEUE:
+            command.params.queueName = args[1];
+            command.params.encryptedObject = args[2];
+            return command;
+        case commandNames.LIST_QUEUE:
+            command.params.queueName = args[1];
+            command.params.sortAfterInsertTime = args[2];
+            command.params.onlyFirstN = args[3];
+            return command;
+        case commandNames.QUEUE_SIZE:
+            command.params.queueName = args[1];
+            return command;
+        case commandNames.GET_OBJECT_FROM_QUEUE:
+        case commandNames.DELETE_OBJECT_FROM_QUEUE:
+            command.params.queueName = args[1];
+            command.params.hash = args[2];
+            return command;
+        default:
+            throw Error(`Invalid command <${commandName}>`)
+    }
+}
+
+module.exports = {
+    createCommandObject
+}
+},{"./commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
 const MemoryEnclave = require("./impl/MemoryEnclave");
+const APIHUBProxy = require("./impl/APIHUBProxy");
 
 function initialiseWalletDBEnclave() {
     const WalletDBEnclave = require("./impl/WalletDBEnclave");
@@ -37622,12 +37792,13 @@ function initialiseMemoryEnclave() {
     return new MemoryEnclave();
 }
 
-function initialiseAPIHUBProxy(adminDID) {
+function initialiseAPIHUBProxy(domain, did) {
     const APIHUBProxy = require("./impl/APIHUBProxy");
-    return new APIHUBProxy();}
+    return new APIHUBProxy(domain, did);}
 
-function initialiseHighSecurityProxy(adminDID) {
-    throw Error("Not implemented");
+function initialiseHighSecurityProxy(domain, did) {
+    const HighSecurityProxy = require("./impl/HighSecurityProxy");
+    return new HighSecurityProxy(domain, did)
 }
 
 function connectEnclave(forDID, enclaveDID, ...args) {
@@ -37642,7 +37813,7 @@ module.exports = {
     connectEnclave
 }
 
-},{"./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -41302,7 +41473,7 @@ function getPath(){
 }
 function getBaseURL(){
     const baseURL = require("../utils/getBaseURL");
-    return baseURL;
+    return baseURL();
 }
 module.exports = {
     getEnvironmentVariable,
@@ -42853,6 +43024,9 @@ function KeyDID_Document(isInitialisation, publicKey) {
 
     this.getPublicKey = (format, callback) => {
         let pubKey = getRawPublicKey();
+        if (format === "raw") {
+            return callback(undefined, pubKey);
+        }
         try {
             pubKey = crypto.convertPublicKey(pubKey, format);
         } catch (e) {
