@@ -2486,7 +2486,296 @@ function DebugLogger(server) {
 
 module.exports = DebugLogger;
 
-},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
+},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/CommandsFactory.js":[function(require,module,exports){
+const commands = {};
+const commandsNames = require("./commandsNames");
+//db commands
+const createInsertRecordCommand = require("./db/InsertRecordCommand");
+const createUpdateRecordCommand = require("./db/UpdateRecordCommand");
+const createGetRecordCommand = require("./db/GetRecordCommand");
+const createDeleteRecordCommand = require("./db/DeleteRecordCommand");
+const createFilterCommand = require("./db/FilterCommand");
+
+//queue commands
+const createAddInQueueCommand = require("./queue/AddInQueueCommand");
+const createQueueSizeCommand = require("./queue/QueueSizeCommand");
+const createListQueueCommand = require("./queue/ListQueueCommand");
+const createGetObjectFromQueueCommand = require("./queue/GetObjectFromQueueCommand");
+const createDeleteObjectFromQueueCommand = require("./queue/DeleteObjectFromQueueCommand");
+
+function CommandsFactory() {
+
+}
+
+CommandsFactory.prototype.registerCommand = (commandName, command) => {
+    commands[commandName] = command;
+};
+
+CommandsFactory.prototype.createCommand = (commandName, params) => {
+    return commands[commandName](params);
+};
+
+//Registering db commands
+CommandsFactory.prototype.registerCommand(commandsNames.INSERT_RECORD, createInsertRecordCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.UPDATE_RECORD, createUpdateRecordCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.GET_RECORD, createGetRecordCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.DELETE_RECORD, createDeleteRecordCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.FILTER_RECORDS, createFilterCommand);
+
+//Registering queue commands
+CommandsFactory.prototype.registerCommand(commandsNames.ADD_IN_QUEUE, createAddInQueueCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.QUEUE_SIZE, createQueueSizeCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.LIST_QUEUE, createListQueueCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.GET_OBJECT_FROM_QUEUE, createGetObjectFromQueueCommand);
+CommandsFactory.prototype.registerCommand(commandsNames.DELETE_OBJECT_FROM_QUEUE, createDeleteObjectFromQueueCommand);
+
+module.exports = new CommandsFactory();
+},{"./commandsNames":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/commandsNames.js","./db/DeleteRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/DeleteRecordCommand.js","./db/FilterCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/FilterCommand.js","./db/GetRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/GetRecordCommand.js","./db/InsertRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/InsertRecordCommand.js","./db/UpdateRecordCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/UpdateRecordCommand.js","./queue/AddInQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/AddInQueueCommand.js","./queue/DeleteObjectFromQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/DeleteObjectFromQueueCommand.js","./queue/GetObjectFromQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/GetObjectFromQueueCommand.js","./queue/ListQueueCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/ListQueueCommand.js","./queue/QueueSizeCommand":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/QueueSizeCommand.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js":[function(require,module,exports){
+const getDefaultEnclave = (storageFolder) => {
+    if (typeof $$.defaultEnclave === "undefined") {
+        const DefaultEnclave = require("default-enclave");
+        $$.defaultEnclave = new DefaultEnclave(storageFolder)
+    }
+
+    return $$.defaultEnclave;
+}
+
+module.exports = {
+    getDefaultEnclave
+}
+},{"default-enclave":"default-enclave"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/commandsNames.js":[function(require,module,exports){
+module.exports = {
+    INSERT_RECORD: "insertRecord",
+    UPDATE_RECORD: "updateRecord",
+    GET_RECORD: "getRecord",
+    DELETE_RECORD: "deleteRecord",
+    FILTER_RECORDS: "filter",
+    ADD_IN_QUEUE: "addInQueue",
+    QUEUE_SIZE: "queueSize",
+    LIST_QUEUE: "listQueue",
+    GET_OBJECT_FROM_QUEUE: "getObjectFromQueue",
+    DELETE_OBJECT_FROM_QUEUE: "deleteObjectFromQueue",
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/DeleteRecordCommand.js":[function(require,module,exports){
+function DeleteRecordCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, tableName, pk} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.deleteRecord(forDID, tableName, pk, callback);
+    }
+}
+
+const createDeleteRecordCommand = (params) => {
+    return new DeleteRecordCommand(params);
+}
+
+module.exports = createDeleteRecordCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/FilterCommand.js":[function(require,module,exports){
+function FilterCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, tableName, query, sort, limit} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.filter(forDID, tableName, query, sort, limit, callback);
+    }
+}
+
+const createFilterCommand = (params) => {
+    return new FilterCommand(params);
+}
+
+module.exports = createFilterCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/GetRecordCommand.js":[function(require,module,exports){
+function GetRecordCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, tableName, pk} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.getRecord(forDID, tableName, pk, callback);
+    }
+}
+
+const createGetRecordCommand = (params) => {
+    return new GetRecordCommand(params);
+}
+
+module.exports = createGetRecordCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/InsertRecordCommand.js":[function(require,module,exports){
+function InsertRecordCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, tableName, pk, plainRecord, encryptedRecord} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.insertRecord(forDID, tableName, pk, plainRecord, callback);
+    }
+}
+
+const createInsertRecordCommand = (params) => {
+    return new InsertRecordCommand(params);
+}
+
+module.exports = createInsertRecordCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/db/UpdateRecordCommand.js":[function(require,module,exports){
+function UpdateRecordCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, tableName, pk, plainRecord, encryptedRecord} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.updateRecord(forDID, tableName, pk, plainRecord, callback);
+    }
+}
+
+const createUpdateRecordCommand = (params) => {
+    return new UpdateRecordCommand(params);
+}
+
+module.exports = createUpdateRecordCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/AddInQueueCommand.js":[function(require,module,exports){
+function AddInQueueCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, queueName, encryptedObject} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.addInQueue(forDID, queueName, encryptedObject, callback);
+    }
+}
+
+const createAddInQueueCommand = (params) => {
+    return new AddInQueueCommand(params);
+}
+
+module.exports = createAddInQueueCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/DeleteObjectFromQueueCommand.js":[function(require,module,exports){
+function DeleteObjectFromQueueCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, queueName, hash} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.getObjectFromQueue(forDID, queueName, hash, callback);
+    }
+}
+
+const createDeleteObjectFromQueueCommand = (params) => {
+    return new DeleteObjectFromQueueCommand(params);
+}
+
+module.exports = createDeleteObjectFromQueueCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/GetObjectFromQueueCommand.js":[function(require,module,exports){
+function GetObjectFromQueueCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, queueName, hash} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.getObjectFromQueue(forDID, queueName, hash, callback);
+    }
+}
+
+const createGetObjectFromQueueCommand = (params) => {
+    return new GetObjectFromQueueCommand(params);
+}
+
+module.exports = createGetObjectFromQueueCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/ListQueueCommand.js":[function(require,module,exports){
+function ListQueueCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, queueName, sortAfterInsertTime, onlyFirstN} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.listQueue(forDID, queueName,  sortAfterInsertTime, onlyFirstN, callback);
+    }
+}
+
+const createListQueueCommand = (params) => {
+    return new ListQueueCommand(params);
+}
+
+module.exports = createListQueueCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/queue/QueueSizeCommand.js":[function(require,module,exports){
+function QueueSizeCommand(params) {
+    const defaultEnclave = require("../DefaultEnclave").getDefaultEnclave(params.storageFolder);
+    const {forDID, queueName} = params;
+
+    this.execute = (callback) => {
+        defaultEnclave.queueSize(forDID, queueName, callback);
+    }
+}
+
+const createQueueSizeCommand = (params) => {
+    return new QueueSizeCommand(params);
+}
+
+module.exports = createQueueSizeCommand;
+},{"../DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
+const config = require("../../config");
+function DefaultEnclave(server) {
+    const { headersMiddleware, responseModifierMiddleware, requestBodyJSONMiddleware } = require('../../utils/middlewares');
+    const domains = [];
+    const path = require("path");
+    const fs = require("fs");
+    const storageFolder = path.join(server.rootFolder, "enclave");
+    try {
+        fs.mkdirSync(storageFolder, {recursive: true})
+    }catch (e) {
+        console.log(`Failed to create folder ${storageFolder}`, e);
+    }
+
+    function requestServerMiddleware(request, response, next) {
+        request.server = server;
+        next();
+    }
+
+    function runEnclaveCommand(request, response) {
+        const domainName = request.params.domain;
+        if (domains.indexOf(domainName) === -1) {
+            console.log(`Caught an request to the enclave for domain ${domainName}. Looks like the domain doesn't have enclave component enabled.`);
+            response.statusCode = 405;
+            response.end();
+            return;
+        }
+
+        response.setHeader("Content-Type", "application/json");
+
+        const CommandFactory = require("./commands/CommandsFactory")
+        request.body.params.storageFolder = storageFolder;
+        const command = CommandFactory.createCommand(request.body.commandName, request.body.params);
+        command.execute((err, data)=>{
+            if (err) {
+                console.log(err);
+                return response.send(500, `Failed to execute command ${request.body.commandName}`);
+            }
+
+            return response.send(200, data);
+        })
+    }
+
+    function getConfiguredDomains() {
+        let confDomains = typeof config.getConfiguredDomains !== "undefined" ? config.getConfiguredDomains() : ["default"];
+
+        for (let i = 0; i < confDomains.length; i++) {
+            let domain = confDomains[i];
+            let domainConfig = config.getDomainConfig(domain);
+
+            if (domainConfig && domainConfig.enable && domainConfig.enable.indexOf("enclave") !== -1) {
+                console.log(`Successfully register enclave endpoints for domain < ${domain} >.`);
+                domains.push(domain);
+            }
+        }
+    }
+
+    getConfiguredDomains();
+    server.use(`/runEnclaveCommand/:domain/*`, headersMiddleware);
+    server.use(`/runEnclaveCommand/:domain/*`, responseModifierMiddleware);
+    server.use(`/runEnclaveCommand/:domain/*`, requestBodyJSONMiddleware);
+    server.use(`/runEnclaveCommand/:domain/*`, requestServerMiddleware);
+    server.put("/runEnclaveCommand/:domain/:enclaveDID", runEnclaveCommand);
+}
+
+module.exports = {
+    DefaultEnclave
+};
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./commands/CommandsFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/CommandsFactory.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
 function sendResult(resHandler, resultStream) {
     resHandler.statusCode = 200;
     resultStream.pipe(resHandler);
@@ -4049,11 +4338,15 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeComponents": ["config", "mq", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "staticServer"],
+    "activeComponents": ["config", "mq", "enclave", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "staticServer"],
     "componentsConfig": {
         "mq":{
             "module": "./components/mqHub",
             "function": "MQHub",
+        },
+        "enclave":{
+            "module": "./components/enclave",
+            "function": "DefaultEnclave",
         },
         "messaging": {
             "module": "./components/mqManager",
@@ -4146,6 +4439,7 @@ const defaultConfig = {
         "/files",
         "/notifications",
         "/mq",
+        "/enclave",
         "/logs"
     ],
     "iframeHandlerDsuBootPath": "./psknode/bundles/nodeBoot.js"
@@ -33405,8 +33699,9 @@ module.exports = {
 }
 
 },{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
-function SingleDSUStorageStrategy(){
+function MemoryStorageStrategy(){
     const ObservableMixin = require("../../utils/ObservableMixin");
+    const operators = require("./operators");
     let volatileMemory = {}
     let self = this
     let storageDSU, afterInitialisation;
@@ -33437,6 +33732,63 @@ function SingleDSUStorageStrategy(){
         callback(undefined,result);
     };
 
+    this.filter = function (tableName, conditionsArray, sort, limit, callback) {
+        if (typeof conditionsArray === "function") {
+            callback = conditionsArray;
+            conditionsArray = undefined;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof conditionsArray === "undefined") {
+            conditionsArray = "__timestamp > 0";
+        }
+
+        if (typeof conditionsArray === "string") {
+            conditionsArray = [conditionsArray];
+        } else if (!Array.isArray(conditionsArray)) {
+            return callback(Error(`Condition argument of filter function need to be string or array of strings`));
+        }
+
+        if (typeof sort === "function") {
+            callback = sort;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof limit === "function") {
+            callback = limit;
+            limit = undefined;
+        }
+
+        if (typeof limit === "undefined") {
+            limit = Infinity;
+        }
+
+        if (typeof sort === "undefined") {
+            sort = "asc";
+        }
+
+        const tbl = getTable(tableName);
+        const records = Object.values(tbl);
+        const filteredRecords = [];
+        let Query = require("./Query");
+        let query = new Query(conditionsArray);
+        const conditions = query.getConditions();
+        records.forEach(record => {
+            let shouldBeAdded = true;
+            for (let i = 0; i < conditions.length; i++) {
+                if (!operators[conditions[i][1]](record[conditions[i][0]], conditions[i][2])) {
+                    shouldBeAdded = false;
+                }
+            }
+            if (shouldBeAdded && filteredRecords.length < limit) {
+                filteredRecords.push(record);
+            }
+        })
+        query.sortValues(filteredRecords, sort);
+        callback(undefined, filteredRecords);
+    }
     /*
       Insert a record, return error if already exists
     */
@@ -33540,8 +33892,8 @@ function SingleDSUStorageStrategy(){
     })
 }
 
-module.exports = SingleDSUStorageStrategy;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+module.exports = MemoryStorageStrategy;
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
 
 function MultiUserStorageStrategy(){
 
@@ -33558,7 +33910,7 @@ module.exports = MultiUserStorageStrategy;
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
 function Query(queryArray) {
     let conditions = [];
-
+    const operators = require("./operators");
     function queryParser(query) {
         query.forEach(fieldQuery => {
             const splitQuery = fieldQuery.split(" ");
@@ -33623,7 +33975,7 @@ function Query(queryArray) {
                     return;
                 }
             }
-            if(!record.__deleted){
+            if (!record.__deleted) {
                 filteredRecords.push(record);
             }
         }
@@ -33646,47 +33998,9 @@ function Query(queryArray) {
         return conditions[0][0];
     };
 
-    const operators = {
-        "<": function (x, y) {
-            return x < y
-        },
-        "<=": function (x, y) {
-            return x <= y
-        },
-        ">": function (x, y) {
-            return x > y
-        },
-        ">=": function (x, y) {
-            return x >= y
-        },
-        "==": function (x, y) {
-            return x == y
-        },
-        "!=": function (x, y) {
-            if (y === "undefined") {
-                y = undefined;
-            }
-            return x != y;
-        },
-        "like": function (str, regex) {
-            if (typeof regex === "string") {
-                let splitRegex = regex.split("/");
-                if (splitRegex[0] === '') {
-                    splitRegex = splitRegex.slice(1);
-                }
-                let flag = undefined;
-                if (splitRegex.length > 1) {
-                    flag = splitRegex.pop();
-                }
-                if (flag === '') {
-                    flag = undefined;
-                }
-                regex = new RegExp(splitRegex.join('/'), flag);
-            }
-            // return regex.test(str);
-            return str.match(regex);
-        }
-    };
+    this.getConditions = () => {
+        return conditions;
+    }
 
     function getCompareFunction(sortOrder) {
         if (sortOrder === "asc" || sortOrder === "ascending") {
@@ -33726,7 +34040,7 @@ function Query(queryArray) {
 }
 
 module.exports = Query;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
+},{"./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const ObservableMixin = require("../../utils/ObservableMixin");
 
@@ -34250,7 +34564,50 @@ function SingleDSUStorageStrategy() {
 module.exports.SingleDSUStorageStrategy = SingleDSUStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
+module.exports = {
+    "<": function (x, y) {
+        return x < y
+    },
+    "<=": function (x, y) {
+        return x <= y
+    },
+    ">": function (x, y) {
+        return x > y
+    },
+    ">=": function (x, y) {
+        return x >= y
+    },
+    "==": function (x, y) {
+        return x == y
+    },
+    "!=": function (x, y) {
+        if (y === "undefined") {
+            y = undefined;
+        }
+        return x != y;
+    },
+    "like": function (str, regex) {
+        if (typeof regex === "string") {
+            let splitRegex = regex.split("/");
+            if (splitRegex[0] === '') {
+                splitRegex = splitRegex.slice(1);
+            }
+            let flag = undefined;
+            if (splitRegex.length > 1) {
+                flag = splitRegex.pop();
+            }
+            if (flag === '') {
+                flag = undefined;
+            }
+            regex = new RegExp(splitRegex.join('/'), flag);
+        }
+        // return regex.test(str);
+        return str.match(regex);
+    }
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
@@ -36694,18 +37051,162 @@ module.exports = {
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
+function APIHUBProxy(domain, enclaveDID) {
+    const http = require("opendsu").loadAPI("http");
+    const system = require("opendsu").loadAPI("system");
+    const url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${enclaveDID}`;
 
+    this.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        const command = {
+            commandName: "insertRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk,
+                plainRecord,
+                encryptedRecord
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        const command = {
+            commandName: "updateRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk,
+                plainRecord,
+                encryptedRecord
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.getRecord = (forDID, table, pk, callback) => {
+        const command = {
+            commandName: "getRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    };
+
+    this.filter = (forDID, table, filter, sort, limit, callback) => {
+        const command = {
+            commandName: "updateRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                query: filter,
+                sort,
+                limit
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.deleteRecord = (forDID, table, pk, callback) => {
+        const command = {
+            commandName: "deleteRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+
+    this.addInQueue = (forDID, queueName, encryptedObject, callback) => {
+        const command = {
+            commandName: "addInQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                encryptedObject
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+    this.queueSize = (forDID, queueName, callback) => {
+        const command = {
+            commandName: "queueSize",
+            params: {
+                forDID: forDID,
+                queueName: queueName
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.listQueue = (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) => {
+        const command = {
+            commandName: "listQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                sortAfterInsertTime,
+                onlyFirstN
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    };
+
+    this.getObjectFromQueue = (forDID, queueName, hash, callback) => {
+        const command = {
+            commandName: "getObjectFromQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                hash
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+    this.deleteObjectFromQueue = (forDID, queueName, hash, callback) => {
+        const command = {
+            commandName: "deleteObjectFromQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                hash
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+}
+
+module.exports = APIHUBProxy;
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 function Enclave_Mixin(target) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
+    const crypto = openDSU.loadAPI("crypto")
+    const scAPI = openDSU.loadAPI("sc")
+    const w3cDID = openDSU.loadAPI("w3cdid")
     const KEY_SSIS_TABLE = "keyssis";
     const SEED_SSIS_TABLE = "seedssis";
     const DIDS_PRIVATE_KEYS = "dids_private";
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
-
-    let enclaveDID;
+    let did;
 
     const getPrivateInfoForDID = (did, callback) => {
         target.storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
@@ -36754,8 +37255,17 @@ function Enclave_Mixin(target) {
     };
 
 
-    target.getEnclaveDID = () => {
-
+    target.getDID = (callback) => {
+        if (did) {
+            return callback(undefined, did);
+        }
+        w3cDID.createIdentity("key", (err, _did)=>{
+            if (err) {
+                return callback(err);
+            }
+            did = _did;
+            callback(undefined, did);
+        });
     }
 
     target.insertRecord = (forDID, table, pk, encryptedObject, indexableFieldsNotEncrypted, callback) => {
@@ -36777,7 +37287,6 @@ function Enclave_Mixin(target) {
     target.deleteRecord = (forDID, table, pk, callback) => {
         target.storageDB.deleteRecord(table, pk, callback);
     }
-
 
     target.storeSeedSSI = (forDID, seedSSI, alias, callback) => {
         if (typeof seedSSI === "string") {
@@ -36857,11 +37366,23 @@ function Enclave_Mixin(target) {
     }
 
     target.signForDID = (forDID, didThatIsSigning, hash, callback) => {
-        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), (err, privateKey) => {
+        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), async (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
             }
-            didThatIsSigning.signImpl(privateKey, hash, callback);
+
+            let domain = didThatIsSigning.getDomain();
+            if (typeof domain === "undefined") {
+                try {
+                    domain = $$.promisify(scAPI.getVaultDomain)()
+                } catch (e) {
+                    return callback(e);
+                }
+            }
+            const keySSI = keySSISpace.createTemplateSeedSSI(domain);
+            const privateKey = privateKeys[privateKeys.length - 1];
+            keySSI.initialize(keySSI.getDLDomain(), privateKey);
+            crypto.sign(keySSI, hash, callback);
         });
     }
 
@@ -36908,10 +37429,11 @@ module.exports = Enclave_Mixin;
 function MemoryEnclave() {
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this);
-    const db = require("opendsu").loadAPI("db");
+    const openDSU = require("opendsu");
+    const db = openDSU.loadAPI("db");
     const init = () => {
         this.storageDB = db.getInMemoryDB();
-        setTimeout(() => {
+        setTimeout(async () => {
             this.dispatchEvent("initialised");
         })
     }
@@ -36924,21 +37446,12 @@ module.exports = MemoryEnclave;
 function WalletDBEnclave() {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
-    const keySSISpace = openDSU.loadAPI("keyssi")
     const scAPI = openDSU.loadAPI("sc");
-
     const DB_NAME = "walletdb_enclave";
-    const KEY_SSIS_TABLE = "keyssis";
-    const SEED_SSIS_TABLE = "seedssis";
-    const DIDS_PRIVATE_KEYS = "dids_private";
-    const DIDS_PUBLIC_KEYS = "dids_public";
 
     const EnclaveMixin = require("./Enclave_Mixin");
-
-
     EnclaveMixin(this);
 
-    let enclaveDID;
     const init = () => {
         scAPI.getMainDSU(async (err, mainDSU) => {
             if (err) {
@@ -36950,6 +37463,7 @@ function WalletDBEnclave() {
             } catch (e) {
                 throw createOpenDSUErrorWrapper(`Failed to get mainDSU's keySSI`, e);
             }
+
             this.storageDB = db.getWalletDB(keySSI, DB_NAME);
             this.storageDB.on("initialised", () => {
                 this.finishInitialisation();
@@ -36967,40 +37481,39 @@ function WalletDBEnclave() {
 
 module.exports = WalletDBEnclave;
 },{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
-const WalletDBEnclave = require("./impl/WalletDBEnclave");
+const MemoryEnclave = require("./impl/MemoryEnclave");
 
-function initialiseWalletDBEnclave(){
+function initialiseWalletDBEnclave() {
     const WalletDBEnclave = require("./impl/WalletDBEnclave");
     return new WalletDBEnclave();
 }
 
-function initialiseMemoryEnclave(){
+function initialiseMemoryEnclave() {
     const MemoryEnclave = require("./impl/MemoryEnclave");
     return new MemoryEnclave();
 }
 
-function initialiseAPIHUBEnclave(adminDID) {
+function initialiseAPIHUBProxy(adminDID) {
+    const APIHUBProxy = require("./impl/APIHUBProxy");
+    return new APIHUBProxy();}
+
+function initialiseHighSecurityProxy(adminDID) {
     throw Error("Not implemented");
 }
 
-
-function initialiseHighSecurityEnclave(adminDID){
-    throw Error("Not implemented");
-}
-
-function connectEnclave(forDID, enclaveDID, ...args){
+function connectEnclave(forDID, enclaveDID, ...args) {
     throw Error("Not implemented");
 }
 
 module.exports = {
     initialiseWalletDBEnclave,
     initialiseMemoryEnclave,
-    initialiseAPIHUBEnclave,
-    initialiseHighSecurityEnclave,
+    initialiseAPIHUBProxy,
+    initialiseHighSecurityProxy,
     connectEnclave
 }
 
-},{"./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -41315,6 +41828,8 @@ function W3CDID_Mixin(target) {
   target.getControllerKey = function (callback) {};
 
   target.getPublicKeys = function (callback) {};
+
+  target.getDomain = function () {}
 }
 
 module.exports = W3CDID_Mixin;
@@ -42103,6 +42618,7 @@ module.exports = {
 
 const OPENDSU_METHOD_NAME = "ssi";
 const KEY_SUBTYPE = "key";
+const SSI_KEY_SUBTYPE = "ssikey";
 const S_READ_SUBTYPE = "sread";
 const NAME_SUBTYPE = "name";
 const DEMO_METHOD_NAME = "demo";
@@ -42130,6 +42646,9 @@ function resolveDID(identifier, callback) {
     let method = tokens[1];
     if (tokens[1] === OPENDSU_METHOD_NAME) {
         method = tokens[2];
+        if(method === KEY_SUBTYPE){
+            method = SSI_KEY_SUBTYPE;
+        }
     }
     methodRegistry[method].resolve(tokens, callback);
 }
@@ -42140,11 +42659,12 @@ function registerDIDMethod(method, implementation) {
 
 
 registerDIDMethod(S_READ_SUBTYPE, require("./didssi/ssiMethods").create_SReadDID_Method());
-registerDIDMethod(KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
+registerDIDMethod(SSI_KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
 registerDIDMethod(NAME_SUBTYPE, require("./didssi/ssiMethods").create_NameDID_Method());
 
 registerDIDMethod(DEMO_METHOD_NAME, require("./demo/diddemo").create_demo_DIDMethod());
 registerDIDMethod(GROUP_METHOD_NAME, require("./didssi/ssiMethods").create_GroupDID_Method());
+registerDIDMethod(KEY_SUBTYPE, require("./w3cdids/didMethods").create_KeyDID_Method());
 
 
 module.exports = {
@@ -42153,7 +42673,7 @@ module.exports = {
     registerDIDMethod
 }
 
-},{"./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
+},{"./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
 
 
 function AliasDIDDocument(isInitialisation, alias, seedSSI){
@@ -42175,7 +42695,84 @@ module.exports = {
         new AliasDIDDocument(false, tokens)
     }
 };
-},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+function KeyDID_Document(isInitialisation, publicKey) {
+    let mixin = require("../W3CDID_Mixin");
+    mixin(this);
+    let privateKey;
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const crypto = openDSU.loadAPI("crypto");
+
+    const init = async () => {
+        if(isInitialisation){
+            let seedSSI = keySSISpace.createSeedSSI();
+            privateKey = seedSSI.getPrivateKey();
+            publicKey = crypto.encodeBase58(seedSSI.getPublicKey("raw"));
+        }
+    };
+
+    const getRawPublicKey = () => {
+        return crypto.decodeBase58(publicKey);
+    }
+
+    this.getPublicKey = (format, callback) => {
+        let pubKey = getRawPublicKey();
+        try {
+            pubKey = crypto.convertPublicKey(pubKey, format);
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to convert public key to ${format}`, e));
+        }
+
+        callback(undefined, pubKey);
+    };
+
+    this.getIdentifier = () => {
+        return `did:key:${publicKey}`;
+    };
+
+    this.getPrivateKeys = () => {
+        return [privateKey];
+    };
+
+    init();
+}
+
+module.exports = {
+    initiateDIDDocument: function (seedSSI) {
+        return new KeyDID_Document(true, seedSSI)
+    },
+    createDIDDocument: function (tokens) {
+        return new KeyDID_Document(false, tokens[2]);
+    }
+};
+
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
+function KeyDID_Method() {
+    let KeyDIDDocument = require("./KeyDID_Document");
+    this.create = function (callback) {
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument();
+        const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+        securityContext.registerDID(keyDIDDocument, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`failed to register did ${keyDIDDocument.getIdentifier()} in security context`, err));
+            }
+
+            callback(null, keyDIDDocument);
+        })
+    }
+
+    this.resolve = function (tokens, callback) {
+        callback(null, KeyDIDDocument.createDIDDocument(tokens))
+    }
+}
+
+module.exports = {
+    create_KeyDID_Method() {
+        return new KeyDID_Method();
+    }
+}
+},{"./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
 module.exports = () => {
     const worker_threads = "worker_threads";
     const { parentPort } = require(worker_threads);
@@ -52168,6 +52765,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig }, callback) {
 	require('./components/keySsiNotifications');
 	require('./components/debugLogger');
 	require('./components/mqHub');
+	require('./components/enclave');
 	//end
 
 	const port = listeningPort || 8080;
@@ -52417,7 +53015,7 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 
-},{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
@@ -52938,212 +53536,244 @@ const loki = require("./lib/lokijs/src/lokijs.js");
 const lfsa = require("./lib/lokijs/src/loki-fs-structured-adapter.js");
 
 const adapter = new lfsa();
-const defaultDBName = "defaultEnclaveDB"
-const defaultTableName = "defaultEnclaveTable"
-const defaultSaveInterval = 10000; // milliseconds
 let bindAutoPendingFunctions = require("../opendsu/utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
 let filterOperationsMap = {
-  "===": "$eq",
-  "!==": "$ne",
-  "==": "$aeq",
-// Equality in time of $dteq
-  ">": "$jgt",
-  ">=": "$jgte",
-  "<": "$jlt",
-  "<=": "$jlte",
-  "between": "$jbetween",
-  "regex": "$regex"
+    "!=": "$ne",
+    "==": "$aeq",
+    ">": "$jgt",
+    ">=": "$jgte",
+    "<": "$jlt",
+    "<=": "$jlte",
+    "like": "$regex"
 }
 
-function EnclaveDB(dbName, autoSaveInterval) {
-  require("opendsu"); // for error wrapper
-
-  let db = new loki(dbName || defaultDBName, {
-    adapter: adapter,
-    autoload: true,
-    autoloadCallback: initialized.bind(this),
-    autosave: true,
-    autosaveInterval: autoSaveInterval || defaultSaveInterval
-  })
-
-  this.count = function (tableName, callback) {
-    let table = db.getCollection(tableName);
-    if (!table) {
-      return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+function DefaultEnclave(rootFolder) {
+    require("opendsu"); // for error wrapper
+    const DEFAULT_NAME = "defaultEnclave";
+    const path = require("path");
+    const AUTOSAVE_INTERVAL = 10000;
+    if (typeof rootFolder === "undefined") {
+        throw Error("Root folder was not specified for DefaultEnclave");
     }
-    let result;
-    try {
-      result = table.count();
-    } catch (err) {
-      return callback(createOpenDSUErrorWrapper(`Could not count on ${tableName}`, err))
-    }
+    let db = new loki(path.join(rootFolder, DEFAULT_NAME), {
+        adapter: adapter,
+        autoload: true,
+        autoloadCallback: initialized.bind(this),
+        autosave: true,
+        autosaveInterval: AUTOSAVE_INTERVAL
+    });
 
-    callback(null, result)
-  }
+    this.count = function (tableName, callback) {
+        let table = db.getCollection(tableName);
+        if (!table) {
+            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+        }
+        let result;
+        try {
+            result = table.count();
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(`Could not count on ${tableName}`, err))
+        }
 
-  this.getCollections = function () {
-    return db.listCollections().map(collection => {
-      return collection.name
-    })
-  }
-
-  this.insertRecord = function (forDID, tableName, pk, record, callback) {
-    let table = db.getCollection(tableName) || db.addCollection(tableName);
-    try {
-      table.insert({"pk": pk, "value": record, "did": forDID});
-    } catch (err) {
-      return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err))
-    }
-    callback(null, true);
-  }
-
-  this.deleteRecord = function (forDID, tableName, pk, callback) {
-    let table = db.getCollection(tableName);
-    if (!table) {
-      return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
-    }
-    const record = table.findOne({'pk': pk});
-    if (!record) {
-      return callback(createOpenDSUErrorWrapper(`Couldn't find a record for pk ${pk} in ${tableName}`))
-    }
-    try {
-      table.remove(record);
-    } catch (err) {
-      return callback(createOpenDSUErrorWrapper(`Couldn't do remove for pk ${pk} in ${tableName}`, err))
+        callback(null, result)
     }
 
-    callback(null, true)
-  }
-
-  this.getRecord = function (forDID, tableName, pk, callback) {
-    let table = db.getCollection(tableName);
-    if (!table) {
-      return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
-    }
-    let result;
-    try {
-      result = table.findObject({'pk': pk});
-    } catch (err) {
-      return callback(createOpenDSUErrorWrapper(`Could not find object woth pk ${pk}`, err));
+    this.getCollections = function () {
+        return db.listCollections().map(collection => {
+            return collection.name
+        })
     }
 
-    callback(null, result)
-  }
+    this.insertRecord = function (forDID, tableName, pk, record, callback) {
+        let table = db.getCollection(tableName) || db.addCollection(tableName);
+        const foundRecord = table.findOne({'pk': pk});
+        if (foundRecord) {
+            return callback(createOpenDSUErrorWrapper(`A record with pk ${pk} already exists in ${tableName}`))
+        }
 
-  this.filterRecords = function (forDID, tableName, filterConditions, sort, max, callback) {
+        try {
+            table.insert({"pk": pk, ...record, "did": forDID, "__timestamp": Date.now()});
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err))
+        }
 
-    if (typeof filterConditions === "function") {
-      callback = filterConditions;
-      filterConditions = undefined;
-      sort = undefined;
-      max = undefined;
+        db.saveDatabase(callback)
     }
 
-    if (typeof filterConditions === "undefined") {
-      // if no filter provided return all
-      filterConditions = {};
+    this.updateRecord = function (forDID, tableName, pk, record, callback) {
+        let table = db.getCollection(tableName);
+        const doc = table.by("pk", pk);
+        for (let prop in record) {
+            doc[prop] = record[prop];
+        }
+        try {
+            table.update(doc);
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err));
+        }
+        db.saveDatabase(callback)
     }
 
-    if (typeof sort === "function") {
-      callback = sort;
-      sort = undefined;
-      max = undefined;
+    this.deleteRecord = function (forDID, tableName, pk, callback) {
+        let table = db.getCollection(tableName);
+        if (!table) {
+            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+        }
+        const record = table.findOne({'pk': pk});
+        if (!record) {
+            return callback(createOpenDSUErrorWrapper(`Couldn't find a record for pk ${pk} in ${tableName}`))
+        }
+        try {
+            table.remove(record);
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(`Couldn't do remove for pk ${pk} in ${tableName}`, err))
+        }
+
+        db.saveDatabase(callback)
     }
 
-    if (typeof max === "function") {
-      callback = max;
-      max = undefined;
+    this.getRecord = function (forDID, tableName, pk, callback) {
+        let table = db.getCollection(tableName);
+        if (!table) {
+            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+        }
+        let result;
+        try {
+            result = table.findObject({'pk': pk});
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(`Could not find object with pk ${pk}`, err));
+        }
+
+        callback(null, result)
     }
 
-    let table = db.getCollection(tableName);
-    if (!table) {
-      return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
-    }
-    let sortObject;
-    let direction = false;
-    if (sort) {
-      sortObject = sort.split(" ");
-      if (sortObject[1] === "desc") {
-        direction = true;
-      }
+    function __parseQuery(filterConditions) {
+        let lokiQuery = {}
+        if (typeof filterConditions === "undefined") {
+            return lokiQuery;
+        }
+
+        filterConditions.forEach(condition =>{
+            const splitCondition = condition.split(" ");
+            const field = splitCondition[0];
+            const operator = splitCondition[1];
+            const value = splitCondition[2];
+            lokiQuery[field] = {};
+            lokiQuery[field][`${filterOperationsMap[operator]}`] = value;
+        })
+        return lokiQuery;
     }
 
-    let result;
-    try {
-      if (sort && max) {
-        result = table.chain().find(filterConditions).simplesort(sortObject[0], direction).limit(max).data();
-      }
-      if (sort && !max) {
-        result = table.chain().find(filterConditions).simplesort(sortObject[0], direction).data();
-      }
-      if (!sort && max) {
-        result = table.chain().find(filterConditions).limit(max).data();
-      }
-      if (!sort && !max) {
-        result = table.chain().find(filterConditions).data();
-      }
-    } catch (err) {
-      return callback(createOpenDSUErrorWrapper(`Filter operation failed on ${tableName}`, err));
-    }
-    callback(null, result);
-  }
+    function __getSortingField(filterConditions) {
+        let sortingField = "__timestamp";
+        if (filterConditions && filterConditions.length) {
+            sortingField = filterConditions[0][0];
+        }
 
-  bindAutoPendingFunctions(this);
+        return sortingField;
+    }
+
+    this.filter = function (forDID, tableName, filterConditions, sort, max, callback) {
+        if (typeof filterConditions === "string") {
+            filterConditions = [filterConditions];
+        }
+
+        if (typeof filterConditions === "function") {
+            callback = filterConditions;
+            filterConditions = undefined;
+            sort = "asc";
+            max = Infinity;
+        }
+
+        if (typeof sort === "function") {
+            callback = sort;
+            sort = "asc";
+            max = Infinity;
+        }
+
+        if (typeof max === "function") {
+            callback = max;
+            max = Infinity;
+        }
+
+        const sortingField = __getSortingField(filterConditions);
+        filterConditions = __parseQuery(filterConditions);
+
+        let table = db.getCollection(tableName);
+        if (!table) {
+            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+        }
+        let direction = false;
+        if (sort === "desc") {
+            direction = true;
+        }
+
+        let result;
+        try {
+            result = table.chain().find(filterConditions).simplesort(sortingField, direction).limit(max).data();
+        } catch (err) {
+            return callback(createOpenDSUErrorWrapper(`Filter operation failed on ${tableName}`, err));
+        }
+
+
+        callback(null, result);
+    }
+
+    bindAutoPendingFunctions(this);
 
 //------------------ queue -----------------
-  let self = this;
-  this.addInQueue = function (forDID, queueName, encryptedObject, callback) {
-    let queue = db.getCollection(queueName) || db.addCollection(queueName);
-    const crypto = require("opendsu").loadApi("crypto");
-    const hash = crypto.sha256(encryptedObject);
-    self.insertRecord(forDID, queueName, hash, encryptedObject, callback);
-  }
-
-  this.queueSize = function (forDID, queueName, callback) {
-    self.count(queueName, callback);
-  }
-
-  this.listQueue = function (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) {
-
-    if (typeof sortAfterInsertTime === "function") {
-      callback = sortAfterInsertTime;
-      sortAfterInsertTime = "asc";
-      onlyFirstN = undefined
-    }
-    if (typeof onlyFirstN === "function") {
-      callback = onlyFirstN;
-      onlyFirstN = undefined;
+    let self = this;
+    this.addInQueue = function (forDID, queueName, encryptedObject, callback) {
+        let queue = db.getCollection(queueName) || db.addCollection(queueName);
+        const crypto = require("opendsu").loadApi("crypto");
+        const hash = crypto.sha256(encryptedObject);
+        self.insertRecord(forDID, queueName, hash, encryptedObject, callback);
     }
 
-    self.filterRecords(forDID, queueName, {}, "insertTime " + sortAfterInsertTime, onlyFirstN, (err, result) => {
-      if (err) {
-        return callback(err);
-      }
-      result = result.map(item => {
-        return item.pk
-      })
-      return callback(null, result);
-    })
-  }
+    this.queueSize = function (forDID, queueName, callback) {
+        self.count(queueName, callback);
+    }
 
-  this.getObjectFromQueue = function (forDID, queueName, hash, callback) {
-    return self.getRecord(forDID, queueName, hash, callback)
-  }
+    this.listQueue = function (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) {
 
-  this.deleteObjectFromQueue = function (forDID, queueName, hash, callback) {
-    return self.deleteRecord(forDID, queueName, hash, callback)
-  }
+        if (typeof sortAfterInsertTime === "function") {
+            callback = sortAfterInsertTime;
+            sortAfterInsertTime = "asc";
+            onlyFirstN = undefined
+        }
+        if (typeof onlyFirstN === "function") {
+            callback = onlyFirstN;
+            onlyFirstN = undefined;
+        }
+
+        self.filter(forDID, queueName, {}, "insertTime " + sortAfterInsertTime, onlyFirstN, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+            result = result.map(item => {
+                return item.pk
+            })
+            return callback(null, result);
+        })
+    }
+
+    this.getObjectFromQueue = function (forDID, queueName, hash, callback) {
+        return self.getRecord(forDID, queueName, hash, callback)
+    }
+
+    this.deleteObjectFromQueue = function (forDID, queueName, hash, callback) {
+        return self.deleteRecord(forDID, queueName, hash, callback)
+    }
 
 }
 
 function initialized() {
-  this.finishInitialisation();
+    this.finishInitialisation();
 }
 
-module.exports = EnclaveDB;
-
-},{"../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-structured-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu"}],"dossier":[function(require,module,exports){
+module.exports = DefaultEnclave;
+},{"../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-structured-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu","path":false}],"dossier":[function(require,module,exports){
 function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{

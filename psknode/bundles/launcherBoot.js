@@ -13187,8 +13187,9 @@ module.exports = {
 }
 
 },{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
-function SingleDSUStorageStrategy(){
+function MemoryStorageStrategy(){
     const ObservableMixin = require("../../utils/ObservableMixin");
+    const operators = require("./operators");
     let volatileMemory = {}
     let self = this
     let storageDSU, afterInitialisation;
@@ -13219,6 +13220,63 @@ function SingleDSUStorageStrategy(){
         callback(undefined,result);
     };
 
+    this.filter = function (tableName, conditionsArray, sort, limit, callback) {
+        if (typeof conditionsArray === "function") {
+            callback = conditionsArray;
+            conditionsArray = undefined;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof conditionsArray === "undefined") {
+            conditionsArray = "__timestamp > 0";
+        }
+
+        if (typeof conditionsArray === "string") {
+            conditionsArray = [conditionsArray];
+        } else if (!Array.isArray(conditionsArray)) {
+            return callback(Error(`Condition argument of filter function need to be string or array of strings`));
+        }
+
+        if (typeof sort === "function") {
+            callback = sort;
+            sort = undefined;
+            limit = undefined;
+        }
+
+        if (typeof limit === "function") {
+            callback = limit;
+            limit = undefined;
+        }
+
+        if (typeof limit === "undefined") {
+            limit = Infinity;
+        }
+
+        if (typeof sort === "undefined") {
+            sort = "asc";
+        }
+
+        const tbl = getTable(tableName);
+        const records = Object.values(tbl);
+        const filteredRecords = [];
+        let Query = require("./Query");
+        let query = new Query(conditionsArray);
+        const conditions = query.getConditions();
+        records.forEach(record => {
+            let shouldBeAdded = true;
+            for (let i = 0; i < conditions.length; i++) {
+                if (!operators[conditions[i][1]](record[conditions[i][0]], conditions[i][2])) {
+                    shouldBeAdded = false;
+                }
+            }
+            if (shouldBeAdded && filteredRecords.length < limit) {
+                filteredRecords.push(record);
+            }
+        })
+        query.sortValues(filteredRecords, sort);
+        callback(undefined, filteredRecords);
+    }
     /*
       Insert a record, return error if already exists
     */
@@ -13322,8 +13380,8 @@ function SingleDSUStorageStrategy(){
     })
 }
 
-module.exports = SingleDSUStorageStrategy;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+module.exports = MemoryStorageStrategy;
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
 
 function MultiUserStorageStrategy(){
 
@@ -13340,7 +13398,7 @@ module.exports = MultiUserStorageStrategy;
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
 function Query(queryArray) {
     let conditions = [];
-
+    const operators = require("./operators");
     function queryParser(query) {
         query.forEach(fieldQuery => {
             const splitQuery = fieldQuery.split(" ");
@@ -13405,7 +13463,7 @@ function Query(queryArray) {
                     return;
                 }
             }
-            if(!record.__deleted){
+            if (!record.__deleted) {
                 filteredRecords.push(record);
             }
         }
@@ -13428,47 +13486,9 @@ function Query(queryArray) {
         return conditions[0][0];
     };
 
-    const operators = {
-        "<": function (x, y) {
-            return x < y
-        },
-        "<=": function (x, y) {
-            return x <= y
-        },
-        ">": function (x, y) {
-            return x > y
-        },
-        ">=": function (x, y) {
-            return x >= y
-        },
-        "==": function (x, y) {
-            return x == y
-        },
-        "!=": function (x, y) {
-            if (y === "undefined") {
-                y = undefined;
-            }
-            return x != y;
-        },
-        "like": function (str, regex) {
-            if (typeof regex === "string") {
-                let splitRegex = regex.split("/");
-                if (splitRegex[0] === '') {
-                    splitRegex = splitRegex.slice(1);
-                }
-                let flag = undefined;
-                if (splitRegex.length > 1) {
-                    flag = splitRegex.pop();
-                }
-                if (flag === '') {
-                    flag = undefined;
-                }
-                regex = new RegExp(splitRegex.join('/'), flag);
-            }
-            // return regex.test(str);
-            return str.match(regex);
-        }
-    };
+    this.getConditions = () => {
+        return conditions;
+    }
 
     function getCompareFunction(sortOrder) {
         if (sortOrder === "asc" || sortOrder === "ascending") {
@@ -13508,7 +13528,7 @@ function Query(queryArray) {
 }
 
 module.exports = Query;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
+},{"./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const ObservableMixin = require("../../utils/ObservableMixin");
 
@@ -14032,7 +14052,50 @@ function SingleDSUStorageStrategy() {
 module.exports.SingleDSUStorageStrategy = SingleDSUStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
+module.exports = {
+    "<": function (x, y) {
+        return x < y
+    },
+    "<=": function (x, y) {
+        return x <= y
+    },
+    ">": function (x, y) {
+        return x > y
+    },
+    ">=": function (x, y) {
+        return x >= y
+    },
+    "==": function (x, y) {
+        return x == y
+    },
+    "!=": function (x, y) {
+        if (y === "undefined") {
+            y = undefined;
+        }
+        return x != y;
+    },
+    "like": function (str, regex) {
+        if (typeof regex === "string") {
+            let splitRegex = regex.split("/");
+            if (splitRegex[0] === '') {
+                splitRegex = splitRegex.slice(1);
+            }
+            let flag = undefined;
+            if (splitRegex.length > 1) {
+                flag = splitRegex.pop();
+            }
+            if (flag === '') {
+                flag = undefined;
+            }
+            regex = new RegExp(splitRegex.join('/'), flag);
+        }
+        // return regex.test(str);
+        return str.match(regex);
+    }
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
@@ -16476,18 +16539,162 @@ module.exports = {
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
+function APIHUBProxy(domain, enclaveDID) {
+    const http = require("opendsu").loadAPI("http");
+    const system = require("opendsu").loadAPI("system");
+    const url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${enclaveDID}`;
 
+    this.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        const command = {
+            commandName: "insertRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk,
+                plainRecord,
+                encryptedRecord
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        const command = {
+            commandName: "updateRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk,
+                plainRecord,
+                encryptedRecord
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.getRecord = (forDID, table, pk, callback) => {
+        const command = {
+            commandName: "getRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    };
+
+    this.filter = (forDID, table, filter, sort, limit, callback) => {
+        const command = {
+            commandName: "updateRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                query: filter,
+                sort,
+                limit
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.deleteRecord = (forDID, table, pk, callback) => {
+        const command = {
+            commandName: "deleteRecord",
+            params: {
+                forDID: forDID,
+                tableName: table,
+                pk: pk
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+
+    this.addInQueue = (forDID, queueName, encryptedObject, callback) => {
+        const command = {
+            commandName: "addInQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                encryptedObject
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+    this.queueSize = (forDID, queueName, callback) => {
+        const command = {
+            commandName: "queueSize",
+            params: {
+                forDID: forDID,
+                queueName: queueName
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+
+    this.listQueue = (forDID, queueName, sortAfterInsertTime, onlyFirstN, callback) => {
+        const command = {
+            commandName: "listQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                sortAfterInsertTime,
+                onlyFirstN
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    };
+
+    this.getObjectFromQueue = (forDID, queueName, hash, callback) => {
+        const command = {
+            commandName: "getObjectFromQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                hash
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+    this.deleteObjectFromQueue = (forDID, queueName, hash, callback) => {
+        const command = {
+            commandName: "deleteObjectFromQueue",
+            params: {
+                forDID: forDID,
+                queueName: queueName,
+                hash
+            }
+        }
+
+        http.doPut(url, JSON.stringify(command), callback);
+    }
+}
+
+module.exports = APIHUBProxy;
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 function Enclave_Mixin(target) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
+    const crypto = openDSU.loadAPI("crypto")
+    const scAPI = openDSU.loadAPI("sc")
+    const w3cDID = openDSU.loadAPI("w3cdid")
     const KEY_SSIS_TABLE = "keyssis";
     const SEED_SSIS_TABLE = "seedssis";
     const DIDS_PRIVATE_KEYS = "dids_private";
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
-
-    let enclaveDID;
+    let did;
 
     const getPrivateInfoForDID = (did, callback) => {
         target.storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
@@ -16536,8 +16743,17 @@ function Enclave_Mixin(target) {
     };
 
 
-    target.getEnclaveDID = () => {
-
+    target.getDID = (callback) => {
+        if (did) {
+            return callback(undefined, did);
+        }
+        w3cDID.createIdentity("key", (err, _did)=>{
+            if (err) {
+                return callback(err);
+            }
+            did = _did;
+            callback(undefined, did);
+        });
     }
 
     target.insertRecord = (forDID, table, pk, encryptedObject, indexableFieldsNotEncrypted, callback) => {
@@ -16559,7 +16775,6 @@ function Enclave_Mixin(target) {
     target.deleteRecord = (forDID, table, pk, callback) => {
         target.storageDB.deleteRecord(table, pk, callback);
     }
-
 
     target.storeSeedSSI = (forDID, seedSSI, alias, callback) => {
         if (typeof seedSSI === "string") {
@@ -16639,11 +16854,23 @@ function Enclave_Mixin(target) {
     }
 
     target.signForDID = (forDID, didThatIsSigning, hash, callback) => {
-        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), (err, privateKey) => {
+        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), async (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
             }
-            didThatIsSigning.signImpl(privateKey, hash, callback);
+
+            let domain = didThatIsSigning.getDomain();
+            if (typeof domain === "undefined") {
+                try {
+                    domain = $$.promisify(scAPI.getVaultDomain)()
+                } catch (e) {
+                    return callback(e);
+                }
+            }
+            const keySSI = keySSISpace.createTemplateSeedSSI(domain);
+            const privateKey = privateKeys[privateKeys.length - 1];
+            keySSI.initialize(keySSI.getDLDomain(), privateKey);
+            crypto.sign(keySSI, hash, callback);
         });
     }
 
@@ -16690,10 +16917,11 @@ module.exports = Enclave_Mixin;
 function MemoryEnclave() {
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this);
-    const db = require("opendsu").loadAPI("db");
+    const openDSU = require("opendsu");
+    const db = openDSU.loadAPI("db");
     const init = () => {
         this.storageDB = db.getInMemoryDB();
-        setTimeout(() => {
+        setTimeout(async () => {
             this.dispatchEvent("initialised");
         })
     }
@@ -16706,21 +16934,12 @@ module.exports = MemoryEnclave;
 function WalletDBEnclave() {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
-    const keySSISpace = openDSU.loadAPI("keyssi")
     const scAPI = openDSU.loadAPI("sc");
-
     const DB_NAME = "walletdb_enclave";
-    const KEY_SSIS_TABLE = "keyssis";
-    const SEED_SSIS_TABLE = "seedssis";
-    const DIDS_PRIVATE_KEYS = "dids_private";
-    const DIDS_PUBLIC_KEYS = "dids_public";
 
     const EnclaveMixin = require("./Enclave_Mixin");
-
-
     EnclaveMixin(this);
 
-    let enclaveDID;
     const init = () => {
         scAPI.getMainDSU(async (err, mainDSU) => {
             if (err) {
@@ -16732,6 +16951,7 @@ function WalletDBEnclave() {
             } catch (e) {
                 throw createOpenDSUErrorWrapper(`Failed to get mainDSU's keySSI`, e);
             }
+
             this.storageDB = db.getWalletDB(keySSI, DB_NAME);
             this.storageDB.on("initialised", () => {
                 this.finishInitialisation();
@@ -16749,40 +16969,39 @@ function WalletDBEnclave() {
 
 module.exports = WalletDBEnclave;
 },{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
-const WalletDBEnclave = require("./impl/WalletDBEnclave");
+const MemoryEnclave = require("./impl/MemoryEnclave");
 
-function initialiseWalletDBEnclave(){
+function initialiseWalletDBEnclave() {
     const WalletDBEnclave = require("./impl/WalletDBEnclave");
     return new WalletDBEnclave();
 }
 
-function initialiseMemoryEnclave(){
+function initialiseMemoryEnclave() {
     const MemoryEnclave = require("./impl/MemoryEnclave");
     return new MemoryEnclave();
 }
 
-function initialiseAPIHUBEnclave(adminDID) {
+function initialiseAPIHUBProxy(adminDID) {
+    const APIHUBProxy = require("./impl/APIHUBProxy");
+    return new APIHUBProxy();}
+
+function initialiseHighSecurityProxy(adminDID) {
     throw Error("Not implemented");
 }
 
-
-function initialiseHighSecurityEnclave(adminDID){
-    throw Error("Not implemented");
-}
-
-function connectEnclave(forDID, enclaveDID, ...args){
+function connectEnclave(forDID, enclaveDID, ...args) {
     throw Error("Not implemented");
 }
 
 module.exports = {
     initialiseWalletDBEnclave,
     initialiseMemoryEnclave,
-    initialiseAPIHUBEnclave,
-    initialiseHighSecurityEnclave,
+    initialiseAPIHUBProxy,
+    initialiseHighSecurityProxy,
     connectEnclave
 }
 
-},{"./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -21105,6 +21324,8 @@ function W3CDID_Mixin(target) {
   target.getControllerKey = function (callback) {};
 
   target.getPublicKeys = function (callback) {};
+
+  target.getDomain = function () {}
 }
 
 module.exports = W3CDID_Mixin;
@@ -21893,6 +22114,7 @@ module.exports = {
 
 const OPENDSU_METHOD_NAME = "ssi";
 const KEY_SUBTYPE = "key";
+const SSI_KEY_SUBTYPE = "ssikey";
 const S_READ_SUBTYPE = "sread";
 const NAME_SUBTYPE = "name";
 const DEMO_METHOD_NAME = "demo";
@@ -21920,6 +22142,9 @@ function resolveDID(identifier, callback) {
     let method = tokens[1];
     if (tokens[1] === OPENDSU_METHOD_NAME) {
         method = tokens[2];
+        if(method === KEY_SUBTYPE){
+            method = SSI_KEY_SUBTYPE;
+        }
     }
     methodRegistry[method].resolve(tokens, callback);
 }
@@ -21930,11 +22155,12 @@ function registerDIDMethod(method, implementation) {
 
 
 registerDIDMethod(S_READ_SUBTYPE, require("./didssi/ssiMethods").create_SReadDID_Method());
-registerDIDMethod(KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
+registerDIDMethod(SSI_KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
 registerDIDMethod(NAME_SUBTYPE, require("./didssi/ssiMethods").create_NameDID_Method());
 
 registerDIDMethod(DEMO_METHOD_NAME, require("./demo/diddemo").create_demo_DIDMethod());
 registerDIDMethod(GROUP_METHOD_NAME, require("./didssi/ssiMethods").create_GroupDID_Method());
+registerDIDMethod(KEY_SUBTYPE, require("./w3cdids/didMethods").create_KeyDID_Method());
 
 
 module.exports = {
@@ -21943,7 +22169,7 @@ module.exports = {
     registerDIDMethod
 }
 
-},{"./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
+},{"./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
 
 
 function AliasDIDDocument(isInitialisation, alias, seedSSI){
@@ -21965,7 +22191,84 @@ module.exports = {
         new AliasDIDDocument(false, tokens)
     }
 };
-},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+function KeyDID_Document(isInitialisation, publicKey) {
+    let mixin = require("../W3CDID_Mixin");
+    mixin(this);
+    let privateKey;
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const crypto = openDSU.loadAPI("crypto");
+
+    const init = async () => {
+        if(isInitialisation){
+            let seedSSI = keySSISpace.createSeedSSI();
+            privateKey = seedSSI.getPrivateKey();
+            publicKey = crypto.encodeBase58(seedSSI.getPublicKey("raw"));
+        }
+    };
+
+    const getRawPublicKey = () => {
+        return crypto.decodeBase58(publicKey);
+    }
+
+    this.getPublicKey = (format, callback) => {
+        let pubKey = getRawPublicKey();
+        try {
+            pubKey = crypto.convertPublicKey(pubKey, format);
+        } catch (e) {
+            return callback(createOpenDSUErrorWrapper(`Failed to convert public key to ${format}`, e));
+        }
+
+        callback(undefined, pubKey);
+    };
+
+    this.getIdentifier = () => {
+        return `did:key:${publicKey}`;
+    };
+
+    this.getPrivateKeys = () => {
+        return [privateKey];
+    };
+
+    init();
+}
+
+module.exports = {
+    initiateDIDDocument: function (seedSSI) {
+        return new KeyDID_Document(true, seedSSI)
+    },
+    createDIDDocument: function (tokens) {
+        return new KeyDID_Document(false, tokens[2]);
+    }
+};
+
+},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
+function KeyDID_Method() {
+    let KeyDIDDocument = require("./KeyDID_Document");
+    this.create = function (callback) {
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument();
+        const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+        securityContext.registerDID(keyDIDDocument, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`failed to register did ${keyDIDDocument.getIdentifier()} in security context`, err));
+            }
+
+            callback(null, keyDIDDocument);
+        })
+    }
+
+    this.resolve = function (tokens, callback) {
+        callback(null, KeyDIDDocument.createDIDDocument(tokens))
+    }
+}
+
+module.exports = {
+    create_KeyDID_Method() {
+        return new KeyDID_Method();
+    }
+}
+},{"./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
 module.exports = () => {
     const worker_threads = "worker_threads";
     const { parentPort } = require(worker_threads);
