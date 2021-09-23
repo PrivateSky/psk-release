@@ -16650,22 +16650,28 @@ function APIHUBProxy(domain, did) {
     const http = openDSU.loadAPI("http");
     const system = openDSU.loadAPI("system");
     const w3cDID = openDSU.loadAPI("w3cdid");
+    const scAPI = openDSU.loadAPI("sc");
     const CryptoSkills = w3cDID.CryptographicSkills;
 
     const ProxyMixin = require("./ProxyMixin");
     ProxyMixin(this);
     let url;
     const init = async () => {
+        if (typeof domain === "undefined") {
+            domain = await $$.promisify(scAPI.getVaultDomain)();
+        }
+
         if (typeof did === "undefined") {
             did = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT).getIdentifier();
         }
 
         url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
         this.finishInitialisation();
+        this.dispatchEvent("initialised");
     }
 
-    this.getDID = () => {
-        return did;
+    this.getDID = (callback) => {
+        callback(undefined, did);
     }
 
     this.__putCommandObject = (commandName, ...args) => {
@@ -16675,7 +16681,7 @@ function APIHUBProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject", "getDID");
+    bindAutoPendingFunctions(this, "__putCommandObject");
     init();
 }
 
@@ -16741,8 +16747,8 @@ function Enclave_Mixin(target, did) {
         });
     };
 
-    target.getDID = () => {
-        return did;
+    target.getDID = (callback) => {
+        callback(undefined, did);
     }
 
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
@@ -16948,8 +16954,8 @@ function HighSecurityProxy(domain, did) {
         this.finishInitialisation();
     }
 
-    this.getDID = () => {
-        return did;
+    this.getDID = (callback) => {
+        callback(undefined, did);
     }
 
     this.__putCommandObject = (commandName, ...args) => {
@@ -16967,7 +16973,7 @@ function HighSecurityProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject", "getDID");
+    bindAutoPendingFunctions(this, "__putCommandObject");
     init();
 }
 
@@ -16993,10 +16999,9 @@ module.exports = MemoryEnclave;
 const {createOpenDSUErrorWrapper} = require("../../error");
 
 function ProxyMixin(target) {
-    const openDSU = require("opendsu");
-    const commandNames = require("./lib/commandsNames");
-    const {createCommandObject} = require("./lib/createCommandObject");
-
+    const commandNames = require("./lib/commandsNames");` `
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    ObservableMixin(target);
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
         target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, encryptedRecord, callback);
     };
@@ -17080,15 +17085,15 @@ function ProxyMixin(target) {
 }
 
 module.exports = ProxyMixin;
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
     const scAPI = openDSU.loadAPI("sc");
     const resolver = openDSU.loadAPI("resolver");
+    const config = openDSU.loadAPI("config");
     const w3cDID = openDSU.loadAPI("w3cdid");
     const DB_NAME = "walletdb_enclave";
-    const ENCLAVE_DSU_KEY_SSI_PATH = ".enclave";
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this, did);
     let enclaveDSU;
@@ -17103,7 +17108,7 @@ function WalletDBEnclave(did) {
         }
 
         try {
-            enclaveDSUKeySSI = await $$.promisify(mainDSU.readFile)(ENCLAVE_DSU_KEY_SSI_PATH);
+            enclaveDSUKeySSI = await $$.promisify(config.getEnv)(openDSU.constants.ENCLAVE_KEY_SSI);
             enclaveDSUKeySSI = enclaveDSUKeySSI.toString();
         } catch (e) {
             let vaultDomain;
@@ -17126,7 +17131,7 @@ function WalletDBEnclave(did) {
                 throw createOpenDSUErrorWrapper(`Failed to get enclave DSU KeySSI`, e);
             }
             try {
-                await $$.promisify(mainDSU.writeFile)(ENCLAVE_DSU_KEY_SSI_PATH, enclaveDSUKeySSI);
+                await $$.promisify(config.setEnv)(openDSU.constants.ENCLAVE_KEY_SSI, enclaveDSUKeySSI);
             } catch (e) {
                 throw createOpenDSUErrorWrapper(`Failed to store enclave DSU KeySSI`, e);
             }
@@ -17139,8 +17144,12 @@ function WalletDBEnclave(did) {
         })
     };
 
+    this.getKeySSI = (callback) => {
+        callback(undefined, enclaveDSUKeySSI);
+    }
+
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, ["on", "off", "getDID", "beginBatch"]);
+    bindAutoPendingFunctions(this, ["on", "off", "beginBatch"]);
 
     init();
 }
@@ -19077,6 +19086,7 @@ module.exports = {
 	VAULT_DOMAIN: "domain",
 	ENCLAVE_TYPE: "enclaveType",
 	ENCLAVE_DID: "enclaveDID",
+	ENCLAVE_KEY_SSI: ".enclave",
 	ENCLAVE_TYPES: {
 		WALLET_DB_ENCLAVE: "WalletDBEnclave",
 		MEMORY_ENCLAVE: "MemoryEnclave",
@@ -20058,7 +20068,7 @@ function SecurityContext() {
         enclave = getEnclaveInstance(enclaveType);
         enclave.on("initialised", async () => {
             if (typeof enclaveDID === "undefined") {
-                enclaveDID = enclave.getDID();
+                enclaveDID = await $$.promisify(enclave.getDID)();
                 try {
                     await $$.promisify(config.setEnv)(constants.ENCLAVE_DID, enclaveDID)
                 } catch (e) {
@@ -20198,11 +20208,17 @@ const getSecurityContext = () => {
     return $$.sc;
 };
 
+const refreshSecurityContext = () => {
+    $$.sc = new SecurityContext();
+    return $$.sc;
+};
+
 module.exports = {
     getMainDSU,
     setMainDSU,
     getVaultDomain,
-    getSecurityContext
+    getSecurityContext,
+    refreshSecurityContext
 };
 
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
