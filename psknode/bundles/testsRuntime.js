@@ -2139,24 +2139,48 @@ function Contract(server) {
 
         callback(null, pool);
     };
+    
+    const responseError = (err) => {
+        let responseError = err;
+        if (err instanceof Error) {
+            responseError = {
+                message: err.message,
+            };
+            
+            if (err.debug_message) {
+                responseError.debugMessage = err.debug_message;
+            }
+            
+            if (err.stack) {
+                responseError.stack = err.stack;
+            }
+            
+            if (err.previousError) {
+                responseError.previousError = responseError(err.previousError);
+            }
+        };
+        
+        responseError = JSON.stringify(responseError);
+        return responseError;
+    }
 
     const sendCommandToWorker = (command, response, mapSuccessResponse) => {
         getDomainWorkerPool(command.domain, (err, workerPool) => {
             if (err) {
-                return response.send(400, err);
+                return response.send(400, responseError(err));
             }
 
             workerPool.addTask(command, (err, message) => {
                 allDomainsWorkerPools[command.domain].isRunning = true;
 
                 if (err) {
-                    return response.send(500, err);
+                    return response.send(500, responseError(err));
                 }
 
                 let { error, result } = message;
 
                 if (error) {
-                    return response.send(500, error);
+                    return response.send(500, responseError(error));
                 }
 
                 if (result && result.optimisticResult) {
@@ -17052,6 +17076,7 @@ class Block {
 module.exports = Block;
 
 },{}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js":[function(require,module,exports){
+(function (Buffer){(function (){
 class PBlockAddedMessage {
     constructor(body) {
         if (!body) {
@@ -17064,7 +17089,12 @@ class PBlockAddedMessage {
         this.validatorURL = validatorURL;
         this.blockNumber = blockNumber;
         this.pBlockHashLinkSSI = pBlockHashLinkSSI;
-        this.validatorSignature = validatorSignature;
+        
+        if (validatorSignature && !Buffer.isBuffer(validatorSignature)) {
+            this.validatorSignature = Buffer.from(validatorSignature, 'hex');
+        } else {
+            this.validatorSignature = validatorSignature;
+        }
     }
 
     computeHash() {
@@ -17083,9 +17113,9 @@ class PBlockAddedMessage {
         return hash;
     }
 
-    sign(validatorDID) {
+    async sign(validatorDID) {
         const hash = this.computeHash();
-        this.validatorSignature = validatorDID.sign(hash);
+        this.validatorSignature = await $$.promisify(validatorDID.sign)(hash);
     }
 
     async validateSignature() {
@@ -17110,7 +17140,7 @@ class PBlockAddedMessage {
             validatorURL,
             blockNumber,
             pBlockHashLinkSSI,
-            validatorSignature,
+            validatorSignature: (validatorSignature) ? validatorSignature.toString('hex') : validatorSignature,
             hash: this.computeHash(),
         };
         return content;
@@ -17119,7 +17149,9 @@ class PBlockAddedMessage {
 
 module.exports = PBlockAddedMessage;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/ValidatorNonInclusionMessage.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/ValidatorNonInclusionMessage.js":[function(require,module,exports){
 class ValidatorNonInclusionMessage {
     constructor(body) {
         if (!body) {
@@ -17150,9 +17182,9 @@ class ValidatorNonInclusionMessage {
         return hash;
     }
 
-    sign(validatorDID) {
+    async sign(validatorDID) {
         const hash = this.computeHash();
-        this.validatorSignature = validatorDID.sign(hash);
+        this.validatorSignature = await $$.promisify(validatorDID.sign)(hash);
     }
 
     async validateSignature() {
@@ -17177,7 +17209,7 @@ class ValidatorNonInclusionMessage {
             validatorURL,
             blockNumber,
             unreachableValidators,
-            validatorSignature,
+            validatorSignature: (validatorSignature) ? validatorSignature.toString('hex') : validatorSignature,
         };
         return content;
     }
@@ -17202,7 +17234,7 @@ class Broadcaster {
         this._logger.info("Create finished");
     }
 
-    broadcastPBlockAdded(pBlock) {
+    async broadcastPBlockAdded(pBlock) {
         const { validatorDID, validatorURL } = this;
         const { blockNumber, hashLinkSSI } = pBlock;
         const message = new PBlockAddedMessage({
@@ -17211,11 +17243,11 @@ class Broadcaster {
             blockNumber,
             pBlockHashLinkSSI: hashLinkSSI,
         });
-        message.sign(validatorDID);
+        await message.sign(validatorDID);
         this._broadcastMessageToAllValidatorsExceptSelf("pblock-added", message.getContent());
     }
     
-    broadcastValidatorNonInclusion(blockNumber, unreachableValidators) {
+    async broadcastValidatorNonInclusion(blockNumber, unreachableValidators) {
         const { validatorDID, validatorURL } = this;
         const message = new ValidatorNonInclusionMessage({
             validatorDID: validatorDID.getIdentifier(),
@@ -17223,7 +17255,7 @@ class Broadcaster {
             blockNumber,
             unreachableValidators,
         });
-        message.sign(validatorDID);
+        await message.sign(validatorDID);
         this._broadcastMessageToAllValidatorsExceptSelf("validator-non-inclusion", message.getContent());
     }
 
@@ -17267,6 +17299,7 @@ module.exports = {
 };
 
 },{"../Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","../utils/bdns-utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/utils/bdns-utils.js","./PBlockAddedMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/PBlockAddedMessage.js","./ValidatorNonInclusionMessage":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Broadcaster/ValidatorNonInclusionMessage.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js":[function(require,module,exports){
+(function (Buffer){(function (){
 class Command {
     constructor(command) {
         if (!command) {
@@ -17314,7 +17347,7 @@ class Command {
 
         const w3cDID = require("opendsu").loadApi("w3cdid");
         const signerDID = await $$.promisify(w3cDID.resolveDID)(signerDIDIdentifier);
-        const isValidSignature = await $$.promisify(signerDID.verify)(hash, requesterSignature);
+        const isValidSignature = await $$.promisify(signerDID.verify)(hash, Buffer.from(requesterSignature, 'hex'));
 
         if (!isValidSignature) {
             throw "Invalid signature specified for Command";
@@ -17335,7 +17368,9 @@ class Command {
 
 module.exports = Command;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/CommandHistoryStorage.js":[function(require,module,exports){
 const { ensurePathExists } = require("./utils/fs-utils");
 
 class CommandHistoryStorage {
@@ -18472,7 +18507,7 @@ class ConsensusCore {
                                 return this._checkForPendingBlockNonInclusionMajorityAsync(pendingBlock);
                             },
                             broadcastValidatorNonInclusion: (unreachableValidators) => {
-                                this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
+                               this._broadcaster.broadcastValidatorNonInclusion(blockNumber, unreachableValidators);
                             },
                         });
                     },
@@ -19603,6 +19638,7 @@ module.exports = {
 };
 
 },{"./Logger":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Logger.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlock.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const Command = require("./Command");
 
 class PBlock {
@@ -19618,15 +19654,29 @@ class PBlock {
         this.previousBlockHash = previousBlockHash;
         this.blockNumber = blockNumber;
         this.hash = hash;
-        this.validatorSignature = validatorSignature;
+
+        if (validatorSignature && !Buffer.isBuffer(validatorSignature)) {
+            this.validatorSignature = Buffer.from(validatorSignature, 'hex');
+        } else {
+            this.validatorSignature = validatorSignature;
+        }
         this.hashLinkSSI = hashLinkSSI;
         this.onConsensusFinished = onConsensusFinished;
         this.isEmpty = !commands || !commands.length;
+        this.signer = null;
     }
 
-    sign(validatorDID) {
+    async sign(validatorDID) {
+        if (!validatorDID && !this.signer) {
+            throw new Error('ValidatorDID is required for signing');
+        }
+        validatorDID = (validatorDID) ? validatorDID : this.signer;
         this.hash = this.computeHash();
-        this.validatorSignature = validatorDID.sign(this.hash);
+        this.validatorSignature = await $$.promisify(validatorDID.sign)(this.hash);
+    }
+    
+    setSigner(validatorDID) {
+        this.signer = validatorDID;
     }
 
     computeHash() {
@@ -19662,7 +19712,15 @@ class PBlock {
     getSerialisation() {
         const { validatorDID, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI } = this;
         const commands = this.getCommandsForSerialisation();
-        const pBlock = { validatorDID, commands, previousBlockHash, blockNumber, hash, validatorSignature, hashLinkSSI };
+        const pBlock = {
+            validatorDID,
+            commands,
+            previousBlockHash,
+            blockNumber,
+            hash,
+            validatorSignature: (validatorSignature) ? validatorSignature.toString('hex') : validatorSignature,
+            hashLinkSSI
+        };
         return JSON.stringify(pBlock);
     }
 
@@ -19677,14 +19735,16 @@ class PBlock {
 
 module.exports = PBlock;
 
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/Command.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/PBlocksFactory.js":[function(require,module,exports){
 const Logger = require("./Logger");
 const PBlock = require("./PBlock");
 
 async function savePBlockInBricks(pBlock, domain, brickStorage) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadApi("keyssi");
-
+    
     const pBlockBrickHash = await brickStorage.addBrickAsync(pBlock.getSerialisation());
 
     const hashLinkSSI = keySSISpace.createHashLinkSSI(domain, pBlockBrickHash);
@@ -19699,8 +19759,7 @@ function createPBlock(validatorDID, commands, previousBlockHash, blockNumber) {
         blockNumber,
     };
     const pBlock = new PBlock(pBlockInfo);
-    pBlock.sign(validatorDID);
-
+    pBlock.setSigner(validatorDID);
     return pBlock;
 }
 
@@ -19897,7 +19956,7 @@ class PBlocksFactory {
                         }
                     }
                 } catch (error) {
-                    this._logger.error(`Failed to add command with hash ${command.getHash()}`, error);
+                    this._logger.error('Failed to build pblock', error);
                 }
 
                 resolve(); // mark processing finished
@@ -19985,6 +20044,8 @@ class PBlocksFactory {
         this._latestPBlock = pBlock;
 
         try {
+            await pBlock.sign();
+
             this._logger.info(`Saving pBlock number ${pBlock.blockNumber} in bricks...`);
             const pBlockHashLinkSSI = await savePBlockInBricks(pBlock, this.domain, this.brickStorage);
             pBlock.hashLinkSSI = pBlockHashLinkSSI;
@@ -26723,9 +26784,9 @@ const buildGetVersionFunction = function(processingFunction){
         const dlDomain = keySSI.getDLDomain();
         const anchorId = keySSI.getAnchorId();
 
-        if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-            return cachedAnchoring.versions(anchorId, callback);
-        }
+        // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        //     return cachedAnchoring.versions(anchorId, callback);
+        // }
 
         bdns.getAnchoringServices(dlDomain, function (err, anchoringServicesArray) {
             if (err) {
@@ -26835,9 +26896,9 @@ const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) =>
     const dlDomain = SSICapableOfSigning.getDLDomain();
     const anchorId = SSICapableOfSigning.getAnchorId();
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
-    }
+    // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+    //     return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
+    // }
 
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
@@ -28141,6 +28202,7 @@ module.exports = {
 };
 
 },{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const { fetch, doPost } = require("../http");
 const promiseRunner = require("../utils/promise-runner");
 
@@ -28214,7 +28276,11 @@ async function getNoncedCommandBody(domain, contract, method, params, blockNumbe
     commandBody.signerDID = signerDID.getIdentifier();
 
     const hash = getCommandHash(commandBody);
-    const signature = await $$.promisify(signerDID.sign)(hash);
+    let signature = await $$.promisify(signerDID.sign)(hash);
+    
+    if (Buffer.isBuffer(signature)) {
+        signature = signature.toString('hex')
+    }
 
     commandBody.requesterSignature = signature;
 
@@ -28294,7 +28360,9 @@ module.exports = {
     callContractEndpointUsingBdns,
 };
 
-},{"../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+}).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
+
+},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
@@ -35214,6 +35282,7 @@ module.exports = {
 	ENVIRONMENT_PATH: "/environment.json",
 	SECURITY_CONTEXT_KEY_SSI: "scKeySSI",
 	VAULT_DOMAIN: "domain",
+	SUBDOMAIN: "subdomain",
 	ENCLAVE_TYPE: "enclaveType",
 	ENCLAVE_DID: "enclaveDID",
 	ENCLAVE_KEY_SSI: ".enclave",
@@ -36008,6 +36077,7 @@ module.exports = {
 const constants = require("../moduleConstants");
 const openDSU = require("opendsu");
 const http = openDSU.loadAPI("http")
+const config = openDSU.loadAPI("config")
 const keySSISpace = openDSU.loadAPI("keyssi");
 const resolver = openDSU.loadAPI("resolver");
 const {getURLForSsappContext} = require("../utils/getURLForSsappContext");
@@ -36315,27 +36385,31 @@ function SecurityContext() {
 }
 
 const getVaultDomain = (callback) => {
-    getMainDSU((err, mainDSU) => {
-        if (err) {
-            return callback(err);
-        }
-
-        mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
-            }
-
-            try {
-                environment = JSON.parse(environment.toString())
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
-            }
-
-            callback(undefined, environment.domain);
-        })
-    })
+    config.getEnv(constants.VAULT_DOMAIN, callback);
+    // getMainDSU((err, mainDSU) => {
+    //     if (err) {
+    //         return callback(err);
+    //     }
+    //
+    //     mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
+    //         if (err) {
+    //             return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
+    //         }
+    //
+    //         try {
+    //             environment = JSON.parse(environment.toString())
+    //         } catch (e) {
+    //             return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
+    //         }
+    //
+    //         callback(undefined, environment.domain);
+    //     })
+    // })
 }
 
+const getSubdomain = (callback) => {
+    config.getEnv(constants.SUBDOMAIN, callback);
+}
 const getSecurityContext = () => {
     if (typeof $$.sc === "undefined") {
         $$.sc = new SecurityContext();
@@ -36354,7 +36428,8 @@ module.exports = {
     setMainDSU,
     getVaultDomain,
     getSecurityContext,
-    refreshSecurityContext
+    refreshSecurityContext,
+    getSubdomain
 };
 
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
@@ -37552,10 +37627,14 @@ function W3CDID_Mixin(target) {
 module.exports = W3CDID_Mixin;
 
 },{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js":[function(require,module,exports){
+(function (Buffer){(function (){
 
 
 function DemoPKDocument(identifier){
     this.sign = function(hash, callback){
+        // Convert the hash to a Buffer instance in order to
+        // remain compatible with the other DID document types
+        hash = Buffer.from(hash);
         if (typeof callback === 'function') {
             return callback(undefined, hash);
         }
@@ -37563,6 +37642,9 @@ function DemoPKDocument(identifier){
     };
 
     this.verify = function(hash, signature, callback){
+        if (Buffer.isBuffer(signature)) {
+            signature = signature.toString();
+        }
         callback(undefined, hash == signature);
     };
 
@@ -37665,7 +37747,9 @@ function DEMO_DIDMethod(){
 module.exports.create_demo_DIDMethod = function(){
     return new DEMO_DIDMethod();
 }
-},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
 const methodsNames = require("./didMethodsNames");
 const createNameDIDDocument = require("./didssi/NameDID_Document").initiateDIDDocument;
 const createGroupDID_Document = require("./didssi/GroupDID_Document").initiateDIDDocument;
@@ -49887,6 +49971,29 @@ function assert(condition, {ifFails}) {
 module.exports = {
     assert
 };
+
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
 
 },{}],"apihub":[function(require,module,exports){
 const httpWrapper = require('./libs/http-wrapper');
