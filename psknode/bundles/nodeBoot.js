@@ -13484,6 +13484,18 @@ function MemoryStorageStrategy(){
         }
     };
 
+    this.beginBatch = () => {
+
+    }
+
+    this.commitBatch = (callback) => {
+        callback(undefined);
+    }
+
+    this.cancelBatch = (callback) => {
+        callback(undefined);
+    }
+
     setTimeout(()=>{
         this.dispatchEvent("initialised");
     })
@@ -19150,6 +19162,7 @@ let http = require("../http");
 let bdns = require("../bdns")
 
 function send(keySSI, message, callback) {
+    console.log("Send method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
@@ -19170,6 +19183,7 @@ function send(keySSI, message, callback) {
 let requests = {};
 
 function getHandler(keySSI, timeout) {
+    console.log("getHandler method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
     let obs = require("../utils/observable").createObservable();
     bdns.getMQEndpoints(keySSI, (err, endpoints) => {
         if (err || endpoints.length === 0) {
@@ -19213,13 +19227,16 @@ function getHandler(keySSI, timeout) {
 }
 
 function unsubscribe(keySSI, observable) {
+    console.log("unsubscribe method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
     http.unpoll(requests[observable]);
 }
 
-function MQHandler(didDocument, domain) {
+function MQHandler(didDocument, domain, pollingTimeout) {
+    let timeout = pollingTimeout || 1000;
     let token;
     let expiryTime;
     let queueName = didDocument.getHash();
+
     domain = domain || didDocument.getDomain();
 
     function getURL(queueName, action, signature, messageID, callback) {
@@ -19304,12 +19321,20 @@ function MQHandler(didDocument, domain) {
 
     }
 
-    function consumeMessage(action, callback) {
+    function consumeMessage(action, waitForMore, callback) {
+        if(typeof waitForMore === "function"){
+            callback = waitForMore;
+            waitForMore = false;
+        }
+        callback.__requestInProgress = true;
         ensureAuth((err, token) => {
             if (err) {
                 return callback(err);
             }
-
+            //somebody called abort before the ensureAuth resolved
+            if(!callback.__requestInProgress){
+                return;
+            }
             didDocument.sign(token, (err, signature) => {
                 if (err) {
                     return callback(createOpenDSUErrorWrapper(`Failed to sign token`, err));
@@ -19319,11 +19344,31 @@ function MQHandler(didDocument, domain) {
                     if (err) {
                         return callback(err);
                     }
+                    let originalCb = callback;
                     callback = $$.makeSaneCallback(callback);
-                    http.fetch(url, {headers: {Authorization: token}})
-                        .then(response => response.json())
-                        .then(data => callback(undefined, data))
-                        .catch(err => callback(err));
+
+                    let options = {headers: {Authorization: token}};
+                    function makeRequest(){
+                        let request = http.poll(url, options, timeout);
+                        originalCb.__requestInProgress = request;
+
+                        request.then(response => response.json())
+                            .then((response) => {
+                                //the return value of the listing callback helps to stop the polling mechanism in case that
+                                //we need to stop to listen for more messages
+                                let stop = callback(undefined, response);
+                                if(waitForMore && !stop){
+                                    makeRequest();
+                                }
+                            }).catch((err) => {
+                                callback(err);
+                            });
+                    }
+                    //somebody called abort before we arrived here
+                    if(!originalCb.__requestInProgress){
+                        return;
+                    }
+                    makeRequest();
                 })
             })
         })
@@ -19331,19 +19376,40 @@ function MQHandler(didDocument, domain) {
 
     this.previewMessage = (callback) => {
         consumeMessage("get", callback);
-    }
+    };
 
     this.readMessage = (callback) => {
         consumeMessage("take", callback);
     };
 
+    this.readAndWaitForMessages = (callback) => {
+        consumeMessage("take", true, callback);
+    };
+
+    this.abort = (callback)=>{
+        let request = callback.__requestInProgress;
+        //if we have an object it means that a http.poll request is in progress
+        if(typeof request === "object"){
+            request.abort();
+            callback.__requestInProgress = undefined;
+            delete callback.__requestInProgress;
+            console.log("A request was aborted programmatically");
+        }else{
+            //if we have true value it means that an ensureAuth is in progress
+            if(request){
+                callback.__requestInProgress = false;
+                console.log("A request was aborted programmatically");
+            }
+        }
+    }
+
     this.deleteMessage = (messageID, callback) => {
         throw Error("Not implemented");
-    }
+    };
 }
 
-function getMQHandlerForDID(didDocument, domain) {
-    return new MQHandler(didDocument, domain);
+function getMQHandlerForDID(didDocument, domain, timeout) {
+    return new MQHandler(didDocument, domain, timeout);
 }
 
 module.exports = {
@@ -21593,7 +21659,9 @@ module.exports = {
     GROUP_METHOD_NAME: "group"
 }
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
-function ConstDID_Document_Mixin(target, domain, name) {
+const {createOpenDSUErrorWrapper} = require("../../error");
+
+function ConstDID_Document_Mixin(target, domain, name, isInitialisation) {
     let mixin = require("../W3CDID_Mixin");
     const observableMixin = require("../../utils/ObservableMixin")
     mixin(target);
@@ -21614,7 +21682,7 @@ function ConstDID_Document_Mixin(target, domain, name) {
         try {
             seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to create SeedSSI`, e);
+            throw createOpenDSUErrorWrapper(`Failed to create SeedSSI`, e);
         }
 
         target.privateKey = seedSSI.getPrivateKey();
@@ -21626,32 +21694,40 @@ function ConstDID_Document_Mixin(target, domain, name) {
         try {
             constDSU = await $$.promisify(resolver.createConstDSU)(domain, name);
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to create constDSU`, e);
+            throw createOpenDSUErrorWrapper(`Failed to create constDSU`, e);
         }
 
+        constDSU.beginBatch();
         try {
             target.dsu = await $$.promisify(resolver.createSeedDSU)(domain);
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to create writableDSU`, e);
+            throw createOpenDSUErrorWrapper(`Failed to create writableDSU`, e);
         }
 
         let publicKey = await generatePublicKey();
         try {
             await $$.promisify(target.addPublicKey)(publicKey);
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to save public key`, e);
+            throw createOpenDSUErrorWrapper(`Failed to save public key`, e);
         }
         let seedSSI;
         try {
             seedSSI = await $$.promisify(target.dsu.getKeySSIAsString)();
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to get seedSSI`, e);
+            throw createOpenDSUErrorWrapper(`Failed to get seedSSI`, e);
         }
 
         try {
             await $$.promisify(constDSU.mount)(WRITABLE_DSU_PATH, seedSSI);
         } catch (e) {
-            return error.reportUserRelevantError(`Failed to mount writable DSU`, e);
+            throw createOpenDSUErrorWrapper(`Failed to mount writable DSU`, e);
+        }
+
+
+        try {
+            await $$.promisify(constDSU.commitBatch)();
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to commit batch in Const DSU`, e);
         }
 
         target.finishInitialisation();
@@ -21661,10 +21737,13 @@ function ConstDID_Document_Mixin(target, domain, name) {
     target.init = () => {
         resolver.loadDSU(keySSISpace.createConstSSI(domain, name), async (err, constDSUInstance) => {
             if (err) {
+                if(isInitialisation === false){
+                    return target.dispatchEvent("error", err);
+                }
                 try {
                     await createDSU(domain, name);
                 } catch (e) {
-                    return error.reportUserRelevantError(`Failed to create DSU`, e);
+                    throw createOpenDSUErrorWrapper(`Failed to create DSU`, e);
                 }
                 return;
             }
@@ -21673,7 +21752,7 @@ function ConstDID_Document_Mixin(target, domain, name) {
                 const dsuContext = await $$.promisify(constDSUInstance.getArchiveForPath)(WRITABLE_DSU_PATH);
                 target.dsu = dsuContext.archive;
             } catch (e) {
-                return error.reportUserRelevantError(`Failed to load writableDSU`, e);
+                throw createOpenDSUErrorWrapper(`Failed to load writableDSU`, e);
             }
 
             target.finishInitialisation();
@@ -21717,16 +21796,16 @@ function ConstDID_Document_Mixin(target, domain, name) {
 
 module.exports = ConstDID_Document_Mixin;
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function GroupDID_Document(domain, groupName) {
+function GroupDID_Document(domain, groupName, isInitialisation) {
     if (typeof domain === "undefined" || typeof groupName === "undefined") {
         throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
     }
 
     let mixin = require("./ConstDID_Document_Mixin");
-    mixin(this, domain, groupName);
+    mixin(this, domain, groupName, isInitialisation);
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
     const openDSU = require("opendsu");
     const MEMBERS_FILE = "members";
@@ -21907,7 +21986,8 @@ function GroupDID_Document(domain, groupName) {
         });
     };
 
-    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getGroupName", "on", "off", "addPublicKey"]);
+    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getGroupName", "addPublicKey", "on", "off", "dispatchEvent", "removeAllObservers"]);
+
     this.init();
     return this;
 }
@@ -21918,7 +21998,7 @@ module.exports = {
         return new GroupDID_Document(domain, groupName)
     },
     createDIDDocument: function (tokens) {
-        return new GroupDID_Document(tokens[3], tokens[4]);
+        return new GroupDID_Document(tokens[3], tokens[4], false);
     }
 };
 
@@ -22149,6 +22229,8 @@ module.exports = {
 };
 
 },{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
+const GroupDIDDocument = require("./GroupDID_Document");
+
 function SReadDID_Method() {
     let SReadDID_Document = require("./SReadDID_Document");
     this.create = (seedSSI, callback) => {
@@ -22224,11 +22306,23 @@ function GroupDID_Method() {
     const GroupDIDDocument = require("./GroupDID_Document");
 
     this.create = (domain, groupName, callback) => {
-        callback(null, GroupDIDDocument.initiateDIDDocument(domain, groupName));
+        const groupDIDDocument = GroupDIDDocument.initiateDIDDocument(domain, groupName);
+        groupDIDDocument.on("error", (err) => {
+            return callback(err);
+        })
+        groupDIDDocument.on("initialised", () => {
+            return callback(undefined, groupDIDDocument);
+        })
     }
 
     this.resolve = (tokens, callback) => {
-        callback(null, GroupDIDDocument.createDIDDocument(tokens))
+        const groupDIDDocument = GroupDIDDocument.createDIDDocument(tokens);
+        groupDIDDocument.on("error", (err) => {
+            return callback(err);
+        })
+        groupDIDDocument.on("initialised", () => {
+            return callback(undefined, groupDIDDocument);
+        })
     }
 }
 
