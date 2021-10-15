@@ -12877,6 +12877,10 @@ function BasicDB(storageStrategy) {
         this.dispatchEvent("initialised");
     });
 
+    this.getAllRecords = (tableName, callback) => {
+        storageStrategy.getAllRecords(tableName, callback);
+    }
+
     this.addIndex = function (tableName, fieldName, forceReindex, callback) {
         if (typeof forceReindex === "function") {
             callback = forceReindex;
@@ -13281,6 +13285,10 @@ const getMainEnclaveDB = (callback) => {
     sc.getMainEnclaveDB(callback);
 }
 
+const getSharedEnclaveDB = (callback) => {
+    const sc = require("opendsu").loadAPI("sc").getSecurityContext();
+    sc.getSharedEnclaveDB(callback);
+}
 module.exports = {
     getBasicDB,
     getWalletDB(keySSI, dbName) {
@@ -13292,7 +13300,8 @@ module.exports = {
     getSharedDB,
     getInMemoryDB,
     getEnclaveDB,
-    getMainEnclaveDB
+    getMainEnclaveDB,
+    getSharedEnclaveDB
 }
 
 },{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
@@ -13496,6 +13505,52 @@ function MemoryStorageStrategy(){
         callback(undefined);
     }
 
+    const READ_WRITE_KEY_TABLE = "KeyValueTable";
+    this.writeKey =  (key, value, callback) => {
+        let valueObject = {
+            type: typeof value,
+            value: value
+        };
+
+        if (typeof value === "object") {
+            if (Buffer.isBuffer(value)) {
+                valueObject = {
+                    type: "buffer",
+                    value: value.toString()
+                }
+            } else {
+                valueObject = {
+                    type: "object",
+                    value: JSON.stringify(value)
+                }
+            }
+        }
+
+        this.insertRecord(READ_WRITE_KEY_TABLE, key, valueObject, callback);
+    };
+
+    this.readKey =  (key, callback) => {
+        this.getRecord(READ_WRITE_KEY_TABLE, key, (err, record) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read key ${key}`, err));
+            }
+
+            let value;
+            switch (record.type) {
+                case "buffer":
+                    value = Buffer.from(record.value);
+                    break;
+                case "object":
+                    value = JSON.parse(record.value);
+                    break;
+                default:
+                    value = record.value;
+            }
+
+            callback(undefined, value);
+        });
+    }
+
     setTimeout(()=>{
         this.dispatchEvent("initialised");
     })
@@ -13678,6 +13733,16 @@ function SingleDSUStorageStrategy() {
         storageDSU.commitBatch(callback);
     }
 
+    this.getAllRecords = (tableName, callback)=>{
+        readTheWholeTable(tableName, (err, tbl)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, Object.values(tbl));
+        })
+    }
+
     function readTheWholeTable(tableName, callback) {
         getPrimaryKeys(tableName, (err, recordKeys) => {
             if (err) {
@@ -13701,6 +13766,7 @@ function SingleDSUStorageStrategy() {
             })
         });
     }
+
 
     /*
        Get the whole content of the table and asynchronously returns an array with all the  records satisfying the condition tested by the filterFunction
@@ -16668,7 +16734,7 @@ function APIHUBProxy(domain, did) {
     const w3cDID = openDSU.loadAPI("w3cdid");
     const scAPI = openDSU.loadAPI("sc");
     const CryptoSkills = w3cDID.CryptographicSkills;
-
+    let initialised = false;
     const ProxyMixin = require("./ProxyMixin");
     ProxyMixin(this);
     let url;
@@ -16682,8 +16748,13 @@ function APIHUBProxy(domain, did) {
         }
 
         url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+        initialised = true;
         this.finishInitialisation();
         this.dispatchEvent("initialised");
+    }
+
+    this.isInitialised = ()=>{
+        return initialised;
     }
 
     this.getDID = (callback) => {
@@ -16697,7 +16768,7 @@ function APIHUBProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject");
+    bindAutoPendingFunctions(this, "__putCommandObject", "isInitialised");
     init();
 }
 
@@ -16805,6 +16876,14 @@ function Enclave_Mixin(target, did) {
 
     target.cancelBatch = (forDID, callback) => {
         target.storageDB.cancelBatch(callback);
+    }
+
+    target.readKey = (forDID, key, callback)=>{
+        target.storageDB.readKey(key, callback);
+    }
+
+    target.writeKey = (forDID, key, value, callback)=>{
+        target.storageDB.writeKey(key, value, callback);
     }
 
     target.storeSeedSSI = (forDID, seedSSI, alias, callback) => {
@@ -16954,12 +17033,16 @@ function HighSecurityProxy(domain, did) {
     const w3cDID = openDSU.loadAPI("w3cdid");
     const http = openDSU.loadAPI("http");
     const crypto = openDSU.loadAPI("crypto");
+    const scAPI = openDSU.loadAPI("sc");
     const CryptoSkills = w3cDID.CryptographicSkills;
     let didDocument;
     const ProxyMixin = require("./ProxyMixin");
     ProxyMixin(this);
 
     const init = async () => {
+        if (typeof domain === "undefined") {
+            domain = await $$.promisify(scAPI.getVaultDomain)();
+        }
         if (typeof did === "undefined") {
             didDocument = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT);
             did = didDocument.getIdentifier();
@@ -17000,11 +17083,17 @@ function MemoryEnclave() {
     EnclaveMixin(this);
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db");
+    let initialised = false;
     const init = () => {
         this.storageDB = db.getInMemoryDB();
         setTimeout(async () => {
+            initialised = true;
             this.dispatchEvent("initialised");
         })
+    }
+
+    this.isInitialised = () => {
+        return initialised
     }
 
     init();
@@ -17013,17 +17102,22 @@ function MemoryEnclave() {
 module.exports = MemoryEnclave;
 },{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
 const {createOpenDSUErrorWrapper} = require("../../error");
+const commandNames = require("./lib/commandsNames");
 
 function ProxyMixin(target) {
-    const commandNames = require("./lib/commandsNames");` `
+    const commandNames = require("./lib/commandsNames");
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi")
+    const w3cDID = openDSU.loadAPI("w3cdid")
+    const CryptoSkills = w3cDID.CryptographicSkills;
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
-        target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, encryptedRecord, callback);
+        target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, callback);
     };
 
     target.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
-        target.__putCommandObject(commandNames.UPDATE_RECORD, forDID, table, pk, plainRecord, encryptedRecord, callback);
+        target.__putCommandObject(commandNames.UPDATE_RECORD, forDID, table, pk, plainRecord, callback);
     }
 
     target.getRecord = (forDID, table, pk, callback) => {
@@ -17075,6 +17169,22 @@ function ProxyMixin(target) {
         });
     }
 
+    target.getAllRecords = (forDID, table, callback) => {
+        target.__putCommandObject(commandNames.GET_ALL_RECORDS, forDID, table, (err, records) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                records = JSON.parse(records);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse record`, e));
+            }
+
+            callback(undefined, records);
+        });
+    }
+
     target.deleteRecord = (forDID, table, pk, callback) => {
         target.__putCommandObject(commandNames.DELETE_RECORD, forDID, table, pk, callback);
     }
@@ -17098,74 +17208,170 @@ function ProxyMixin(target) {
     target.deleteObjectFromQueue = (forDID, queueName, hash, callback) => {
         target.__putCommandObject(commandNames.DELETE_OBJECT_FROM_QUEUE, forDID, queueName, hash, callback);
     }
+
+    target.beginBatch = (forDID, callback) => {
+        callback(undefined);
+    }
+
+    target.cancelBatch = (forDID, callback) => {
+        callback(undefined);
+    }
+
+    target.commitBatch = (forDID, callback) => {
+        callback(undefined);
+    }
+
+    target.readKey = (forDID, key, callback) => {
+        target.__putCommandObject(commandNames.READ_KEY, forDID, key, (err, serializedValue) => {
+            if (err) {
+                return callback(err);
+            }
+            let value;
+            try {
+                serializedValue = JSON.parse(serializedValue);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse value`, e));
+            }
+            switch (serializedValue.type) {
+                case "buffer":
+                    value = Buffer.from(serializedValue.value);
+                    break;
+                case "object":
+                    value = JSON.parse(serializedValue.value);
+                    break;
+                default:
+                    value = serializedValue.value;
+            }
+            callback(undefined, value);
+        });
+    }
+
+    target.writeKey = (forDID, key, value, callback) => {
+        target.__putCommandObject(commandNames.WRITE_KEY, forDID, key, value, callback);
+    }
+
+    target.storeSeedSSI = (forDID, seedSSI, alias, callback) => {
+        target.__putCommandObject(commandNames.STORE_SEED_SSI, forDID, seedSSI.getIdentifier(), alias, callback);
+    }
+
+    target.storeDID = (forDID, storedDID, privateKeys, callback) => {
+        target.__putCommandObject(commandNames.STORE_DID, forDID.getIdentifier(), storedDID.getIdentifier(), privateKeys, callback);
+    }
+
+    target.signForDID = (forDID, didThatIsSigning, hash, callback) => {
+        target.__putCommandObject(commandNames.SIGN_FOR_DID, forDID.getIdentifier(), didThatIsSigning.getIdentifier(), hash, (err, signature) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, $$.Buffer.from(JSON.parse(signature)));
+        });
+    }
+
+    target.verifyForDID = (forDID, didThatIsVerifying, hash, signature, callback) => {
+        target.__putCommandObject(commandNames.VERIFY_FOR_DID, forDID.getIdentifier(), didThatIsVerifying.getIdentifier(), hash, signature, (err, verificationResult) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, verificationResult);
+        });
+    }
+
+    target.signForKeySSI = (forDID, keySSI, hash, callback) => {
+        target.__putCommandObject(commandNames.SIGN_FOR_KEY_SSI, forDID.getIdentifier(), keySSI.getIdentifier(), hash, callback);
+    }
+
+    target.encryptMessage = (forDID, didFrom, didTo, message, callback) => {
+        target.__putCommandObject(commandNames.ENCRYPT_MESSAGE, forDID.getIdentifier(), didFrom.getIdentifier(), didTo.getIdentifier(), message, callback);
+    }
+
+    target.decryptMessage = (forDID, didTo, encryptedMessage, callback) => {
+        target.__putCommandObject(commandNames.DECRYPT_MESSAGE, forDID.getIdentifier(), didTo.getIdentifier(), encryptedMessage, (err, decryptedMessage) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                decryptedMessage = JSON.parse(decryptedMessage);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse decrypted message`, e));
+            }
+            callback(undefined, decryptedMessage.message);
+        });
+    }
 }
 
 module.exports = ProxyMixin;
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
-function WalletDBEnclave(did) {
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
     const scAPI = openDSU.loadAPI("sc");
     const resolver = openDSU.loadAPI("resolver");
     const config = openDSU.loadAPI("config");
-    const w3cDID = openDSU.loadAPI("w3cdid");
     const DB_NAME = "walletdb_enclave";
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this, did);
     let enclaveDSU;
-    let enclaveDSUKeySSI;
+    let initialised = false;
 
     const init = async () => {
-        let mainDSU;
-        try {
-            mainDSU = await $$.promisify(scAPI.getMainDSU)();
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to get main DSU`, e);
-        }
-
-        try {
-            enclaveDSUKeySSI = await $$.promisify(config.getEnv)(openDSU.constants.ENCLAVE_KEY_SSI);
-            enclaveDSUKeySSI = enclaveDSUKeySSI.toString();
-        } catch (e) {
-            let vaultDomain;
+        if (!keySSI) {
             try {
-                vaultDomain = await $$.promisify(scAPI.getVaultDomain)();
+                keySSI = await $$.promisify(config.getEnv)(openDSU.constants.MAIN_ENCLAVE.KEY_SSI);
             } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to get vault domain`, e);
             }
 
-            try {
-                enclaveDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to create Seed DSU`, e);
-            }
+            if (!keySSI) {
+                let vaultDomain;
+                try {
+                    vaultDomain = await $$.promisify(scAPI.getVaultDomain)();
+                } catch (e) {
+                    throw createOpenDSUErrorWrapper(`Failed to get vault domain`, e);
+                }
 
+                try {
+                    enclaveDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
+                } catch (e) {
+                    throw createOpenDSUErrorWrapper(`Failed to create Seed DSU`, e);
+                }
 
-            try {
-                enclaveDSUKeySSI = await $$.promisify(enclaveDSU.getKeySSIAsString)();
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to get enclave DSU KeySSI`, e);
-            }
-            try {
-                await $$.promisify(config.setEnv)(openDSU.constants.ENCLAVE_KEY_SSI, enclaveDSUKeySSI);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to store enclave DSU KeySSI`, e);
+                try {
+                    keySSI = await $$.promisify(enclaveDSU.getKeySSIAsString)();
+                } catch (e) {
+                    throw createOpenDSUErrorWrapper(`Failed to get enclave DSU KeySSI`, e);
+                }
+                try {
+                    await $$.promisify(config.setEnv)(openDSU.constants.MAIN_ENCLAVE.KEY_SSI, keySSI);
+                } catch (e) {
+                    throw createOpenDSUErrorWrapper(`Failed to store enclave DSU KeySSI`, e);
+                }
             }
         }
 
-        this.storageDB = db.getWalletDB(enclaveDSUKeySSI, DB_NAME);
+        this.storageDB = db.getWalletDB(keySSI, DB_NAME);
         this.storageDB.on("initialised", () => {
+            initialised = true;
             this.finishInitialisation();
             this.dispatchEvent("initialised");
         })
     };
 
-    this.getKeySSI = (callback) => {
-        callback(undefined, enclaveDSUKeySSI);
+    this.getKeySSI = (forDID, callback) => {
+        if (typeof forDID === "function") {
+            callback = forDID;
+            forDID = undefined;
+        }
+        callback(undefined, keySSI);
     }
 
+    this.isInitialised = () => {
+        return initialised;
+    };
+
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, ["on", "off", "beginBatch"]);
+    bindAutoPendingFunctions(this, ["on", "off", "beginBatch", "isInitialised"]);
 
     init();
 }
@@ -17178,72 +17384,46 @@ module.exports = {
     GET_RECORD: "getRecord",
     DELETE_RECORD: "deleteRecord",
     FILTER_RECORDS: "filter",
+    GET_ALL_RECORDS: "getAllRecords",
+    BEGIN_BATCH: "beginBatch",
+    COMMIT_BATCH: "commitBatch",
+    CANCEL_BATCH: "cancelBatch",
+    READ_KEY: "readKey",
+    WRITE_KEY: "writeKey",
     ADD_IN_QUEUE: "addInQueue",
     QUEUE_SIZE: "queueSize",
     LIST_QUEUE: "listQueue",
     GET_OBJECT_FROM_QUEUE: "getObjectFromQueue",
     DELETE_OBJECT_FROM_QUEUE: "deleteObjectFromQueue",
+    STORE_SEED_SSI: "storeSeedSSI",
+    SIGN_FOR_KEY_SSI: "signForKeySSI",
+    STORE_DID: "storeDID",
+    ADD_PRIVATE_KEY_FOR_DID: "addPrivateKeyForDID",
+    SIGN_FOR_DID: "signForDID",
+    VERIFY_FOR_DID: "verifyForDID",
+    ENCRYPT_MESSAGE: "encryptMessage",
+    DECRYPT_MESSAGE: "decryptMessage",
+    GET_PRIVATE_INFO_FOR_DID:"getPrivateInfoForDID"
 }
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
-const commandNames = require("./commandsNames");
 const createCommandObject = (commandName, ...args) => {
-    let command = {
+    return {
         commandName,
-        params: {
-            forDID: args[0]
-        }
+        params: [
+            ...args
+        ]
     };
-    switch (commandName) {
-        case commandNames.INSERT_RECORD:
-        case commandNames.UPDATE_RECORD:
-            command.params.tableName = args[1];
-            command.params.pk = args[2];
-            command.params.plainRecord = args[3];
-            command.params.encryptedRecord = args[4];
-            return command;
-        case commandNames.GET_RECORD:
-        case commandNames.DELETE_RECORD:
-            command.params.tableName = args[1];
-            command.params.pk = args[2];
-            return command;
-        case commandNames.FILTER_RECORDS:
-            command.params.tableName = args[1];
-            command.params.query = args[2];
-            command.params.sort = args[3];
-            command.params.limit = args[4];
-            return command;
-        case commandNames.ADD_IN_QUEUE:
-            command.params.queueName = args[1];
-            command.params.encryptedObject = args[2];
-            return command;
-        case commandNames.LIST_QUEUE:
-            command.params.queueName = args[1];
-            command.params.sortAfterInsertTime = args[2];
-            command.params.onlyFirstN = args[3];
-            return command;
-        case commandNames.QUEUE_SIZE:
-            command.params.queueName = args[1];
-            return command;
-        case commandNames.GET_OBJECT_FROM_QUEUE:
-        case commandNames.DELETE_OBJECT_FROM_QUEUE:
-            command.params.queueName = args[1];
-            command.params.hash = args[2];
-            return command;
-        default:
-            throw Error(`Invalid command <${commandName}>`)
-    }
 }
 
 module.exports = {
     createCommandObject
 }
-},{"./commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
-const MemoryEnclave = require("./impl/MemoryEnclave");
-const APIHUBProxy = require("./impl/APIHUBProxy");
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+const constants = require("../moduleConstants");
 
-function initialiseWalletDBEnclave() {
+function initialiseWalletDBEnclave(keySSI, did) {
     const WalletDBEnclave = require("./impl/WalletDBEnclave");
-    return new WalletDBEnclave();
+    return new WalletDBEnclave(keySSI);
 }
 
 function initialiseMemoryEnclave() {
@@ -17264,15 +17444,38 @@ function connectEnclave(forDID, enclaveDID, ...args) {
     throw Error("Not implemented");
 }
 
+const enclaveConstructors = {};
+function createEnclave(enclaveType, ...args) {
+    if (typeof enclaveConstructors[enclaveType] !== "function") {
+        throw Error(`No constructor function registered for enclave type ${enclaveType}`);
+    }
+
+    return enclaveConstructors[enclaveType](...args);
+}
+
+function registerEnclave(enclaveType, enclaveConstructor) {
+    if (typeof enclaveConstructors[enclaveType] !== "undefined") {
+        throw Error(`A constructor function already registered for enclave type ${enclaveType}`);
+    }
+    enclaveConstructors[enclaveType] = enclaveConstructor;
+}
+
+registerEnclave(constants.ENCLAVE_TYPES.MEMORY_ENCLAVE, initialiseMemoryEnclave);
+registerEnclave(constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE, initialiseWalletDBEnclave);
+registerEnclave(constants.ENCLAVE_TYPES.APIHUB_ENCLAVE, initialiseAPIHUBProxy);
+registerEnclave(constants.ENCLAVE_TYPES.HIGH_SECURITY_ENCLAVE, initialiseHighSecurityProxy);
+
 module.exports = {
     initialiseWalletDBEnclave,
     initialiseMemoryEnclave,
     initialiseAPIHUBProxy,
     initialiseHighSecurityProxy,
-    connectEnclave
+    connectEnclave,
+    createEnclave,
+    registerEnclave
 }
 
-},{"./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -17574,7 +17777,81 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
+},{"./browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js":[function(require,module,exports){
+const userAgent = 'PSK NodeAgent/0.0.1';
+const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
+
+function getNetworkForOptions(options) {
+	const httpModuleName = "http";
+	const http = require(httpModuleName);
+	const https = require(httpModuleName + "s");
+
+	let network;
+	switch (options.protocol) {
+		case "http:":
+			network = http;
+			break;
+		case "https:":
+			network = https;
+			break;
+		default:
+			throw new Error(`Can't handle protocol ${options.protocol}`);
+	}
+
+	return network;
+}
+
+function buildOptions(url, method, opts){
+	const urlModuleName = "url";
+	const URL = require(urlModuleName);
+	const innerUrl = URL.parse(url);
+
+	const options = {
+		hostname: innerUrl.hostname,
+		path: innerUrl.pathname,
+		protocol: innerUrl.protocol,
+		port: parseInt(innerUrl.port),
+		headers: {
+			'User-Agent': userAgent,
+			[signatureHeaderName]: 'replaceThisPlaceholderSignature'
+		},
+		method
+	};
+
+	//if no port is specified we need to set the default ones
+	if(!options.port){
+		options.port = innerUrl.protocol === "http:" ? 80 : 443
+	}
+
+	if(opts){
+		for(let name in opts.headers){
+			options.headers[name] = opts.headers[name];
+		}
+	}
+
+	return options;
+}
+
+function setContentTypeByData(options, data){
+	if(typeof data === "undefined"){
+		return;
+	}
+	if (ArrayBuffer.isView(data) || $$.Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+		if (!$$.Buffer.isBuffer(data)) {
+			data = $$.Buffer.from(data);
+		}
+
+		options.headers['Content-Type'] = 'application/octet-stream';
+		options.headers['Content-Length'] = data.length;
+	}
+}
+
+module.exports = {
+	setContentTypeByData,
+	buildOptions,
+	getNetworkForOptions
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -17798,23 +18075,8 @@ module.exports = {
 }
 
 },{"http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
-const http = require("http");
-const https = require("https");
-const URL = require("url");
 
-const userAgent = 'PSK NodeAgent/0.0.1';
-const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
-
-function getNetworkForOptions(options) {
-	if(options.protocol === 'http:') {
-		return http;
-	} else if(options.protocol === 'https:') {
-		return https;
-	} else {
-		throw new Error(`Can't handle protocol ${options.protocol}`);
-	}
-
-}
+const {setContentTypeByData,buildOptions,getNetworkForOptions} = require("./common.js");
 
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, reqOptions, callback) {
@@ -17822,33 +18084,11 @@ function generateMethodForRequestWithData(httpMethod) {
 			callback = reqOptions;
 			reqOptions = {};
 		}
-		const innerUrl = URL.parse(url);
 
-		const options = {
-			hostname: innerUrl.hostname,
-			path: innerUrl.pathname,
-			port: parseInt(innerUrl.port),
-			headers: {
-				'User-Agent': userAgent,
-				[signatureHeaderName]: 'replaceThisPlaceholderSignature'
-			},
-			method: httpMethod
-		};
+		const options = buildOptions(url, httpMethod, reqOptions);
+		const network = getNetworkForOptions(options);
 
-		for(let name in reqOptions.headers){
-			options.headers[name] = reqOptions.headers[name];
-		}
-
-		const network = getNetworkForOptions(innerUrl);
-
-		if (ArrayBuffer.isView(data) || $$.Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
-			if (!$$.Buffer.isBuffer(data)) {
-				data = $$.Buffer.from(data);
-			}
-
-			options.headers['Content-Type'] = 'application/octet-stream';
-			options.headers['Content-Length'] = data.length;
-		}
+		setContentTypeByData(options, data);
 
 		const req = network.request(options, (res) => {
 			const {statusCode} = res;
@@ -17902,18 +18142,269 @@ function generateMethodForRequestWithData(httpMethod) {
 			data = JSON.stringify(data);
 		}
 
-		req.write(data);
+		if(data){
+			req.write(data);
+		}
 		req.end();
 	};
 }
 
-module.exports = {
-	fetch: require("./fetch").fetch,
-	doPost: generateMethodForRequestWithData('POST'),
-	doPut: generateMethodForRequestWithData('PUT')
+function doGet(url, options, callback) {
+	let fnc = generateMethodForRequestWithData('GET');
+	return fnc(url, undefined, options, callback);
 }
 
-},{"./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js","http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+const {doGetWithProxy, doPutWithProxy, doPostWithProxy} = require("./proxy");
+
+module.exports = {
+	fetch: require("./fetch").fetch,
+	doGet,
+	doPost: generateMethodForRequestWithData('POST'),
+	doPut: generateMethodForRequestWithData('PUT'),
+	doGetWithProxy,
+	doPutWithProxy,
+	doPostWithProxy
+}
+
+},{"./common.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js","./proxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/index.js":[function(require,module,exports){
+const {setContentTypeByData,buildOptions,getNetworkForOptions} = require("../common");
+
+function generateMethodForRequestViaProxy(httpMethod) {
+	return function (proxyUrl, url, data, opts, callback) {
+		console.log("Received Proxy:", proxyUrl);
+		console.log("Targeting URL:", url);
+
+		const options = buildOptions(url, httpMethod, opts);
+
+		setContentTypeByData(options, data);
+
+		const proxyUrlObject = buildOptions(proxyUrl);
+		const network = getNetworkForOptions(proxyUrlObject);
+
+		const proxyPath = `${proxyUrlObject.hostname}:${proxyUrlObject.port}`;
+		const proxyOpts = {
+			host: proxyUrlObject.hostname,
+			port: proxyUrlObject.port,
+			method: 'CONNECT',
+			path: proxyPath
+		}
+		console.log("Preparing to connect to proxy", proxyOpts);
+		const proxyReq = network.request(proxyOpts);
+
+		//setting up the listener for connect event
+		proxyReq.on('connect', function (res, socket, head) {
+			console.log("Proxy connection OK");
+			const connectMethod = proxyUrlObject.protocol === "http:" ? require("net").connect : require('tls').connect;
+			const targetOpts = {
+				host: options.hostname,
+				port: options.port,
+				socket: socket
+			};
+			console.log("Preparing connection to handle the targeted url using options", targetOpts);
+			let socketConnection = connectMethod(targetOpts, function () {
+				console.log("Host connection OK");
+				//now that we are connected to the proxy we need to prepare the request that needs to be done by the proxy for us
+				let request = `${httpMethod} ${url} HTTP/1.1\r\nHost: ${options.hostname}\r\n`;
+				//injecting supplementary headers to ensure proxy connection doesn't close
+				options.headers["Accept"] = "*/*";
+				options.headers["Proxy-Connection"] = "Keep-Alive";
+				//handling headers
+				for (let headerName in options.headers) {
+					let headerValue = options.headers[headerName];
+					request += `${headerName}: ${headerValue}\r\n`;
+				}
+				console.log("Writing", request);
+				socketConnection.write(request);
+
+				//if data is stream
+				if (data && data.pipe && typeof data.pipe === "function") {
+					//we need to signal that the body of the request will be written
+					socketConnection.write("\r\n");
+					data.on("data", function (chunk) {
+						console.log("Writing", chunk);
+						socketConnection.write(chunk);
+					});
+
+					data.on("end", function () {
+						socketConnection.write("\r\n");
+					});
+					return;
+				}
+
+				//if data is object we serialize it as JSON
+				if (typeof data !== "undefined" && typeof data !== 'string' && !$$.Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
+					//we need to signal that the body of the request will be written
+					let message = "\r\n" + JSON.stringify(data) + "\r\n";
+					console.log("Writing", message);
+					socketConnection.write(message);
+					return;
+				}
+
+				//if buffer type just write it into the socket
+				if (data) {
+					//we need to signal that the body of the request will be written
+					console.log("Writing", data);
+					socketConnection.write("\r\n");
+					socketConnection.write(data);
+				}
+				console.log("Finish the writing.");
+				socketConnection.write("\r\n");
+			});
+
+			require("./responseParser.js")(socketConnection, (err, response)=>{
+				if(err){
+					return callback(err);
+				}
+				//not sure if we should treat redirects as errors...
+				if (response.statusCode < 200 || response.statusCode >= 300){
+					return callback(response);
+				}
+				//TODO: document the last argument... providing response.headers to the callback
+				callback(undefined, response.body, response.headers);
+			});
+		});
+
+		proxyReq.on('error', (err)=>{
+			console.log("Got an error from the proxy", err);
+			return callback(err);
+		});
+
+		//make the request to the proxy
+		proxyReq.end();
+	}
+}
+
+function doGetWithProxy(proxyUrl, url, options, callback) {
+	let fnc = generateMethodForRequestViaProxy('GET');
+	return fnc(proxyUrl, url, undefined, options, callback);
+}
+
+module.exports = {
+	doGetWithProxy,
+	doPutWithProxy: generateMethodForRequestViaProxy('PUT'),
+	doPostWithProxy: generateMethodForRequestViaProxy('POST')
+}
+
+
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./responseParser.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/responseParser.js","net":false,"tls":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/responseParser.js":[function(require,module,exports){
+module.exports = function(responseStream, callback){
+	responseStream.on("error", function (err) {
+		console.log("Caught an error while reading the response", err);
+		return callback(err);
+	});
+
+	let receivedDataAsString = "";
+
+	const response = {};
+
+	const HTTPStatusRegex = /^HTTP\/[0-9.]* [0-9][0-9][0-9] [\w ]*[\r\n]+/gm;
+	const headerLineDelimiter = "\r\n";
+	const headerZoneDelimiter = "\r\n\r\n";
+	let headerReceived = false;
+	let headerRead = false;
+
+	const TRANSFER_ENCODING_HEADER = "Transfer-Encoding";
+	let expectedChunkSize;
+
+	const CONTENT_LENGTH_HEADER = "Content-Length";
+
+	let expectedContentLength;
+
+	responseStream.on('data', function (data) {
+		console.log("Received", data.toString());
+		let convertedToString = false;
+		if(!headerRead){
+			receivedDataAsString += data.toString();
+			convertedToString = true;
+		}
+
+		if(!headerReceived){
+			//first line from response should be protocol/version statusCode Status
+			headerReceived = HTTPStatusRegex.test(data);
+			HTTPStatusRegex.lastIndex = -1;
+			let status = HTTPStatusRegex.exec(receivedDataAsString)[0];
+			status = status.replace(headerLineDelimiter, "");
+			receivedDataAsString = receivedDataAsString.replace(HTTPStatusRegex, "");
+			status = status.split(" ");
+			response.statusCode = status[1];
+			response.statusMessage = status[2];
+		}
+		if(headerReceived && !headerRead){
+			headerRead = receivedDataAsString.indexOf(headerZoneDelimiter) !== -1;
+		}
+		if(headerRead && !response.headers){
+			let headers = receivedDataAsString.substring(0, receivedDataAsString.indexOf(headerZoneDelimiter));
+			//in case that after the headers we receive more data let's extract the header part from the response
+			receivedDataAsString = receivedDataAsString.replace(headers+headerZoneDelimiter, "");
+
+			headers = headers.split(headerLineDelimiter);
+			//let's parse headers line by line using the headerRegex
+			const headerRegex = /([\w-]+): (.*)/gm;
+			response.headers = {};
+			for(let i=0; i<headers.length; i++){
+				let header = /([\w-]+): (.*)/gm.exec(headers[i]);
+				response.headers[header[1]] = header[2];
+			}
+			//test for content length header
+			if(typeof response.headers[CONTENT_LENGTH_HEADER] !== "undefined"){
+				expectedContentLength = response.headers[CONTENT_LENGTH_HEADER];
+			}
+
+			if(receivedDataAsString !== ""){
+				data = Buffer.from(receivedDataAsString);
+				convertedToString = false;
+			}
+		}
+		if(response.headers && !convertedToString){
+			//we should start ingesting body data...
+			const transferEncoding = response.headers[TRANSFER_ENCODING_HEADER];
+			if(transferEncoding === "chunked"){
+				let sizeRegex = /^[0-9A-F][0-9A-F][0-9A-F][0-9A-F]\r\n/gm;
+				let noOfBytes = 4;
+
+				let foundChunkSize = data.toString().search(sizeRegex);
+				if(foundChunkSize!==-1){
+					const chunkSize = data.slice(foundChunkSize, foundChunkSize+noOfBytes);
+					expectedChunkSize = parseInt(chunkSize.toString(), 16);
+
+					if(foundChunkSize === 0){
+						data = data.slice(noOfBytes, data.length);
+					}else{
+						for(let i=0; i<noOfBytes+headerLineDelimiter.length; i++){
+							data[foundChunkSize+i] = Buffer.from("");
+						}
+					}
+				}
+				if(!response.chunks){
+					response.chunks = [];
+				}
+				response.chunks.push(data);
+				expectedChunkSize -= data.length;
+				const endCharacterIndex = data.toString().search(/^0$/gm);
+				if(endCharacterIndex !==-1){
+					//end of response
+					data[endCharacterIndex] = Buffer.from("");
+					response.body = Buffer.concat(response.chunks);
+					return callback(undefined, response);
+				}
+			}
+			if(expectedContentLength){
+				if(!response.chunks){
+					response.chunks = [];
+				}
+				response.chunks.push(data);
+				expectedContentLength -= data.length;
+
+				if(expectedContentLength <= 0){
+					//received everything... so we good
+					response.body = Buffer.concat(response.chunks);
+					return callback(undefined, response);
+				}
+			}
+		}
+	});
+}
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -19099,11 +19590,19 @@ module.exports = {
 	BDNS_ROOT_HOSTS: "BDNS_ROOT_HOSTS",
 	ENVIRONMENT_PATH: "/environment.json",
 	SECURITY_CONTEXT_KEY_SSI: "scKeySSI",
-	VAULT_DOMAIN: "domain",
-	SUBDOMAIN: "subdomain",
-	ENCLAVE_TYPE: "enclaveType",
-	ENCLAVE_DID: "enclaveDID",
-	ENCLAVE_KEY_SSI: ".enclave",
+	VAULT_DOMAIN: "vaultDomain",
+	DOMAIN: "domain",
+	DID_DOMAIN: "didDomain",
+	MAIN_ENCLAVE: {
+		TYPE: "enclaveType",
+		DID: "enclaveDID",
+		KEY_SSI: "enclaveKeySSI"
+	},
+	SHARED_ENCLAVE: {
+		TYPE: "sharedEnclaveType",
+		DID: "sharedEnclaveDID",
+		KEY_SSI: "sharedEnclaveKeySSI",
+	},
 	ENCLAVE_TYPES: {
 		WALLET_DB_ENCLAVE: "WalletDBEnclave",
 		MEMORY_ENCLAVE: "MemoryEnclave",
@@ -19322,7 +19821,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
     }
 
     function consumeMessage(action, waitForMore, callback) {
-        if(typeof waitForMore === "function"){
+        if (typeof waitForMore === "function") {
             callback = waitForMore;
             waitForMore = false;
         }
@@ -19332,7 +19831,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                 return callback(err);
             }
             //somebody called abort before the ensureAuth resolved
-            if(!callback.__requestInProgress){
+            if (!callback.__requestInProgress) {
                 return;
             }
             didDocument.sign(token, (err, signature) => {
@@ -19348,7 +19847,8 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                     callback = $$.makeSaneCallback(callback);
 
                     let options = {headers: {Authorization: token}};
-                    function makeRequest(){
+
+                    function makeRequest() {
                         let request = http.poll(url, options, timeout);
                         originalCb.__requestInProgress = request;
 
@@ -19357,15 +19857,16 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                                 //the return value of the listing callback helps to stop the polling mechanism in case that
                                 //we need to stop to listen for more messages
                                 let stop = callback(undefined, response);
-                                if(waitForMore && !stop){
+                                if (waitForMore && !stop) {
                                     makeRequest();
                                 }
                             }).catch((err) => {
-                                callback(err);
-                            });
+                            callback(err);
+                        });
                     }
+
                     //somebody called abort before we arrived here
-                    if(!originalCb.__requestInProgress){
+                    if (!originalCb.__requestInProgress) {
                         return;
                     }
                     makeRequest();
@@ -19386,17 +19887,17 @@ function MQHandler(didDocument, domain, pollingTimeout) {
         consumeMessage("take", true, callback);
     };
 
-    this.abort = (callback)=>{
+    this.abort = (callback) => {
         let request = callback.__requestInProgress;
         //if we have an object it means that a http.poll request is in progress
-        if(typeof request === "object"){
+        if (typeof request === "object") {
             request.abort();
             callback.__requestInProgress = undefined;
             delete callback.__requestInProgress;
             console.log("A request was aborted programmatically");
-        }else{
+        } else {
             //if we have true value it means that an ensureAuth is in progress
-            if(request){
+            if (request) {
                 callback.__requestInProgress = false;
                 console.log("A request was aborted programmatically");
             }
@@ -19404,7 +19905,29 @@ function MQHandler(didDocument, domain, pollingTimeout) {
     }
 
     this.deleteMessage = (messageID, callback) => {
-        throw Error("Not implemented");
+        ensureAuth((err, token) => {
+            if (err) {
+                return callback(err);
+            }
+            didDocument.sign(token, (err, signature) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to sign token`, err));
+                }
+
+                getURL(queueName, "delete", signature.toString("hex"), messageID, (err, url) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    http.fetch(url, {
+                        method: "DELETE",
+                        headers: {"Authorization": token}
+                    })
+                        .then(response => callback())
+                        .catch(e => callback(e));
+                });
+            });
+        });
     };
 }
 
@@ -19995,7 +20518,10 @@ function getMainDSUForNode(callback) {
                 }
                 setMainDSU(seedDSU);
 
-                seedDSU.writeFile("/environment.json", JSON.stringify({domain: "vault"}), (err) => {
+                seedDSU.writeFile("/environment.json", JSON.stringify({
+                    vaultDomain: "vault",
+                    didDomain: "vault"
+                }), (err) => {
                     if (err) {
                         return callback(err);
                     }
@@ -20067,90 +20593,92 @@ function SecurityContext() {
     const config = openDSU.loadAPI("config");
     const enclaveAPI = openDSU.loadAPI("enclave");
     let enclave;
+    let sharedEnclave;
     let storageDSU;
     let scDSUKeySSI;
     let mainDID;
 
     let initialised = false;
 
-    const getEnclaveInstance = (enclaveType) => {
-        switch (enclaveType) {
-            case constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE:
-                return enclaveAPI.initialiseWalletDBEnclave();
-            case constants.ENCLAVE_TYPES.APIHUB_ENCLAVE:
-                return enclaveAPI.initialiseAPIHUBProxy();
-            case constants.ENCLAVE_TYPES.HIGH_SECURITY_ENCLAVE:
-                return enclaveAPI.initialiseHighSecurityProxy();
-            case constants.ENCLAVE_TYPES.MEMORY_ENCLAVE:
-                return enclaveAPI.initialiseMemoryEnclave();
-            default:
-                throw Error(`Invalid enclave type ${enclaveType}`)
+    const initSharedEnclave = async () => {
+        let sharedEnclaveType;
+        let sharedEnclaveKeySSI;
+        try {
+            sharedEnclaveType = await $$.promisify(config.getEnv)(constants.SHARED_ENCLAVE.TYPE);
+        } catch (e) {
+            return;
         }
-    };
+        if (!sharedEnclaveType) {
+            return;
+        }
+        try {
+            sharedEnclaveKeySSI = await $$.promisify(config.getEnv)(constants.SHARED_ENCLAVE.KEY_SSI);
+        } catch (e) {
+            if (sharedEnclaveType === constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE) {
+                throw Error(`A key SSI should be provided when creating a WalletDB enclave`);
+            }
+        }
+
+        sharedEnclave = enclaveAPI.createEnclave(sharedEnclaveType, sharedEnclaveKeySSI);
+        return sharedEnclave;
+    }
 
     const init = async () => {
         let enclaveType;
         let enclaveDID;
         try {
-            enclaveType = await $$.promisify(config.getEnv)(constants.ENCLAVE_TYPE);
+            enclaveType = await $$.promisify(config.getEnv)(constants.MAIN_ENCLAVE.TYPE);
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to get env enclaveType`, e);
         }
 
         if (typeof enclaveType === "undefined") {
             enclaveType = constants.ENCLAVE_TYPES.MEMORY_ENCLAVE;
-            try {
-                await $$.promisify(config.setEnv)(constants.ENCLAVE_TYPE, enclaveType)
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to set env enclaveType`, e);
-            }
         }
 
         try {
-            enclaveDID = await $$.promisify(config.getEnv)(constants.ENCLAVE_DID);
+            enclaveDID = await $$.promisify(config.getEnv)(constants.MAIN_ENCLAVE.DID);
         } catch (e) {
             throw createOpenDSUErrorWrapper(`Failed to get env enclaveDID`, e);
         }
 
-        try {
-            scDSUKeySSI = await $$.promisify(config.getEnv)(constants.SECURITY_CONTEXT_KEY_SSI);
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to get env scKeySSI`, e);
-        }
-
-
-        if (typeof scDSUKeySSI === "undefined") {
-            try {
-                const vaultDomain = await $$.promisify(getVaultDomain)();
-                const seedDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
-                scDSUKeySSI = await $$.promisify(seedDSU.getKeySSIAsString)();
-                storageDSU = seedDSU;
-                await $$.promisify(config.setEnv)(constants.SECURITY_CONTEXT_KEY_SSI, scDSUKeySSI)
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to create SeedDSU for sc`, e);
-            }
-        } else {
-            try {
-                storageDSU = await $$.promisify(resolver.loadDSU)(scDSUKeySSI);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to load sc DSU`, e);
-            }
-        }
-
-        enclave = getEnclaveInstance(enclaveType);
-        enclave.on("initialised", async () => {
+        enclave = enclaveAPI.createEnclave(enclaveType);
+        await initSharedEnclave();
+        const __saveEnclaveDIDAndFinishInit =async ()=>{
             if (typeof enclaveDID === "undefined") {
                 enclaveDID = await $$.promisify(enclave.getDID)();
                 try {
-                    await $$.promisify(config.setEnv)(constants.ENCLAVE_DID, enclaveDID)
+                    await $$.promisify(config.setEnv)(constants.MAIN_ENCLAVE.DID, enclaveDID)
                 } catch (e) {
                     throw createOpenDSUErrorWrapper(`Failed to set env enclaveDID`, e);
                 }
             }
-            initialised = true;
-            this.finishInitialisation();
-            this.dispatchEvent("initialised")
-        });
+
+            if (!sharedEnclave) {
+                return finishInit();
+            }
+            if (!sharedEnclave.isInitialised()) {
+                sharedEnclave.on("initialised", () => {
+                    finishInit();
+                });
+            } else {
+                finishInit();
+            }
+        }
+
+        if(enclave.isInitialised()){
+            __saveEnclaveDIDAndFinishInit()
+        }else{
+            enclave.on("initialised", async () => {
+                __saveEnclaveDIDAndFinishInit();
+            });
+        }
+    }
+
+    const finishInit = () => {
+        initialised = true;
+        this.finishInitialisation();
+        this.dispatchEvent("initialised")
     }
 
     this.registerDID = (didDocument, callback) => {
@@ -20168,13 +20696,23 @@ function SecurityContext() {
     this.registerKeySSI = (forDID, keySSI, callback) => {
         const generateUid = require("swarmutils").generateUid;
         const alias = generateUid(10).toString("hex");
-        enclave.storeSeedSSI(forDID, keySSI, alias, err => {
-            if (err) {
-                return callback(err);
-            }
+        if (sharedEnclave) {
+            sharedEnclave.storeSeedSSI(forDID, keySSI, alias, err => {
+                if (err) {
+                    return callback(err);
+                }
 
-            callback(undefined, alias);
-        })
+                callback(undefined, alias);
+            })
+        } else {
+            enclave.storeSeedSSI(forDID, keySSI, alias, err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, alias);
+            })
+        }
     };
 
     this.signForKeySSI = (forDID, keySSI, data, callback) => {
@@ -20214,32 +20752,54 @@ function SecurityContext() {
         callback(undefined, storageDSU);
     }
 
-    this.getMainEnclaveDB = (callback) => {
-        const __initMainEnclave = () => {
-            const mainEnclaveDB = {};
-            let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch"];
-            let syncDBMethods = ["beginBatch"]
-            for (let i = 0; i < asyncDBMethods.length; i++) {
-                mainEnclaveDB[asyncDBMethods[i]] = function (...args) {
-                    enclave[asyncDBMethods[i]](mainDID, ...args);
-                }
-
-                mainEnclaveDB[`${asyncDBMethods[i]}Async`] = $$.promisify(mainEnclaveDB[asyncDBMethods[i]]);
+    const wrapEnclave = (enclave) => {
+        const enclaveDB = {};
+        let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords"];
+        let syncDBMethods = ["beginBatch"]
+        for (let i = 0; i < asyncDBMethods.length; i++) {
+            enclaveDB[asyncDBMethods[i]] = function (...args) {
+                enclave[asyncDBMethods[i]](mainDID, ...args);
             }
 
-
-            for (let i = 0; i < syncDBMethods.length; i++) {
-                mainEnclaveDB[syncDBMethods[i]] = function (...args) {
-                    enclave[syncDBMethods[i]](mainDID, ...args);
-                }
-            }
-            callback(undefined, mainEnclaveDB);
+            enclaveDB[`${asyncDBMethods[i]}Async`] = $$.promisify(enclaveDB[asyncDBMethods[i]]);
         }
+
+
+        for (let i = 0; i < syncDBMethods.length; i++) {
+            enclaveDB[syncDBMethods[i]] = function (...args) {
+                enclave[syncDBMethods[i]](mainDID, ...args);
+            }
+        }
+
+        return enclaveDB;
+    }
+    this.getMainEnclaveDB = (callback) => {
+        let mainEnclaveDB;
         if (this.isInitialised()) {
-            __initMainEnclave();
+            mainEnclaveDB = wrapEnclave(enclave);
+            callback(undefined, mainEnclaveDB);
         } else {
             enclave.on("initialised", () => {
-                __initMainEnclave()
+                mainEnclaveDB = wrapEnclave(enclave);
+                callback(undefined, mainEnclaveDB);
+            })
+        }
+    }
+
+    this.getSharedEnclaveDB = (callback) => {
+        let sharedEnclaveDB;
+        const __getWrappedEnclave = () => {
+            if (!sharedEnclave) {
+                return callback(Error(`No shared db found`))
+            }
+            sharedEnclaveDB = wrapEnclave(sharedEnclave);
+            callback(undefined, sharedEnclaveDB);
+        }
+        if (this.isInitialised()) {
+            __getWrappedEnclave();
+        } else {
+            enclave.on("initialised", () => {
+                __getWrappedEnclave();
             })
         }
     }
@@ -20251,30 +20811,18 @@ function SecurityContext() {
 }
 
 const getVaultDomain = (callback) => {
-    config.getEnv(constants.VAULT_DOMAIN, callback);
-    // getMainDSU((err, mainDSU) => {
-    //     if (err) {
-    //         return callback(err);
-    //     }
-    //
-    //     mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, environment) => {
-    //         if (err) {
-    //             return callback(createOpenDSUErrorWrapper(`Failed to read environment file`, err));
-    //         }
-    //
-    //         try {
-    //             environment = JSON.parse(environment.toString())
-    //         } catch (e) {
-    //             return callback(createOpenDSUErrorWrapper(`Failed to parse environment data`, e));
-    //         }
-    //
-    //         callback(undefined, environment.domain);
-    //     })
-    // })
+    config.getEnv(constants.VAULT_DOMAIN, (err, vaultDomain) => {
+        if (err || !vaultDomain) {
+            console.log(`The property <${constants.DOMAIN}> is deprecated in environment.js. Use the property <${constants.VAULT_DOMAIN}> instead`)
+            return config.getEnv(constants.DOMAIN, callback);
+        }
+
+        callback(undefined, vaultDomain);
+    });
 }
 
-const getSubdomain = (callback) => {
-    config.getEnv(constants.SUBDOMAIN, callback);
+const getDIDDomain = (callback) => {
+    config.getEnv(constants.DID_DOMAIN, callback);
 }
 const getSecurityContext = () => {
     if (typeof $$.sc === "undefined") {
@@ -20295,7 +20843,7 @@ module.exports = {
     getVaultDomain,
     getSecurityContext,
     refreshSecurityContext,
-    getSubdomain
+    getDIDDomain
 };
 
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
@@ -21247,18 +21795,18 @@ function CryptographicSkillsMixin(target) {
                 callback(undefined, encryptedMessage);
             };
 
-            let compatibleSSI;
-            try {
-                compatibleSSI = await $$.promisify(publicKeySSI.generateCompatiblePowerfulKeySSI)();
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to create compatible seed ssi`, e));
-            }
-
-            try {
-                await saveNewKeyPairInSC(didFrom, compatibleSSI);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
-            }
+            // let compatibleSSI;
+            // try {
+            //     compatibleSSI = await $$.promisify(publicKeySSI.generateCompatiblePowerfulKeySSI)();
+            // } catch (e) {
+            //     return callback(createOpenDSUErrorWrapper(`Failed to create compatible seed ssi`, e));
+            // }
+            //
+            // try {
+            //     await saveNewKeyPairInSC(didFrom, compatibleSSI);
+            // } catch (e) {
+            //     return callback(createOpenDSUErrorWrapper(`Failed to save compatible seed ssi`, e));
+            // }
 
             __encryptMessage(senderSeedSSI);
         });
@@ -21462,7 +22010,7 @@ function W3CDID_Mixin(target) {
         const mqHandler = require("opendsu")
             .loadAPI("mq")
             .getMQHandlerForDID(target);
-        mqHandler.readMessage((err, encryptedMessage) => {
+        mqHandler.previewMessage((err, encryptedMessage) => {
             if (err) {
                 return callback(
                     createOpenDSUErrorWrapper(`Failed to read message`, err)
@@ -21475,7 +22023,13 @@ function W3CDID_Mixin(target) {
             } catch (e) {
                 return callback(e);
             }
-            target.decryptMessage(message, callback);
+
+            mqHandler.deleteMessage(encryptedMessage.messageId, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
+                }
+                target.decryptMessage(message, callback);
+            })
         });
     };
 
@@ -22088,13 +22642,13 @@ module.exports = {
 },{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function NameDID_Document(domain, name) {
+function NameDID_Document(domain, name, isInitialisation) {
     if (typeof domain === "undefined" || typeof name === "undefined") {
         throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
     }
 
     let mixin = require("./ConstDID_Document_Mixin");
-    mixin(this, domain, name);
+    mixin(this, domain, name, isInitialisation);
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
     this.getMethodName = () => {
@@ -22109,7 +22663,7 @@ function NameDID_Document(domain, name) {
         return name;
     };
 
-    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getName", "on", "off", "addPublicKey", "readMessage", "getDomain", "getHash"]);
+    bindAutoPendingFunctions(this, ["init", "getIdentifier", "getName", "on", "off", "dispatchEvent", "removeAllObservers", "addPublicKey", "readMessage", "getDomain", "getHash"]);
     this.init();
     return this;
 }
@@ -22120,7 +22674,7 @@ module.exports = {
         return new NameDID_Document(domain, name)
     },
     createDIDDocument: function (tokens) {
-        return new NameDID_Document(tokens[3], tokens[4]);
+        return new NameDID_Document(tokens[3], tokens[4], false);
     }
 };
 
@@ -22231,20 +22785,31 @@ module.exports = {
 },{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
 const GroupDIDDocument = require("./GroupDID_Document");
 
+function storeDIDInSC(didDocument, callback) {
+    const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
+        const __registerDID = ()=>{
+            securityContext.registerDID(didDocument, (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`failed to register did ${didDocument.getIdentifier()} in security context`, err));
+                }
+
+                callback(null, didDocument);
+            })
+        }
+        if(securityContext.isInitialised()){
+            __registerDID();
+        }else {
+            securityContext.on("initialised", ()=>{
+                __registerDID()
+            })
+        }
+}
 function SReadDID_Method() {
     let SReadDID_Document = require("./SReadDID_Document");
     this.create = (seedSSI, callback) => {
         const sReadDIDDocument = SReadDID_Document.initiateDIDDocument(seedSSI);
         sReadDIDDocument.on("initialised", () => {
-            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-
-            securityContext.registerDID(sReadDIDDocument, (err) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`failed to register did ${sReadDIDDocument.getIdentifier()} in security context`, err));
-                }
-
-                callback(null, sReadDIDDocument);
-            })
+            storeDIDInSC(sReadDIDDocument, callback);
         });
     }
     this.resolve = function (tokens, callback) {
@@ -22259,15 +22824,7 @@ function KeyDID_Method() {
     let KeyDIDDocument = require("./KeyDID_Document");
     this.create = function (seedSSI, callback) {
         const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(seedSSI);
-        const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-
-        securityContext.registerDID(keyDIDDocument, (err) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`failed to register did ${keyDIDDocument.getIdentifier()} in security context`, err));
-            }
-
-            callback(null, keyDIDDocument);
-        })
+        storeDIDInSC(keyDIDDocument, callback);
     }
 
     this.resolve = function (tokens, callback) {
@@ -22280,23 +22837,23 @@ function NameDID_Method() {
 
     this.create = (domain, publicName, callback) => {
         const nameDIDDocument = NameDIDDocument.initiateDIDDocument(domain, publicName);
+
+        nameDIDDocument.on("error", (err) => {
+            return callback(err);
+        })
+
         nameDIDDocument.on("initialised", () => {
-            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-
-            securityContext.registerDID(nameDIDDocument, (err) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`failed to register did ${nameDIDDocument.getIdentifier()} in security context`, err));
-                }
-
-                callback(null, nameDIDDocument);
-            })
+            storeDIDInSC(nameDIDDocument, callback);
         });
     }
 
     this.resolve = (tokens, callback) => {
         const nameDIDDocument = NameDIDDocument.createDIDDocument(tokens);
+        nameDIDDocument.on("error", (err) => {
+            return callback(err);
+        })
+
         nameDIDDocument.on("initialised", () => {
-            const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
             callback(null, nameDIDDocument)
         });
     }
@@ -22307,19 +22864,23 @@ function GroupDID_Method() {
 
     this.create = (domain, groupName, callback) => {
         const groupDIDDocument = GroupDIDDocument.initiateDIDDocument(domain, groupName);
+
         groupDIDDocument.on("error", (err) => {
             return callback(err);
         })
+
         groupDIDDocument.on("initialised", () => {
-            return callback(undefined, groupDIDDocument);
+            storeDIDInSC(groupDIDDocument, callback);
         })
     }
 
     this.resolve = (tokens, callback) => {
         const groupDIDDocument = GroupDIDDocument.createDIDDocument(tokens);
+
         groupDIDDocument.on("error", (err) => {
             return callback(err);
         })
+
         groupDIDDocument.on("initialised", () => {
             return callback(undefined, groupDIDDocument);
         })
@@ -28979,7 +29540,7 @@ module.exports = KeyEncoder;
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
 
-const EcdsaDerSig = asn1.define('ECPrivateKey', function() {
+const EcdsaDerSig = asn1.define('ECPrivateKey', function () {
     return this.seq().obj(
         this.key('r').int(),
         this.key('s').int()
@@ -28995,6 +29556,18 @@ function padToEven(str) {
     return str.length % 2 ? '0' + str : str;
 }
 
+function padToLength(buff, len) {
+    const buffer = Buffer.alloc(len);
+
+    buffer.fill(0);
+    console.log(buffer);
+    const offset = len - buff.length;
+    for (let i = 0; i < len - offset; i++) {
+        buffer[i + offset] = buff[i]
+    }
+    return buffer;
+}
+
 function stripZeros(buffer) {
     var i = 0; // eslint-disable-line
     for (i = 0; i < buffer.length; i++) {
@@ -29004,13 +29577,13 @@ function stripZeros(buffer) {
     }
     return i > 0 ? buffer.slice(i) : buffer;
 }
-///
 
-function decodeDERIntoASN1ETH(derSignatureBuffer){
+function decodeDERIntoASN1ETH(derSignatureBuffer) {
     const rsSig = EcdsaDerSig.decode(derSignatureBuffer, 'der');
-    const signArray = [bnToBuffer(rsSig.r),bnToBuffer(rsSig.s)];
+    let rBuffer = padToLength(bnToBuffer(rsSig.r), 32);
+    let sBuffer = padToLength(bnToBuffer(rsSig.s), 32);
     //build signature
-    return '0x'+$$.Buffer.concat(signArray).toString('hex');
+    return '0x' + $$.Buffer.concat([rBuffer, sBuffer]).toString('hex');
 }
 
 function asn1SigSigToConcatSig(asn1SigBuffer) {

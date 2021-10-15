@@ -6148,10 +6148,11 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 module.exports = KeyEncoder;
 
 },{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
 
-const EcdsaDerSig = asn1.define('ECPrivateKey', function() {
+const EcdsaDerSig = asn1.define('ECPrivateKey', function () {
     return this.seq().obj(
         this.key('r').int(),
         this.key('s').int()
@@ -6167,6 +6168,18 @@ function padToEven(str) {
     return str.length % 2 ? '0' + str : str;
 }
 
+function padToLength(buff, len) {
+    const buffer = Buffer.alloc(len);
+
+    buffer.fill(0);
+    console.log(buffer);
+    const offset = len - buff.length;
+    for (let i = 0; i < len - offset; i++) {
+        buffer[i + offset] = buff[i]
+    }
+    return buffer;
+}
+
 function stripZeros(buffer) {
     var i = 0; // eslint-disable-line
     for (i = 0; i < buffer.length; i++) {
@@ -6176,13 +6189,13 @@ function stripZeros(buffer) {
     }
     return i > 0 ? buffer.slice(i) : buffer;
 }
-///
 
-function decodeDERIntoASN1ETH(derSignatureBuffer){
+function decodeDERIntoASN1ETH(derSignatureBuffer) {
     const rsSig = EcdsaDerSig.decode(derSignatureBuffer, 'der');
-    const signArray = [bnToBuffer(rsSig.r),bnToBuffer(rsSig.s)];
+    let rBuffer = padToLength(bnToBuffer(rsSig.r), 32);
+    let sBuffer = padToLength(bnToBuffer(rsSig.s), 32);
     //build signature
-    return '0x'+$$.Buffer.concat(signArray).toString('hex');
+    return '0x' + $$.Buffer.concat([rBuffer, sBuffer]).toString('hex');
 }
 
 function asn1SigSigToConcatSig(asn1SigBuffer) {
@@ -6236,7 +6249,9 @@ function ecdsaVerify(data, signature, key) {
 module.exports = {
     decodeDERIntoASN1ETH
 };
-},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","crypto":"crypto"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":"buffer","crypto":"crypto"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
