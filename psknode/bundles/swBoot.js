@@ -19278,6 +19278,22 @@ function buildOptions(url, method, opts){
 	}
 
 	if(opts){
+		if(opts.useProxy){
+			let proxy = URL.parse(opts.useProxy);
+			//setting proxy hostname
+			options.hostname = proxy.hostname;
+
+			//setting proxy port
+			if(Number.isNaN(proxy.port)){
+				options.port = proxy.protocol === "http:" ? 80 : 443;
+			}else{
+				options.port = proxy.port;
+			}
+
+			//updating the path
+			options.path = url;
+		}
+
 		for(let name in opts.headers){
 			options.headers[name] = opts.headers[name];
 		}
@@ -19610,260 +19626,14 @@ function doGet(url, options, callback) {
 	return fnc(url, undefined, options, callback);
 }
 
-const {doGetWithProxy, doPutWithProxy, doPostWithProxy} = require("./proxy");
-
 module.exports = {
 	fetch: require("./fetch").fetch,
 	doGet,
 	doPost: generateMethodForRequestWithData('POST'),
-	doPut: generateMethodForRequestWithData('PUT'),
-	doGetWithProxy,
-	doPutWithProxy,
-	doPostWithProxy
+	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{"./common.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js","./proxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/index.js":[function(require,module,exports){
-const {setContentTypeByData,buildOptions,getNetworkForOptions} = require("../common");
-
-function generateMethodForRequestViaProxy(httpMethod) {
-	return function (proxyUrl, url, data, opts, callback) {
-		console.log("Received Proxy:", proxyUrl);
-		console.log("Targeting URL:", url);
-
-		const options = buildOptions(url, httpMethod, opts);
-
-		setContentTypeByData(options, data);
-
-		const proxyUrlObject = buildOptions(proxyUrl);
-		const network = getNetworkForOptions(proxyUrlObject);
-
-		const proxyPath = `${proxyUrlObject.hostname}:${proxyUrlObject.port}`;
-		const proxyOpts = {
-			host: proxyUrlObject.hostname,
-			port: proxyUrlObject.port,
-			method: 'CONNECT',
-			path: proxyPath
-		}
-		console.log("Preparing to connect to proxy", proxyOpts);
-		const proxyReq = network.request(proxyOpts);
-
-		//setting up the listener for connect event
-		proxyReq.on('connect', function (res, socket, head) {
-			console.log("Proxy connection OK");
-			const connectMethod = proxyUrlObject.protocol === "http:" ? require("net").connect : require('tls').connect;
-			const targetOpts = {
-				host: options.hostname,
-				port: options.port,
-				socket: socket
-			};
-			console.log("Preparing connection to handle the targeted url using options", targetOpts);
-			let socketConnection = connectMethod(targetOpts, function () {
-				console.log("Host connection OK");
-				//now that we are connected to the proxy we need to prepare the request that needs to be done by the proxy for us
-				let request = `${httpMethod} ${url} HTTP/1.1\r\nHost: ${options.hostname}\r\n`;
-				//injecting supplementary headers to ensure proxy connection doesn't close
-				options.headers["Accept"] = "*/*";
-				options.headers["Proxy-Connection"] = "Keep-Alive";
-				//handling headers
-				for (let headerName in options.headers) {
-					let headerValue = options.headers[headerName];
-					request += `${headerName}: ${headerValue}\r\n`;
-				}
-				console.log("Writing", request);
-				socketConnection.write(request);
-
-				//if data is stream
-				if (data && data.pipe && typeof data.pipe === "function") {
-					//we need to signal that the body of the request will be written
-					socketConnection.write("\r\n");
-					data.on("data", function (chunk) {
-						console.log("Writing", chunk);
-						socketConnection.write(chunk);
-					});
-
-					data.on("end", function () {
-						socketConnection.write("\r\n");
-					});
-					return;
-				}
-
-				//if data is object we serialize it as JSON
-				if (typeof data !== "undefined" && typeof data !== 'string' && !$$.Buffer.isBuffer(data) && !ArrayBuffer.isView(data)) {
-					//we need to signal that the body of the request will be written
-					let message = "\r\n" + JSON.stringify(data) + "\r\n";
-					console.log("Writing", message);
-					socketConnection.write(message);
-					return;
-				}
-
-				//if buffer type just write it into the socket
-				if (data) {
-					//we need to signal that the body of the request will be written
-					console.log("Writing", data);
-					socketConnection.write("\r\n");
-					socketConnection.write(data);
-				}
-				console.log("Finish the writing.");
-				socketConnection.write("\r\n");
-			});
-
-			require("./responseParser.js")(socketConnection, (err, response)=>{
-				if(err){
-					return callback(err);
-				}
-				//not sure if we should treat redirects as errors...
-				if (response.statusCode < 200 || response.statusCode >= 300){
-					return callback(response);
-				}
-				//TODO: document the last argument... providing response.headers to the callback
-				callback(undefined, response.body, response.headers);
-			});
-		});
-
-		proxyReq.on('error', (err)=>{
-			console.log("Got an error from the proxy", err);
-			return callback(err);
-		});
-
-		//make the request to the proxy
-		proxyReq.end();
-	}
-}
-
-function doGetWithProxy(proxyUrl, url, options, callback) {
-	let fnc = generateMethodForRequestViaProxy('GET');
-	return fnc(proxyUrl, url, undefined, options, callback);
-}
-
-module.exports = {
-	doGetWithProxy,
-	doPutWithProxy: generateMethodForRequestViaProxy('PUT'),
-	doPostWithProxy: generateMethodForRequestViaProxy('POST')
-}
-
-
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./responseParser.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/responseParser.js","net":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","tls":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/proxy/responseParser.js":[function(require,module,exports){
-(function (Buffer){(function (){
-module.exports = function(responseStream, callback){
-	responseStream.on("error", function (err) {
-		console.log("Caught an error while reading the response", err);
-		return callback(err);
-	});
-
-	let receivedDataAsString = "";
-
-	const response = {};
-
-	const HTTPStatusRegex = /^HTTP\/[0-9.]* [0-9][0-9][0-9] [\w ]*[\r\n]+/gm;
-	const headerLineDelimiter = "\r\n";
-	const headerZoneDelimiter = "\r\n\r\n";
-	let headerReceived = false;
-	let headerRead = false;
-
-	const TRANSFER_ENCODING_HEADER = "Transfer-Encoding";
-	let expectedChunkSize;
-
-	const CONTENT_LENGTH_HEADER = "Content-Length";
-
-	let expectedContentLength;
-
-	responseStream.on('data', function (data) {
-		console.log("Received", data.toString());
-		let convertedToString = false;
-		if(!headerRead){
-			receivedDataAsString += data.toString();
-			convertedToString = true;
-		}
-
-		if(!headerReceived){
-			//first line from response should be protocol/version statusCode Status
-			headerReceived = HTTPStatusRegex.test(data);
-			HTTPStatusRegex.lastIndex = -1;
-			let status = HTTPStatusRegex.exec(receivedDataAsString)[0];
-			status = status.replace(headerLineDelimiter, "");
-			receivedDataAsString = receivedDataAsString.replace(HTTPStatusRegex, "");
-			status = status.split(" ");
-			response.statusCode = status[1];
-			response.statusMessage = status[2];
-		}
-		if(headerReceived && !headerRead){
-			headerRead = receivedDataAsString.indexOf(headerZoneDelimiter) !== -1;
-		}
-		if(headerRead && !response.headers){
-			let headers = receivedDataAsString.substring(0, receivedDataAsString.indexOf(headerZoneDelimiter));
-			//in case that after the headers we receive more data let's extract the header part from the response
-			receivedDataAsString = receivedDataAsString.replace(headers+headerZoneDelimiter, "");
-
-			headers = headers.split(headerLineDelimiter);
-			//let's parse headers line by line using the headerRegex
-			const headerRegex = /([\w-]+): (.*)/gm;
-			response.headers = {};
-			for(let i=0; i<headers.length; i++){
-				let header = /([\w-]+): (.*)/gm.exec(headers[i]);
-				response.headers[header[1]] = header[2];
-			}
-			//test for content length header
-			if(typeof response.headers[CONTENT_LENGTH_HEADER] !== "undefined"){
-				expectedContentLength = response.headers[CONTENT_LENGTH_HEADER];
-			}
-
-			if(receivedDataAsString !== ""){
-				data = Buffer.from(receivedDataAsString);
-				convertedToString = false;
-			}
-		}
-		if(response.headers && !convertedToString){
-			//we should start ingesting body data...
-			const transferEncoding = response.headers[TRANSFER_ENCODING_HEADER];
-			if(transferEncoding === "chunked"){
-				let sizeRegex = /^[0-9A-F][0-9A-F][0-9A-F][0-9A-F]\r\n/gm;
-				let noOfBytes = 4;
-
-				let foundChunkSize = data.toString().search(sizeRegex);
-				if(foundChunkSize!==-1){
-					const chunkSize = data.slice(foundChunkSize, foundChunkSize+noOfBytes);
-					expectedChunkSize = parseInt(chunkSize.toString(), 16);
-
-					if(foundChunkSize === 0){
-						data = data.slice(noOfBytes, data.length);
-					}else{
-						for(let i=0; i<noOfBytes+headerLineDelimiter.length; i++){
-							data[foundChunkSize+i] = Buffer.from("");
-						}
-					}
-				}
-				if(!response.chunks){
-					response.chunks = [];
-				}
-				response.chunks.push(data);
-				expectedChunkSize -= data.length;
-				const endCharacterIndex = data.toString().search(/^0$/gm);
-				if(endCharacterIndex !==-1){
-					//end of response
-					data[endCharacterIndex] = Buffer.from("");
-					response.body = Buffer.concat(response.chunks);
-					return callback(undefined, response);
-				}
-			}
-			if(expectedContentLength){
-				if(!response.chunks){
-					response.chunks = [];
-				}
-				response.chunks.push(data);
-				expectedContentLength -= data.length;
-
-				if(expectedContentLength <= 0){
-					//received everything... so we good
-					response.body = Buffer.concat(response.chunks);
-					return callback(undefined, response);
-				}
-			}
-		}
-	});
-}
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./common.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
