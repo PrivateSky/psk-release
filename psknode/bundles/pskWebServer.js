@@ -6001,7 +6001,7 @@ function OAuth(server) {
         }
     }
 
-    function getPublicKey(callback) {
+    function getPublicKey(rawAccessToken, callback) {
         if (publicKey) {
             return callback(undefined, publicKey);
         }
@@ -6025,10 +6025,10 @@ function OAuth(server) {
                 rawData += chunk;
             });
             res.on('end', () => {
-                console.log(rawData);
                 try {
                     const parsedData = JSON.parse(rawData);
-                    publicKey = parsedData.keys.find(key => key.use === "sig");
+                    const accessToken = parseAccessToken(rawAccessToken);
+                    publicKey = parsedData.keys.find(key => key.use === "sig" && key.kid === accessToken.header.kid);
                     callback(undefined, publicKey);
                 } catch (e) {
                     console.error(e.message);
@@ -6058,7 +6058,7 @@ function OAuth(server) {
             return;
         }
 
-        getPublicKey((err, publicKey) => {
+        getPublicKey(rawAccessToken, (err, publicKey) => {
             if (err) {
                 return sendUnauthorizedResponse(req, res, "Unable to get JWKS");
             }
@@ -40776,7 +40776,7 @@ class OIDC {
 
 
     isCallbackPhaseActive() {
-        return !!location.toString().includes(this.client.redirectPath);
+        return !!location.toString().includes(this.client.redirectPath) || !!location.toString().includes("/#code=");
     }
 
 
@@ -43834,35 +43834,39 @@ function GroupDID_Document(domain, groupName, isInitialisation) {
 
     this.sendMessage = (message, callback) => {
         const w3cDID = openDSU.loadAPI("w3cdid");
+        if (typeof message === "object") {
+            try {
+                message = message.getSerialisation();
+            } catch (e) {
+                return callback(e);
+            }
+        }
         readMembers(async (err, members) => {
             if (err) {
                 return callback(err);
             }
 
-            let senderDIDDocument;
-            try {
-                senderDIDDocument = await $$.promisify(w3cDID.resolveDID)(message.getSender());
-            } catch (e) {
-                return callback(e);
-            }
-
             const membersIds = Object.keys(members);
             const noMembers = membersIds.length;
-
-            let counter = noMembers - 1;
+            let senderDIDDocument;
+            try{
+                senderDIDDocument = await $$.promisify(w3cDID.resolveDID)(membersIds[0]);
+            }
+            catch (e) {
+                return callback(e);
+            }
+            let counter = noMembers;
             for (let i = 0; i < noMembers; i++) {
-                if (membersIds[i] !== message.getSender()) {
-                    try {
-                        const receiverDIDDocument = await $$.promisify(w3cDID.resolveDID)(membersIds[i]);
-                        await $$.promisify(senderDIDDocument.sendMessage)(message.getSerialisation(), receiverDIDDocument)
-                    } catch (e) {
-                        return callback(e);
-                    }
+                try {
+                    const receiverDIDDocument = await $$.promisify(w3cDID.resolveDID)(membersIds[i]);
+                    await $$.promisify(senderDIDDocument.sendMessage)(message, receiverDIDDocument)
+                } catch (e) {
+                    return callback(e);
+                }
 
-                    counter--;
-                    if (counter === 0) {
-                        return callback();
-                    }
+                counter--;
+                if (counter === 0) {
+                    return callback();
                 }
             }
         });
@@ -43913,8 +43917,11 @@ function GroupDID_Document(domain, groupName, isInitialisation) {
                 return this.dsu.writeFile(MEMBERS_FILE, JSON.stringify(members), callback);
             } else if (operation === "add") {
                 identities.forEach((id, index) => {
+                    if (typeof id === "object") {
+                        id = id.getIdentifier();
+                    }
                     if (typeof members[id] === "undefined") {
-                        members[id] = info[index]
+                        members[id] = info[index];
                     }
                 });
                 return this.dsu.writeFile(MEMBERS_FILE, JSON.stringify(members), callback);
