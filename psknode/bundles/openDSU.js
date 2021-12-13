@@ -1,9 +1,9 @@
-openDSURequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/runner/work/privatesky/privatesky/builds/tmp/openDSU.js":[function(require,module,exports){
+openDSURequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/openDSU.js":[function(require,module,exports){
 const or = require('overwrite-require');
 or.enableForEnvironment(or.constants.NODEJS_ENVIRONMENT_TYPE);
 
 require("./openDSU_intermediar");
-},{"./openDSU_intermediar":"/home/runner/work/privatesky/privatesky/builds/tmp/openDSU_intermediar.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/builds/tmp/openDSU_intermediar.js":[function(require,module,exports){
+},{"./openDSU_intermediar":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/openDSU_intermediar.js","overwrite-require":"overwrite-require"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/openDSU_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.openDSULoadModules = function(){ 
 
@@ -61,7 +61,7 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","callflow":"callflow","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarmutils":"swarmutils","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
+},{"bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","callflow":"callflow","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","swarmutils":"swarmutils","syndicate":"syndicate"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -122,7 +122,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-},{"./PathAsyncIterator":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -247,7 +247,7 @@ function PathAsyncIterator(inputPath) {
 }
 
 module.exports = PathAsyncIterator;
-},{"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
+},{"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
 'use strict'
 
 /**
@@ -294,7 +294,7 @@ function AnchorValidator(options) {
 }
 
 module.exports = AnchorValidator;
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 const Brick = require('./Brick');
 const stream = require('stream');
 const BrickStorageService = require('./BrickStorageService').Service;
@@ -2230,7 +2230,7 @@ function Archive(archiveConfigurator) {
 
 module.exports = Archive;
 
-},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js","opendsu":"opendsu","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Manifest.js","opendsu":"opendsu","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 
@@ -2436,7 +2436,7 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 
 module.exports = ArchiveConfigurator;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -2637,7 +2637,7 @@ function Brick(options) {
 
 module.exports = Brick;
 
-},{"./brick-transforms":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
+},{"./brick-transforms":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
 const BrickMapMixin = require('./BrickMapMixin');
 
 /**
@@ -3003,7 +3003,7 @@ function BrickMap(header) {
 }
 module.exports = BrickMap;
 
-},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
 'use strict';
 
 // HTTP error code returned by the anchoring middleware
@@ -4072,7 +4072,7 @@ function BrickMapController(options) {
 
 module.exports = BrickMapController;
 
-},{"./AnchorValidator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
+},{"./AnchorValidator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapMixin = require('./BrickMapMixin');
@@ -4213,7 +4213,7 @@ function BrickMapDiff(header) {
 }
 module.exports = BrickMapDiff;
 
-},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
 'use strict';
 
 const Brick = require("./Brick");
@@ -4954,7 +4954,7 @@ const BrickMapMixin = {
 
 module.exports = BrickMapMixin;
 
-},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
+},{"./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
     brickMapController: null,
     brickMapState: null,
@@ -5286,7 +5286,7 @@ const BrickMapStrategyMixin = {
 
 module.exports = BrickMapStrategyMixin;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../../lib/BrickMapDiff');
@@ -5595,7 +5595,7 @@ function DiffStrategy(options) {
 
 module.exports = DiffStrategy;
 
-},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../BrickMapDiff');
@@ -5886,7 +5886,7 @@ function LatestVersionStrategy(options) {
 
 module.exports = LatestVersionStrategy;
 
-},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js":[function(require,module,exports){
 module.exports = {
     DIFF: 'Diff',
     LATEST_VERSION: 'LatestVersion',
@@ -5894,7 +5894,7 @@ module.exports = {
     //DEFAULT_BRICK_MAP_STRATEGY: 'Diff'
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
 /**
  * @param {object} options
  */
@@ -5963,7 +5963,7 @@ function BrickMapStrategyFactory(options) {
 
 module.exports = BrickMapStrategyFactory;
 
-},{"./DiffStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./builtinBrickMapStrategies":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
+},{"./DiffStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./builtinBrickMapStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 'use strict';
 
 
@@ -7020,14 +7020,14 @@ function Service(options) {
 
 module.exports = Service;
 
-},{"../../utils/isStream":"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"overwrite-require","path":false,"stream":false,"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
     Service: require('./Service')
 };
 
-},{"./Service":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
+},{"./Service":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
 function Manifest(archive, options, callback) {
@@ -7206,7 +7206,7 @@ module.exports.getManifest = function getManifest(archive, options, callback) {
 };
 
 
-},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
 const zlib = require("zlib");
 
 function CompressionTransformation(config) {
@@ -7260,7 +7260,7 @@ function CompressionTransformation(config) {
 module.exports = CompressionTransformation;
 
 
-},{"zlib":false}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
+},{"zlib":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 
@@ -7289,7 +7289,7 @@ function EncryptionTransformation() {
 }
 
 module.exports = EncryptionTransformation;
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
 const CompressionTransformation = require("./CompressionTransformation");
 const EncryptionTransformation = require("./EncryptionTransformation");
 
@@ -7304,7 +7304,7 @@ module.exports = {
 };
 
 
-},{"./CompressionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
+},{"./CompressionTransformation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -7319,7 +7319,7 @@ module.exports = {
     }
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
 const Brick = require("../Brick");
 const util = require("../../utils/utilities");
 const pathModule = "path";
@@ -7454,7 +7454,7 @@ function FileBrickMap(header) {
 
 module.exports = FileBrickMap;
 
-},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
@@ -7673,7 +7673,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
 const BrickMap = require("../BrickMap");
 const Brick = require("../Brick");
 
@@ -7773,7 +7773,7 @@ module.exports = {
     }
 };
 
-},{"../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{"../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","fs":false,"path":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -7805,7 +7805,7 @@ module.exports = {
     isDuplex
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
 const OFFSET_SIZE = 8;
 
 function getBrickMapOffsetSize() {
@@ -7824,7 +7824,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":false}],"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
+},{"fs":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/OBFTImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -7983,7 +7983,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"./transactionsUtil":"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
+},{"./transactionsUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/PulseUtil.js":[function(require,module,exports){
 function PulseUtil(signer, currentPulseNumber, block, newTransactions, vsd, top, last) {
     this.signer         = signer;               //a.k.a. delegatedAgentName
     this.currentPulse   = currentPulseNumber;
@@ -8007,7 +8007,7 @@ function PulseHistory(){
 module.exports.createPulseHistory = function () {
     return new PulseHistory();
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/transactionsUtil.js":[function(require,module,exports){
 /*
 consensus helper functions when working with transactions
 */
@@ -8035,7 +8035,7 @@ module.exports.orderCRTransactions = function (pset) { //order in place the pset
     return arr;
 }
 
-},{"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js":[function(require,module,exports){
 var CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -8082,7 +8082,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js","callflow":"callflow"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js","callflow":"callflow"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 
 exports.createForObject = function(valueObject, thisObject, localId){
@@ -8129,7 +8129,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 	return ret;
 };
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js","callflow":"callflow"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js","callflow":"callflow"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js":[function(require,module,exports){
 
 $$.asset.describe("ACLScope", {
     public:{
@@ -8152,7 +8152,7 @@ $$.asset.describe("ACLScope", {
         return true;
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js":[function(require,module,exports){
 
 $$.asset.describe("Agent", {
     public:{
@@ -8178,7 +8178,7 @@ $$.asset.describe("Agent", {
 
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js":[function(require,module,exports){
 
 $$.asset.describe("Backup", {
     public:{
@@ -8192,7 +8192,7 @@ $$.asset.describe("Backup", {
     }
 });
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js":[function(require,module,exports){
 $$.asset.describe("BarAnchor", {
     public: {
         alias: "string",
@@ -8219,7 +8219,7 @@ $$.asset.describe("BarAnchor", {
         this.writeList.push(agentId);
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js":[function(require,module,exports){
 
 $$.asset.describe("CSBMeta", {
 	public:{
@@ -8242,7 +8242,7 @@ $$.asset.describe("CSBMeta", {
 
 });
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js":[function(require,module,exports){
 
 $$.asset.describe("DomainConfig", {
     public:{
@@ -8284,7 +8284,7 @@ $$.asset.describe("DomainConfig", {
         this.workerStrategy = workerStrategy;
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js":[function(require,module,exports){
 
 $$.asset.describe("DomainReference", {
     public:{
@@ -8310,7 +8310,7 @@ $$.asset.describe("DomainReference", {
         return this.workspace;
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js":[function(require,module,exports){
 $$.asset.describe("FileAnchor", {
     public: {
         alias: "string",
@@ -8329,7 +8329,7 @@ $$.asset.describe("FileAnchor", {
 });
 
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Key.js":[function(require,module,exports){
 
 $$.asset.describe("key", {
     public:{
@@ -8343,7 +8343,7 @@ $$.asset.describe("key", {
         this.value = value;
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/index.js":[function(require,module,exports){
 module.exports = $$.library(function(){
     require("./DomainReference");
     require("./DomainConfig");
@@ -8356,7 +8356,7 @@ module.exports = $$.library(function(){
     require("./FileAnchor");
     require('./CSBMeta');
 });
-},{"../transactions/transactions":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
+},{"../transactions/transactions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js","./ACLScope":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/ACLScope.js","./Agent":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Agent.js","./Backup":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Backup.js","./BarAnchor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/BarAnchor.js","./CSBMeta":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/CSBMeta.js","./DomainConfig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/DomainConfig.js","./DomainReference":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/DomainReference.js","./FileAnchor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/FileAnchor.js","./Key":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/Key.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/swarms/index.js":[function(require,module,exports){
 if($$.swarms){
     $$.swarms.describe("transactionHandler", {
         start: function (identity, transactionName, methodName, ...args) {
@@ -8368,7 +8368,7 @@ if($$.swarms){
     });
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Agents", {
@@ -8389,7 +8389,7 @@ $$.transaction.describe("Agents", {
     getAgents: sharedPhases.getAllAssetsFactory('global.Agent')
 });
 
-},{"./sharedPhases":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("DomainConfigTransaction", {
@@ -8423,7 +8423,7 @@ $$.transaction.describe("DomainConfigTransaction", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainConfig')
 });
 
-},{"./sharedPhases":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js":[function(require,module,exports){
 const sharedPhases = require('./sharedPhases');
 
 $$.transaction.describe("Domain", {
@@ -8526,7 +8526,7 @@ $$.transaction.describe("Domain", {
     getDomains: sharedPhases.getAllAssetsFactory('global.DomainReference')
 });
 
-},{"./sharedPhases":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
+},{"./sharedPhases":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js":[function(require,module,exports){
 /**
  * FIXME
  * The first block in the blockchain is 0.
@@ -8546,13 +8546,13 @@ $$.transaction.describe("TooShortBlockChainWorkaroundDeleteThis", {
         this.commit();
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/index.js":[function(require,module,exports){
 require('./domainTransaction');
 require('./agentTransaction');
 require('./standardCSBTransactions');
 require('./domainConfigTransaction');
 require('./firstTransactionWorkaroundDeleteThis');
-},{"./agentTransaction":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
+},{"./agentTransaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/agentTransaction.js","./domainConfigTransaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/domainConfigTransaction.js","./domainTransaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/domainTransaction.js","./firstTransactionWorkaroundDeleteThis":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/firstTransactionWorkaroundDeleteThis.js","./standardCSBTransactions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/sharedPhases.js":[function(require,module,exports){
 module.exports = {
     getAssetFactory: function(assetType) {
         return function(alias) {
@@ -8576,7 +8576,7 @@ module.exports = {
         };
     }
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/standardCSBTransactions.js":[function(require,module,exports){
 $$.transaction.describe("StandardCSBTransactions", {
     addBarAnchor: function (mountPoint, brickMapDigest) {
         this.transaction.createAsset("BarAnchor", "init", mountPoint, brickMapDigest);
@@ -8621,7 +8621,7 @@ $$.transaction.describe("StandardCSBTransactions", {
         }
     }
 });
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/transactions.js":[function(require,module,exports){
 $$.transaction.describe("transactions", {
     updateKey: function (key, value) {
         var transaction = $$.blockchain.beginTransaction(this);
@@ -8678,7 +8678,7 @@ usages:
 
  */
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js":[function(require,module,exports){
 module.exports = {
     ALIAS:"alias",
     ALIASES : '/aliases',
@@ -8693,7 +8693,7 @@ module.exports = {
     SWARMID:"swarmId",
     SWARMTYPE:"swarmTypeName"
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleExports.js":[function(require,module,exports){
 module.exports = {
     createBlockchain:function(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, loadDefaultConstitution, forcedBoot){
         return require("./pskdb").startDefaultDB(worldStateCache, historyStorage, consensusAlgorithm, signatureProvider, loadDefaultConstitution, forcedBoot);
@@ -8750,7 +8750,7 @@ module.exports = {
         return require("./strategies/votingStrategies/votingStrategiesRegistry").createVotingStrategy(name,...args);
     }
 }
-},{"./pskdb":"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
+},{"./pskdb":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/index.js","./strategies/consensusAlgortims/consensusAlgoritmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js","./strategies/historyStorages/historyStoragesRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js","./strategies/networkCommunication/networkCommunicationStrategiesRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js","./strategies/signatureProvidersRegistry/signatureProvidersRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js","./strategies/votingStrategies/votingStrategiesRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js","./strategies/worldStateCaches/worldStateCacheRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js","pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/Blockchain.js":[function(require,module,exports){
 const bm = require('../moduleExports');
 var CNST = require("../moduleConstants");
 
@@ -8953,7 +8953,7 @@ function Transaction(blockchain, pdsHandler, transactionSwarm, worldStateCache, 
 }
 
 module.exports = Blockchain;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js","../moduleExports":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleExports.js","./securityParadigms/securityParadigmRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/index.js":[function(require,module,exports){
 const Blockchain = require('./Blockchain');
 
 module.exports = {
@@ -8982,7 +8982,7 @@ module.exports = {
     }
 };
 
-},{"../defaultConstitution/assets/index":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/home/runner/work/privatesky/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
+},{"../defaultConstitution/assets/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/assets/index.js","../defaultConstitution/swarms/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/swarms/index.js","../defaultConstitution/transactions/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/defaultConstitution/transactions/index.js","./Blockchain":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/Blockchain.js","./pskdb":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/pskdb.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/pskdb.js":[function(require,module,exports){
 let CNST = require("../moduleConstants");
 let cutil = require("../OBFT/transactionsUtil");
 // let bm = require("../moduleExports");
@@ -9376,7 +9376,7 @@ function VerificationKeySpaceHandler(parentStorage, worldStateCache, blockchain)
 exports.newPSKDB = function (worldStateCache, historyStorage) {
     return new PSKDB(worldStateCache, historyStorage);
 };
-},{"../OBFT/transactionsUtil":"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/transactionsUtil.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js","./securityParadigms/localExecutionCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/securityParadigms/localExecutionCache.js":[function(require,module,exports){
 let CNST=require("../../moduleConstants");
 let cache = {};
 
@@ -9451,7 +9451,7 @@ module.exports = {
     }
 };
 
-},{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
+},{"../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/pskdb/securityParadigms/securityParadigmRegistry.js":[function(require,module,exports){
 
 var CNST = require("../../moduleConstants");
 
@@ -9559,7 +9559,7 @@ module.exports = {
         return new Registry();
     }
 }
-},{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
+},{"../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js":[function(require,module,exports){
 let pskcrypto = require("pskcrypto");
 let fs = require("fs");
 
@@ -9794,7 +9794,7 @@ exports.createConsensusManager = function (delegatedAgentName, communicationOutl
     return instance;
 }
 
-},{"../OBFT/transactionsUtil":"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
+},{"../OBFT/transactionsUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/transactionsUtil.js","fs":false,"pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/consensusAlgortims/consensusAlgoritmsRegistry.js":[function(require,module,exports){
 var mod = require("../../moduleExports");
 
 function DirectCommitAlgorithm() {
@@ -9871,7 +9871,7 @@ module.exports = {
         }
     }
 };
-},{"../../OBFT/OBFTImplementation":"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/home/runner/work/privatesky/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
+},{"../../OBFT/OBFTImplementation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/OBFTImplementation.js","../../moduleExports":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleExports.js","../../signsensus/SignSensusImplementation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/signsensus/SignSensusImplementation.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function BarHistoryStorage(archive) {
@@ -9944,7 +9944,7 @@ function BarHistoryStorage(archive) {
 }
 
 module.exports = BarHistoryStorage;
-},{"./LatestHashTracker":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function FsHistoryStorage(folder) {
@@ -10049,7 +10049,7 @@ function FsHistoryStorage(folder) {
 
 module.exports = FsHistoryStorage;
 
-},{"./LatestHashTracker":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":false}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js","fs":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js":[function(require,module,exports){
 function LatestHashTracker() {
     let hlb = "none";
     let maxBlockNumber = 0;
@@ -10066,7 +10066,7 @@ function LatestHashTracker() {
 }
 
 module.exports = LatestHashTracker;
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js":[function(require,module,exports){
 const LatestHashTracker = require("./LatestHashTracker");
 
 function MemoryHistoryStorage() {
@@ -10093,7 +10093,7 @@ function MemoryHistoryStorage() {
 }
 
 module.exports = MemoryHistoryStorage;
-},{"./LatestHashTracker":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
+},{"./LatestHashTracker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/LatestHashTracker.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/historyStoragesRegistry.js":[function(require,module,exports){
 const FsHistoryStorage = require("./FsHistoryStorage");
 const MemoryHistoryStorage = require("./MemoryHistoryStorage");
 const BarHistoryStorage = require("./BarHistoryStorage");
@@ -10112,7 +10112,7 @@ module.exports = {
         }
     }
 };
-},{"./BarHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
+},{"./BarHistoryStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/BarHistoryStorage.js","./FsHistoryStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/FsHistoryStorage.js","./MemoryHistoryStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/historyStorages/MemoryHistoryStorage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/networkCommunication/networkCommunicationStrategiesRegistry.js":[function(require,module,exports){
 const mc = require("../../moduleConstants");
 let pulseUtil = require("../../OBFT/PulseUtil");
 
@@ -10175,7 +10175,7 @@ module.exports = {
         }
     }
 }
-},{"../../OBFT/PulseUtil":"/home/runner/work/privatesky/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
+},{"../../OBFT/PulseUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/OBFT/PulseUtil.js","../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/signatureProvidersRegistry/signatureProvidersRegistry.js":[function(require,module,exports){
 function PermissiveSignatureProvider(){
     /*
     return a signature of message ms for agent agentId
@@ -10202,7 +10202,7 @@ module.exports = {
     }
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/votingStrategies/votingStrategiesRegistry.js":[function(require,module,exports){
 
 function SimpleMajoritarianStrategy(shareHoldersCounter){
     this.refreshShares = function(){
@@ -10252,7 +10252,7 @@ module.exports = {
         }
     }
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/strategies/worldStateCaches/worldStateCacheRegistry.js":[function(require,module,exports){
 (function (setImmediate){(function (){
 const mc = require("../../moduleConstants");
 
@@ -10410,7 +10410,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require("timers").setImmediate)
 
-},{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleConstants.js","fs":false,"timers":false}],"/home/runner/work/privatesky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleConstants.js","fs":false,"timers":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -10432,7 +10432,7 @@ $$.CONSTANTS.mixIn = function(otherConstants){
     }
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
 (function (global){(function (){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
@@ -10627,7 +10627,7 @@ exports.createInterceptorRegistry = function () {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -10731,7 +10731,7 @@ exports.loadLibrary = function(prefixName, folder){
 }
 
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
 
 var globalJoinCounter = 0;
 
@@ -10868,7 +10868,7 @@ exports.createJoinPoint = function(swarm, callback, args){
     jp.__setProxyObject(p);
     return p;
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
 
 var joinCounter = 0;
 
@@ -10993,7 +10993,7 @@ exports.createSerialJoinPoint = function(swarm, callback, args){
     jp.setProxyObject(p);
     return p;
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
 const swarmDescriptionsRegistry = {};
 let currentInlineCounter = 0;
 
@@ -11358,7 +11358,7 @@ exports.createSwarmEngine = function(swarmType, utils){
 };
 
 
-},{"./utilityFunctions/callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
+},{"./utilityFunctions/callflow":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
 (function (global){(function (){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
@@ -11557,7 +11557,7 @@ function localLog (logType, message, err) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"fs":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
+},{"fs":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var swarmDebug = require("./SwarmDebug");
 	let ret = {};
@@ -11686,12 +11686,12 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 };
 
-},{"../parallelJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
+},{"../parallelJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
+},{"./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
 function CryptoAlgorithmsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -11797,7 +11797,7 @@ function CryptoAlgorithmsMixin(target) {
 
 module.exports = CryptoAlgorithmsMixin;
 
-},{"pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
+},{"pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
 const SSITypes = require("../KeySSIs/SSITypes");
 const CryptoFunctionTypes = require("./CryptoFunctionTypes");
 const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
@@ -11907,7 +11907,7 @@ CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.CONSENSUS_SS
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.PUBLIC_KEY_SSI, 'v0',  new CryptoAlgorithmsMixin());
 
 
-},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./SeedSSICryptoAlgorithms":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CryptoAlgorithmsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./SeedSSICryptoAlgorithms":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js":[function(require,module,exports){
 module.exports = {
     HASH: "hash",
     ENCRYPTION: "encryption",
@@ -11931,7 +11931,7 @@ module.exports = {
     SET_IES_CONFIG: "setConfigForIES",
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js":[function(require,module,exports){
 function SeedSSICryptoAlgorithms() {
     const crypto = require("pskcrypto");
     const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
@@ -11963,7 +11963,7 @@ function SeedSSICryptoAlgorithms() {
 
 module.exports = SeedSSICryptoAlgorithms;
 
-},{"./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js":[function(require,module,exports){
+},{"./CryptoAlgorithmsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -12033,7 +12033,7 @@ function ConsensusDSUFactory(options) {
 
 module.exports = ConsensusDSUFactory;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -12105,7 +12105,7 @@ function ConstDSUFactory(options) {
 
 module.exports = ConstDSUFactory;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -12119,13 +12119,13 @@ function DSUFactory(options) {
     options = options || {};
     this.keySSIFactory = options.keySSIFactory;
     this.brickMapStrategyFactory = options.brickMapStrategyFactory;
-
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
 
     function castSSI(ssi){
         if(typeof ssi !== "undefined"){
             if(typeof ssi === "string"){
-                let keyssi = require("opendsu").loadApi("keyssi");
-                ssi = keyssi.parse(ssi);
+                ssi = keySSISpace.parse(ssi);
             } else {
                  if(ssi.getTypeName === undefined || ssi.getIdentifier === undefined){
                      throw Error("Please provide a proper SSI instance ");
@@ -12242,7 +12242,9 @@ function DSUFactory(options) {
         }
         const KeySSIFactory = require("../KeySSIs/KeySSIFactory");
         const keySSI = KeySSIFactory.createType(templateKeySSI.getTypeName());
-        keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, templateKeySSI.getHint(), callback);
+
+        // keySSI.initialize(templateKeySSI.getDLDomain(), undefined, undefined, undefined, templateKeySSI.getHint(), callback);
+        keySSISpace.createSeedSSI(templateKeySSI.getDLDomain(), undefined, templateKeySSI.getHint(), callback);
         // keySSI.initialize(templateKeySSI.getDLDomain(), templateKeySSI.getSpecificString(), templateKeySSI.getControlString(), templateKeySSI.getVn(), templateKeySSI.getHint(), callback);
     }
 
@@ -12311,7 +12313,7 @@ function DSUFactory(options) {
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -12381,7 +12383,7 @@ function OwnershipDSUFactory(options) {
 
 module.exports = OwnershipDSUFactory;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -12554,7 +12556,7 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
 const SSITypes = require("../KeySSIs/SSITypes");
 /**
@@ -12690,7 +12692,7 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 
 module.exports = Registry;
 
-},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConsensusDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js","./ConstDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./OwnershipDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js","./WalletFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConsensusDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js","./ConstDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./OwnershipDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js","./WalletFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
@@ -12751,7 +12753,7 @@ module.exports = function(archive){
 	return archive;
 }
 
-},{"overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+},{"overwrite-require":"overwrite-require"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 /**
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  * @param {DSUFactory} options.dsuFactory
@@ -12841,13 +12843,17 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
-function ArraySSI(identifier) {
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+function ArraySSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
     const SSITypes = require("../SSITypes");
     const KeySSIMixin = require("../KeySSIMixin");
     const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-    KeySSIMixin(this);
+    KeySSIMixin(this, enclave);
     const self = this;
 
     if (typeof identifier !== "undefined") {
@@ -12878,20 +12884,24 @@ function ArraySSI(identifier) {
     };
 }
 
-function createArraySSI(identifier) {
-    return new ArraySSI(identifier);
+function createArraySSI(enclave, identifier) {
+    return new ArraySSI(enclave, identifier);
 }
 
 module.exports = {
     createArraySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
-function CZaSSI(identifier) {
-    KeySSIMixin(this);
+function CZaSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -12910,22 +12920,26 @@ function CZaSSI(identifier) {
     };
 }
 
-function createCZaSSI(identifier) {
-    return new CZaSSI(identifier);
+function createCZaSSI(enclave, identifier) {
+    return new CZaSSI(enclave, identifier);
 }
 
 module.exports = {
     createCZaSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const CZaSSI = require("./CZaSSI");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function ConstSSI(identifier) {
-    KeySSIMixin(this);
+function ConstSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -12952,22 +12966,26 @@ function ConstSSI(identifier) {
     };
 }
 
-function createConstSSI(identifier) {
-    return new ConstSSI(identifier);
+function createConstSSI(enclave, identifier) {
+    return new ConstSSI(enclave, identifier);
 }
 
 module.exports = {
     createConstSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ConstSSI = require("./ConstSSI");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function PasswordSSI(identifier){
-    KeySSIMixin(this);
+function PasswordSSI(enclave, identifier){
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
 
     if (typeof identifier !== "undefined") {
@@ -12990,15 +13008,15 @@ function PasswordSSI(identifier){
     };
 }
 
-function createPasswordSSI(identifier) {
-    return new PasswordSSI(identifier);
+function createPasswordSSI(enclave, identifier) {
+    return new PasswordSSI(enclave, identifier);
 }
 
 module.exports = {
     createPasswordSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -13023,20 +13041,24 @@ module.exports = {
     createConsensusSSI,
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
 
 module.exports = DSURepresentationNames;
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const { createHashLinkSSI } = require("../OtherKeySSIs/HashLinkSSI");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const SSITypes = require("../SSITypes");
 
-function SignedHashLinkSSI(identifier) {
-    KeySSIMixin(this);
+function SignedHashLinkSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
 
     if (typeof identifier !== "undefined") {
@@ -13089,15 +13111,15 @@ function SignedHashLinkSSI(identifier) {
     };
 }
 
-function createSignedHashLinkSSI(identifier) {
-    return new SignedHashLinkSSI(identifier);
+function createSignedHashLinkSSI(enclave, identifier) {
+    return new SignedHashLinkSSI(enclave, identifier);
 }
 
 module.exports = {
     createSignedHashLinkSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -13144,14 +13166,19 @@ KeySSIFactory.prototype.registerFactory = (typeName, vn, derivedType, functionFa
     registry[typeName] = {derivedType, functionFactory};
 };
 
-KeySSIFactory.prototype.create = (identifier, options) => {
+KeySSIFactory.prototype.create = (enclave, identifier, options) => {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+
     if (typeof identifier === "undefined") {
         throw Error("An SSI should be provided");
     }
 
     const KeySSIMixin = require("./KeySSIMixin");
     let keySSI = {}
-    KeySSIMixin(keySSI);
+    KeySSIMixin(keySSI, enclave);
 
     try{
         keySSI.autoLoad(identifier);
@@ -13161,10 +13188,15 @@ KeySSIFactory.prototype.create = (identifier, options) => {
 
     const typeName = keySSI.getTypeName();
 
-    return KeySSIFactory.prototype.createByType(typeName, identifier, options);
+    return KeySSIFactory.prototype.createByType(typeName, enclave, identifier, options);
 };
 
-KeySSIFactory.prototype.createByType = (typeName, identifier, options) => {
+KeySSIFactory.prototype.createByType = (typeName, enclave, identifier, options) => {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+
     if (typeof identifier === "undefined") {
         throw Error("An SSI should be provided");
     }
@@ -13172,7 +13204,7 @@ KeySSIFactory.prototype.createByType = (typeName, identifier, options) => {
     if (typeof registry[typeName] === "undefined") {
         throw Error(`The type ${typeName} is not a registered KeySSI type`);
     }
-    const keySSI = registry[typeName].functionFactory(identifier);
+    const keySSI = registry[typeName].functionFactory(enclave, identifier);
     keySSI.options = options;
     return keySSI;
 };
@@ -13279,7 +13311,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_KEY_SSI, 'v0', undefined
 
 module.exports = new KeySSIFactory();
 
-},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const CryptoFunctionTypes = require("../CryptoAlgorithms/CryptoFunctionTypes");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
@@ -13287,7 +13319,7 @@ const pskCrypto = require("pskcrypto");
 
 const MAX_KEYSSI_LENGTH = 2048
 
-function keySSIMixin(target) {
+function keySSIMixin(target, enclave) {
     let _prefix = "ssi";
     let _subtype;
     let _dlDomain;
@@ -13509,12 +13541,16 @@ function keySSIMixin(target) {
 
 module.exports = keySSIMixin;
 
-},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
-function HashLinkSSI(identifier) {
-    KeySSIMixin(this);
+function HashLinkSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
 
     if (typeof identifier !== "undefined") {
@@ -13542,21 +13578,25 @@ function HashLinkSSI(identifier) {
     };
 }
 
-function createHashLinkSSI(identifier) {
-    return new HashLinkSSI(identifier);
+function createHashLinkSSI(enclave, identifier) {
+    return new HashLinkSSI(enclave, identifier);
 }
 
 module.exports = {
     createHashLinkSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function PublicKeySSI(identifier) {
-    KeySSIMixin(this);
+function PublicKeySSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
 
     if (typeof identifier !== "undefined") {
@@ -13591,21 +13631,25 @@ function PublicKeySSI(identifier) {
     };
 }
 
-function createPublicKeySSI(identifier) {
-    return new PublicKeySSI(identifier);
+function createPublicKeySSI(enclave, identifier) {
+    return new PublicKeySSI(enclave, identifier);
 }
 
 module.exports = {
     createPublicKeySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function SymmetricalEncryptionSSI(identifier) {
-    KeySSIMixin(this);
+function SymmetricalEncryptionSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -13637,22 +13681,22 @@ function SymmetricalEncryptionSSI(identifier) {
     }
 }
 
-function createSymmetricalEncryptionSSI(identifier) {
-    return new SymmetricalEncryptionSSI(identifier);
+function createSymmetricalEncryptionSSI(enclave, identifier) {
+    return new SymmetricalEncryptionSSI(enclave, identifier);
 }
 
 module.exports = {
     createSymmetricalEncryptionSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
 const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
 
-function WalletSSI(identifier) {
+function WalletSSI(enclave, identifier) {
     const self = this;
-    const arraySSI = ArraySSI.createArraySSI(identifier);
+    const arraySSI = ArraySSI.createArraySSI(enclave, identifier);
 
     arraySSI.getTypeName = () => {
         return SSITypes.WALLET_SSI;
@@ -13662,15 +13706,15 @@ function WalletSSI(identifier) {
 
 }
 
-function createWalletSSI(identifier) {
-    return new WalletSSI(identifier);
+function createWalletSSI(enclave, identifier) {
+    return new WalletSSI(enclave, identifier);
 }
 
 module.exports = {
     createWalletSSI
 }
 
-},{"../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js":[function(require,module,exports){
+},{"../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZATSSI = require("./ZATSSI");
 const SSITypes = require("../SSITypes");
@@ -13743,7 +13787,7 @@ module.exports = {
     createOReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZATSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const OReadSSI = require("./OReadSSI");
 const SSITypes = require("../SSITypes");
@@ -13904,7 +13948,7 @@ module.exports = {
     createOwnershipSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./OReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -13937,7 +13981,7 @@ module.exports = {
     createZATSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -13965,7 +14009,7 @@ module.exports = {
     PUBLIC_KEY_SSI: "pk"
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ReadSSI = require("./ReadSSI");
 const SSITypes = require("../SSITypes");
@@ -13994,7 +14038,7 @@ module.exports = {
     createAnchorSSI
 }
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZaSSI = require("./ZaSSI");
 const SSITypes = require("../SSITypes");
@@ -14023,7 +14067,7 @@ module.exports = {
     createPublicSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const PublicSSI = require("./PublicSSI");
 const SSITypes = require("../SSITypes");
@@ -14052,7 +14096,7 @@ module.exports = {
     createReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const AnchorSSI = require("./AnchorSSI");
 const SSITypes = require("../SSITypes");
@@ -14080,7 +14124,7 @@ module.exports = {
     createSecretSSI
 }
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 function ZaSSI(identifier) {
     KeySSIMixin(this);
@@ -14101,15 +14145,18 @@ function createZaSSI(identifier) {
 module.exports = {
     createZaSSI
 };
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function SReadSSI(identifier) {
-    KeySSIMixin(this);
-    const self = this;
+function SReadSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);    const self = this;
 
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -14136,21 +14183,25 @@ function SReadSSI(identifier) {
     };
 }
 
-function createSReadSSI(identifier) {
-    return new SReadSSI(identifier)
+function createSReadSSI(enclave, identifier) {
+    return new SReadSSI(enclave, identifier)
 }
 
 module.exports = {
     createSReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
-function SZaSSI(identifier) {
+function SZaSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
     const self = this;
-    KeySSIMixin(self);
+    KeySSIMixin(self, enclave);
 
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -14169,22 +14220,26 @@ function SZaSSI(identifier) {
     };
 }
 
-function createSZaSSI(identifier) {
-    return new SZaSSI(identifier);
+function createSZaSSI(enclave, identifier) {
+    return new SZaSSI(enclave, identifier);
 }
 
 module.exports = {
     createSZaSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SReadSSI = require("./SReadSSI");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
-function SeedSSI(identifier) {
-    KeySSIMixin(this);
+function SeedSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -14289,20 +14344,24 @@ function SeedSSI(identifier) {
     }
 }
 
-function createSeedSSI(identifier) {
-    return new SeedSSI(identifier);
+function createSeedSSI(enclave, identifier) {
+    return new SeedSSI(enclave, identifier);
 }
 
 module.exports = {
     createSeedSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
-function TokenSSI(identifier) {
-    KeySSIMixin(this);
+function TokenSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -14353,20 +14412,24 @@ function TokenSSI(identifier) {
     };
 }
 
-function createTokenSSI(identifier) {
-    return new TokenSSI(identifier);
+function createTokenSSI(enclave, identifier) {
+    return new TokenSSI(enclave, identifier);
 }
 
 module.exports = {
     createTokenSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
-function TransferSSI(identifier) {
-    KeySSIMixin(this);
+function TransferSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
     const self = this;
     if (typeof identifier !== "undefined") {
         self.autoLoad(identifier);
@@ -14415,15 +14478,15 @@ function TransferSSI(identifier) {
     }
 }
 
-function createTransferSSI(identifier) {
-    return new TransferSSI(identifier);
+function createTransferSSI(enclave, identifier) {
+    return new TransferSSI(enclave, identifier);
 }
 
 module.exports = {
     createTransferSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function validateHashLinks(keySSI, hashLinks, callback) {
@@ -14493,7 +14556,7 @@ module.exports = {
     verifySignature
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const keySSISpace = openDSU.loadApi("keyssi");
 const cachedStores = require("../cache/");
@@ -14553,7 +14616,7 @@ module.exports = {
     versions,
     latestVersion
 }
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
 const bdns = require("../bdns");
 const keyssi = require("../keyssi");
 const {fetch, doPut} = require("../http");
@@ -14802,7 +14865,7 @@ module.exports = {
     getLatestVersion
 }
 
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
@@ -14915,7 +14978,7 @@ function BDNS() {
 
 module.exports = new BDNS();
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js":[function(require,module,exports){
 (function (global){(function (){
 function BootEngine(getKeySSI) {
     if (typeof getKeySSI !== "function") {
@@ -15047,7 +15110,7 @@ module.exports = BootEngine;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/NodeBootScript.js":[function(require,module,exports){
 function boot(keySSI) {
     const worker_threads = "worker_threads";
     const { parentPort } = require(worker_threads);
@@ -15089,7 +15152,7 @@ function boot(keySSI) {
 
 module.exports = boot;
 
-},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js":[function(require,module,exports){
+},{"./BootEngine.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/WorkerBootScript.js":[function(require,module,exports){
 function boot(keySSI) {
     const { handleMessage } = require("./boot-utils.js");
 
@@ -15122,7 +15185,7 @@ function boot(keySSI) {
 
 module.exports = boot;
 
-},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js":[function(require,module,exports){
+},{"./BootEngine.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js":[function(require,module,exports){
 function handleMessage(message, onHandleMessage) {
     // console.log("[worker] Received message", message);
 
@@ -15161,7 +15224,7 @@ module.exports = {
     handleMessage,
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/index.js":[function(require,module,exports){
 let { ENVIRONMENT_TYPES } = require("../moduleConstants.js");
 
 function getBootScript() {
@@ -15177,7 +15240,7 @@ function getBootScript() {
 
 module.exports = getBootScript();
 
-},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./NodeBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js","./WorkerBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./NodeBootScript":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/NodeBootScript.js","./WorkerBootScript":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/WorkerBootScript.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -15236,7 +15299,7 @@ module.exports = {
     getMultipleBricks
 }
 
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
+},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
@@ -15431,7 +15494,7 @@ const putBrick = (domain, brick, authToken, callback) => {
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
+},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -15511,7 +15574,7 @@ function FSCache(folderName) {
 
 
 module.exports.FSCache = FSCache;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -15632,7 +15695,7 @@ function IndexedDBCache(storeName, lifetime) {
 
 
 module.exports.IndexedDBCache  = IndexedDBCache;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
 
 const constants = require("../moduleConstants");
 
@@ -15665,7 +15728,7 @@ function MemoryCache() {
 
 
 module.exports.MemoryCache = MemoryCache;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -15705,7 +15768,7 @@ module.exports = {
     getCacheForVault,
     getMemoryCache
 }
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
 const config = require("./index");
 const constants = require("../moduleConstants");
 const system = require("../system");
@@ -15742,7 +15805,7 @@ setGlobalVariable("printOpenDSUError", errorModule.printOpenDSUError);
 
 
 
-},{"../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+},{"../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
 
 module.exports = function(environment){
         const config = require("./index.js");
@@ -15759,7 +15822,7 @@ module.exports = function(environment){
         }
         console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
 }
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const config = {};
 
@@ -15847,7 +15910,7 @@ module.exports = {
 };
 
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
 const getBaseURL = require("../utils/getBaseURL");
 
 const {
@@ -15994,7 +16057,7 @@ module.exports = {
     generateNoncedCommandForSpecificServer,
 };
 
-},{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
+},{"../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const { fetch, doPost } = require("../http");
 const promiseRunner = require("../utils/promise-runner");
@@ -16155,7 +16218,7 @@ module.exports = {
 
 }).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
@@ -16432,9 +16495,9 @@ function createBloomFilter(options) {
     return new BloomFilter(options);
 }
 
-const sha256JOSE = (data) => {
+const sha256JOSE = (data, encoding) => {
     const pskCrypto = require("pskcrypto");
-    return pskCrypto.hash("sha256", data);
+    return pskCrypto.hash("sha256", data, encoding);
 }
 
 const base64UrlEncodeJOSE = (data) => {
@@ -16485,7 +16548,7 @@ module.exports = {
     joseAPI: require("pskcrypto").joseAPI
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -16834,11 +16897,11 @@ module.exports = {
     verifyDID_JWT
 };
 
-},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
+},{"../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
 module.exports.TimestampMergingStrategy = function(){
 
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/BasicDB.js":[function(require,module,exports){
 /*
     An OpenDSU  BasicDB is a simple noSQL database
     The DB is used with a concept of "table" and rows (records) that have multiple versions
@@ -17073,7 +17136,7 @@ function BasicDB(storageStrategy) {
 
 module.exports = BasicDB;
 
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
 const {createOpenDSUErrorWrapper} = require("../../error");
 module.exports = {
     ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
@@ -17215,7 +17278,7 @@ module.exports = {
     }
 }
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
 let util = require("./impl/DSUDBUtil")
 const {SingleDSUStorageStrategy} = require("./storageStrategies/SingleDSUStorageStrategy");
 const {TimestampMergingStrategy: ConflictStrategy} = require("./conflictSolvingStrategies/timestampMergingStrategy");
@@ -17284,11 +17347,16 @@ const getEnclaveDB = () => {
     throw Error("Not implemented");
 };
 
+const mainEnclaveIsInitialised = ()=>{
+    const sc = require("opendsu").loadAPI("sc");
+    return sc.securityContextIsInitialised();
+}
+
 const getMainEnclaveDB = (callback) => {
     const sc = require("opendsu").loadAPI("sc").getSecurityContext();
     if (sc.isInitialised()) {
-        sc.getMainEnclaveDB(callback);
-    }else {
+        return sc.getMainEnclaveDB(callback);
+    } else {
         sc.on("initialised", () => {
             sc.getMainEnclaveDB(callback);
         });
@@ -17299,7 +17367,7 @@ const getSharedEnclaveDB = (callback) => {
     const sc = require("opendsu").loadAPI("sc").getSecurityContext();
     if (sc.isInitialised()) {
         sc.getSharedEnclaveDB(callback);
-    }else {
+    } else {
         sc.on("initialised", () => {
             sc.getSharedEnclaveDB(callback);
         });
@@ -17317,10 +17385,13 @@ module.exports = {
     getInMemoryDB,
     getEnclaveDB,
     getMainEnclaveDB,
+    getMainEnclave: getMainEnclaveDB,
+    mainEnclaveIsInitialised,
+    getSharedEnclave: getSharedEnclaveDB,
     getSharedEnclaveDB
 }
 
-},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
+},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function MemoryStorageStrategy() {
     const ObservableMixin = require("../../utils/ObservableMixin");
@@ -17412,6 +17483,11 @@ function MemoryStorageStrategy() {
         })
         query.sortValues(filteredRecords, sort);
         callback(undefined, filteredRecords);
+    }
+
+    this.getAllRecords = (tableName, callback) => {
+        const table = getTable(tableName);
+        callback(undefined, Object.values(table));
     }
     /*
       Insert a record, return error if already exists
@@ -17578,7 +17654,7 @@ function MemoryStorageStrategy() {
 module.exports = MemoryStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
 
 function MultiUserStorageStrategy(){
 
@@ -17592,7 +17668,7 @@ function MultiUserStorageStrategy(){
 
 }
 module.exports = MultiUserStorageStrategy;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
 function Query(queryArray) {
     let conditions = [];
     const operators = require("./operators");
@@ -17644,7 +17720,10 @@ function Query(queryArray) {
                 return callback(undefined, filteredRecords);
             }
             getNextRecordForValue(sortedValues[currentIndex], (err, record) => {
-                if (record === null) {
+                if (record === null || err) {
+                    if(err){
+                        console.log("We caught an error during record retrieval and we are skipping to the next from the list.", err);
+                    }
                     getNextRecord(currentIndex + 1);
                 } else {
                     processRecord(record);
@@ -17662,7 +17741,7 @@ function Query(queryArray) {
                     return;
                 }
             }
-            if (!record.__deleted) {
+            if (record && !record.__deleted) {
                 filteredRecords.push(record);
             }
         }
@@ -17693,7 +17772,7 @@ function Query(queryArray) {
 }
 
 module.exports = Query;
-},{"./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
+},{"./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const ObservableMixin = require("../../utils/ObservableMixin");
 const Query = require("./Query");
@@ -18234,6 +18313,25 @@ function SingleDSUStorageStrategy() {
                     record = JSON.parse(res);
                 } catch (newErr) {
                     retErr = createOpenDSUErrorWrapper(`Failed to parse record in ${recordPath}: ${res}`, retErr);
+                    //let's try to check if the res contains the record twice... at some point there was a bug on this topic
+                    let serializedRecord = res;
+                    if(ArrayBuffer.isView(serializedRecord) || serializedRecord.buffer){
+                        serializedRecord = new TextDecoder().decode(serializedRecord);
+                    }
+                    let halfOfRes = serializedRecord.slice(0, serializedRecord.length/2);
+                    let isDuplicated = (serializedRecord === halfOfRes + halfOfRes);
+                    if(isDuplicated){
+                        try{
+                            record = JSON.parse(halfOfRes);
+                            console.log("We caught an error during record retrieval process and fix it. (duplicate content)");
+                            //we ignore the original error because we were able to fix it.
+                            retErr = undefined;
+                        }catch(err){
+                            console.log("We caught an error during record retrieval process and we failed to fix it!");
+                        }
+                    }else{
+                        console.log(retErr);
+                    }
                 }
             }
             callback(retErr, record);
@@ -18291,7 +18389,7 @@ function SingleDSUStorageStrategy() {
 module.exports.SingleDSUStorageStrategy = SingleDSUStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js","buffer":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js","buffer":false,"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
 module.exports = {
     "<": function (x, y) {
         return x < y
@@ -18334,7 +18432,7 @@ module.exports = {
     }
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js":[function(require,module,exports){
 function getCompareFunction(sortOrder) {
     if (sortOrder === "asc" || sortOrder === "ascending") {
         return function (a, b) {
@@ -18379,11 +18477,11 @@ module.exports = {
     getCompareFunction,
     getCompareFunctionForObjects
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -18938,7 +19036,7 @@ function AppBuilderService(environment, opts) {
     }
 }
 module.exports = AppBuilderService;
-},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
+},{"./DossierBuilder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -19141,7 +19239,7 @@ const DossierBuilder = function(sourceDSU, varStore){
 
 module.exports = DossierBuilder;
 
-},{"./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
+},{"./commands":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -19262,7 +19360,7 @@ function FileService(options) {
 }
 
 module.exports = FileService;
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19367,7 +19465,7 @@ class Command {
 }
 
 module.exports = Command;
-},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js":[function(require,module,exports){
+},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js":[function(require,module,exports){
 /**
  * List of all available commands to the Dossier Builder
  * Without being here, they can't be used
@@ -19401,7 +19499,7 @@ const _getByName = function(cmdName){
 }
 
 module.exports = _getByName;
-},{"./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js":[function(require,module,exports){
+},{"./addFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/VarStore.js":[function(require,module,exports){
 /**
  * @module commands
  * A simple variable store
@@ -19446,7 +19544,7 @@ const VarStore = function(){
 }
 
 module.exports = VarStore;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19534,7 +19632,7 @@ class AddFileCommand extends Command{
 }
 
 module.exports = AddFileCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19601,7 +19699,7 @@ class AddFolderCommand extends Command {
 }
 
 module.exports = AddFolderCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19792,7 +19890,7 @@ class CreateDSUCommand extends Command{
 }
 
 module.exports = CreateDSUCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19858,7 +19956,7 @@ class CreateFileCommand extends Command{
 }
 
 module.exports = CreateFileCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19940,7 +20038,7 @@ class DefineCommand extends Command {
 }
 
 module.exports = DefineCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19995,7 +20093,7 @@ class DeleteCommand extends Command {
 
 module.exports = DeleteCommand;
 
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20050,7 +20148,7 @@ class DeriveCommand extends Command{
 }
 
 module.exports = DeriveCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20102,7 +20200,7 @@ class EndWithCommand extends Command{
 }
 
 module.exports = EndWithCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20251,7 +20349,7 @@ class GenKeyCommand extends Command {
 }
 
 module.exports = GenKeyCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20323,7 +20421,7 @@ class GetIdentifierCommand extends Command{
 }
 
 module.exports = GetIdentifierCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20346,7 +20444,7 @@ module.exports = {
     WithCommand: require('./with'),
     _getByName: require('./Registry')
 }
-},{"./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js":[function(require,module,exports){
+},{"./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./addFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20468,7 +20566,7 @@ class MountCommand extends Command{
 }
 
 module.exports = MountCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20525,7 +20623,7 @@ class ObjToArrayCommand extends Command{
 }
 
 module.exports = ObjToArrayCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20587,7 +20685,7 @@ class ReadFileCommand extends Command{
 }
 
 module.exports = ReadFileCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js":[function(require,module,exports){
 /**
  * @module Commands
  */
@@ -20670,7 +20768,7 @@ module.exports = {
     KEY_TYPE,
     DSU_TYPE
 };
-},{"fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js":[function(require,module,exports){
+},{"fs":false,"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -20797,7 +20895,7 @@ class WithCommand extends Command {
 }
 
 module.exports = WithCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
+},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -20823,7 +20921,7 @@ module.exports = {
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
 const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -20873,7 +20971,7 @@ function APIHUBProxy(domain, did) {
 }
 
 module.exports = APIHUBProxy;
-},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+},{".././../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 function Enclave_Mixin(target, did) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
@@ -20885,9 +20983,6 @@ function Enclave_Mixin(target, did) {
     ObservableMixin(target);
     const CryptoSkills = w3cDID.CryptographicSkills;
 
-    if (!did) {
-        did = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT).getIdentifier();
-    }
     const getPrivateInfoForDID = (did, callback) => {
         target.storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
             if (err) {
@@ -20935,7 +21030,15 @@ function Enclave_Mixin(target, did) {
     };
 
     target.getDID = (callback) => {
-        callback(undefined, did);
+        if (!did) {
+            did = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT);
+            did.on("initialised", () => {
+                did = did.getIdentifier();
+                callback(undefined, did);
+            })
+        } else {
+            callback(undefined, did);
+        }
     }
 
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
@@ -20999,6 +21102,16 @@ function Enclave_Mixin(target, did) {
             }
         }
 
+        if (typeof alias === "function") {
+            callback = alias;
+            alias = undefined;
+        }
+
+        if (typeof alias === "undefined") {
+            const generateUid = require("swarmutils").generateUid;
+            alias = generateUid(10).toString("hex");
+        }
+
         const keySSIIdentifier = seedSSI.getIdentifier();
 
         function registerDerivedKeySSIs(derivedKeySSI) {
@@ -21026,7 +21139,32 @@ function Enclave_Mixin(target, did) {
         })
     }
 
+    target.storeKeySSI = (forDID, keySSI, callback) => {
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
+            }
+        }
+        if (keySSI.getTypeName() === openDSU.constants.KEY_SSIS.SEED_SSI) {
+            return target.storeSeedSSI(forDID, keySSI, undefined, callback);
+        }
+        const keySSIIdentifier = keySSI.getIdentifier();
+
+        target.storageDB.insertRecord(KEY_SSIS_TABLE, keySSIIdentifier, {keySSI: keySSIIdentifier}, callback)
+    }
+
     target.storeDID = (forDID, storedDID, privateKeys, callback) => {
+        if (typeof privateKeys === "function") {
+            callback = privateKeys;
+            privateKeys = storedDID;
+            storedDID = forDID;
+        }
+        if (!Array.isArray(privateKeys)) {
+            privateKeys = [privateKeys];
+        }
+
         target.storageDB.getRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), (err, res) => {
             if (err || !res) {
                 return target.storageDB.insertRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), {privateKeys: privateKeys}, callback);
@@ -21068,6 +21206,11 @@ function Enclave_Mixin(target, did) {
     }
 
     target.signForDID = (forDID, didThatIsSigning, hash, callback) => {
+        if (typeof hash === "function") {
+            callback = hash;
+            hash = didThatIsSigning;
+            didThatIsSigning = forDID;
+        }
         getPrivateInfoForDID(didThatIsSigning.getIdentifier(), async (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
@@ -21079,6 +21222,12 @@ function Enclave_Mixin(target, did) {
     }
 
     target.verifyForDID = (forDID, didThatIsVerifying, hash, signature, callback) => {
+        if (typeof hash === "function") {
+            callback = signature;
+            signature = hash;
+            hash = didThatIsVerifying;
+            didThatIsVerifying = forDID;
+        }
         didThatIsVerifying.getPublicKey("pem", (err, publicKey) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to read public key for did ${target.getIdentifier()}`, err));
@@ -21107,6 +21256,12 @@ function Enclave_Mixin(target, did) {
     }
 
     target.encryptMessage = (forDID, didFrom, didTo, message, callback) => {
+        if (typeof message === "function") {
+            callback = message;
+            message = didTo;
+            didTo = didFrom;
+            didFrom = forDID;
+        }
         getPrivateInfoForDID(didFrom.getIdentifier(), (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didFrom.getIdentifier()}`, err));
@@ -21117,6 +21272,11 @@ function Enclave_Mixin(target, did) {
     }
 
     target.decryptMessage = (forDID, didTo, encryptedMessage, callback) => {
+        if (typeof encryptedMessage === "function") {
+            callback = encryptedMessage;
+            encryptedMessage = didTo;
+            didTo = forDID;
+        }
         getPrivateInfoForDID(didTo.getIdentifier(), (err, privateKeys) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didTo.getIdentifier()}`, err));
@@ -21125,10 +21285,45 @@ function Enclave_Mixin(target, did) {
             CryptoSkills.applySkill(didTo.getMethodName(), CryptoSkills.NAMES.DECRYPT_MESSAGE, privateKeys, didTo, encryptedMessage, callback);
         });
     };
+
+    // expose resolver APIs
+    const resolverAPI = openDSU.loadAPI("resolver");
+    Object.keys(resolverAPI).forEach(fnName => {
+        target[fnName] = (...args)=>{
+            args.shift();
+            resolverAPI[fnName](...args);
+        }
+    })
+
+    // expose keyssi APIs
+    Object.keys(keySSISpace).forEach(fnName => {
+        if (fnName.startsWith("we_")) {
+            const trimmedFnName = fnName.slice(3);
+            target[trimmedFnName] = (...args) => {
+                args.shift();
+                args.unshift(target);
+                keySSISpace[fnName](...args);
+            }
+        } else if (fnName.startsWith("createTemplate")) {
+            target[fnName] = keySSISpace[fnName];
+        }
+    })
+
+    // expose w3cdid APIs
+    Object.keys(w3cDID).forEach(fnName => {
+        if (fnName.startsWith("we_")) {
+            const trimmedFnName = fnName.slice(3);
+            target[trimmedFnName] = (...args) => {
+                args.shift();
+                args.unshift(target);
+                w3cDID[fnName](...args);
+            }
+        }
+    })
 }
 
 module.exports = Enclave_Mixin;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -21150,12 +21345,16 @@ function HighSecurityProxy(domain, did) {
         }
         if (typeof did === "undefined") {
             didDocument = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT);
-            did = didDocument.getIdentifier();
+            didDocument.on("initialised", () => {
+                did = didDocument.getIdentifier();
+                this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
+                this.finishInitialisation();
+            })
         } else {
             didDocument = await $$.promisify(w3cDID.resolveDID)(did);
+            this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
+            this.finishInitialisation();
         }
-        this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
-        this.finishInitialisation();
     }
 
     this.getDID = (callback) => {
@@ -21184,7 +21383,7 @@ function HighSecurityProxy(domain, did) {
 module.exports = HighSecurityProxy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
+},{".././../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","buffer":false,"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
 function MemoryEnclave() {
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this);
@@ -21207,19 +21406,14 @@ function MemoryEnclave() {
 }
 
 module.exports = MemoryEnclave;
-},{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
+},{"./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createOpenDSUErrorWrapper} = require("../../error");
-const commandNames = require("./lib/commandsNames");
 
 function ProxyMixin(target) {
     const commandNames = require("./lib/commandsNames");
-    const openDSU = require("opendsu");
-    const keySSISpace = openDSU.loadAPI("keyssi")
-    const w3cDID = openDSU.loadAPI("w3cdid")
-    const CryptoSkills = w3cDID.CryptographicSkills;
-    const ObservableMixin = require("../../utils/ObservableMixin");
-    ObservableMixin(target);
+    const EnclaveMixin = require("./Enclave_Mixin");
+    EnclaveMixin(target);
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
         target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, callback);
     };
@@ -21413,7 +21607,7 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -21487,7 +21681,7 @@ function WalletDBEnclave(keySSI, did) {
 }
 
 module.exports = WalletDBEnclave;
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
 module.exports = {
     INSERT_RECORD: "insertRecord",
     UPDATE_RECORD: "updateRecord",
@@ -21515,7 +21709,7 @@ module.exports = {
     DECRYPT_MESSAGE: "decryptMessage",
     GET_PRIVATE_INFO_FOR_DID:"getPrivateInfoForDID"
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
 const createCommandObject = (commandName, ...args) => {
     return {
         commandName,
@@ -21528,7 +21722,7 @@ const createCommandObject = (commandName, ...args) => {
 module.exports = {
     createCommandObject
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function initialiseWalletDBEnclave(keySSI, did) {
@@ -21585,7 +21779,7 @@ module.exports = {
     registerEnclave
 }
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -21773,7 +21967,7 @@ module.exports = {
     printOpenDSUError
 }
 
-},{"./../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
+},{"./../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -21854,7 +22048,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT'),
 	doGet
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -21887,7 +22081,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js":[function(require,module,exports){
+},{"./browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"overwrite-require"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/common.js":[function(require,module,exports){
 const userAgent = 'PSK NodeAgent/0.0.1';
 const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
 
@@ -21977,7 +22171,7 @@ module.exports = {
 	buildOptions,
 	getNetworkForOptions
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -22200,7 +22394,7 @@ module.exports = {
 	fetch
 }
 
-},{"http":false,"https":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
+},{"http":false,"https":false,"url":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 
 const {setContentTypeByData,buildOptions,getNetworkForOptions} = require("./common.js");
 
@@ -22287,7 +22481,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{"./common.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./common.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/fetch.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -22334,7 +22528,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
 function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 	const requests = new Map();
@@ -22469,7 +22663,7 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 module.exports = PollRequestManager;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
 let interceptors = [];
 
 function registerInterceptor(interceptor){
@@ -22571,17 +22765,21 @@ function enable(handler){
 }
 
 module.exports = {enable};
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("../crypto");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 const SSITypes = keySSIResolver.SSITypes;
-
+const dbAPI = require("opendsu").loadAPI("db");
 const parse = (ssiString, options) => {
     return keySSIFactory.create(ssiString, options);
 };
 
 const createSeedSSI = (domain, vn, hint, callback) => {
+    return we_createSeedSSI(dbAPI.getMainEnclave(), domain, vn, hint, callback);
+};
+
+const we_createSeedSSI = (enclave, domain, vn, hint, callback) => {
     if (typeof vn == "function") {
         callback = vn;
         vn = undefined;
@@ -22594,7 +22792,21 @@ const createSeedSSI = (domain, vn, hint, callback) => {
 
     let seedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 
-    seedSSI.initialize(domain, undefined, undefined, vn, hint, callback);
+    if (typeof callback === "function") {
+        seedSSI.initialize(domain, undefined, undefined, vn, hint, (err => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (enclave) {
+                enclave.storeKeySSI(seedSSI, (err) => callback(err, seedSSI));
+            } else {
+                callback(undefined, seedSSI);
+            }
+        }));
+    } else {
+        seedSSI.initialize(domain, undefined, undefined, vn, hint);
+    }
     return seedSSI;
 };
 
@@ -22643,7 +22855,6 @@ const createTemplateKeySSI = (ssiType, domain, specificString, control, vn, hint
     return keySSI;
 };
 
-
 const buildTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
     console.log("This function is obsolete. Use createTemplateWalletSSI instead.");
     try {
@@ -22665,15 +22876,37 @@ const createTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
     }
 };
 
-const createConstSSI = (domain, constString, vn, hint, callback) => {
+const createConstSSI = (domain, constString, vn, hint) => {
+    return we_createConstSSI(dbAPI.getMainEnclave(), domain, constString, vn, hint)
+};
+
+const we_createConstSSI = (enclave, domain, constString, vn, hint, callback) => {
     const constSSI = keySSIFactory.createType(SSITypes.CONST_SSI);
     constSSI.initialize(domain, constString, vn, hint);
+    if (typeof callback === "function") {
+        if (enclave) {
+            enclave.storeKeySSI(undefined, constSSI, callback);
+        } else {
+            callback(undefined, constSSI);
+        }
+    }
     return constSSI;
 };
 
 const createArraySSI = (domain, arr, vn, hint, callback) => {
+    return we_createArraySSI(dbAPI.getMainEnclave(), domain, arr, vn, hint);
+}
+
+const we_createArraySSI = (enclave, domain, arr, vn, hint, callback) => {
     const arraySSI = keySSIFactory.createType(SSITypes.ARRAY_SSI);
     arraySSI.initialize(domain, arr, vn, hint);
+    if (typeof callback === "function") {
+        if (enclave) {
+            enclave.storeKeySSI(undefined, arraySSI, callback);
+        } else {
+            callback(undefined, arraySSI);
+        }
+    }
     return arraySSI;
 };
 
@@ -22778,6 +23011,7 @@ const createPublicKeySSI = (compatibleFamilyName, publicKey, vn) => {
     return publicKeySSI;
 };
 
+
 module.exports = {
     parse,
     createSeedSSI,
@@ -22797,10 +23031,13 @@ module.exports = {
     createTransferSSI,
     createTemplateTransferSSI,
     createSignedHashLinkSSI,
-    createPublicKeySSI
+    createPublicKeySSI,
+    we_createSeedSSI,
+    we_createConstSSI,
+    we_createArraySSI
 };
 
-},{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
+},{"../anchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
 const apis = {};
 function defineApi(name, implementation){
 	if(typeof implementation !== "function"){
@@ -22814,7 +23051,7 @@ function getApis(){
 }
 
 module.exports = {defineApi, getApis}
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultApis/index.js":[function(require,module,exports){
 const registry = require("../apisRegistry");
 
 /*
@@ -22994,7 +23231,7 @@ registry.defineApi("getResolver", function (domain, ssiType, options) {
 });
 
 
-},{"../apisRegistry":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js":[function(require,module,exports){
+},{"../apisRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js":[function(require,module,exports){
 const mappingRegistry = require("./../mappingRegistry.js");
 
 async function validateMessage(message){
@@ -23006,7 +23243,7 @@ async function digestMessage(message){
 }
 
 mappingRegistry.defineMapping(validateMessage, digestMessage);
-},{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
+},{"./../mappingRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 
 errorTypes = {
@@ -23159,7 +23396,7 @@ module.exports = {
   addNewErrorType
 }
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
 const mappingRegistry = require("./mappingRegistry.js");
 const apisRegistry = require("./apisRegistry.js");
 const errMap = require("./errorsMap.js")
@@ -23377,7 +23614,7 @@ module.exports = {
   defineApi: apisRegistry.defineApi
 }
 
-},{"./apisRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./errorsMap.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js","./mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
+},{"./apisRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./errorsMap.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/errorsMap.js","./mappingRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
 const mappingRegistry = [];
 function defineMapping(matchFunction, mappingFunction){
 	mappingRegistry.push({matchFunction, mappingFunction});
@@ -23391,7 +23628,7 @@ module.exports = {
 	defineMapping,
 	getMappings
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js":[function(require,module,exports){
 module.exports = function (maxGroupSize, maxQueuingTime, groupingFunction) {
 
     this.queue = [];
@@ -23452,7 +23689,7 @@ module.exports = function (maxGroupSize, maxQueuingTime, groupingFunction) {
     startWaitingMessages();
 
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
 const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
 
 let cachedKeySSIResolver = undefined;
@@ -23535,7 +23772,7 @@ module.exports = {
 
 
 
-},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -23824,7 +24061,7 @@ module.exports = {
     unsubscribe,
     getMQHandlerForDID
 }
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -23925,7 +24162,7 @@ module.exports = {
 	isSubscribed
 }
 
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js":[function(require,module,exports){
+},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/index.js":[function(require,module,exports){
 const createOIDC = (options) => {
     const OIDC = require("./src/oidc/OIDC");
     return new OIDC(options);
@@ -23937,7 +24174,7 @@ module.exports = {
     constants: require("./src/oidc/constants"),
 
 }
-},{"./src/oidc/OIDC":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js","./src/oidc/constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/constants.js","./src/util/Storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Client.js":[function(require,module,exports){
+},{"./src/oidc/OIDC":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js","./src/oidc/constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/constants.js","./src/util/Storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Client.js":[function(require,module,exports){
 class Client {
     constructor(options) {
         this.options = options;
@@ -23966,7 +24203,7 @@ class Client {
 
 
 module.exports = Client;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js":[function(require,module,exports){
 class Issuer {
     constructor(options) {
         this.options = options;
@@ -23990,7 +24227,7 @@ class Issuer {
 
 
 module.exports = Issuer;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js":[function(require,module,exports){
 const RedirectInteraction = require('./interactions/Redirect');
 const IFrameInteraction = require('./interactions/IFrame');
 const PopupInteraction = require('./interactions/Popup');
@@ -24322,7 +24559,7 @@ class OIDC {
 
 OIDC.utils = {Browser};
 module.exports = OIDC;
-},{"../util/Browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js","../util/Crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js","../util/Storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js","./Client":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Client.js","./Issuer":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js","./grants/AuthorizationCode":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js","./grants/RefreshToken":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js","./interactions/IFrame":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js","./interactions/Popup":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js","./interactions/Redirect":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/constants.js":[function(require,module,exports){
+},{"../util/Browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js","../util/Crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js","../util/Storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js","./Client":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Client.js","./Issuer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js","./grants/AuthorizationCode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js","./grants/RefreshToken":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js","./interactions/IFrame":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js","./interactions/Popup":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js","./interactions/Redirect":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/constants.js":[function(require,module,exports){
 module.exports = {
     ID_TOKEN: 'session.idToken',
     ACCESS_TOKEN: 'session.accessToken',
@@ -24339,7 +24576,7 @@ module.exports = {
     TOKEN_CHECK_INTERVAL: 1000 * 30,
     TOKEN_EXPIRATION_THRESHOLD: 1000 * 60,
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js":[function(require,module,exports){
 const Crypto = require('../../util/Crypto');
 
 
@@ -24390,7 +24627,7 @@ class AuthorizationCode {
 
 
 module.exports = AuthorizationCode;
-},{"../../util/Crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js":[function(require,module,exports){
+},{"../../util/Crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js":[function(require,module,exports){
 class RefreshToken {
     static refreshToken(issuer, client, options) {
         const params = new URLSearchParams();
@@ -24411,7 +24648,7 @@ class RefreshToken {
 
 
 module.exports = RefreshToken;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js":[function(require,module,exports){
 const Promises = require('../../util/Promises');
 const Interaction = require('./Interaction');
 
@@ -24485,7 +24722,7 @@ class IFrame extends Interaction {
 
 
 module.exports = IFrame;
-},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js":[function(require,module,exports){
 const Browser = require('../../util/Browser');
 
 
@@ -24517,7 +24754,7 @@ class Interaction {
 
 
 module.exports = Interaction;
-},{"../../util/Browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js":[function(require,module,exports){
+},{"../../util/Browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js":[function(require,module,exports){
 const Interaction = require('./Interaction');
 const Promises = require('../../util/Promises');
 
@@ -24572,7 +24809,7 @@ class Popup extends Interaction {
 
 
 module.exports = Popup;
-},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js":[function(require,module,exports){
 const Interaction = require('./Interaction');
 const Promises = require('../../util/Promises');
 
@@ -24597,7 +24834,7 @@ class Redirect extends Interaction {
 
 
 module.exports = Redirect;
-},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js":[function(require,module,exports){
 function parseUrlHash(hash) {
     return parseUrlParams(hash.substring(1));
 }
@@ -24657,7 +24894,7 @@ module.exports = {
     getCurrentLocation,
     isItMe
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadAPI("crypto");
 
@@ -24689,7 +24926,7 @@ module.exports = {
     generateCodeChallenge,
     decodeBase64EncodedData
 }
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js":[function(require,module,exports){
 function flatPromise() {
     let resolve, reject;
     let promise = new Promise((_resolve, _reject) => {
@@ -24704,7 +24941,7 @@ function flatPromise() {
 module.exports = {
     flatPromise
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js":[function(require,module,exports){
 const {prettyByte} = require("@msgpack/msgpack/dist/utils/prettyByte");
 
 class Storage {
@@ -24744,7 +24981,7 @@ const getStorage = () => {
 module.exports = {
     getStorage
 };
-},{"@msgpack/msgpack/dist/utils/prettyByte":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+},{"@msgpack/msgpack/dist/utils/prettyByte":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
@@ -24809,25 +25046,26 @@ const createDSU = (templateKeySSI, options, callback) => {
             addDSUInstanceInCache(dsuInstance, callback);
         }
 
-        const sc = require("opendsu").loadAPI("sc").getSecurityContext();
-        if (sc.isInitialised()) {
-            dsuInstance.getKeySSIAsObject((err, seedSSI) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get seed SSI`, err));
-                }
-
-                sc.registerKeySSI(undefined, seedSSI, (err) => {
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to register seed ssi`, err));
-                    }
-
-
-                    addInCache(undefined, dsuInstance);
-                })
-            });
-        } else {
-            addInCache(undefined, dsuInstance);
-        }
+        addInCache(undefined, dsuInstance);
+        // const sc = require("opendsu").loadAPI("sc").getSecurityContext();
+        // if (sc.isInitialised()) {
+        //     dsuInstance.getKeySSIAsObject((err, seedSSI) => {
+        //         if (err) {
+        //             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get seed SSI`, err));
+        //         }
+        //
+        //         sc.registerKeySSI(undefined, seedSSI, (err) => {
+        //             if (err) {
+        //                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to register seed ssi`, err));
+        //             }
+        //
+        //
+        //             addInCache(undefined, dsuInstance);
+        //         })
+        //     });
+        // } else {
+        //     addInCache(undefined, dsuInstance);
+        // }
     });
 };
 
@@ -25141,7 +25379,7 @@ module.exports = {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./resolver-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js","buffer":false,"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js":[function(require,module,exports){
+},{"../cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./resolver-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/resolver-utils.js","buffer":false,"key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","syndicate":"syndicate"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/resolver-utils.js":[function(require,module,exports){
 (function (global){(function (){
 function getWebWorkerBootScript(dsuKeySSI) {
     const scriptLocation = document.currentScript
@@ -25176,7 +25414,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 /*
     Security Context related functionalities
 
@@ -25361,7 +25599,7 @@ function SecurityContext() {
 
         enclave = enclaveAPI.createEnclave(enclaveType);
         await initSharedEnclave();
-        const __saveEnclaveDIDAndFinishInit =async ()=>{
+        const __saveEnclaveDIDAndFinishInit = async () => {
             if (typeof enclaveDID === "undefined") {
                 enclaveDID = await $$.promisify(enclave.getDID)();
                 try {
@@ -25383,9 +25621,9 @@ function SecurityContext() {
             }
         }
 
-        if(enclave.isInitialised()){
+        if (enclave.isInitialised()) {
             __saveEnclaveDIDAndFinishInit()
-        }else{
+        } else {
             enclave.on("initialised", async () => {
                 __saveEnclaveDIDAndFinishInit();
             });
@@ -25469,47 +25707,59 @@ function SecurityContext() {
         callback(undefined, storageDSU);
     }
 
-    const wrapEnclave = (enclave) => {
-        const enclaveDB = {};
+    const wrapEnclave = (asDID, enclave) => {
+        const wrappedEnclave = {};
         let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords"];
-        let syncDBMethods = ["beginBatch"]
         for (let i = 0; i < asyncDBMethods.length; i++) {
-            enclaveDB[asyncDBMethods[i]] = function (...args) {
-                enclave[asyncDBMethods[i]](mainDID, ...args);
+            wrappedEnclave[asyncDBMethods[i]] = (...args) => {
+                enclave[asyncDBMethods[i]](asDID, ...args);
             }
 
-            enclaveDB[`${asyncDBMethods[i]}Async`] = $$.promisify(enclaveDB[asyncDBMethods[i]]);
+            wrappedEnclave[`${asyncDBMethods[i]}Async`] = $$.promisify(wrappedEnclave[asyncDBMethods[i]]);
         }
 
-
-        for (let i = 0; i < syncDBMethods.length; i++) {
-            enclaveDB[syncDBMethods[i]] = function (...args) {
-                enclave[syncDBMethods[i]](mainDID, ...args);
+        Object.keys(enclave).forEach(methodName => {
+            if (typeof wrappedEnclave[methodName] === "undefined") {
+                wrappedEnclave[methodName] = (...args) => {
+                    enclave[methodName](asDID, ...args);
+                }
             }
-        }
-
-        return enclaveDB;
+        })
+        return wrappedEnclave;
     }
-    this.getMainEnclaveDB = (callback) => {
+    this.getMainEnclaveDB = (asDID, callback) => {
+        if (typeof asDID === "function") {
+            callback = asDID;
+            asDID = mainDID;
+        }
+
         let mainEnclaveDB;
         if (this.isInitialised()) {
-            mainEnclaveDB = wrapEnclave(enclave);
-            callback(undefined, mainEnclaveDB);
+            mainEnclaveDB = wrapEnclave(asDID, enclave);
+            if (typeof callback === "function") {
+                callback(undefined, mainEnclaveDB);
+            }
+            return mainEnclaveDB;
         } else {
             enclave.on("initialised", () => {
-                mainEnclaveDB = wrapEnclave(enclave);
+                mainEnclaveDB = wrapEnclave(asDID, enclave);
                 callback(undefined, mainEnclaveDB);
             })
         }
     }
 
-    this.getSharedEnclaveDB = (callback) => {
+    this.getSharedEnclaveDB = (asDID, callback) => {
+        if (typeof asDID === "function") {
+            callback = asDID;
+            asDID = mainDID;
+        }
+
         let sharedEnclaveDB;
         const __getWrappedEnclave = () => {
             if (!sharedEnclave) {
                 return callback(Error(`No shared db found`))
             }
-            sharedEnclaveDB = wrapEnclave(sharedEnclave);
+            sharedEnclaveDB = wrapEnclave(asDID, sharedEnclave);
             callback(undefined, sharedEnclaveDB);
         }
         if (this.isInitialised()) {
@@ -25541,6 +25791,15 @@ const getVaultDomain = (callback) => {
 const getDIDDomain = (callback) => {
     config.getEnv(constants.DID_DOMAIN, callback);
 }
+
+const securityContextIsInitialised = ()=>{
+    if (typeof $$.sc === "undefined") {
+        return false;
+    }
+
+    return $$.sc.isInitialised();
+}
+
 const getSecurityContext = () => {
     if (typeof $$.sc === "undefined") {
         $$.sc = new SecurityContext();
@@ -25560,10 +25819,11 @@ module.exports = {
     getVaultDomain,
     getSecurityContext,
     refreshSecurityContext,
-    getDIDDomain
+    getDIDDomain,
+    securityContextIsInitialised
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
 const { fetch } = require("./utils");
 
 // helpers
@@ -25873,12 +26133,12 @@ function getDSUStorage() {
 
 module.exports = getDSUStorage;
 
-},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js":[function(require,module,exports){
+},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/index.js":[function(require,module,exports){
 module.exports = {
   getDSUStorage: require("./DSUStorage")
 };
 
-},{"./DSUStorage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/utils.js":[function(require,module,exports){
+},{"./DSUStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/DSUStorage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/utils.js":[function(require,module,exports){
 function promisify(fun) {
   return function (...args) {
     return new Promise((resolve, reject) => {
@@ -25920,7 +26180,7 @@ module.exports = {
   fetch: executeFetch,
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
     if (typeof envVariables[name] !== "undefined") {
@@ -25953,7 +26213,7 @@ module.exports = {
     getBaseURL
 }
 
-},{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
+},{"../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
 const PendingCallMixin = require("./PendingCallMixin");
 /*
     Utility to make classes that depend on some initialisation easier to use.
@@ -26005,7 +26265,7 @@ module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
     return obj;
 };
 
-},{"./PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
+},{"./PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
 function ObservableMixin(target) {
     let observers = {};
 
@@ -26063,7 +26323,7 @@ function ObservableMixin(target) {
 
 module.exports = ObservableMixin;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
 function PendingCallMixin(target) {
     let pendingCalls = [];
     let serialPendingCalls = [];
@@ -26112,7 +26372,7 @@ function PendingCallMixin(target) {
 }
 
 module.exports = PendingCallMixin;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -26122,7 +26382,7 @@ function shuffle(array) {
 
 module.exports.shuffle = shuffle;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const system = require("../system");
 function getBaseURL(){
@@ -26161,7 +26421,7 @@ function getBaseURL(){
 }
 
 module.exports = getBaseURL;
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getURLForSsappContext.js":[function(require,module,exports){
 function getURLForSsappContext(relativePath) {
     if (window["$$"] && $$.SSAPP_CONTEXT && $$.SSAPP_CONTEXT.BASE_URL && $$.SSAPP_CONTEXT.SEED) {
         // if we have a BASE_URL then we prefix the fetch url with BASE_URL
@@ -26176,11 +26436,11 @@ module.exports = {
     getURLForSsappContext
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
 module.exports = {
     bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions
 }
-},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"./BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -26188,7 +26448,7 @@ module.exports.createObservable = function(){
 	observableMixin(obs);
 	return obs;
 }
-},{"./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+},{"./ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
 const arrayUtils = require("./array");
 const { OpenDSUSafeCallback, createOpenDSUErrorWrapper } = require('./../error')
 
@@ -26347,7 +26607,7 @@ module.exports = {
   runEnoughForMajority,
 };
 
-},{"./../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./array":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js":[function(require,module,exports){
+},{"./../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./array":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/array.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js":[function(require,module,exports){
 const cryptoSkillsRegistry = {};
 const methodsNames = require("../didMethodsNames");
 const KeyDID_CryptographicSkills = require("./KeyDID_CryptographicSkills");
@@ -26375,7 +26635,7 @@ module.exports = {
     applySkill,
     NAMES: require("./cryptographicSkillsNames")
 };
-},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
+},{"../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
 function CryptographicSkillsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -26571,7 +26831,7 @@ function CryptographicSkillsMixin(target) {
 
 module.exports = CryptographicSkillsMixin;
 
-},{"opendsu":"opendsu","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js":[function(require,module,exports){
+},{"opendsu":"opendsu","pskcrypto":"pskcrypto","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function GroupDID_CryptographicSkills() {
@@ -26584,7 +26844,7 @@ function GroupDID_CryptographicSkills() {
 }
 
 module.exports = GroupDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function KeyDID_CryptographicSkills() {
@@ -26597,7 +26857,7 @@ function KeyDID_CryptographicSkills() {
 }
 
 module.exports = KeyDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function NameDID_CryptographicSkills() {
@@ -26610,7 +26870,7 @@ function NameDID_CryptographicSkills() {
 }
 
 module.exports = NameDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function SReadDID_CryptographicSkills() {
@@ -26623,7 +26883,7 @@ function SReadDID_CryptographicSkills() {
 }
 
 module.exports = SReadDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function SSI_KeyDID_CryptographicSkills() {
@@ -26636,7 +26896,7 @@ function SSI_KeyDID_CryptographicSkills() {
 }
 
 module.exports = SSI_KeyDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js":[function(require,module,exports){
 module.exports = {
     CREATE_DID_DOCUMENT:"createDID_Document",
     SIGN: "sign",
@@ -26644,7 +26904,7 @@ module.exports = {
     ENCRYPT_MESSAGE: "encryptMessage",
     DECRYPT_MESSAGE: "decryptMessage"
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
 /*
     W3CDID Minxin is abstracting the DID document for OpenDSU compatible DID methods
 
@@ -26656,19 +26916,36 @@ module.exports = {
 
  */
 
-function W3CDID_Mixin(target) {
-    const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-    const keySSISpace = require("opendsu").loadAPI("keyssi");
-    const crypto = require("opendsu").loadAPI("crypto");
+function W3CDID_Mixin(target, enclave) {
+    const openDSU = require("opendsu");
+    const dbAPI = openDSU.loadAPI("db");
+    const crypto = openDSU.loadAPI("crypto");
     target.findPrivateKeysInSecurityContext = function (callback) {
+
     };
 
+    const __ensureEnclaveExistsThenExecute = (fnName, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof enclave === "undefined") {
+            dbAPI.getMainEnclave((err, mainEnclave) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                enclave = mainEnclave;
+                enclave[fnName](...args);
+            })
+        } else {
+            enclave[fnName](...args);
+        }
+    }
+
     target.sign = function (hash, callback) {
-        securityContext.signAsDID(target, hash, callback);
+        __ensureEnclaveExistsThenExecute("signForDID", target, hash, callback);
     };
 
     target.verify = function (hash, signature, callback) {
-        securityContext.verifyForDID(target, hash, signature, callback);
+        __ensureEnclaveExistsThenExecute("verifyForDID", target, hash, signature, callback);
     };
 
     /*Elliptic Curve Integrated Encryption Scheme
@@ -26686,11 +26963,11 @@ function W3CDID_Mixin(target) {
      * */
 
     target.encryptMessage = function (receiverDID, message, callback) {
-        securityContext.encryptForDID(target, receiverDID, message, callback);
+        __ensureEnclaveExistsThenExecute("encryptMessage", target, receiverDID, message, callback);
     };
 
     target.decryptMessage = function (encryptedMessage, callback) {
-        securityContext.decryptAsDID(target, encryptedMessage, callback);
+        __ensureEnclaveExistsThenExecute("decryptMessage", target, encryptedMessage, callback);
     };
 
     /* messages to the APiHUb MQ compatible APIs
@@ -26709,18 +26986,34 @@ function W3CDID_Mixin(target) {
                 return callback(e);
             }
         }
-        const mqHandler = require("opendsu")
-            .loadAPI("mq")
-            .getMQHandlerForDID(toOtherDID);
-        target.encryptMessage(toOtherDID, message, (err, encryptedMessage) => {
-            if (err) {
-                return callback(
-                    createOpenDSUErrorWrapper(`Failed to encrypt message`, err)
-                );
-            }
 
-            mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
-        });
+        const __sendMessage = () => {
+            const mqHandler = require("opendsu")
+                .loadAPI("mq")
+                .getMQHandlerForDID(toOtherDID);
+            target.encryptMessage(toOtherDID, message, (err, encryptedMessage) => {
+                if (err) {
+                    return callback(
+                        createOpenDSUErrorWrapper(`Failed to encrypt message`, err)
+                    );
+                }
+
+                mqHandler.writeMessage(JSON.stringify(encryptedMessage), callback);
+            });
+        }
+
+        if (typeof toOtherDID === "string") {
+            enclave.resolveDID(toOtherDID, (err, didDocument) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                toOtherDID = didDocument;
+                __sendMessage();
+            })
+        } else {
+            __sendMessage();
+        }
     };
 
     target.readMessage = function (callback) {
@@ -26741,12 +27034,17 @@ function W3CDID_Mixin(target) {
 
             mqHandler.deleteMessage(encryptedMessage.messageId, (err) => {
                 if (err) {
+                    console.log(err);
                     return callback(createOpenDSUErrorWrapper(`Failed to delete message`, err));
                 }
                 target.decryptMessage(message, callback);
             })
         });
     };
+
+    target.getEnclave = () => {
+        return enclave;
+    }
 
     target.on = function (callback) {
     };
@@ -26769,130 +27067,7 @@ function W3CDID_Mixin(target) {
 
 module.exports = W3CDID_Mixin;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js":[function(require,module,exports){
-(function (Buffer){(function (){
-
-
-function DemoPKDocument(identifier){
-    this.sign = function(hash, callback){
-        // Convert the hash to a Buffer instance in order to
-        // remain compatible with the other DID document types
-        hash = Buffer.from(hash);
-        if (typeof callback === 'function') {
-            return callback(undefined, hash);
-        }
-        return hash;
-    };
-
-    this.verify = function(hash, signature, callback){
-        if (Buffer.isBuffer(signature)) {
-            signature = signature.toString();
-        }
-        callback(undefined, hash == signature);
-    };
-
-    let domainName;
-
-    this.setDomain = function(name) {
-        domainName = name;
-    }
-
-    function getApiHubEndpoint() {
-        return new Promise(async (resolve, reject) => {
-            const opendsu = require("opendsu");
-            const getBaseURL = require("../../utils/getBaseURL");
-            const consts = opendsu.constants;
-            const system = opendsu.loadApi("system");
-            // return system.getEnvironmentVariable(consts.BDNS_ROOT_HOSTS);
-            if (domainName) {
-                const bdns = opendsu.loadApi('bdns');
-                try {
-                    let mqArray = await $$.promisify(bdns.getMQEndpoints)(domainName);
-                    if (mqArray.length > 0) {
-                        return resolve(mqArray[0]);
-                    }
-                } catch (e) {
-                    resolve(getBaseURL());
-                }
-            }
-            resolve(getBaseURL());
-        });
-    }
-
-    this.sendMessage = async (message, toOtherDID, callback) => {
-        const opendsu = require("opendsu");
-        const http = opendsu.loadApi("http");
-        let apiHubEndpoint = await getApiHubEndpoint();
-        let url = `${apiHubEndpoint}/mq/send-message/${encodeURI(toOtherDID)}`;
-        let options = message;
-
-        let request = http.doPost(url, options, (err, response) => {
-            if (err) {
-                return callback(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to send message`, err)));
-            }
-
-            return callback();
-        });
-    };
-
-    this.readMessage = async (callback) => {
-        const endpoint = await getApiHubEndpoint();
-        const opendsu = require("opendsu");
-        const http = opendsu.loadApi("http");
-        let didIdentifier = this.getIdentifier();
-        let createChannelUrl = `${endpoint}/mq/create-channel/${encodeURI(didIdentifier)}`;
-        http.doPost(createChannelUrl, "", (err, response) => {
-            if (err) {
-                if (err.statusCode === 409) {
-                    //channels already exists. no problem :D
-                } else {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to create channel for DID ${didIdentifier}`, err));
-                }
-            }
-
-            function makeRequest() {
-                let url = `${endpoint}/mq/receive-message/${encodeURI(didIdentifier)}`;
-                let options = {};
-
-                let request = http.poll(url, options);
-
-                request.then((response) => {
-                    return response.text();
-                }).then((message) => {
-                    return callback(undefined, message);
-                }).catch((err) => {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Unable to read message`, err));
-                });
-            }
-
-            makeRequest();
-        });
-    };
-
-    this.getIdentifier = function(){
-        return `did:demo:${identifier}`;
-    }
-
-    return this;
-}
-
-function DEMO_DIDMethod(){
-    let aliasDocument = require("../proposals/aliasDocument");
-    this.create = function(identifier, callback){
-        callback(null, new DemoPKDocument(identifier));
-    }
-
-    this.resolve = function(tokens, callback){
-        callback(null, new DemoPKDocument(tokens[2]));
-    }
-}
-
-module.exports.create_demo_DIDMethod = function(){
-    return new DEMO_DIDMethod();
-}
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","../proposals/aliasDocument":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
 const methodsNames = require("./didMethodsNames");
 const createNameDIDDocument = require("./didssi/NameDID_Document").initiateDIDDocument;
 const createGroupDID_Document = require("./didssi/GroupDID_Document").initiateDIDDocument;
@@ -26920,29 +27095,34 @@ module.exports = {
     registerDID_Document_Constructor,
     createDID_Document
 }
-},{"./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/GroupDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./didssi/KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./didssi/NameDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./didssi/SReadDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","./w3cdids/KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js":[function(require,module,exports){
+},{"./didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/GroupDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./didssi/KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./didssi/NameDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./didssi/SReadDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","./w3cdids/KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js":[function(require,module,exports){
 module.exports = {
     OPENDSU_METHOD_NAME: "ssi",
     KEY_SUBTYPE: "key",
-    SSI_KEY_SUBTYPE: "ssikey",
-    S_READ_SUBTYPE: "sread",
-    NAME_SUBTYPE: "name",
-    DEMO_METHOD_NAME: "demo",
-    GROUP_METHOD_NAME: "group"
+    SSI_KEY_SUBTYPE: "ssi:key",
+    S_READ_SUBTYPE: "ssi:sread",
+    NAME_SUBTYPE: "ssi:name",
+    GROUP_METHOD_NAME: "ssi:group",
+    DEMO_METHOD_NAME: "demo"
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createOpenDSUErrorWrapper} = require("../../error");
 
-function ConstDID_Document_Mixin(target, domain, name, isInitialisation) {
+function ConstDID_Document_Mixin(target, enclave, domain, name, isInitialisation) {
+    if (arguments.length === 4) {
+        isInitialisation = name;
+        name = domain;
+        domain = undefined;
+    }
     let mixin = require("../W3CDID_Mixin");
     const observableMixin = require("../../utils/ObservableMixin")
-    mixin(target);
+    mixin(target, enclave);
     observableMixin(target);
 
     const openDSU = require("opendsu");
-    const sc = openDSU.loadAPI("sc").getSecurityContext();
-    const error = openDSU.loadAPI("error");
+    const dbAPI = openDSU.loadAPI("db");
+    const scAPI = openDSU.loadAPI("sc");
     const crypto = openDSU.loadAPI("crypto");
     const keySSISpace = openDSU.loadAPI("keyssi");
     const resolver = openDSU.loadAPI("resolver");
@@ -26996,7 +27176,6 @@ function ConstDID_Document_Mixin(target, domain, name, isInitialisation) {
             throw createOpenDSUErrorWrapper(`Failed to mount writable DSU`, e);
         }
 
-
         try {
             await $$.promisify(constDSU.commitBatch)();
         } catch (e) {
@@ -27007,10 +27186,17 @@ function ConstDID_Document_Mixin(target, domain, name, isInitialisation) {
         target.dispatchEvent("initialised");
     };
 
-    target.init = () => {
+    target.init = async () => {
+        if (!domain) {
+            try {
+                domain = await $$.promisify(scAPI.getDIDDomain)();
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to get did domain`, e);
+            }
+        }
         resolver.loadDSU(keySSISpace.createConstSSI(domain, name), async (err, constDSUInstance) => {
             if (err) {
-                if(isInitialisation === false){
+                if (isInitialisation === false) {
                     return target.dispatchEvent("error", err);
                 }
                 try {
@@ -27071,16 +27257,16 @@ module.exports = ConstDID_Document_Mixin;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
+},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","buffer":false,"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function GroupDID_Document(domain, groupName, isInitialisation) {
+function GroupDID_Document(enclave, domain, groupName, isInitialisation) {
     if (typeof domain === "undefined" || typeof groupName === "undefined") {
         throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
     }
 
     let mixin = require("./ConstDID_Document_Mixin");
-    mixin(this, domain, groupName, isInitialisation);
+    mixin(this, enclave, domain, groupName, isInitialisation);
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
     const openDSU = require("opendsu");
     const MEMBERS_FILE = "members";
@@ -27276,34 +27462,40 @@ function GroupDID_Document(domain, groupName, isInitialisation) {
 
 
 module.exports = {
-    initiateDIDDocument: function (domain, groupName) {
-        return new GroupDID_Document(domain, groupName)
+    initiateDIDDocument: function (enclave, domain, groupName) {
+        return new GroupDID_Document(enclave, domain, groupName)
     },
-    createDIDDocument: function (tokens) {
-        return new GroupDID_Document(tokens[3], tokens[4], false);
+    createDIDDocument: function (enclave, tokens) {
+        return new GroupDID_Document(enclave, tokens[3], tokens[4], false);
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
+const {bindAutoPendingFunctions} = require("../../utils/BindAutoPendingFunctions");
 
-function KeyDID_Document(isInitialisation, seedSSI) {
-    let mixin = require("../W3CDID_Mixin");
-    mixin(this);
-    let tokens;
-    if (!isInitialisation) {
-        tokens = seedSSI;
-        seedSSI = undefined;
-    }
+function KeyDID_Document(enclave, isInitialisation, seedSSI) {
+    let DID_mixin = require("../W3CDID_Mixin");
+    DID_mixin(this, enclave);
+
     const openDSU = require("opendsu");
+    const dbAPI = openDSU.loadAPI("db");
     const keySSISpace = openDSU.loadAPI("keyssi");
     const crypto = openDSU.loadAPI("crypto");
-    const sc = openDSU.loadAPI("sc").getSecurityContext();
-    if (typeof seedSSI === "string") {
-        try {
-            seedSSI = keySSISpace.parse(seedSSI);
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to parse ssi ${seedSSI}`);
+
+    let tokens;
+    const __init = async () => {
+        if (!isInitialisation) {
+            tokens = seedSSI;
+            seedSSI = undefined;
+        }
+
+        if (typeof seedSSI === "string") {
+            try {
+                seedSSI = keySSISpace.parse(seedSSI);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to parse ssi ${seedSSI}`);
+            }
         }
     }
 
@@ -27355,28 +27547,34 @@ function KeyDID_Document(isInitialisation, seedSSI) {
         return [seedSSI.getPrivateKey()];
     };
 
+    __init();
     return this;
 }
 
 module.exports = {
-    initiateDIDDocument: function (seedSSI) {
-        return new KeyDID_Document(true, seedSSI)
+    initiateDIDDocument: function (enclave, seedSSI) {
+        return new KeyDID_Document(enclave, true, seedSSI);
     },
-    createDIDDocument: function (tokens) {
-        return new KeyDID_Document(false, [tokens[3], tokens[4]]);
+    createDIDDocument: function (enclave, tokens) {
+        return new KeyDID_Document(enclave, false,  [tokens[3], tokens[4]]);
     }
 };
 
-},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function NameDID_Document(domain, name, isInitialisation) {
-    if (typeof domain === "undefined" || typeof name === "undefined") {
-        throw Error(`Invalid number of arguments. Expected blockchain domain and group name.`);
+function NameDID_Document(enclave, domain, name, isInitialisation) {
+    if (arguments.length === 3) {
+        isInitialisation = name;
+        name = domain;
+        domain = undefined;
+    }
+    if (typeof name === "undefined") {
+        throw Error(`Argument name is missing`);
     }
 
     let mixin = require("./ConstDID_Document_Mixin");
-    mixin(this, domain, name, isInitialisation);
+    mixin(this, enclave, domain, name, isInitialisation);
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
     this.getMethodName = () => {
@@ -27384,7 +27582,7 @@ function NameDID_Document(domain, name, isInitialisation) {
     }
 
     this.getIdentifier = () => {
-        return `did:ssi:name:${domain}:${name}`;
+        return `did:ssi:name:${this.getDomain()}:${name}`;
     };
 
     this.getName = () => {
@@ -27398,28 +27596,30 @@ function NameDID_Document(domain, name, isInitialisation) {
 
 
 module.exports = {
-    initiateDIDDocument: function (domain, name) {
-        return new NameDID_Document(domain, name)
+    initiateDIDDocument: function (enclave, domain, name) {
+        return new NameDID_Document(enclave, domain, name, true);
     },
-    createDIDDocument: function (tokens) {
-        return new NameDID_Document(tokens[3], tokens[4], false);
+    createDIDDocument: function (enclave, tokens) {
+        return new NameDID_Document(enclave, tokens[3], tokens[4], false);
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function SReadDID_Document(isInitialisation, seedSSI) {
-    let DID_mixin = require("./ConstDID_Document_Mixin");
+function SReadDID_Document(enclave, isInitialisation, seedSSI) {
+    const DID_mixin = require("./ConstDID_Document_Mixin");
+    const ObservableMixin = require("../../utils/ObservableMixin");
     let tokens;
     let sReadSSI;
 
     const PUB_KEYS_PATH = "publicKeys";
-    DID_mixin(this);
-
+    DID_mixin(this, enclave);
+    ObservableMixin(this);
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi");
     const resolver = openDSU.loadAPI("resolver");
+    const dbAPI = openDSU.loadAPI("db");
 
     const createSeedDSU = async () => {
         try {
@@ -27437,6 +27637,7 @@ function SReadDID_Document(isInitialisation, seedSSI) {
 
         this.privateKey = ssi.getPrivateKey();
         const publicKey = ssi.getPublicKey("raw");
+
         try {
             await $$.promisify(this.dsu.writeFile)(`${PUB_KEYS_PATH}/${publicKey.toString("hex")}`);
         } catch (e) {
@@ -27502,81 +27703,106 @@ function SReadDID_Document(isInitialisation, seedSSI) {
 }
 
 module.exports = {
-    initiateDIDDocument: function (seedSSI) {
-        return new SReadDID_Document(true, seedSSI)
+    initiateDIDDocument: function (enclave, seedSSI) {
+        return new SReadDID_Document(enclave, true, seedSSI)
     },
-    createDIDDocument: function (tokens) {
-        return new SReadDID_Document(false, tokens.slice(1));
+    createDIDDocument: function (enclave, tokens) {
+        return new SReadDID_Document(enclave, false, tokens.slice(1));
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
-const GroupDIDDocument = require("./GroupDID_Document");
-
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
 function storeDIDInSC(didDocument, callback) {
     const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-        const __registerDID = ()=>{
-            securityContext.registerDID(didDocument, (err) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper(`failed to register did ${didDocument.getIdentifier()} in security context`, err));
-                }
+    const __registerDID = () => {
+        securityContext.registerDID(didDocument, (err) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`failed to register did ${didDocument.getIdentifier()} in security context`, err));
+            }
 
-                callback(null, didDocument);
-            })
-        }
-        if(securityContext.isInitialised()){
-            __registerDID();
-        }else {
-            securityContext.on("initialised", ()=>{
-                __registerDID()
-            })
-        }
+            callback(null, didDocument);
+        })
+    }
+    if (securityContext.isInitialised()) {
+        __registerDID();
+    } else {
+        securityContext.on("initialised", () => {
+            __registerDID()
+        })
+    }
 }
+
+const openDSU = require("opendsu");
+const dbAPI = openDSU.loadAPI("db")
+const __ensureEnclaveExistsThenExecute = (fn, enclave, ...args) => {
+    if (typeof enclave === "undefined") {
+        dbAPI.getMainEnclave((err, mainEnclave) => {
+            if (err) {
+                return callback(err);
+            }
+
+            enclave = mainEnclave;
+            fn(mainEnclave, ...args);
+        })
+    } else {
+        fn(enclave, ...args);
+    }
+}
+
 function SReadDID_Method() {
     let SReadDID_Document = require("./SReadDID_Document");
-    this.create = (seedSSI, callback) => {
-        const sReadDIDDocument = SReadDID_Document.initiateDIDDocument(seedSSI);
+    this.create = (enclave, seedSSI, callback) => {
+        const sReadDIDDocument = SReadDID_Document.initiateDIDDocument(enclave, seedSSI);
+        sReadDIDDocument.on("error", (err) => {
+            callback(err);
+        });
+
         sReadDIDDocument.on("initialised", () => {
-            storeDIDInSC(sReadDIDDocument, callback);
+            callback(undefined, sReadDIDDocument);
         });
     }
-    this.resolve = function (tokens, callback) {
-        const sReadDIDDocument = SReadDID_Document.createDIDDocument(tokens);
+    this.resolve = function (enclave, tokens, callback) {
+        const sReadDIDDocument = SReadDID_Document.createDIDDocument(enclave, tokens);
         sReadDIDDocument.on("initialised", () => {
-            callback(null, sReadDIDDocument);
+            callback(undefined, sReadDIDDocument);
         });
     }
 }
 
 function KeyDID_Method() {
     let KeyDIDDocument = require("./KeyDID_Document");
-    this.create = function (seedSSI, callback) {
-        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(seedSSI);
-        storeDIDInSC(keyDIDDocument, callback);
+    this.create = function (enclave, seedSSI, callback) {
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(enclave, seedSSI);
+        callback(undefined, keyDIDDocument);
     }
 
-    this.resolve = function (tokens, callback) {
-        callback(null, KeyDIDDocument.createDIDDocument(tokens))
+    this.resolve = function (enclave, tokens, callback) {
+        callback(null, KeyDIDDocument.createDIDDocument(enclave, tokens))
     }
 }
 
 function NameDID_Method() {
     const NameDIDDocument = require("./NameDID_Document");
 
-    this.create = (domain, publicName, callback) => {
-        const nameDIDDocument = NameDIDDocument.initiateDIDDocument(domain, publicName);
+    this.create = (enclave, domain, publicName, callback) => {
+        if (typeof publicName === "function") {
+            callback = publicName;
+            publicName = domain;
+            domain = undefined;
+        }
+        const nameDIDDocument = NameDIDDocument.initiateDIDDocument(enclave, domain, publicName);
 
         nameDIDDocument.on("error", (err) => {
             return callback(err);
         })
 
         nameDIDDocument.on("initialised", () => {
-            storeDIDInSC(nameDIDDocument, callback);
+            callback(undefined, nameDIDDocument);
         });
     }
 
-    this.resolve = (tokens, callback) => {
-        const nameDIDDocument = NameDIDDocument.createDIDDocument(tokens);
+    this.resolve = (enclave, tokens, callback) => {
+        const nameDIDDocument = NameDIDDocument.createDIDDocument(enclave, tokens);
         nameDIDDocument.on("error", (err) => {
             return callback(err);
         })
@@ -27590,20 +27816,20 @@ function NameDID_Method() {
 function GroupDID_Method() {
     const GroupDIDDocument = require("./GroupDID_Document");
 
-    this.create = (domain, groupName, callback) => {
-        const groupDIDDocument = GroupDIDDocument.initiateDIDDocument(domain, groupName);
+    this.create = (enclave, domain, groupName, callback) => {
+        const groupDIDDocument = GroupDIDDocument.initiateDIDDocument(enclave, domain, groupName);
 
         groupDIDDocument.on("error", (err) => {
             return callback(err);
         })
 
         groupDIDDocument.on("initialised", () => {
-            storeDIDInSC(groupDIDDocument, callback);
+            callback(undefined, groupDIDDocument);
         })
     }
 
-    this.resolve = (tokens, callback) => {
-        const groupDIDDocument = GroupDIDDocument.createDIDDocument(tokens);
+    this.resolve = (enclave, tokens, callback) => {
+        const groupDIDDocument = GroupDIDDocument.createDIDDocument(enclave, tokens);
 
         groupDIDDocument.on("error", (err) => {
             return callback(err);
@@ -27639,7 +27865,7 @@ module.exports = {
     create_GroupDID_Method
 }
 
-},{"./GroupDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./NameDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./SReadDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js":[function(require,module,exports){
+},{"./GroupDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./NameDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./SReadDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/index.js":[function(require,module,exports){
 /*
     OpenDSU W3C compatible  ID pluginisable resolver  that can resolve arbitrary DID methods.
 
@@ -27670,32 +27896,78 @@ module.exports = {
 const methodsNames = require("./didMethodsNames");
 let methodRegistry = {};
 
+const openDSU = require("opendsu");
+const dbAPI = openDSU.loadAPI("db");
+
 /*
     Create a new W3CDID based on SeedSSI
  */
 function createIdentity(didMethod, ...args) {
-    let callback = args.pop();
-    methodRegistry[didMethod].create(...args, callback);
+    we_createIdentity(undefined, didMethod, ...args);
 }
 
+function we_createIdentity(enclave, didMethod, ...args) {
+    let callback = args.pop();
+
+    const __createAndStoreDID = (enclave) => {
+        methodRegistry[didMethod].create(enclave, ...args, (err, didDocument) => {
+            if (err) {
+                return callback(err);
+            }
+
+            enclave.storeDID(didDocument, didDocument.getPrivateKeys(), err => callback(err, didDocument));
+        });
+    }
+    if (typeof enclave === "undefined") {
+        if (!dbAPI.mainEnclaveIsInitialised()) {
+            return methodRegistry[didMethod].create(enclave, ...args, callback);
+        }
+        dbAPI.getMainEnclave((err, mainEnclave) => {
+            if (err) {
+                return callback(err);
+            }
+
+            __createAndStoreDID(mainEnclave);
+        });
+    } else {
+        __createAndStoreDID(enclave);
+    }
+}
 
 /*
     Returns an error or an instance of W3CDID
  */
 function resolveDID(identifier, callback) {
+    we_resolveDID(undefined, identifier, callback);
+}
+
+function we_resolveDID(enclave, identifier, callback) {
     let tokens = identifier.split(":");
     if (tokens[0] !== "did") {
         return callback(Error("Wrong identifier format. Missing did keyword."));
     }
     let method = tokens[1];
     if (tokens[1] === methodsNames.OPENDSU_METHOD_NAME) {
-        method = tokens[2];
-        if (method === methodsNames.KEY_SUBTYPE) {
-            method = methodsNames.SSI_KEY_SUBTYPE;
-        }
+        method = `${tokens[1]}:${tokens[2]}`;
     }
-    methodRegistry[method].resolve(tokens, callback);
+
+    if (typeof enclave === "undefined") {
+        if (!dbAPI.mainEnclaveIsInitialised()) {
+            methodRegistry[method].resolve(undefined, tokens, callback);
+            return;
+        }
+        dbAPI.getMainEnclave((err, mainEnclave) => {
+            if (err) {
+                return callback(err);
+            }
+
+            methodRegistry[method].resolve(mainEnclave, tokens, callback);
+        })
+    } else {
+        methodRegistry[method].resolve(enclave, tokens, callback);
+    }
 }
+
 
 function registerDIDMethod(method, implementation) {
     methodRegistry[method] = implementation;
@@ -27706,56 +27978,63 @@ registerDIDMethod(methodsNames.S_READ_SUBTYPE, require("./didssi/ssiMethods").cr
 registerDIDMethod(methodsNames.SSI_KEY_SUBTYPE, require("./didssi/ssiMethods").create_KeyDID_Method());
 registerDIDMethod(methodsNames.NAME_SUBTYPE, require("./didssi/ssiMethods").create_NameDID_Method());
 
-registerDIDMethod(methodsNames.DEMO_METHOD_NAME, require("./demo/diddemo").create_demo_DIDMethod());
 registerDIDMethod(methodsNames.GROUP_METHOD_NAME, require("./didssi/ssiMethods").create_GroupDID_Method());
 registerDIDMethod(methodsNames.KEY_SUBTYPE, require("./w3cdids/didMethods").create_KeyDID_Method());
 
+registerDIDMethod(methodsNames.DEMO_METHOD_NAME, require("./w3cdids/didMethods").create_KeyDID_Method());
+// registerDIDMethod(methodsNames.DEMO_METHOD_NAME, require("./demo/diddemo").create_demo_DIDMethod());
 
 module.exports = {
     createIdentity,
+    we_createIdentity,
     resolveDID,
+    we_resolveDID,
     registerDIDMethod,
     CryptographicSkills: require("./CryptographicSkills/CryptographicSkills")
 }
 
-},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./demo/diddemo":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/demo/diddemo.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/proposals/aliasDocument.js":[function(require,module,exports){
-
-
-function AliasDIDDocument(isInitialisation, alias, seedSSI){
-    let mixin =  require("../W3CDID_Mixin");
-    let tokens;
-    if(isInitialisation){
-        tokens = alias;
-        alias = undefined;
-    }
-    mixin(this);
-    return this;
-}
-
-module.exports = {
-    initiateDIDDocument:function(alias, seedSSI){
-        new AliasDIDDocument(true, alias, seedSSI)
-    },
-    createDIDDocument:function(tokens){
-        new AliasDIDDocument(false, tokens)
-    }
-};
-},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+},{"./CryptographicSkills/CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
-function KeyDID_Document(isInitialisation, publicKey) {
-    let mixin = require("../W3CDID_Mixin");
-    mixin(this);
+function KeyDID_Document(enclave, isInitialisation, publicKey) {
+    const DID_mixin = require("../W3CDID_Mixin");
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    DID_mixin(this, enclave);
+    ObservableMixin(this);
     let privateKey;
+    let domain;
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi");
     const crypto = openDSU.loadAPI("crypto");
+    const dbAPI = openDSU.loadAPI("db");
+    const scAPI = openDSU.loadAPI("sc");
 
     const init = async () => {
+        if (publicKey) {
+            setTimeout(()=>{
+                this.dispatchEvent("initialised");
+            })
+            return;
+        }
+        try {
+            domain = await $$.promisify(scAPI.getDIDDomain)();
+        } catch (e) {
+            throw createOpenDSUErrorWrapper(`Failed to get did domain`, e);
+        }
+
         if (isInitialisation) {
-            let seedSSI = keySSISpace.createSeedSSI();
+            let seedSSI;
+            try {
+                seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to create Seed SSI`, e);
+            }
             privateKey = seedSSI.getPrivateKey();
+
             publicKey = crypto.encodeBase58(seedSSI.getPublicKey("raw"));
+            this.dispatchEvent("initialised");
+        } else {
+            this.dispatchEvent("initialised");
         }
     };
 
@@ -27781,6 +28060,10 @@ function KeyDID_Document(isInitialisation, publicKey) {
         return methodsNames.KEY_SUBTYPE;
     }
 
+    this.getDomain = () => {
+        return domain;
+    }
+
     this.getIdentifier = () => {
         return `did:key:${publicKey}`;
     };
@@ -27793,31 +28076,30 @@ function KeyDID_Document(isInitialisation, publicKey) {
 }
 
 module.exports = {
-    initiateDIDDocument: function (seedSSI) {
-        return new KeyDID_Document(true, seedSSI)
+    initiateDIDDocument: function (enclave, seedSSI) {
+        return new KeyDID_Document(enclave, true, seedSSI)
     },
-    createDIDDocument: function (tokens) {
-        return new KeyDID_Document(false, tokens[2]);
+    createDIDDocument: function (enclave, tokens) {
+        return new KeyDID_Document(enclave, false, tokens[2]);
     }
 };
 
-},{"../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
 function KeyDID_Method() {
     let KeyDIDDocument = require("./KeyDID_Document");
-    this.create = function (callback) {
-        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument();
-        const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
-        securityContext.registerDID(keyDIDDocument, (err) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`failed to register did ${keyDIDDocument.getIdentifier()} in security context`, err));
-            }
-
-            callback(null, keyDIDDocument);
-        })
+    this.create = function (enclave, seedSSI, callback) {
+        if (typeof seedSSI === "function") {
+            callback = seedSSI;
+            seedSSI = undefined;
+        }
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(enclave, seedSSI);
+        keyDIDDocument.on("initialised", () => {
+            callback(undefined, keyDIDDocument);
+        });
     }
 
-    this.resolve = function (tokens, callback) {
-        callback(null, KeyDIDDocument.createDIDDocument(tokens))
+    this.resolve = function (enclave, tokens, callback) {
+        callback(null, KeyDIDDocument.createDIDDocument(enclave, tokens));
     }
 }
 
@@ -27826,7 +28108,7 @@ module.exports = {
         return new KeyDID_Method();
     }
 }
-},{"./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
+},{"./KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
 module.exports = () => {
     const worker_threads = "worker_threads";
     const { parentPort } = require(worker_threads);
@@ -27850,7 +28132,7 @@ module.exports = () => {
         setTimeout(() => process.exit(1), 100);
     });
 }
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/web.js":[function(require,module,exports){
 module.exports = () => {
     addEventListener('message', (event) => {
         const { functionName, payload } = event.data;
@@ -27871,7 +28153,7 @@ module.exports = () => {
         console.error("[workers] web worker error", error);
     });
 }
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/functions.js":[function(require,module,exports){
 function runSyncFunction({ apiSpaceName, functionName, params }) {
     const openDSU = require("opendsu");
     const api = openDSU.loadAPI(apiSpaceName);
@@ -27891,7 +28173,7 @@ module.exports = {
     runSyncFunction,
     runSyncFunctionOnlyFromWorker
 }
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/index.js":[function(require,module,exports){
 (function (global){(function (){
 function getWebWorkerBootScript() {
     const scriptLocation = document.currentScript
@@ -28070,7 +28352,7 @@ module.exports = {
 }
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"syndicate"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
@@ -28081,7 +28363,7 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (global){(function (){
 let logger = console;
 
@@ -28404,7 +28686,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"buffer":false,"psklogger":false,"swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -28523,7 +28805,7 @@ function Cache(options) {
 
 module.exports = Cache;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -28628,7 +28910,7 @@ module.exports = {
     convertKeysToKeyObjects
 }
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js":[function(require,module,exports){
 module.exports = {
     curveName: 'secp256k1',
     encodingFormat: 'base64',
@@ -28644,7 +28926,7 @@ module.exports = {
     publicKeyType: 'spki'
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -28682,7 +28964,7 @@ module.exports = {
     symmetricDecrypt
 }
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -28719,7 +29001,7 @@ module.exports = {
     verifyDigitalSignature
 }
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -28757,7 +29039,7 @@ class ECEphemeralKeyAgreement {
 
 module.exports = ECEphemeralKeyAgreement
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js":[function(require,module,exports){
 'use strict';
 
 const cipher = require('./cipher')
@@ -28787,7 +29069,7 @@ module.exports = {
     PublicKeyDeserializer: require('./pkdeserializer')
 }
 
-},{"./cipher":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js","./digitalsig":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js","./ecephka":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js","./kdf":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js","./kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js","./pkdeserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js","./pkserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js":[function(require,module,exports){
+},{"./cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js","./digitalsig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js","./ecephka":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js","./kdf":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js","./kmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js","./pkdeserializer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js","./pkserializer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -28818,7 +29100,7 @@ module.exports = {
     KDF2
 }
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -28845,7 +29127,7 @@ module.exports = {
     verifyKMAC
 }
 
-},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","./index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js":[function(require,module,exports){
+},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto')
@@ -28879,7 +29161,7 @@ function PublicKeyDeserializer() {
 
 module.exports = new PublicKeyDeserializer()
 
-},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js":[function(require,module,exports){
+},{"../../lib/ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js":[function(require,module,exports){
 const config = require('../config');
 
 function PublicKeySerializer() {
@@ -28908,7 +29190,7 @@ function PublicKeySerializer() {
 
 module.exports = new PublicKeySerializer()
 
-},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js":[function(require,module,exports){
+},{"../../lib/ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -28977,7 +29259,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     };
 }
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -29037,7 +29319,7 @@ module.exports.encrypt = function (senderECSigningKeyPair, receiverECDHPublicKey
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 };
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -29045,7 +29327,7 @@ module.exports = {
   decrypt: require('./decrypt').decrypt,
   getDecodedECDHPublicKeyFromEncEnvelope: require('../common').getDecodedECDHPublicKeyFromEncEnvelope
 }
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto');
@@ -29110,7 +29392,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     };
 }
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto');
@@ -29165,9 +29447,9 @@ module.exports.encrypt = function (senderECDHKeyPair, receiverECDHPublicKey, mes
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 };
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js":[function(require,module,exports){
-arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js":[function(require,module,exports){
+arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -29219,7 +29501,7 @@ module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
     return mycrypto.symmetricDecrypt(symmetricCipherKey, ciphertext, iv, options)
 }
 
-},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js":[function(require,module,exports){
+},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const utils = require('../utils')
@@ -29280,7 +29562,7 @@ module.exports.encrypt = function (message, ...receiverECDHPublicKeys) {
     }
 }
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js":[function(require,module,exports){
+},{"../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -29289,7 +29571,7 @@ module.exports = {
   getRecipientECDHPublicKeysFromEncEnvelope: require('../utils').getRecipientECDHPublicKeysFromEncEnvelope
 }
 
-},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js":[function(require,module,exports){
+},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -29340,7 +29622,7 @@ module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
     }
 }
 
-},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js":[function(require,module,exports){
+},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -29389,9 +29671,9 @@ module.exports.encrypt = function (senderECSigningKeyPair, message, ...receiverE
     return eciesGEEnvelope;
 }
 
-},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js":[function(require,module,exports){
-arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"][0].apply(exports,arguments)
-},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js":[function(require,module,exports){
+},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js":[function(require,module,exports){
+arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"][0].apply(exports,arguments)
+},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js":[function(require,module,exports){
 'use strict';
 
 const sender = require('./sender')
@@ -29407,7 +29689,7 @@ module.exports = {
 
 
 
-},{"./recipient":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js","./sender":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js":[function(require,module,exports){
+},{"./recipient":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js","./sender":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -29491,7 +29773,7 @@ module.exports.parseKeyBuffer = function (keyBuffer, options) {
     }
 }
 
-},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js":[function(require,module,exports){
+},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -29529,7 +29811,7 @@ module.exports.senderMultiRecipientECIESEncrypt = function(message, ...receiverE
     return $$.Buffer.from(JSON.stringify(eciesInstancesArray))
 }
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js":[function(require,module,exports){
+},{"../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -29580,7 +29862,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     return mycrypto.symmetricDecrypt(symmetricEncryptionKey, ciphertext, iv, options)
 }
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -29622,9 +29904,9 @@ module.exports.encrypt = function (receiverECDHPublicKey, message, options) {
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 }
 
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js":[function(require,module,exports){
-arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
-},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js":[function(require,module,exports){
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js":[function(require,module,exports){
+arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js":[function(require,module,exports){
 module.exports = {
     ecies_encrypt: require("./ecies").encrypt,
     ecies_decrypt: require("./ecies").decrypt,
@@ -29640,7 +29922,7 @@ module.exports = {
     ecies_group_getRecipientECDHPublicKeysFromEncEnvelope: require("./ecies-group-encryption/ecies-ge-doa").getRecipientECDHPublicKeysFromEncEnvelope
 }
 
-},{"./ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js","./ecies-doa-ds":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js","./ecies-doa-kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js","./ecies-group-encryption/ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js","./ecies-group-encryption/ecies-ge-doa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js","./ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js":[function(require,module,exports){
+},{"./ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js","./ecies-doa-ds":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js","./ecies-doa-kmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js","./ecies-group-encryption/ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js","./ecies-group-encryption/ecies-ge-doa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js","./ecies/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js":[function(require,module,exports){
 var jws = require('./jws');
 
 module.exports = function (jwt, options) {
@@ -29671,7 +29953,7 @@ module.exports = function (jwt, options) {
     }
     return payload;
 };
-},{"./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js":[function(require,module,exports){
+},{"./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/index.js":[function(require,module,exports){
 module.exports = {
     verify: require('./verify'),
     sign: require('./sign'),
@@ -29682,7 +29964,7 @@ Object.defineProperty(module.exports, 'decode', {
     value: require('./decode'),
 });
 
-},{"./decode":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./sign":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/sign.js","./verify":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/verify.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js":[function(require,module,exports){
+},{"./decode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./sign":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/sign.js","./verify":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/verify.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js":[function(require,module,exports){
 var getParamBytesForAlg = require('./param-bytes-for-alg');
 
 var MAX_OCTET = 0x80,
@@ -29866,7 +30148,7 @@ module.exports = {
     derToJose: derToJose,
     joseToDer: joseToDer
 };
-},{"./param-bytes-for-alg":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js":[function(require,module,exports){
+},{"./param-bytes-for-alg":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js":[function(require,module,exports){
 var crypto = require('crypto');
 var formatEcdsa = require('./ecdsa-sig-formatter');
 var util = require('util');
@@ -30117,7 +30399,7 @@ module.exports = function jwa(algorithm) {
         verify: verifierFactories[algo](bits),
     }
 };
-},{"./ecdsa-sig-formatter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js","crypto":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js":[function(require,module,exports){
+},{"./ecdsa-sig-formatter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js","crypto":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js":[function(require,module,exports){
 'use strict';
 
 function getParamSize(keySize) {
@@ -30141,7 +30423,7 @@ function getParamBytesForAlg(alg) {
 }
 
 module.exports = getParamBytesForAlg;
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js":[function(require,module,exports){
 var asn = require('../../lib/asn1/asn1');
 var crypto = require('crypto')
 var BN = asn.bignum
@@ -30194,7 +30476,7 @@ function factor(e, d, n) {
 }
 
 module.exports = factor
-},{"../../lib/asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js":[function(require,module,exports){
+},{"../../lib/asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var asn = require('../../lib/asn1/asn1')
 var factor = require('./factor')
@@ -30431,7 +30713,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../lib/asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./factor":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js":[function(require,module,exports){
+},{"../../lib/asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./factor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js","buffer":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js":[function(require,module,exports){
 /*global module, process*/
 var Stream = require('stream');
 var util = require('util');
@@ -30486,7 +30768,7 @@ DataStream.prototype.end = function end(data) {
 };
 
 module.exports = DataStream;
-},{"stream":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js":[function(require,module,exports){
 /*global exports*/
 var SignStream = require('./sign-stream');
 var VerifyStream = require('./verify-stream');
@@ -30509,7 +30791,7 @@ exports.createSign = function createSign(opts) {
 exports.createVerify = function createVerify(opts) {
     return new VerifyStream(opts);
 };
-},{"./sign-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js","./verify-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js":[function(require,module,exports){
+},{"./sign-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js","./verify-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js":[function(require,module,exports){
 var DataStream = require('./data-stream');
 var jwa = require('../jwa');
 var Stream = require('stream');
@@ -30586,7 +30868,7 @@ SignStream.prototype.sign = function sign() {
 SignStream.sign = jwsSign;
 
 module.exports = SignStream;
-},{"../jwa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js":[function(require,module,exports){
+},{"../jwa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js":[function(require,module,exports){
 module.exports = function toString(obj) {
     if (typeof obj === 'string')
         return obj;
@@ -30594,7 +30876,7 @@ module.exports = function toString(obj) {
         return obj.toString();
     return JSON.stringify(obj);
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js":[function(require,module,exports){
 /*global module*/
 var DataStream = require('./data-stream');
 var jwa = require('../jwa');
@@ -30714,7 +30996,7 @@ VerifyStream.isValid = isValidJws;
 VerifyStream.verify = jwsVerify;
 
 module.exports = VerifyStream;
-},{"../jwa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js":[function(require,module,exports){
+},{"../jwa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js":[function(require,module,exports){
 var JsonWebTokenError = function (message, error) {
     Error.call(this, message);
     if(Error.captureStackTrace) {
@@ -30729,7 +31011,7 @@ JsonWebTokenError.prototype = Object.create(Error.prototype);
 JsonWebTokenError.prototype.constructor = JsonWebTokenError;
 
 module.exports = JsonWebTokenError;
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js":[function(require,module,exports){
 var JsonWebTokenError = require('./JsonWebTokenError');
 
 var NotBeforeError = function (message, date) {
@@ -30743,7 +31025,7 @@ NotBeforeError.prototype = Object.create(JsonWebTokenError.prototype);
 NotBeforeError.prototype.constructor = NotBeforeError;
 
 module.exports = NotBeforeError;
-},{"./JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js":[function(require,module,exports){
+},{"./JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js":[function(require,module,exports){
 var JsonWebTokenError = require('./JsonWebTokenError');
 
 var TokenExpiredError = function (message, expiredAt) {
@@ -30757,7 +31039,7 @@ TokenExpiredError.prototype = Object.create(JsonWebTokenError.prototype);
 TokenExpiredError.prototype.constructor = TokenExpiredError;
 
 module.exports = TokenExpiredError;
-},{"./JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js":[function(require,module,exports){
+},{"./JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js":[function(require,module,exports){
 module.exports = function (time, iat) {
     var timestamp = iat || Math.floor(Date.now() / 1000);
 
@@ -30768,7 +31050,7 @@ module.exports = function (time, iat) {
     }
 
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/sign.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/sign.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var timespan = require('./lib/timespan');
 var jws = require('./jws');
@@ -30902,7 +31184,7 @@ module.exports = function (payload, secretOrPrivateKey, options, callback) {
 };
 }).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/timespan":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/verify.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js","./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/timespan":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/verify.js":[function(require,module,exports){
 var JsonWebTokenError = require('./lib/JsonWebTokenError');
 var NotBeforeError = require('./lib/NotBeforeError');
 var TokenExpiredError = require('./lib/TokenExpiredError');
@@ -31128,7 +31410,7 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
         return done(null, payload);
     });
 };
-},{"./decode":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./jwkToPemConverter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js","./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js","./lib/NotBeforeError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js","./lib/TokenExpiredError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js","./lib/timespan":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
+},{"./decode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./jwkToPemConverter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js","./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js","./lib/NotBeforeError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js","./lib/TokenExpiredError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js","./lib/timespan":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 function ECKeyGenerator() {
     const crypto = require('crypto');
     const KeyEncoder = require('./keyEncoder');
@@ -31216,7 +31498,7 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 
-},{"./keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./keyEncoder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
@@ -31430,7 +31712,7 @@ module.exports = new PskCrypto();
 
 
 
-},{"../js-mutual-auth-ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"../js-mutual-auth-ecies/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
     const crypto = require("crypto");
     const utils = require("./utils/cryptoUtils");
@@ -31530,7 +31812,7 @@ function PskEncryption(algorithm) {
 
 module.exports = PskEncryption;
 
-},{"./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -31591,7 +31873,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false,"vm":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
+},{"./asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false,"vm":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('./bignum/bn');
@@ -31602,7 +31884,7 @@ asn1.constants = require('./constants/index');
 asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
-},{"./api":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./api":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -31721,7 +32003,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -31729,7 +32011,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
 //var assert = require('double-check').assert;
@@ -32329,7 +32611,7 @@ Node.prototype._encodePrimitive = function encodePrimitive(tag, data) {
     throw new Error('Unsupported tag: ' + tag);
 };
 
-},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 function Reporter(options) {
@@ -32433,7 +32715,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
+},{"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
 (function (module, exports) {
 
 'use strict';
@@ -34876,7 +35158,7 @@ Mont.prototype.invm = function invm(a) {
 
 })(typeof module === 'undefined' || module, this);
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
 var constants = require('../constants');
 
 exports.tagClass = {
@@ -34920,7 +35202,7 @@ exports.tag = {
 };
 exports.tagByName = constants._reverse(exports.tag);
 
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
+},{"../constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
 var constants = exports;
 
 // Helper
@@ -34941,7 +35223,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -35234,13 +35516,13 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
 var decoders = exports;
 
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 
 const asn1 = require('../asn1');
@@ -35290,7 +35572,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -35560,13 +35842,13 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -35590,7 +35872,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
+},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -35755,7 +36037,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 
 module.exports = KeyEncoder;
 
-},{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+},{"./asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
@@ -35859,7 +36141,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false,"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"../asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false,"crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -35884,7 +36166,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
+},{"stream":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -36019,7 +36301,7 @@ module.exports = {
     encode,
     decode
 };
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -36109,7 +36391,7 @@ module.exports = {
 };
 
 
-},{"./base58":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -36137,7 +36419,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -36336,7 +36618,7 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -36362,7 +36644,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -36453,7 +36735,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -36554,7 +36836,7 @@ Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -36703,7 +36985,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -36753,7 +37035,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -36809,7 +37091,7 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+},{"./OwM":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
 function replaceAll(str, search, replacement) {
     return str.split(search).join(replacement);
 }
@@ -36996,7 +37278,7 @@ module.exports = {
     extname
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 const PING = "PING";
 const PONG = "PONG";
 
@@ -37088,7 +37370,7 @@ module.exports.enableLifeLine = function(timeout){
         }
     }, interval);
 };
-},{"child_process":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"child_process":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 var commands = {};
 var commands_help = {};
 
@@ -37159,7 +37441,7 @@ module.exports = {
 };
 
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -37226,7 +37508,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 function UidGenerator(minBuffers, buffersSize) {
     const Queue = require("./Queue");
     var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
@@ -37328,7 +37610,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-},{"./Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
+},{"./Queue":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js","crypto":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
 (function (setImmediate){(function (){
 const {assert} = require('./utils');
 const util = require('util');
@@ -37440,7 +37722,7 @@ module.exports = AbstractPool;
 
 }).call(this)}).call(this,require("timers").setImmediate)
 
-},{"./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","events":false,"timers":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
+},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js","events":false,"timers":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 /**
@@ -37476,7 +37758,7 @@ util.inherits(PoolIsolates, AbstractPool);
 
 module.exports = PoolIsolates;
 
-},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -37529,7 +37811,7 @@ util.inherits(PoolThreads, AbstractPool);
 
 module.exports = PoolThreads;
 
-},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -37583,7 +37865,7 @@ util.inherits(PoolWebWorkers, AbstractPool);
 
 module.exports = PoolWebWorkers;
 
-},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"overwrite-require","util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"overwrite-require","util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
 const os = require('os');
 const util = require('util');
 const WorkerStrategies = require('./WorkerStrategies');
@@ -37685,7 +37967,7 @@ PoolConfig.createByOverwritingDefaults = function (config = {}, options = {allow
 };
 
 module.exports = PoolConfig;
-},{"./WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":false,"util":false}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
+},{"./WorkerStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":false,"util":false}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
 function Queue() {
     const backingStorage = [];
 
@@ -37747,7 +38029,7 @@ function Queue() {
 
 module.exports = Queue;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
 /** @param pool {AbstractPool} */
 function WorkerPool(pool) {
     const { assert } = require("./utils");
@@ -37881,7 +38163,7 @@ function WorkerPool(pool) {
 
 module.exports = WorkerPool;
 
-},{"./QueueShim.js":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
+},{"./QueueShim.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js","swarmutils":"swarmutils"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
 const WorkerStrategies = {
     THREADS: 'threads',
     ISOLATES: 'isolates',
@@ -37890,7 +38172,7 @@ const WorkerStrategies = {
 
 module.exports = Object.freeze(WorkerStrategies);
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
 function assert(condition, {ifFails}) {
     if (condition === false) {
         console.error(ifFails);
@@ -37901,7 +38183,7 @@ module.exports = {
     assert
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -37929,7 +38211,7 @@ module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
 };
-},{"./lib/FsAdapter":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
+},{"./lib/FsAdapter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"bar":[function(require,module,exports){
 
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
 const createFolderBrickStorage = require("./lib/obsolete/FolderBrickStorage").createFolderBrickStorage;
@@ -37968,7 +38250,7 @@ module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapS
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"blockchain":[function(require,module,exports){
+},{"./lib/Archive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"blockchain":[function(require,module,exports){
 ___DISABLE_OBSOLETE_ZIP_ARCHIVER_WAIT_FOR_BARS = true;
 //require("../../../psknode/bundles/pskruntime.js");
 var callflowModule = require("callflow");
@@ -37982,7 +38264,7 @@ $$.transaction      = $$.transactions;
 module.exports = require('./moduleExports');
 
 
-},{"./blockchainSwarmTypes/asset_swarm_template":"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/runner/work/privatesky/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/runner/work/privatesky/privatesky/modules/blockchain/moduleExports.js","callflow":"callflow"}],"callflow":[function(require,module,exports){
+},{"./blockchainSwarmTypes/asset_swarm_template":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/blockchainSwarmTypes/asset_swarm_template.js","./blockchainSwarmTypes/transaction_swarm_template":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/blockchainSwarmTypes/transaction_swarm_template.js","./moduleExports":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/blockchain/moduleExports.js","callflow":"callflow"}],"callflow":[function(require,module,exports){
 (function (global){(function (){
 function initialise() {
     if($$.callflow){
@@ -38070,7 +38352,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./constants":"/home/runner/work/privatesky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":false,"path":false,"soundpubsub":false}],"key-ssi-resolver":[function(require,module,exports){
+},{"./constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":false,"path":false,"soundpubsub":false}],"key-ssi-resolver":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 
@@ -38108,7 +38390,7 @@ module.exports = {
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
 (function (global){(function (){
 /*
 html API space
@@ -38244,7 +38526,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","./config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","./db":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/index.js","./dc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dc/index.js","./dt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/index.js","./error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/sc/index.js","./storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/index.js","./system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -38657,7 +38939,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+},{"./moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
 const Cache = require("./lib/Cache")
 let cacheInstance;
 
@@ -38694,7 +38976,7 @@ module.exports = {
     }
 };
 
-},{"./lib/Cache":"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js"}],"pskcrypto":[function(require,module,exports){
+},{"./lib/Cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/lib/Cache.js"}],"pskcrypto":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -38705,7 +38987,7 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarmutils":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"swarmutils":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
@@ -38757,7 +39039,7 @@ module.exports.ensureIsBuffer = function (data) {
     return buffer;
 }
 
-},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
+},{"./lib/Combos":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
@@ -38813,8 +39095,8 @@ module.exports = {
     registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/openDSU.js"])
+},{"./lib/Pool-Isolates":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js"}]},{},["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/openDSU.js"])
                     ;(function(global) {
-                        global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
+                        global.bundlePaths = {"webshims":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/testRunnerBoot.js"};
                     })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
                 
