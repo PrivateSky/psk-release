@@ -1,9 +1,9 @@
-swBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/swBoot.js":[function(require,module,exports){
+swBootRequire=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({"/home/runner/work/privatesky/privatesky/builds/tmp/swBoot.js":[function(require,module,exports){
 const or = require('overwrite-require');
 or.enableForEnvironment(or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE);
 
 require("./swBoot_intermediar");
-},{"./swBoot_intermediar":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/swBoot_intermediar.js","overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/swBoot_intermediar.js":[function(require,module,exports){
+},{"./swBoot_intermediar":"/home/runner/work/privatesky/privatesky/builds/tmp/swBoot_intermediar.js","overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js"}],"/home/runner/work/privatesky/privatesky/builds/tmp/swBoot_intermediar.js":[function(require,module,exports){
 (function (global){(function (){
 global.swBootLoadModules = function(){ 
 
@@ -25,12 +25,12 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarm-engine/bootScripts/browser/sw":"swarm-engine/bootScripts/browser/sw"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarm-engine/bootScripts/browser/sw":"swarm-engine/bootScripts/browser/sw"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/index.js":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
 };
-},{"./lib/FsAdapter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
+},{"./lib/FsAdapter":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/FsAdapter.js":[function(require,module,exports){
 function FsAdapter() {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -91,7 +91,7 @@ function FsAdapter() {
 }
 
 module.exports = FsAdapter;
-},{"./PathAsyncIterator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
+},{"./PathAsyncIterator":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js"}],"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/lib/PathAsyncIterator.js":[function(require,module,exports){
 function PathAsyncIterator(inputPath) {
     const fsModule = "fs";
     const fs = require(fsModule);
@@ -216,7 +216,7 @@ function PathAsyncIterator(inputPath) {
 }
 
 module.exports = PathAsyncIterator;
-},{"swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/index.js":[function(require,module,exports){
+},{"swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/index.js":[function(require,module,exports){
 
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
 const createFolderBrickStorage = require("./lib/obsolete/FolderBrickStorage").createFolderBrickStorage;
@@ -255,7 +255,7 @@ module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapS
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
+},{"./lib/Archive":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js":[function(require,module,exports){
 'use strict'
 
 /**
@@ -302,7 +302,7 @@ function AnchorValidator(options) {
 }
 
 module.exports = AnchorValidator;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js":[function(require,module,exports){
 const Brick = require('./Brick');
 const stream = require('stream');
 const BrickStorageService = require('./BrickStorageService').Service;
@@ -2238,7 +2238,7 @@ function Archive(archiveConfigurator) {
 
 module.exports = Archive;
 
-},{"./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Manifest.js","opendsu":"opendsu","path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
+},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMapController":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js","./BrickStorageService":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js","./Manifest":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js":[function(require,module,exports){
 const storageProviders = {};
 const fsAdapters = {};
 
@@ -2444,7 +2444,7 @@ ArchiveConfigurator.prototype.registerFsAdapter = (fsAdapterName, factory) => {
 
 module.exports = ArchiveConfigurator;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -2645,7 +2645,7 @@ function Brick(options) {
 
 module.exports = Brick;
 
-},{"./brick-transforms":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
+},{"./brick-transforms":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js":[function(require,module,exports){
 const BrickMapMixin = require('./BrickMapMixin');
 
 /**
@@ -3011,7 +3011,7 @@ function BrickMap(header) {
 }
 module.exports = BrickMap;
 
-},{"./BrickMapMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js":[function(require,module,exports){
 'use strict';
 
 // HTTP error code returned by the anchoring middleware
@@ -4080,7 +4080,7 @@ function BrickMapController(options) {
 
 module.exports = BrickMapController;
 
-},{"./AnchorValidator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
+},{"./AnchorValidator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/AnchorValidator.js","./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapMixin = require('./BrickMapMixin');
@@ -4221,7 +4221,7 @@ function BrickMapDiff(header) {
 }
 module.exports = BrickMapDiff;
 
-},{"./BrickMapMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
+},{"./BrickMapMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapMixin.js":[function(require,module,exports){
 'use strict';
 
 const Brick = require("./Brick");
@@ -4962,7 +4962,7 @@ const BrickMapMixin = {
 
 module.exports = BrickMapMixin;
 
-},{"./Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
+},{"./Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js":[function(require,module,exports){
 const BrickMapStrategyMixin = {
     brickMapController: null,
     brickMapState: null,
@@ -5294,7 +5294,7 @@ const BrickMapStrategyMixin = {
 
 module.exports = BrickMapStrategyMixin;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../../lib/BrickMapDiff');
@@ -5603,7 +5603,7 @@ function DiffStrategy(options) {
 
 module.exports = DiffStrategy;
 
-},{"../../lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","./BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../../lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js":[function(require,module,exports){
 'use strict';
 
 const BrickMapDiff = require('../BrickMapDiff');
@@ -5894,7 +5894,7 @@ function LatestVersionStrategy(options) {
 
 module.exports = LatestVersionStrategy;
 
-},{"../../lib/Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js":[function(require,module,exports){
+},{"../../lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","../BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js":[function(require,module,exports){
 module.exports = {
     DIFF: 'Diff',
     LATEST_VERSION: 'LatestVersion',
@@ -5902,7 +5902,7 @@ module.exports = {
     //DEFAULT_BRICK_MAP_STRATEGY: 'Diff'
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js":[function(require,module,exports){
 /**
  * @param {object} options
  */
@@ -5971,7 +5971,7 @@ function BrickMapStrategyFactory(options) {
 
 module.exports = BrickMapStrategyFactory;
 
-},{"./DiffStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./builtinBrickMapStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
+},{"./DiffStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/DiffStrategy.js","./LatestVersionStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/LatestVersionStrategy.js","./builtinBrickMapStrategies":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/builtinBrickMapStrategies.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js":[function(require,module,exports){
 'use strict';
 
 
@@ -7028,14 +7028,14 @@ function Service(options) {
 
 module.exports = Service;
 
-},{"../../utils/isStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js","path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
+},{"../../utils/isStream":"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","opendsu":"opendsu","overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js":[function(require,module,exports){
 'use strict'
 
 module.exports = {
     Service: require('./Service')
 };
 
-},{"./Service":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
+},{"./Service":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/Service.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/Manifest.js":[function(require,module,exports){
 const MANIFEST_PATH = "/manifest";
 
 function Manifest(archive, options, callback) {
@@ -7214,7 +7214,7 @@ module.exports.getManifest = function getManifest(archive, options, callback) {
 };
 
 
-},{"opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js":[function(require,module,exports){
 const zlib = require("zlib");
 
 function CompressionTransformation(config) {
@@ -7268,7 +7268,7 @@ function CompressionTransformation(config) {
 module.exports = CompressionTransformation;
 
 
-},{"zlib":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-zlib/lib/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
+},{"zlib":"/home/runner/work/privatesky/privatesky/node_modules/browserify-zlib/lib/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 
@@ -7297,7 +7297,7 @@ function EncryptionTransformation() {
 }
 
 module.exports = EncryptionTransformation;
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/index.js":[function(require,module,exports){
 const CompressionTransformation = require("./CompressionTransformation");
 const EncryptionTransformation = require("./EncryptionTransformation");
 
@@ -7312,7 +7312,7 @@ module.exports = {
 };
 
 
-},{"./CompressionTransformation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
+},{"./CompressionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/CompressionTransformation.js","./EncryptionTransformation":"/home/runner/work/privatesky/privatesky/modules/bar/lib/brick-transforms/EncryptionTransformation.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/constants.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -7327,7 +7327,7 @@ module.exports = {
     }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js":[function(require,module,exports){
 const Brick = require("../Brick");
 const util = require("../../utils/utilities");
 const pathModule = "path";
@@ -7462,7 +7462,7 @@ function FileBrickMap(header) {
 
 module.exports = FileBrickMap;
 
-},{"../../utils/utilities":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js":[function(require,module,exports){
 function FileBrickStorage(filePath) {
     const fsModuleName = "fs";
     const fs = require(fsModuleName);
@@ -7681,7 +7681,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/utilities":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
+},{"../../utils/utilities":"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js","../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./FileBrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickMap.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js":[function(require,module,exports){
 const BrickMap = require("../BrickMap");
 const Brick = require("../Brick");
 
@@ -7781,7 +7781,7 @@ module.exports = {
     }
 };
 
-},{"../Brick":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/lib/BrickMap.js","fs":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
+},{"../Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","../BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/isStream.js":[function(require,module,exports){
 function isStream(stream){
     return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
 }
@@ -7813,7 +7813,7 @@ module.exports = {
     isDuplex
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/bar/utils/utilities.js":[function(require,module,exports){
 const OFFSET_SIZE = 8;
 
 function getBrickMapOffsetSize() {
@@ -7832,7 +7832,7 @@ function ensureFileDoesNotExist(filePath, callback) {
 }
 
 module.exports = {getBrickMapOffsetSize, ensureFileDoesNotExist};
-},{"fs":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/constants.js":[function(require,module,exports){
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/constants.js":[function(require,module,exports){
 $$.CONSTANTS = {
     SWARM_FOR_EXECUTION:"swarm_for_execution",//TODO: remove
     INBOUND:"inbound",//TODO: remove
@@ -7854,7 +7854,7 @@ $$.CONSTANTS.mixIn = function(otherConstants){
     }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/index.js":[function(require,module,exports){
 (function (global){(function (){
 function initialise() {
     if($$.callflow){
@@ -7942,7 +7942,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js","path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/soundpubsub/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/callflow/constants.js","./lib/InterceptorRegistry":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/InterceptorRegistry.js","./lib/loadLibrary":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/loadLibrary.js","./lib/parallelJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js","./lib/serialJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js","./lib/swarmDescription":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/swarmDescription.js","./lib/utilityFunctions/base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","soundpubsub":"/home/runner/work/privatesky/privatesky/modules/soundpubsub/index.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/InterceptorRegistry.js":[function(require,module,exports){
 (function (global){(function (){
 // related to: SwarmSpace.SwarmDescription.createPhase()
 
@@ -8137,7 +8137,7 @@ exports.createInterceptorRegistry = function () {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/loadLibrary.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -8241,7 +8241,7 @@ exports.loadLibrary = function(prefixName, folder){
 }
 
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js":[function(require,module,exports){
 (function (process){(function (){
 
 var globalJoinCounter = 0;
@@ -8381,7 +8381,7 @@ exports.createJoinPoint = function(swarm, callback, args){
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js":[function(require,module,exports){
 
 var joinCounter = 0;
 
@@ -8506,7 +8506,7 @@ exports.createSerialJoinPoint = function(swarm, callback, args){
     jp.setProxyObject(p);
     return p;
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/swarmDescription.js":[function(require,module,exports){
 const swarmDescriptionsRegistry = {};
 let currentInlineCounter = 0;
 
@@ -8871,7 +8871,7 @@ exports.createSwarmEngine = function(swarmType, utils){
 };
 
 
-},{"./utilityFunctions/callflow":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
+},{"./utilityFunctions/callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js":[function(require,module,exports){
 (function (process,global){(function (){
 /*
  Initial License: (c) Axiologic Research & Alboaie Sînică.
@@ -9070,7 +9070,7 @@ function localLog (logType, message, err) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","fs":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var swarmDebug = require("./SwarmDebug");
 	let ret = {};
@@ -9199,12 +9199,12 @@ exports.createForObject = function(valueObject, thisObject, localId){
 
 };
 
-},{"../parallelJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
+},{"../parallelJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/parallelJoinPoint.js","../serialJoinPoint":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/serialJoinPoint.js","./SwarmDebug":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/SwarmDebug.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/callflow.js":[function(require,module,exports){
 exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js":[function(require,module,exports){
+},{"./base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js":[function(require,module,exports){
 const KeySSIResolver = require('./lib/KeySSIResolver');
 const DSUFactory = require("./lib/DSUFactoryRegistry");
 
@@ -9242,7 +9242,7 @@ module.exports = {
     DSUFactory: require("./lib/DSUFactoryRegistry")
 };
 
-},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
+},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"/home/runner/work/privatesky/privatesky/modules/bar/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js":[function(require,module,exports){
 function CryptoAlgorithmsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -9348,7 +9348,7 @@ function CryptoAlgorithmsMixin(target) {
 
 module.exports = CryptoAlgorithmsMixin;
 
-},{"pskcrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
+},{"pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js":[function(require,module,exports){
 const SSITypes = require("../KeySSIs/SSITypes");
 const CryptoFunctionTypes = require("./CryptoFunctionTypes");
 const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
@@ -9458,7 +9458,7 @@ CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.CONSENSUS_SS
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.PUBLIC_KEY_SSI, 'v0',  new CryptoAlgorithmsMixin());
 
 
-},{"../KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CryptoAlgorithmsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./SeedSSICryptoAlgorithms":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./SeedSSICryptoAlgorithms":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js":[function(require,module,exports){
 module.exports = {
     HASH: "hash",
     ENCRYPTION: "encryption",
@@ -9482,7 +9482,7 @@ module.exports = {
     SET_IES_CONFIG: "setConfigForIES",
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/SeedSSICryptoAlgorithms.js":[function(require,module,exports){
 function SeedSSICryptoAlgorithms() {
     const crypto = require("pskcrypto");
     const CryptoAlgorithmsMixin = require("./CryptoAlgorithmsMixin");
@@ -9514,7 +9514,7 @@ function SeedSSICryptoAlgorithms() {
 
 module.exports = SeedSSICryptoAlgorithms;
 
-},{"./CryptoAlgorithmsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","pskcrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js":[function(require,module,exports){
+},{"./CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -9584,7 +9584,7 @@ function ConsensusDSUFactory(options) {
 
 module.exports = ConsensusDSUFactory;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -9656,7 +9656,7 @@ function ConstDSUFactory(options) {
 
 module.exports = ConstDSUFactory;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -9864,7 +9864,7 @@ function DSUFactory(options) {
 
 module.exports = DSUFactory;
 
-},{"../KeySSIs/KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/bar-fs-adapter/index.js","opendsu":"opendsu","overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js","psk-cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js":[function(require,module,exports){
+},{"../KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./mixins/DSUBase":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js","bar":"/home/runner/work/privatesky/privatesky/modules/bar/index.js","bar-fs-adapter":"/home/runner/work/privatesky/privatesky/modules/bar-fs-adapter/index.js","opendsu":"opendsu","overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js","psk-cache":"/home/runner/work/privatesky/privatesky/modules/psk-cache/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -9934,7 +9934,7 @@ function OwnershipDSUFactory(options) {
 
 module.exports = OwnershipDSUFactory;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js":[function(require,module,exports){
 /**
  * @param {object} options
  * @param {KeySSIFactory} options.keySSIFactory
@@ -10107,7 +10107,7 @@ function WalletFactory(options) {
 
 module.exports = WalletFactory;
 
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js":[function(require,module,exports){
 const BarFactory = require('./DSUFactory');
 const SSITypes = require("../KeySSIs/SSITypes");
 /**
@@ -10243,7 +10243,7 @@ Registry.prototype.getDSUFactory = (dsuType) => {
 
 module.exports = Registry;
 
-},{"../KeySSIs/SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConsensusDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js","./ConstDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./OwnershipDSUFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js","./WalletFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
+},{"../KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConsensusDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConsensusDSUFactory.js","./ConstDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/ConstDSUFactory.js","./DSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/DSUFactory.js","./OwnershipDSUFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/OwnershipDSUFactory.js","./WalletFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/WalletFactory.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/mixins/DSUBase.js":[function(require,module,exports){
 module.exports = function(archive){
 	archive.call = (functionName, ...args) => {
 		if(args.length === 0){
@@ -10304,7 +10304,7 @@ module.exports = function(archive){
 	return archive;
 }
 
-},{"overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
+},{"overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js":[function(require,module,exports){
 /**
  * @param {BrickMapStrategyFactory} options.brickMapStrategyFactory
  * @param {DSUFactory} options.dsuFactory
@@ -10394,7 +10394,7 @@ function KeySSIResolver(options) {
 
 module.exports = KeySSIResolver;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js":[function(require,module,exports){
 function ArraySSI(enclave, identifier) {
     if (typeof enclave === "string") {
         identifier = enclave;
@@ -10443,7 +10443,7 @@ module.exports = {
     createArraySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -10479,7 +10479,7 @@ module.exports = {
     createCZaSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const CZaSSI = require("./CZaSSI");
 const SSITypes = require("../SSITypes");
@@ -10525,7 +10525,7 @@ module.exports = {
     createConstSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ConstSSI = require("./ConstSSI");
 const SSITypes = require("../SSITypes");
@@ -10567,7 +10567,7 @@ module.exports = {
     createPasswordSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -10592,13 +10592,13 @@ module.exports = {
     createConsensusSSI,
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js":[function(require,module,exports){
 const DSURepresentationNames = {
     "seed": "RawDossier"
 }
 
 module.exports = DSURepresentationNames;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const { createHashLinkSSI } = require("../OtherKeySSIs/HashLinkSSI");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
@@ -10670,7 +10670,7 @@ module.exports = {
     createSignedHashLinkSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -10862,7 +10862,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_KEY_SSI, 'v0', undefined
 
 module.exports = new KeySSIFactory();
 
-},{"./ConstSSIs/ArraySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const CryptoFunctionTypes = require("../CryptoAlgorithms/CryptoFunctionTypes");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
@@ -11092,7 +11092,7 @@ function keySSIMixin(target, enclave) {
 
 module.exports = keySSIMixin;
 
-},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -11137,7 +11137,7 @@ module.exports = {
     createHashLinkSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
@@ -11190,7 +11190,7 @@ module.exports = {
     createPublicKeySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
@@ -11240,7 +11240,7 @@ module.exports = {
     createSymmetricalEncryptionSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js":[function(require,module,exports){
 const SeedSSI = require("./../SeedSSIs/SeedSSI");
 const ArraySSI = require("./../ConstSSIs/ArraySSI");
 const SSITypes = require("../SSITypes");
@@ -11265,7 +11265,7 @@ module.exports = {
     createWalletSSI
 }
 
-},{"../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js":[function(require,module,exports){
+},{"../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./../ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./../SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZATSSI = require("./ZATSSI");
 const SSITypes = require("../SSITypes");
@@ -11338,7 +11338,7 @@ module.exports = {
     createOReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZATSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const OReadSSI = require("./OReadSSI");
 const SSITypes = require("../SSITypes");
@@ -11499,7 +11499,7 @@ module.exports = {
     createOwnershipSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./OReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -11532,7 +11532,7 @@ module.exports = {
     createZATSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js":[function(require,module,exports){
 module.exports = {
     DEFAULT: "default",
     SECRET_SSI: "secret",
@@ -11560,7 +11560,7 @@ module.exports = {
     PUBLIC_KEY_SSI: "pk"
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ReadSSI = require("./ReadSSI");
 const SSITypes = require("../SSITypes");
@@ -11589,7 +11589,7 @@ module.exports = {
     createAnchorSSI
 }
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const ZaSSI = require("./ZaSSI");
 const SSITypes = require("../SSITypes");
@@ -11618,7 +11618,7 @@ module.exports = {
     createPublicSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const PublicSSI = require("./PublicSSI");
 const SSITypes = require("../SSITypes");
@@ -11647,7 +11647,7 @@ module.exports = {
     createReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const AnchorSSI = require("./AnchorSSI");
 const SSITypes = require("../SSITypes");
@@ -11675,7 +11675,7 @@ module.exports = {
     createSecretSSI
 }
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 function ZaSSI(identifier) {
     KeySSIMixin(this);
@@ -11696,7 +11696,7 @@ function createZaSSI(identifier) {
 module.exports = {
     createZaSSI
 };
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -11742,7 +11742,7 @@ module.exports = {
     createSReadSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -11779,7 +11779,7 @@ module.exports = {
     createSZaSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SReadSSI = require("./SReadSSI");
 const SSITypes = require("../SSITypes");
@@ -11903,7 +11903,7 @@ module.exports = {
     createSeedSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -11971,7 +11971,7 @@ module.exports = {
     createTokenSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -12037,7 +12037,7 @@ module.exports = {
     createTransferSSI
 };
 
-},{"../KeySSIMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function validateHashLinks(keySSI, hashLinks, callback) {
@@ -12107,7 +12107,7 @@ module.exports = {
     verifySignature
 };
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const keySSISpace = openDSU.loadApi("keyssi");
 const cachedStores = require("../cache/");
@@ -12167,7 +12167,7 @@ module.exports = {
     versions,
     latestVersion
 }
-},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
 const bdns = require("../bdns");
 const keyssi = require("../keyssi");
 const {fetch, doPut} = require("../http");
@@ -12416,7 +12416,7 @@ module.exports = {
     getLatestVersion
 }
 
-},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
@@ -12529,7 +12529,7 @@ function BDNS() {
 
 module.exports = new BDNS();
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js":[function(require,module,exports){
 (function (global){(function (){
 function BootEngine(getKeySSI) {
     if (typeof getKeySSI !== "function") {
@@ -12661,7 +12661,7 @@ module.exports = BootEngine;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/NodeBootScript.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js":[function(require,module,exports){
 (function (process){(function (){
 function boot(keySSI) {
     const worker_threads = "worker_threads";
@@ -12706,7 +12706,7 @@ module.exports = boot;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"./BootEngine.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/WorkerBootScript.js":[function(require,module,exports){
+},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js":[function(require,module,exports){
 function boot(keySSI) {
     const { handleMessage } = require("./boot-utils.js");
 
@@ -12739,7 +12739,7 @@ function boot(keySSI) {
 
 module.exports = boot;
 
-},{"./BootEngine.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/boot-utils.js":[function(require,module,exports){
+},{"./BootEngine.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/BootEngine.js","./boot-utils.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/boot-utils.js":[function(require,module,exports){
 function handleMessage(message, onHandleMessage) {
     // console.log("[worker] Received message", message);
 
@@ -12778,7 +12778,7 @@ module.exports = {
     handleMessage,
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js":[function(require,module,exports){
 let { ENVIRONMENT_TYPES } = require("../moduleConstants.js");
 
 function getBootScript() {
@@ -12794,7 +12794,7 @@ function getBootScript() {
 
 module.exports = getBootScript();
 
-},{"../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./NodeBootScript":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/NodeBootScript.js","./WorkerBootScript":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/WorkerBootScript.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./NodeBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/NodeBootScript.js","./WorkerBootScript":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/WorkerBootScript.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadApi("crypto");
 const keySSISpace = openDSU.loadApi("keyssi");
@@ -12853,7 +12853,7 @@ module.exports = {
     getMultipleBricks
 }
 
-},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
@@ -13048,7 +13048,7 @@ const putBrick = (domain, brick, authToken, callback) => {
 
 module.exports = {getBrick, putBrick, getMultipleBricks};
 
-},{"../cache/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 (function (process){(function (){
 let stores = {};
 const config = require("opendsu").loadApi("config");
@@ -13131,7 +13131,7 @@ function FSCache(folderName) {
 module.exports.FSCache = FSCache;
 }).call(this)}).call(this,require('_process'))
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -13252,7 +13252,7 @@ function IndexedDBCache(storeName, lifetime) {
 
 
 module.exports.IndexedDBCache  = IndexedDBCache;
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js":[function(require,module,exports){
 
 const constants = require("../moduleConstants");
 
@@ -13285,7 +13285,7 @@ function MemoryCache() {
 
 
 module.exports.MemoryCache = MemoryCache;
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -13325,7 +13325,7 @@ module.exports = {
     getCacheForVault,
     getMemoryCache
 }
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js","./FSCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js","./IndexeDBCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/IndexeDBCache.js","./MemoryCache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/MemoryCache.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js":[function(require,module,exports){
 const config = require("./index");
 const constants = require("../moduleConstants");
 const system = require("../system");
@@ -13362,7 +13362,7 @@ setGlobalVariable("printOpenDSUError", errorModule.printOpenDSUError);
 
 
 
-},{"../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
+},{"../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js":[function(require,module,exports){
 
 module.exports = function(environment){
         const config = require("./index.js");
@@ -13379,7 +13379,7 @@ module.exports = function(environment){
         }
         console.log("Environment for vault", environment.appName,  config.get(constants.CACHE.VAULT_TYPE))
 }
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const config = {};
 
@@ -13467,7 +13467,7 @@ module.exports = {
 };
 
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./autoConfigFromEnvironment":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfigFromEnvironment.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js":[function(require,module,exports){
 const getBaseURL = require("../utils/getBaseURL");
 
 const {
@@ -13614,7 +13614,7 @@ module.exports = {
     generateNoncedCommandForSpecificServer,
 };
 
-},{"../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
+},{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/utils.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const { fetch, doPost } = require("../http");
 const promiseRunner = require("../utils/promise-runner");
@@ -13775,7 +13775,7 @@ module.exports = {
 
 }).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
@@ -14105,7 +14105,7 @@ module.exports = {
     joseAPI: require("pskcrypto").joseAPI
 };
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/index.js","pskcrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/index.js","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -14454,11 +14454,11 @@ module.exports = {
     verifyDID_JWT
 };
 
-},{"../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
+},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
 module.exports.TimestampMergingStrategy = function(){
 
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/BasicDB.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js":[function(require,module,exports){
 /*
     An OpenDSU  BasicDB is a simple noSQL database
     The DB is used with a concept of "table" and rows (records) that have multiple versions
@@ -14693,7 +14693,7 @@ function BasicDB(storageStrategy) {
 
 module.exports = BasicDB;
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
 const {createOpenDSUErrorWrapper} = require("../../error");
 module.exports = {
     ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
@@ -14835,7 +14835,7 @@ module.exports = {
     }
 }
 
-},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
 let util = require("./impl/DSUDBUtil")
 const {SingleDSUStorageStrategy} = require("./storageStrategies/SingleDSUStorageStrategy");
 const {TimestampMergingStrategy: ConflictStrategy} = require("./conflictSolvingStrategies/timestampMergingStrategy");
@@ -14948,7 +14948,7 @@ module.exports = {
     getSharedEnclaveDB
 }
 
-},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
+},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function MemoryStorageStrategy() {
     const ObservableMixin = require("../../utils/ObservableMixin");
@@ -15211,7 +15211,7 @@ function MemoryStorageStrategy() {
 module.exports = MemoryStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
 
 function MultiUserStorageStrategy(){
 
@@ -15225,7 +15225,7 @@ function MultiUserStorageStrategy(){
 
 }
 module.exports = MultiUserStorageStrategy;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
 function Query(queryArray) {
     let conditions = [];
     const operators = require("./operators");
@@ -15329,7 +15329,7 @@ function Query(queryArray) {
 }
 
 module.exports = Query;
-},{"./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
+},{"./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const ObservableMixin = require("../../utils/ObservableMixin");
 const Query = require("./Query");
@@ -15946,7 +15946,7 @@ function SingleDSUStorageStrategy() {
 module.exports.SingleDSUStorageStrategy = SingleDSUStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js":[function(require,module,exports){
 module.exports = {
     "<": function (x, y) {
         return x < y
@@ -15989,7 +15989,7 @@ module.exports = {
     }
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/storageStrategies/utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/utils.js":[function(require,module,exports){
 function getCompareFunction(sortOrder) {
     if (sortOrder === "asc" || sortOrder === "ascending") {
         return function (a, b) {
@@ -16034,11 +16034,11 @@ module.exports = {
     getCompareFunction,
     getCompareFunctionForObjects
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js":[function(require,module,exports){
 /*
 html API space
 */
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -16593,7 +16593,7 @@ function AppBuilderService(environment, opts) {
     }
 }
 module.exports = AppBuilderService;
-},{"./DossierBuilder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
+},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -16796,7 +16796,7 @@ const DossierBuilder = function(sourceDSU, varStore){
 
 module.exports = DossierBuilder;
 
-},{"./commands":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
+},{"./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -16917,7 +16917,7 @@ function FileService(options) {
 }
 
 module.exports = FileService;
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17022,7 +17022,7 @@ class Command {
 }
 
 module.exports = Command;
-},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js":[function(require,module,exports){
 /**
  * List of all available commands to the Dossier Builder
  * Without being here, they can't be used
@@ -17056,7 +17056,7 @@ const _getByName = function(cmdName){
 }
 
 module.exports = _getByName;
-},{"./addFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/VarStore.js":[function(require,module,exports){
+},{"./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js":[function(require,module,exports){
 /**
  * @module commands
  * A simple variable store
@@ -17101,7 +17101,7 @@ const VarStore = function(){
 }
 
 module.exports = VarStore;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17189,7 +17189,7 @@ class AddFileCommand extends Command{
 }
 
 module.exports = AddFileCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17256,7 +17256,7 @@ class AddFolderCommand extends Command {
 }
 
 module.exports = AddFolderCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17447,7 +17447,7 @@ class CreateDSUCommand extends Command{
 }
 
 module.exports = CreateDSUCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17513,7 +17513,7 @@ class CreateFileCommand extends Command{
 }
 
 module.exports = CreateFileCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17595,7 +17595,7 @@ class DefineCommand extends Command {
 }
 
 module.exports = DefineCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17650,7 +17650,7 @@ class DeleteCommand extends Command {
 
 module.exports = DeleteCommand;
 
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17705,7 +17705,7 @@ class DeriveCommand extends Command{
 }
 
 module.exports = DeriveCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17757,7 +17757,7 @@ class EndWithCommand extends Command{
 }
 
 module.exports = EndWithCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17906,7 +17906,7 @@ class GenKeyCommand extends Command {
 }
 
 module.exports = GenKeyCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -17978,7 +17978,7 @@ class GetIdentifierCommand extends Command{
 }
 
 module.exports = GetIdentifierCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -18001,7 +18001,7 @@ module.exports = {
     WithCommand: require('./with'),
     _getByName: require('./Registry')
 }
-},{"./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./addFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/mount.js":[function(require,module,exports){
+},{"./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./addFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFile.js","./addFolder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/addFolder.js","./createDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createDSU.js","./createFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/createFile.js","./define":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/define.js","./delete":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/delete.js","./derive":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/derive.js","./endWith":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/endWith.js","./genKey":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/genKey.js","./getIndentifier":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/getIndentifier.js","./mount":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js","./objToArray":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./with":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/mount.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -18123,7 +18123,7 @@ class MountCommand extends Command{
 }
 
 module.exports = MountCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -18180,7 +18180,7 @@ class ObjToArrayCommand extends Command{
 }
 
 module.exports = ObjToArrayCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/readFile.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -18242,7 +18242,7 @@ class ReadFileCommand extends Command{
 }
 
 module.exports = ReadFileCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js":[function(require,module,exports){
 /**
  * @module Commands
  */
@@ -18325,7 +18325,7 @@ module.exports = {
     KEY_TYPE,
     DSU_TYPE
 };
-},{"fs":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/with.js":[function(require,module,exports){
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/with.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -18452,7 +18452,7 @@ class WithCommand extends Command {
 }
 
 module.exports = WithCommand;
-},{"./Command":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./Registry":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Registry.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -18478,7 +18478,7 @@ module.exports = {
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
 const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -18528,7 +18528,7 @@ function APIHUBProxy(domain, did) {
 }
 
 module.exports = APIHUBProxy;
-},{".././../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 function Enclave_Mixin(target, did) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
@@ -18880,7 +18880,7 @@ function Enclave_Mixin(target, did) {
 }
 
 module.exports = Enclave_Mixin;
-},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -18940,7 +18940,7 @@ function HighSecurityProxy(domain, did) {
 module.exports = HighSecurityProxy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{".././../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
+},{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js":[function(require,module,exports){
 function MemoryEnclave() {
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this);
@@ -18963,7 +18963,7 @@ function MemoryEnclave() {
 }
 
 module.exports = MemoryEnclave;
-},{"./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
+},{"./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createOpenDSUErrorWrapper} = require("../../error");
 
@@ -19164,7 +19164,7 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -19238,7 +19238,7 @@ function WalletDBEnclave(keySSI, did) {
 }
 
 module.exports = WalletDBEnclave;
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
 module.exports = {
     INSERT_RECORD: "insertRecord",
     UPDATE_RECORD: "updateRecord",
@@ -19266,7 +19266,7 @@ module.exports = {
     DECRYPT_MESSAGE: "decryptMessage",
     GET_PRIVATE_INFO_FOR_DID:"getPrivateInfoForDID"
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
 const createCommandObject = (commandName, ...args) => {
     return {
         commandName,
@@ -19279,7 +19279,7 @@ const createCommandObject = (commandName, ...args) => {
 module.exports = {
     createCommandObject
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function initialiseWalletDBEnclave(keySSI, did) {
@@ -19336,7 +19336,7 @@ module.exports = {
     registerEnclave
 }
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -19524,7 +19524,7 @@ module.exports = {
     printOpenDSUError
 }
 
-},{"./../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
+},{"./../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -19605,7 +19605,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT'),
 	doGet
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js":[function(require,module,exports){
 /**
  * http API space
  */
@@ -19638,7 +19638,7 @@ module.exports.unpoll = function(request){
 	rm.cancelRequest(request);
 }
 
-},{"./browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/common.js":[function(require,module,exports){
+},{"./browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js","./node":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js","./serviceWorker":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js","./utils/PollRequestManager":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js","./utils/interceptors":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js","overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js":[function(require,module,exports){
 (function (process){(function (){
 const userAgent = 'PSK NodeAgent/0.0.1';
 const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
@@ -19731,7 +19731,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js":[function(require,module,exports){
 const http = require("http");
 const https = require("https");
 const URL = require("url");
@@ -19954,7 +19954,7 @@ module.exports = {
 	fetch
 }
 
-},{"http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/index.js","https":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/https-browserify/index.js","url":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/url.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
+},{"http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","https":"/home/runner/work/privatesky/privatesky/node_modules/https-browserify/index.js","url":"/home/runner/work/privatesky/privatesky/node_modules/url/url.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/index.js":[function(require,module,exports){
 
 const {setContentTypeByData,buildOptions,getNetworkForOptions} = require("./common.js");
 
@@ -20041,7 +20041,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{"./common.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/node/fetch.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
+},{"./common.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/common.js","./fetch":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/node/fetch.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/serviceWorker/index.js":[function(require,module,exports){
 function generateMethodForRequestWithData(httpMethod) {
 	return function (url, data, options, callback) {
 		if(typeof options === "function"){
@@ -20088,7 +20088,7 @@ module.exports = {
 	doPut: generateMethodForRequestWithData('PUT')
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
 function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 	const requests = new Map();
@@ -20223,7 +20223,7 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 module.exports = PollRequestManager;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/interceptors.js":[function(require,module,exports){
 let interceptors = [];
 
 function registerInterceptor(interceptor){
@@ -20325,7 +20325,7 @@ function enable(handler){
 }
 
 module.exports = {enable};
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("../crypto");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
@@ -20597,7 +20597,7 @@ module.exports = {
     we_createArraySSI
 };
 
-},{"../anchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
+},{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
 const apis = {};
 function defineApi(name, implementation){
 	if(typeof implementation !== "function"){
@@ -20611,7 +20611,7 @@ function getApis(){
 }
 
 module.exports = {defineApi, getApis}
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultApis/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js":[function(require,module,exports){
 const registry = require("../apisRegistry");
 
 /*
@@ -20791,7 +20791,7 @@ registry.defineApi("getResolver", function (domain, ssiType, options) {
 });
 
 
-},{"../apisRegistry":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js":[function(require,module,exports){
+},{"../apisRegistry":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js":[function(require,module,exports){
 const mappingRegistry = require("./../mappingRegistry.js");
 
 async function validateMessage(message){
@@ -20803,7 +20803,7 @@ async function digestMessage(message){
 }
 
 mappingRegistry.defineMapping(validateMessage, digestMessage);
-},{"./../mappingRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
+},{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 
 errorTypes = {
@@ -20956,7 +20956,7 @@ module.exports = {
   addNewErrorType
 }
 
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
 const mappingRegistry = require("./mappingRegistry.js");
 const apisRegistry = require("./apisRegistry.js");
 const errMap = require("./errorsMap.js")
@@ -21174,7 +21174,7 @@ module.exports = {
   defineApi: apisRegistry.defineApi
 }
 
-},{"./apisRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./errorsMap.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/errorsMap.js","./mappingRegistry.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
+},{"./apisRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js","./defaultApis":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultApis/index.js","./defaultMappings":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/defaultMappings/index.js","./errorsMap.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js","./mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js","./messagesPipe":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js":[function(require,module,exports){
 const mappingRegistry = [];
 function defineMapping(matchFunction, mappingFunction){
 	mappingRegistry.push({matchFunction, mappingFunction});
@@ -21188,7 +21188,7 @@ module.exports = {
 	defineMapping,
 	getMappings
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/messagesPipe/index.js":[function(require,module,exports){
 module.exports = function (maxGroupSize, maxQueuingTime, groupingFunction) {
 
     this.queue = [];
@@ -21249,7 +21249,7 @@ module.exports = function (maxGroupSize, maxQueuingTime, groupingFunction) {
     startWaitingMessages();
 
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js":[function(require,module,exports){
 const ENVIRONMENT_TYPES = require("../overwrite-require/moduleConstants");
 
 let cachedKeySSIResolver = undefined;
@@ -21332,7 +21332,7 @@ module.exports = {
 
 
 
-},{"../overwrite-require/moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -21621,7 +21621,7 @@ module.exports = {
     unsubscribe,
     getMQHandlerForDID
 }
-},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -21722,7 +21722,7 @@ module.exports = {
 	isSubscribed
 }
 
-},{"../bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","../http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js":[function(require,module,exports){
 const createOIDC = (options) => {
     const OIDC = require("./src/oidc/OIDC");
     return new OIDC(options);
@@ -21734,7 +21734,7 @@ module.exports = {
     constants: require("./src/oidc/constants"),
 
 }
-},{"./src/oidc/OIDC":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js","./src/oidc/constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/constants.js","./src/util/Storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Client.js":[function(require,module,exports){
+},{"./src/oidc/OIDC":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js","./src/oidc/constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/constants.js","./src/util/Storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Client.js":[function(require,module,exports){
 class Client {
     constructor(options) {
         this.options = options;
@@ -21763,7 +21763,7 @@ class Client {
 
 
 module.exports = Client;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js":[function(require,module,exports){
 class Issuer {
     constructor(options) {
         this.options = options;
@@ -21787,7 +21787,7 @@ class Issuer {
 
 
 module.exports = Issuer;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/OIDC.js":[function(require,module,exports){
 const RedirectInteraction = require('./interactions/Redirect');
 const IFrameInteraction = require('./interactions/IFrame');
 const PopupInteraction = require('./interactions/Popup');
@@ -22119,7 +22119,7 @@ class OIDC {
 
 OIDC.utils = {Browser};
 module.exports = OIDC;
-},{"../util/Browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js","../util/Crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js","../util/Storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js","./Client":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Client.js","./Issuer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js","./grants/AuthorizationCode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js","./grants/RefreshToken":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js","./interactions/IFrame":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js","./interactions/Popup":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js","./interactions/Redirect":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/constants.js":[function(require,module,exports){
+},{"../util/Browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js","../util/Crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js","../util/Storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js","./Client":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Client.js","./Issuer":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/Issuer.js","./grants/AuthorizationCode":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js","./grants/RefreshToken":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js","./interactions/IFrame":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js","./interactions/Popup":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js","./interactions/Redirect":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/constants.js":[function(require,module,exports){
 module.exports = {
     ID_TOKEN: 'session.idToken',
     ACCESS_TOKEN: 'session.accessToken',
@@ -22136,7 +22136,7 @@ module.exports = {
     TOKEN_CHECK_INTERVAL: 1000 * 30,
     TOKEN_EXPIRATION_THRESHOLD: 1000 * 60,
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/AuthorizationCode.js":[function(require,module,exports){
 const Crypto = require('../../util/Crypto');
 
 
@@ -22187,7 +22187,7 @@ class AuthorizationCode {
 
 
 module.exports = AuthorizationCode;
-},{"../../util/Crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js":[function(require,module,exports){
+},{"../../util/Crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/grants/RefreshToken.js":[function(require,module,exports){
 class RefreshToken {
     static refreshToken(issuer, client, options) {
         const params = new URLSearchParams();
@@ -22208,7 +22208,7 @@ class RefreshToken {
 
 
 module.exports = RefreshToken;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/IFrame.js":[function(require,module,exports){
 const Promises = require('../../util/Promises');
 const Interaction = require('./Interaction');
 
@@ -22282,7 +22282,7 @@ class IFrame extends Interaction {
 
 
 module.exports = IFrame;
-},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js":[function(require,module,exports){
 const Browser = require('../../util/Browser');
 
 
@@ -22314,7 +22314,7 @@ class Interaction {
 
 
 module.exports = Interaction;
-},{"../../util/Browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js":[function(require,module,exports){
+},{"../../util/Browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Popup.js":[function(require,module,exports){
 const Interaction = require('./Interaction');
 const Promises = require('../../util/Promises');
 
@@ -22369,7 +22369,7 @@ class Popup extends Interaction {
 
 
 module.exports = Popup;
-},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Redirect.js":[function(require,module,exports){
 const Interaction = require('./Interaction');
 const Promises = require('../../util/Promises');
 
@@ -22394,7 +22394,7 @@ class Redirect extends Interaction {
 
 
 module.exports = Redirect;
-},{"../../util/Promises":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Browser.js":[function(require,module,exports){
+},{"../../util/Promises":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js","./Interaction":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/oidc/interactions/Interaction.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Browser.js":[function(require,module,exports){
 function parseUrlHash(hash) {
     return parseUrlParams(hash.substring(1));
 }
@@ -22454,7 +22454,7 @@ module.exports = {
     getCurrentLocation,
     isItMe
 };
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Crypto.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Crypto.js":[function(require,module,exports){
 const openDSU = require("opendsu");
 const crypto = openDSU.loadAPI("crypto");
 
@@ -22486,7 +22486,7 @@ module.exports = {
     generateCodeChallenge,
     decodeBase64EncodedData
 }
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Promises.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Promises.js":[function(require,module,exports){
 function flatPromise() {
     let resolve, reject;
     let promise = new Promise((_resolve, _reject) => {
@@ -22501,7 +22501,7 @@ function flatPromise() {
 module.exports = {
     flatPromise
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/src/util/Storage.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/src/util/Storage.js":[function(require,module,exports){
 const {prettyByte} = require("@msgpack/msgpack/dist/utils/prettyByte");
 
 class Storage {
@@ -22541,7 +22541,7 @@ const getStorage = () => {
 module.exports = {
     getStorage
 };
-},{"@msgpack/msgpack/dist/utils/prettyByte":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/@msgpack/msgpack/dist/utils/prettyByte.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
+},{"@msgpack/msgpack/dist/utils/prettyByte":"/home/runner/work/privatesky/privatesky/node_modules/@msgpack/msgpack/dist/utils/prettyByte.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const KeySSIResolver = require("key-ssi-resolver");
 const keySSISpace = require("opendsu").loadApi("keyssi");
@@ -22939,7 +22939,7 @@ module.exports = {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./resolver-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/resolver-utils.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","key-ssi-resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu","syndicate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/resolver-utils.js":[function(require,module,exports){
+},{"../cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./resolver-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/resolver-utils.js":[function(require,module,exports){
 (function (global){(function (){
 function getWebWorkerBootScript(dsuKeySSI) {
     const scriptLocation = document.currentScript
@@ -22974,7 +22974,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js":[function(require,module,exports){
 (function (process){(function (){
 /*
     Security Context related functionalities
@@ -23386,7 +23386,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getURLForSsappContext.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","fs":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","os":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/os-browserify/browser.js","path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
 const { fetch } = require("./utils");
 
 // helpers
@@ -23696,12 +23696,12 @@ function getDSUStorage() {
 
 module.exports = getDSUStorage;
 
-},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/utils.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/index.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js":[function(require,module,exports){
 module.exports = {
   getDSUStorage: require("./DSUStorage")
 };
 
-},{"./DSUStorage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/DSUStorage.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/utils.js":[function(require,module,exports){
+},{"./DSUStorage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/utils.js":[function(require,module,exports){
 function promisify(fun) {
   return function (...args) {
     return new Promise((resolve, reject) => {
@@ -23743,7 +23743,7 @@ module.exports = {
   fetch: executeFetch,
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 (function (process){(function (){
 const envVariables = {};
 function getEnvironmentVariable(name){
@@ -23779,7 +23779,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../utils/getBaseURL":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
+},{"../utils/getBaseURL":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js":[function(require,module,exports){
 const PendingCallMixin = require("./PendingCallMixin");
 /*
     Utility to make classes that depend on some initialisation easier to use.
@@ -23831,7 +23831,7 @@ module.exports.bindAutoPendingFunctions = function(obj, exceptionList){
     return obj;
 };
 
-},{"./PendingCallMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
+},{"./PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js":[function(require,module,exports){
 function ObservableMixin(target) {
     let observers = {};
 
@@ -23889,7 +23889,7 @@ function ObservableMixin(target) {
 
 module.exports = ObservableMixin;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js":[function(require,module,exports){
 function PendingCallMixin(target) {
     let pendingCalls = [];
     let serialPendingCalls = [];
@@ -23938,7 +23938,7 @@ function PendingCallMixin(target) {
 }
 
 module.exports = PendingCallMixin;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js":[function(require,module,exports){
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -23948,7 +23948,7 @@ function shuffle(array) {
 
 module.exports.shuffle = shuffle;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getBaseURL.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const system = require("../system");
 function getBaseURL(){
@@ -23987,7 +23987,7 @@ function getBaseURL(){
 }
 
 module.exports = getBaseURL;
-},{"../moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/getURLForSsappContext.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js":[function(require,module,exports){
 function getURLForSsappContext(relativePath) {
     if (window["$$"] && $$.SSAPP_CONTEXT && $$.SSAPP_CONTEXT.BASE_URL && $$.SSAPP_CONTEXT.SEED) {
         // if we have a BASE_URL then we prefix the fetch url with BASE_URL
@@ -24002,11 +24002,11 @@ module.exports = {
     getURLForSsappContext
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
 module.exports = {
     bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions
 }
-},{"./BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -24014,7 +24014,7 @@ module.exports.createObservable = function(){
 	observableMixin(obs);
 	return obs;
 }
-},{"./ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
+},{"./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js":[function(require,module,exports){
 const arrayUtils = require("./array");
 const { OpenDSUSafeCallback, createOpenDSUErrorWrapper } = require('./../error')
 
@@ -24173,7 +24173,7 @@ module.exports = {
   runEnoughForMajority,
 };
 
-},{"./../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./array":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/array.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js":[function(require,module,exports){
+},{"./../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./array":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/array.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js":[function(require,module,exports){
 const cryptoSkillsRegistry = {};
 const methodsNames = require("../didMethodsNames");
 const KeyDID_CryptographicSkills = require("./KeyDID_CryptographicSkills");
@@ -24201,7 +24201,7 @@ module.exports = {
     applySkill,
     NAMES: require("./cryptographicSkillsNames")
 };
-},{"../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
+},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
 function CryptographicSkillsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -24397,7 +24397,7 @@ function CryptographicSkillsMixin(target) {
 
 module.exports = CryptographicSkillsMixin;
 
-},{"opendsu":"opendsu","pskcrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js":[function(require,module,exports){
+},{"opendsu":"opendsu","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function GroupDID_CryptographicSkills() {
@@ -24410,7 +24410,7 @@ function GroupDID_CryptographicSkills() {
 }
 
 module.exports = GroupDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function KeyDID_CryptographicSkills() {
@@ -24423,7 +24423,7 @@ function KeyDID_CryptographicSkills() {
 }
 
 module.exports = KeyDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function NameDID_CryptographicSkills() {
@@ -24436,7 +24436,7 @@ function NameDID_CryptographicSkills() {
 }
 
 module.exports = NameDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function SReadDID_CryptographicSkills() {
@@ -24449,7 +24449,7 @@ function SReadDID_CryptographicSkills() {
 }
 
 module.exports = SReadDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js":[function(require,module,exports){
 const didDocumentsFactory = require("../didDocumentsFactory");
 const didMethodsNames = require("../didMethodsNames");
 function SSI_KeyDID_CryptographicSkills() {
@@ -24462,7 +24462,7 @@ function SSI_KeyDID_CryptographicSkills() {
 }
 
 module.exports = SSI_KeyDID_CryptographicSkills;
-},{"../didDocumentsFactory":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js":[function(require,module,exports){
+},{"../didDocumentsFactory":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js":[function(require,module,exports){
 module.exports = {
     CREATE_DID_DOCUMENT:"createDID_Document",
     SIGN: "sign",
@@ -24470,7 +24470,7 @@ module.exports = {
     ENCRYPT_MESSAGE: "encryptMessage",
     DECRYPT_MESSAGE: "decryptMessage"
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js":[function(require,module,exports){
 /*
     W3CDID Minxin is abstracting the DID document for OpenDSU compatible DID methods
 
@@ -24633,7 +24633,7 @@ function W3CDID_Mixin(target, enclave) {
 
 module.exports = W3CDID_Mixin;
 
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
 const methodsNames = require("./didMethodsNames");
 const createNameDIDDocument = require("./didssi/NameDID_Document").initiateDIDDocument;
 const createGroupDID_Document = require("./didssi/GroupDID_Document").initiateDIDDocument;
@@ -24661,7 +24661,7 @@ module.exports = {
     registerDID_Document_Constructor,
     createDID_Document
 }
-},{"./didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/GroupDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./didssi/KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./didssi/NameDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./didssi/SReadDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","./w3cdids/KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js":[function(require,module,exports){
+},{"./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/GroupDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./didssi/KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./didssi/NameDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./didssi/SReadDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","./w3cdids/KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js":[function(require,module,exports){
 module.exports = {
     OPENDSU_METHOD_NAME: "ssi",
     KEY_SUBTYPE: "key",
@@ -24671,7 +24671,7 @@ module.exports = {
     GROUP_METHOD_NAME: "ssi:group",
     DEMO_METHOD_NAME: "demo"
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createOpenDSUErrorWrapper} = require("../../error");
 
@@ -24823,7 +24823,7 @@ module.exports = ConstDID_Document_Mixin;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
 function GroupDID_Document(enclave, domain, groupName, isInitialisation) {
@@ -25036,7 +25036,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 const {bindAutoPendingFunctions} = require("../../utils/BindAutoPendingFunctions");
 
@@ -25126,7 +25126,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
 function NameDID_Document(enclave, domain, name, isInitialisation) {
@@ -25170,7 +25170,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
 function SReadDID_Document(enclave, isInitialisation, seedSSI) {
@@ -25277,7 +25277,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./ConstDID_Document_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ConstDID_Document_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js":[function(require,module,exports){
 function storeDIDInSC(didDocument, callback) {
     const securityContext = require("opendsu").loadAPI("sc").getSecurityContext();
     const __registerDID = () => {
@@ -25431,7 +25431,7 @@ module.exports = {
     create_GroupDID_Method
 }
 
-},{"./GroupDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./NameDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./SReadDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/index.js":[function(require,module,exports){
+},{"./GroupDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/GroupDID_Document.js","./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/KeyDID_Document.js","./NameDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/NameDID_Document.js","./SReadDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/SReadDID_Document.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js":[function(require,module,exports){
 /*
     OpenDSU W3C compatible  ID pluginisable resolver  that can resolve arbitrary DID methods.
 
@@ -25559,7 +25559,7 @@ module.exports = {
     CryptographicSkills: require("./CryptographicSkills/CryptographicSkills")
 }
 
-},{"./CryptographicSkills/CryptographicSkills":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
 function KeyDID_Document(enclave, isInitialisation, publicKey) {
@@ -25650,7 +25650,7 @@ module.exports = {
     }
 };
 
-},{"../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
 function KeyDID_Method() {
     let KeyDIDDocument = require("./KeyDID_Document");
     this.create = function (enclave, seedSSI, callback) {
@@ -25674,7 +25674,7 @@ module.exports = {
         return new KeyDID_Method();
     }
 }
-},{"./KeyDID_Document":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
+},{"./KeyDID_Document":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js":[function(require,module,exports){
 (function (process){(function (){
 module.exports = () => {
     const worker_threads = "worker_threads";
@@ -25701,7 +25701,7 @@ module.exports = () => {
 }
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/web.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js":[function(require,module,exports){
 module.exports = () => {
     addEventListener('message', (event) => {
         const { functionName, payload } = event.data;
@@ -25722,7 +25722,7 @@ module.exports = () => {
         console.error("[workers] web worker error", error);
     });
 }
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/functions.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js":[function(require,module,exports){
 function runSyncFunction({ apiSpaceName, functionName, params }) {
     const openDSU = require("opendsu");
     const api = openDSU.loadAPI(apiSpaceName);
@@ -25742,7 +25742,7 @@ module.exports = {
     runSyncFunction,
     runSyncFunctionOnlyFromWorker
 }
-},{"opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js":[function(require,module,exports){
 (function (global){(function (){
 function getWebWorkerBootScript() {
     const scriptLocation = document.currentScript
@@ -25921,7 +25921,7 @@ module.exports = {
 }
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js":[function(require,module,exports){
 (function (process,global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
@@ -26334,7 +26334,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
@@ -26345,7 +26345,7 @@ module.exports = {
   NODEJS_ENVIRONMENT_TYPE: 'nodejs'
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js":[function(require,module,exports){
 (function (process,global){(function (){
 let logger = console;
 
@@ -26668,7 +26668,7 @@ $$.registerGlobalSymbol("throttlingEvent", function (...args) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","psklogger":false,"swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/index.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","psklogger":false,"swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-cache/index.js":[function(require,module,exports){
 const Cache = require("./lib/Cache")
 let cacheInstance;
 
@@ -26705,7 +26705,7 @@ module.exports = {
     }
 };
 
-},{"./lib/Cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/lib/Cache.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
+},{"./lib/Cache":"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-cache/lib/Cache.js":[function(require,module,exports){
 const DEFAULT_ITEMS_LIMIT = 1000;
 const DEFAULT_STORAGE_LEVELS = 3;
 
@@ -26824,11 +26824,11 @@ function Cache(options) {
 
 module.exports = Cache;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/index.js":[function(require,module,exports){
 const BloomFilter = require("./src/bloom-filter");
 module.exports = BloomFilter;
 
-},{"./src/bloom-filter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/bloom-filter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/bloom-filter.js":[function(require,module,exports){
+},{"./src/bloom-filter":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/bloom-filter.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/bloom-filter.js":[function(require,module,exports){
 const sha2 = require("./crypto-hash-functions/sha2");
 const linearFowlerNollVoJenkinsHashFunction = require("./hash-functions/linear-fowler–noll–vo-jenkins-hash-function");
 const InMemoryBitCollectionStrategy = require("./in-memory-bit-collection-strategy");
@@ -26959,7 +26959,7 @@ BloomFilter.prototype.test = function (data) {
 
 module.exports = BloomFilter;
 
-},{"./crypto-hash-functions/sha2":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js","./hash-functions/linear-fowler–noll–vo-jenkins-hash-function":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js","./in-memory-bit-collection-strategy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js":[function(require,module,exports){
+},{"./crypto-hash-functions/sha2":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js","./hash-functions/linear-fowler–noll–vo-jenkins-hash-function":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js","./in-memory-bit-collection-strategy":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/crypto-hash-functions/sha2.js":[function(require,module,exports){
 const crypto = require("crypto");
 
 function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
@@ -26971,7 +26971,7 @@ function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
 
 module.exports = linearFowlerNollVoJenkinsHashFunction;
 
-},{"crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js":[function(require,module,exports){
+},{"crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js":[function(require,module,exports){
 /**
  * Fowler–Noll–Vo hash function - FNV-1a hash variant
  * https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1a_hash
@@ -27011,7 +27011,7 @@ function fnv_multiply(hash) {
 
 module.exports = fowlerNollVo1a;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js":[function(require,module,exports){
 /**
  * Jenkins hash function - one at a time hash function
  * https://en.wikipedia.org/wiki/Jenkins_hash_function
@@ -27033,7 +27033,7 @@ function jenkins(key) {
 
 module.exports = jenkins;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/linear-fowler–noll–vo-jenkins-hash-function.js":[function(require,module,exports){
 const fowlerNollVo1a = require("./fowler–noll–vo-1a");
 const jenkins = require("./jenkins");
 
@@ -27044,7 +27044,7 @@ function linearFowlerNollVoJenkinsHashFunction(data, index, options) {
 
 module.exports = linearFowlerNollVoJenkinsHashFunction;
 
-},{"./fowler–noll–vo-1a":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js","./jenkins":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js":[function(require,module,exports){
+},{"./fowler–noll–vo-1a":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/fowler–noll–vo-1a.js","./jenkins":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/hash-functions/jenkins.js"}],"/home/runner/work/privatesky/privatesky/modules/psk-dbf/src/in-memory-bit-collection-strategy.js":[function(require,module,exports){
 function InMemoryBitCollectionStrategy(options) {
     let { byteCount, data } = options;
 
@@ -27099,7 +27099,7 @@ InMemoryBitCollectionStrategy.prototype.length = function () {
 
 module.exports = InMemoryBitCollectionStrategy;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js":[function(require,module,exports){
 const PskCrypto = require("./lib/PskCrypto");
 const ssutil = require("./signsensusDS/ssutil");
 
@@ -27110,7 +27110,7 @@ module.exports.hashValues = ssutil.hashValues;
 module.exports.DuplexStream = require("./lib/utils/DuplexStream");
 
 module.exports.isStream = require("./lib/utils/isStream");
-},{"./lib/PskCrypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js":[function(require,module,exports){
+},{"./lib/PskCrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js","./lib/utils/DuplexStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js","./lib/utils/isStream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js","./signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -27215,7 +27215,7 @@ module.exports = {
     convertKeysToKeyObjects
 }
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js":[function(require,module,exports){
 module.exports = {
     curveName: 'secp256k1',
     encodingFormat: 'base64',
@@ -27231,7 +27231,7 @@ module.exports = {
     publicKeyType: 'spki'
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -27269,7 +27269,7 @@ module.exports = {
     symmetricDecrypt
 }
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -27306,7 +27306,7 @@ module.exports = {
     verifyDigitalSignature
 }
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -27344,7 +27344,7 @@ class ECEphemeralKeyAgreement {
 
 module.exports = ECEphemeralKeyAgreement
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js":[function(require,module,exports){
 'use strict';
 
 const cipher = require('./cipher')
@@ -27374,7 +27374,7 @@ module.exports = {
     PublicKeyDeserializer: require('./pkdeserializer')
 }
 
-},{"./cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js","./digitalsig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js","./ecephka":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js","./kdf":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js","./kmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js","./pkdeserializer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js","./pkserializer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js":[function(require,module,exports){
+},{"./cipher":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/cipher.js","./digitalsig":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/digitalsig.js","./ecephka":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/ecephka.js","./kdf":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js","./kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js","./pkdeserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js","./pkserializer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kdf.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -27405,7 +27405,7 @@ module.exports = {
     KDF2
 }
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/kmac.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto');
@@ -27432,7 +27432,7 @@ module.exports = {
     verifyKMAC
 }
 
-},{"../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","./index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js":[function(require,module,exports){
+},{"../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","./index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkdeserializer.js":[function(require,module,exports){
 'use strict';
 
 const crypto = require('crypto')
@@ -27466,7 +27466,7 @@ function PublicKeyDeserializer() {
 
 module.exports = new PublicKeyDeserializer()
 
-},{"../../lib/ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js":[function(require,module,exports){
+},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/pkserializer.js":[function(require,module,exports){
 const config = require('../config');
 
 function PublicKeySerializer() {
@@ -27495,7 +27495,7 @@ function PublicKeySerializer() {
 
 module.exports = new PublicKeySerializer()
 
-},{"../../lib/ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js":[function(require,module,exports){
+},{"../../lib/ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -27564,7 +27564,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     };
 }
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -27624,7 +27624,7 @@ module.exports.encrypt = function (senderECSigningKeyPair, receiverECDHPublicKey
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 };
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -27632,7 +27632,7 @@ module.exports = {
   decrypt: require('./decrypt').decrypt,
   getDecodedECDHPublicKeyFromEncEnvelope: require('../common').getDecodedECDHPublicKeyFromEncEnvelope
 }
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto');
@@ -27697,7 +27697,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     };
 }
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto');
@@ -27752,9 +27752,9 @@ module.exports.encrypt = function (senderECDHKeyPair, receiverECDHPublicKey, mes
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 };
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -27806,7 +27806,7 @@ module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
     return mycrypto.symmetricDecrypt(symmetricCipherKey, ciphertext, iv, options)
 }
 
-},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js":[function(require,module,exports){
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const utils = require('../utils')
@@ -27867,7 +27867,7 @@ module.exports.encrypt = function (message, ...receiverECDHPublicKeys) {
     }
 }
 
-},{"../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -27876,7 +27876,7 @@ module.exports = {
   getRecipientECDHPublicKeysFromEncEnvelope: require('../utils').getRecipientECDHPublicKeysFromEncEnvelope
 }
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -27927,7 +27927,7 @@ module.exports.decrypt = function (receiverECDHKeyPair, encEnvelope, options) {
     }
 }
 
-},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js":[function(require,module,exports){
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -27976,9 +27976,9 @@ module.exports.encrypt = function (senderECSigningKeyPair, message, ...receiverE
     return eciesGEEnvelope;
 }
 
-},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"][0].apply(exports,arguments)
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js":[function(require,module,exports){
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js"][0].apply(exports,arguments)
+},{"../utils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/index.js":[function(require,module,exports){
 'use strict';
 
 const sender = require('./sender')
@@ -27994,7 +27994,7 @@ module.exports = {
 
 
 
-},{"./recipient":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js","./sender":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js":[function(require,module,exports){
+},{"./recipient":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js","./sender":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/recipient.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -28078,7 +28078,7 @@ module.exports.parseKeyBuffer = function (keyBuffer, options) {
     }
 }
 
-},{"../../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js":[function(require,module,exports){
+},{"../../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/utils/sender.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../../crypto')
@@ -28116,7 +28116,7 @@ module.exports.senderMultiRecipientECIESEncrypt = function(message, ...receiverE
     return $$.Buffer.from(JSON.stringify(eciesInstancesArray))
 }
 
-},{"../../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js","../../ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -28167,7 +28167,7 @@ module.exports.decrypt = function (receiverECDHPrivateKey, encEnvelope, options)
     return mycrypto.symmetricDecrypt(symmetricEncryptionKey, ciphertext, iv, options)
 }
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js":[function(require,module,exports){
 'use strict';
 
 const mycrypto = require('../crypto')
@@ -28209,9 +28209,9 @@ module.exports.encrypt = function (receiverECDHPublicKey, message, options) {
     return common.createEncryptedEnvelopeObject(receiverECDHPublicKey, ephemeralPublicKey, ciphertext, iv, tag, options)
 }
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js","./encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/config.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/crypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js"][0].apply(exports,arguments)
+},{"../common":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/common/index.js","./decrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/decrypt.js","./encrypt":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/encrypt.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js":[function(require,module,exports){
 module.exports = {
     ecies_encrypt: require("./ecies").encrypt,
     ecies_decrypt: require("./ecies").decrypt,
@@ -28227,7 +28227,7 @@ module.exports = {
     ecies_group_getRecipientECDHPublicKeysFromEncEnvelope: require("./ecies-group-encryption/ecies-ge-doa").getRecipientECDHPublicKeysFromEncEnvelope
 }
 
-},{"./ecies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js","./ecies-doa-ds":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js","./ecies-doa-kmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js","./ecies-group-encryption/ecies-ge-anon":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js","./ecies-group-encryption/ecies-ge-doa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js","./ecies/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js":[function(require,module,exports){
+},{"./ecies":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js","./ecies-doa-ds":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-ds/index.js","./ecies-doa-kmac":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-doa-kmac/index.js","./ecies-group-encryption/ecies-ge-anon":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-anon/index.js","./ecies-group-encryption/ecies-ge-doa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies-group-encryption/ecies-ge-doa/index.js","./ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/ecies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js":[function(require,module,exports){
 var jws = require('./jws');
 
 module.exports = function (jwt, options) {
@@ -28258,7 +28258,7 @@ module.exports = function (jwt, options) {
     }
     return payload;
 };
-},{"./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/index.js":[function(require,module,exports){
+},{"./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js":[function(require,module,exports){
 module.exports = {
     verify: require('./verify'),
     sign: require('./sign'),
@@ -28269,7 +28269,7 @@ Object.defineProperty(module.exports, 'decode', {
     value: require('./decode'),
 });
 
-},{"./decode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./sign":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/sign.js","./verify":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/verify.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js":[function(require,module,exports){
+},{"./decode":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./sign":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/sign.js","./verify":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/verify.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js":[function(require,module,exports){
 var getParamBytesForAlg = require('./param-bytes-for-alg');
 
 var MAX_OCTET = 0x80,
@@ -28453,7 +28453,7 @@ module.exports = {
     derToJose: derToJose,
     joseToDer: joseToDer
 };
-},{"./param-bytes-for-alg":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js":[function(require,module,exports){
+},{"./param-bytes-for-alg":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js":[function(require,module,exports){
 var crypto = require('crypto');
 var formatEcdsa = require('./ecdsa-sig-formatter');
 var util = require('util');
@@ -28704,7 +28704,7 @@ module.exports = function jwa(algorithm) {
         verify: verifierFactories[algo](bits),
     }
 };
-},{"./ecdsa-sig-formatter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js":[function(require,module,exports){
+},{"./ecdsa-sig-formatter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/ecdsa-sig-formatter.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/param-bytes-for-alg.js":[function(require,module,exports){
 'use strict';
 
 function getParamSize(keySize) {
@@ -28728,7 +28728,7 @@ function getParamBytesForAlg(alg) {
 }
 
 module.exports = getParamBytesForAlg;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js":[function(require,module,exports){
 var asn = require('../../lib/asn1/asn1');
 var crypto = require('crypto')
 var BN = asn.bignum
@@ -28781,7 +28781,7 @@ function factor(e, d, n) {
 }
 
 module.exports = factor
-},{"../../lib/asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js":[function(require,module,exports){
+},{"../../lib/asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var asn = require('../../lib/asn1/asn1')
 var factor = require('./factor')
@@ -29018,7 +29018,7 @@ module.exports = {
 }
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../lib/asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./factor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js":[function(require,module,exports){
+},{"../../lib/asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./factor":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/factor.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js":[function(require,module,exports){
 (function (process){(function (){
 /*global module, process*/
 var Stream = require('stream');
@@ -29076,7 +29076,7 @@ DataStream.prototype.end = function end(data) {
 module.exports = DataStream;
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js":[function(require,module,exports){
 /*global exports*/
 var SignStream = require('./sign-stream');
 var VerifyStream = require('./verify-stream');
@@ -29099,7 +29099,7 @@ exports.createSign = function createSign(opts) {
 exports.createVerify = function createVerify(opts) {
     return new VerifyStream(opts);
 };
-},{"./sign-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js","./verify-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js":[function(require,module,exports){
+},{"./sign-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js","./verify-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/sign-stream.js":[function(require,module,exports){
 var DataStream = require('./data-stream');
 var jwa = require('../jwa');
 var Stream = require('stream');
@@ -29176,7 +29176,7 @@ SignStream.prototype.sign = function sign() {
 SignStream.sign = jwsSign;
 
 module.exports = SignStream;
-},{"../jwa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js":[function(require,module,exports){
+},{"../jwa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js":[function(require,module,exports){
 module.exports = function toString(obj) {
     if (typeof obj === 'string')
         return obj;
@@ -29184,7 +29184,7 @@ module.exports = function toString(obj) {
         return obj.toString();
     return JSON.stringify(obj);
 };
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/verify-stream.js":[function(require,module,exports){
 /*global module*/
 var DataStream = require('./data-stream');
 var jwa = require('../jwa');
@@ -29304,7 +29304,7 @@ VerifyStream.isValid = isValidJws;
 VerifyStream.verify = jwsVerify;
 
 module.exports = VerifyStream;
-},{"../jwa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js":[function(require,module,exports){
+},{"../jwa":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwa/index.js","./data-stream":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/data-stream.js","./tostring":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/tostring.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js":[function(require,module,exports){
 var JsonWebTokenError = function (message, error) {
     Error.call(this, message);
     if(Error.captureStackTrace) {
@@ -29319,7 +29319,7 @@ JsonWebTokenError.prototype = Object.create(Error.prototype);
 JsonWebTokenError.prototype.constructor = JsonWebTokenError;
 
 module.exports = JsonWebTokenError;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js":[function(require,module,exports){
 var JsonWebTokenError = require('./JsonWebTokenError');
 
 var NotBeforeError = function (message, date) {
@@ -29333,7 +29333,7 @@ NotBeforeError.prototype = Object.create(JsonWebTokenError.prototype);
 NotBeforeError.prototype.constructor = NotBeforeError;
 
 module.exports = NotBeforeError;
-},{"./JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js":[function(require,module,exports){
+},{"./JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js":[function(require,module,exports){
 var JsonWebTokenError = require('./JsonWebTokenError');
 
 var TokenExpiredError = function (message, expiredAt) {
@@ -29347,7 +29347,7 @@ TokenExpiredError.prototype = Object.create(JsonWebTokenError.prototype);
 TokenExpiredError.prototype.constructor = TokenExpiredError;
 
 module.exports = TokenExpiredError;
-},{"./JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js":[function(require,module,exports){
+},{"./JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js":[function(require,module,exports){
 module.exports = function (time, iat) {
     var timestamp = iat || Math.floor(Date.now() / 1000);
 
@@ -29358,7 +29358,7 @@ module.exports = function (time, iat) {
     }
 
 };
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/sign.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/sign.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var timespan = require('./lib/timespan');
 var jws = require('./jws');
@@ -29492,7 +29492,7 @@ module.exports = function (payload, secretOrPrivateKey, options, callback) {
 };
 }).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js","./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/timespan":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/verify.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/timespan":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/verify.js":[function(require,module,exports){
 var JsonWebTokenError = require('./lib/JsonWebTokenError');
 var NotBeforeError = require('./lib/NotBeforeError');
 var TokenExpiredError = require('./lib/TokenExpiredError');
@@ -29718,7 +29718,7 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
         return done(null, payload);
     });
 };
-},{"./decode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./jwkToPemConverter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js","./jws":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/JsonWebTokenError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js","./lib/NotBeforeError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js","./lib/TokenExpiredError":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js","./lib/timespan":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
+},{"./decode":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./jwkToPemConverter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js","./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js","./lib/NotBeforeError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js","./lib/TokenExpiredError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js","./lib/timespan":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
 function ECKeyGenerator() {
     const crypto = require('crypto');
     const KeyEncoder = require('./keyEncoder');
@@ -29806,7 +29806,7 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 
-},{"./keyEncoder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
@@ -30020,7 +30020,7 @@ module.exports = new PskCrypto();
 
 
 
-},{"../js-mutual-auth-ecies/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"../js-mutual-auth-ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
     const crypto = require("crypto");
     const utils = require("./utils/cryptoUtils");
@@ -30120,7 +30120,7 @@ function PskEncryption(algorithm) {
 
 module.exports = PskEncryption;
 
-},{"./utils/cryptoUtils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
+},{"./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js":[function(require,module,exports){
 var asn1 = require('./asn1');
 var inherits = require('util').inherits;
 
@@ -30181,7 +30181,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js","vm":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/vm-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
+},{"./asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js","vm":"/home/runner/work/privatesky/privatesky/node_modules/vm-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js":[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('./bignum/bn');
@@ -30192,7 +30192,7 @@ asn1.constants = require('./constants/index');
 asn1.decoders = require('./decoders/index');
 asn1.encoders = require('./encoders/index');
 
-},{"./api":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./api":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/api.js","./base/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","./bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","./constants/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js","./decoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js","./encoders/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const Reporter = require('../base').Reporter;
 
@@ -30311,7 +30311,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
     return out;
 };
 
-},{"../base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js":[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -30319,7 +30319,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/buffer.js","./node":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js","./reporter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/node.js":[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
 //var assert = require('double-check').assert;
@@ -30919,7 +30919,7 @@ Node.prototype._encodePrimitive = function encodePrimitive(tag, data) {
     throw new Error('Unsupported tag: ' + tag);
 };
 
-},{"../base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/base/reporter.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 function Reporter(options) {
@@ -31023,7 +31023,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
+},{"util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js":[function(require,module,exports){
 (function (module, exports) {
 
 'use strict';
@@ -33466,7 +33466,7 @@ Mont.prototype.invm = function invm(a) {
 
 })(typeof module === 'undefined' || module, this);
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js":[function(require,module,exports){
 var constants = require('../constants');
 
 exports.tagClass = {
@@ -33510,7 +33510,7 @@ exports.tag = {
 };
 exports.tagByName = constants._reverse(exports.tag);
 
-},{"../constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/index.js":[function(require,module,exports){
 var constants = exports;
 
 // Helper
@@ -33531,7 +33531,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/constants/der.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -33824,13 +33824,13 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/index.js":[function(require,module,exports){
 var decoders = exports;
 
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/pem.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 
 const asn1 = require('../asn1');
@@ -33880,7 +33880,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
     return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/decoders/der.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js":[function(require,module,exports){
 const inherits = require('util').inherits;
 const asn1 = require('../asn1');
 const base = asn1.base;
@@ -34150,13 +34150,13 @@ function encodeTag(tag, primitive, cls, reporter) {
     return res;
 }
 
-},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/index.js":[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/pem.js":[function(require,module,exports){
 var inherits = require('util').inherits;
 
 var asn1 = require('../asn1');
@@ -34180,7 +34180,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"../asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
+},{"../asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./der":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/encoders/der.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js":[function(require,module,exports){
 'use strict'
 
 const asn1 = require('./asn1/asn1');
@@ -34345,7 +34345,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 
 module.exports = KeyEncoder;
 
-},{"./asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
+},{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const asn1 = require('../asn1/asn1');
 const BN = require('../asn1/bignum/bn');
@@ -34449,7 +34449,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../asn1/asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -34474,7 +34474,7 @@ DuplexStream.prototype._read = function (n) {
 };
 
 module.exports = DuplexStream;
-},{"stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
+},{"stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js":[function(require,module,exports){
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE = ALPHABET.length;
 const LEADER = ALPHABET.charAt(0);
@@ -34609,7 +34609,7 @@ module.exports = {
     encode,
     decode
 };
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 
 const keySizes = [128, 192, 256];
@@ -34699,7 +34699,7 @@ module.exports = {
 };
 
 
-},{"./base58":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"./base58":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
@@ -34727,7 +34727,7 @@ module.exports            = isStream;
 module.exports.isReadable = isReadable;
 module.exports.isWritable = isWritable;
 module.exports.isDuplex   = isDuplex;
-},{"stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
+},{"stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js":[function(require,module,exports){
 /*
  SignSens helper functions
  */
@@ -34926,7 +34926,7 @@ exports.createSignature = function (agent,counter, nextPublic, arr, size){
 
     return agent + ":" + counter + ":" + nextPublic + ":" + result;
 }
-},{"crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/queue/index.js":[function(require,module,exports){
+},{"crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/queue/index.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -34995,11 +34995,11 @@ Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/soundpubsub/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/soundpubsub/index.js":[function(require,module,exports){
 module.exports = {
 					soundPubSub: require("./lib/soundPubSub").soundPubSub
 };
-},{"./lib/soundPubSub":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
+},{"./lib/soundPubSub":"/home/runner/work/privatesky/privatesky/modules/soundpubsub/lib/soundPubSub.js"}],"/home/runner/work/privatesky/privatesky/modules/soundpubsub/lib/soundPubSub.js":[function(require,module,exports){
 /*
 Initial License: (c) Axiologic Research & Alboaie Sînică.
 Contributors: Axiologic Research , PrivateSky project
@@ -35424,7 +35424,7 @@ function SoundPubSub(){
 
 exports.soundPubSub = new SoundPubSub();
 
-},{"queue":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/queue/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/index.js":[function(require,module,exports){
+},{"queue":"/home/runner/work/privatesky/privatesky/modules/queue/index.js"}],"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/index.js":[function(require,module,exports){
 const Middleware = require("./lib/Middleware");
 let middlewareInstance = new Middleware();
 
@@ -35432,7 +35432,7 @@ exports.getMiddleware = function(){
     return middlewareInstance;
 };
 
-},{"./lib/Middleware":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/Middleware.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/EventRequest.js":[function(require,module,exports){
+},{"./lib/Middleware":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/Middleware.js"}],"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/EventRequest.js":[function(require,module,exports){
 const unsupportedMethods = ["acceptsCharsets", "acceptsEncodings", "acceptsLanguages", "param", "is", "range"];
 const unsupportedProperties = ["app", "fresh", "ip", "ips", "signedCookies", "stale", "subdomains", "xhr"];
 
@@ -35564,7 +35564,7 @@ function EventRequest(event) {
 
 exports.EventRequest = EventRequest;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/EventResponse.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/EventResponse.js":[function(require,module,exports){
 const unsupportedMethods = ["append", "redirect", "location", "links", "jsonp", "render", "sendFile"];
 const unsupportedProperties = ["app", "headersSent", "locals"];
 // The following status codes require responseBody to be null
@@ -35753,7 +35753,7 @@ if (typeof FetchEvent !== "undefined") {
 }
 
 exports.EventResponse = EventResponse;
-},{"./HttpStatuses":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js":[function(require,module,exports){
+},{"./HttpStatuses":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js"}],"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/HttpStatuses.js":[function(require,module,exports){
 exports.httpStatuses = {
     "100": "Continue",
     "101": "Switching Protocols",
@@ -35820,7 +35820,7 @@ exports.httpStatuses = {
     "511": "Network Authentication Required"
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/Middleware.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/Middleware.js":[function(require,module,exports){
 const EventResponse = require("./EventResponse").EventResponse;
 const EventRequest = require("./EventRequest").EventRequest;
 
@@ -36130,7 +36130,7 @@ function Middleware() {
 module.exports = Middleware;
 
 
-},{"./EventRequest":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
+},{"./EventRequest":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/EventRequest.js","./EventResponse":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/lib/EventResponse.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js":[function(require,module,exports){
 (function (global){(function (){
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
@@ -36238,7 +36238,7 @@ module.exports = BootEngine;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"opendsu":"opendsu","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js":[function(require,module,exports){
+},{"opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js":[function(require,module,exports){
 const { Readable } = require('stream');
 const util = require('util');
 
@@ -36280,7 +36280,7 @@ FileReadableStreamAdapter.prototype._read = function (size) {
 
 module.exports = FileReadableStreamAdapter;
 
-},{"stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js":[function(require,module,exports){
+},{"stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js":[function(require,module,exports){
 const FileReadableStreamAdapter = require("./FileReadableStreamAdapter");
 
 const IS_NODE_ENV = typeof $$ !== "undefined" && $$.environmentType && $$.environmentType === "nodejs";
@@ -36714,7 +36714,7 @@ Uploader.prototype.upload = function (request, callback) {
 
 module.exports = Uploader;
 
-},{"./FileReadableStreamAdapter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js":[function(require,module,exports){
+},{"./FileReadableStreamAdapter":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/Uploader/FileReadableStreamAdapter.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js":[function(require,module,exports){
 const MimeType = require("../util/MimeType");
 const securityPolicies = "/app/security.policies";
 const cache = require("opendsu").loadApi("cache").getCacheForVault("middlewareCache", 1000*60*60);
@@ -36858,7 +36858,7 @@ function RawDossierHelper(rawDossier) {
 
 module.exports = RawDossierHelper;
 
-},{"../util/MimeType":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js":[function(require,module,exports){
+},{"../util/MimeType":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js":[function(require,module,exports){
 function SWBootScript(keySSI) {
 
     console.log("Booting host...");
@@ -36917,7 +36917,7 @@ module.exports = SWBootScript;
 
 
 
-},{"../../../powerCords/browser/ServiceWorkerPC":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","../../BootEngine":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/callflow/index.js","soundpubsub":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/soundpubsub/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js":[function(require,module,exports){
+},{"../../../powerCords/browser/ServiceWorkerPC":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","../../BootEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/BootEngine.js","callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/index.js","soundpubsub":"/home/runner/work/privatesky/privatesky/modules/soundpubsub/index.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js":[function(require,module,exports){
 const extensionsMimeTypes = {
     "aac": {
         name: "audio/aac",
@@ -37193,7 +37193,7 @@ module.exports.getMimeTypeFromExtension = function (extension) {
     return defaultMimeType;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js":[function(require,module,exports){
 const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
     const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
@@ -37295,7 +37295,7 @@ function ServiceWorkerPC() {
 
 module.exports = ServiceWorkerPC;
 
-},{"../../utils/SWChannelsManager":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
+},{"../../utils/SWChannelsManager":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../utils/utilFunctions":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/utilFunctions.js","ssapp-middleware":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js":[function(require,module,exports){
 const maxQueueSize = 100;
 const TOKEN_PLACEHOLDER = "WEB_TOKEN_PLACEHOLDER";
 const queues = {};
@@ -37433,7 +37433,7 @@ module.exports.getChannelsManager = function(){
     return channelManagerInstance;
 }
 
-},{"../powerCords/browser/ServiceWorkerPC":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/utilFunctions.js":[function(require,module,exports){
+},{"../powerCords/browser/ServiceWorkerPC":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/ServiceWorkerPC.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/utilFunctions.js":[function(require,module,exports){
 const urlReg = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?([a-z0-9]+([\-.]{1}[a-z0-9]+)*\.[a-z]{2,5}|localhost)(:[0-9]{1,5})?(\/.*)?$/gi;
 const domainReg = /^([0-9a-zA-Z]*)\/agent\/([0-9a-zA-Z]*)$/gi;
 const httpUrlRegex = new RegExp(urlReg);
@@ -37519,7 +37519,7 @@ function handleOptionsRequest(req,res, next){
 
 module.exports = {prepareMessage, getChannelName, isUrl, isInMyHosts, handleOptionsRequest};
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
@@ -37571,7 +37571,7 @@ module.exports.ensureIsBuffer = function (data) {
     return buffer;
 }
 
-},{"./lib/Combos":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
+},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js":[function(require,module,exports){
 function product(args) {
     if(!args.length){
         return [ [] ];
@@ -37597,7 +37597,7 @@ function objectProduct(obj) {
 }
 
 module.exports = objectProduct;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js":[function(require,module,exports){
 var meta = "meta";
 
 function OwM(serialized){
@@ -37688,7 +37688,7 @@ OwM.prototype.setMetaFor = function(obj, name, value){
 };
 
 module.exports = OwM;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js":[function(require,module,exports){
 function QueueElement(content) {
 	this.content = content;
 	this.next = null;
@@ -37789,7 +37789,7 @@ Queue.prototype.inspect = Queue.prototype.toString;
 
 module.exports = Queue;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js":[function(require,module,exports){
 const HEADER_SIZE_RESEARVED = 4;
 
 function SwarmPacker(){
@@ -37938,7 +37938,7 @@ SwarmPacker.getHeader = function(pack){
     return header;
 };
 module.exports = SwarmPacker;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js":[function(require,module,exports){
 
 function TaskCounter(finalCallback) {
 	let results = [];
@@ -37988,7 +37988,7 @@ function TaskCounter(finalCallback) {
 }
 
 module.exports = TaskCounter;
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js":[function(require,module,exports){
 const OwM = require("./OwM");
 
 /*
@@ -38044,7 +38044,7 @@ exports.jsonToNative = function(serialisedValues, result){
     };
 
 };
-},{"./OwM":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
+},{"./OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js":[function(require,module,exports){
 (function (process){(function (){
 function replaceAll(str, search, replacement) {
     return str.split(search).join(replacement);
@@ -38234,7 +38234,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js":[function(require,module,exports){
 (function (process){(function (){
 const PING = "PING";
 const PONG = "PONG";
@@ -38329,7 +38329,7 @@ module.exports.enableLifeLine = function(timeout){
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","child_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","child_process":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js":[function(require,module,exports){
 (function (process){(function (){
 var commands = {};
 var commands_help = {};
@@ -38403,7 +38403,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -38470,7 +38470,7 @@ exports.short_uuid = function(callback) {
         callback(null, encode(buf));
     });
 };
-},{"crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
+},{"crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js":[function(require,module,exports){
 function UidGenerator(minBuffers, buffersSize) {
     const Queue = require("./Queue");
     var PSKBuffer = typeof $$ !== "undefined" && $$.PSKBuffer ? $$.PSKBuffer : $$.Buffer;
@@ -38572,7 +38572,7 @@ module.exports.createUidGenerator = function (minBuffers, bufferSize) {
     return new UidGenerator(minBuffers, bufferSize);
 };
 
-},{"./Queue":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/lib/Queue.js","crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/index.js":[function(require,module,exports){
+},{"./Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js":[function(require,module,exports){
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
@@ -38628,7 +38628,7 @@ module.exports = {
     registerWorkerStrategy
 };
 
-},{"./lib/Pool-Isolates":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
+},{"./lib/Pool-Isolates":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js","./lib/Pool-Threads":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js","./lib/Pool-Web-Workers":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js","./lib/PoolConfig":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js","./lib/WorkerPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js","./lib/WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js":[function(require,module,exports){
 (function (setImmediate){(function (){
 const {assert} = require('./utils');
 const util = require('util');
@@ -38740,7 +38740,7 @@ module.exports = AbstractPool;
 
 }).call(this)}).call(this,require("timers").setImmediate)
 
-},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js","events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","timers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/timers-browserify/main.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","timers":"/home/runner/work/privatesky/privatesky/node_modules/timers-browserify/main.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Isolates.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 /**
@@ -38776,7 +38776,7 @@ util.inherits(PoolIsolates, AbstractPool);
 
 module.exports = PoolIsolates;
 
-},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Threads.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -38829,7 +38829,7 @@ util.inherits(PoolThreads, AbstractPool);
 
 module.exports = PoolThreads;
 
-},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/Pool-Web-Workers.js":[function(require,module,exports){
 const AbstractPool = require('./AbstractPool');
 const util = require('util');
 
@@ -38883,7 +38883,7 @@ util.inherits(PoolWebWorkers, AbstractPool);
 
 module.exports = PoolWebWorkers;
 
-},{"./AbstractPool":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/overwrite-require/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
+},{"./AbstractPool":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/AbstractPool.js","overwrite-require":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/PoolConfig.js":[function(require,module,exports){
 const os = require('os');
 const util = require('util');
 const WorkerStrategies = require('./WorkerStrategies');
@@ -38985,7 +38985,7 @@ PoolConfig.createByOverwritingDefaults = function (config = {}, options = {allow
 };
 
 module.exports = PoolConfig;
-},{"./WorkerStrategies":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/os-browserify/browser.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
+},{"./WorkerStrategies":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js":[function(require,module,exports){
 function Queue() {
     const backingStorage = [];
 
@@ -39047,7 +39047,7 @@ function Queue() {
 
 module.exports = Queue;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerPool.js":[function(require,module,exports){
 /** @param pool {AbstractPool} */
 function WorkerPool(pool) {
     const { assert } = require("./utils");
@@ -39181,7 +39181,7 @@ function WorkerPool(pool) {
 
 module.exports = WorkerPool;
 
-},{"./QueueShim.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js","swarmutils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarmutils/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
+},{"./QueueShim.js":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/QueueShim.js","./utils":"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/WorkerStrategies.js":[function(require,module,exports){
 const WorkerStrategies = {
     THREADS: 'threads',
     ISOLATES: 'isolates',
@@ -39190,7 +39190,7 @@ const WorkerStrategies = {
 
 module.exports = Object.freeze(WorkerStrategies);
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/syndicate/lib/utils.js":[function(require,module,exports){
 function assert(condition, {ifFails}) {
     if (condition === false) {
         console.error(ifFails);
@@ -39201,7 +39201,7 @@ module.exports = {
     assert
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/@msgpack/msgpack/dist/utils/prettyByte.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/@msgpack/msgpack/dist/utils/prettyByte.js":[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prettyByte = void 0;
@@ -39210,7 +39210,7 @@ function prettyByte(byte) {
 }
 exports.prettyByte = prettyByte;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1.js":[function(require,module,exports){
 'use strict';
 
 const asn1 = exports;
@@ -39223,7 +39223,7 @@ asn1.constants = require('./asn1/constants');
 asn1.decoders = require('./asn1/decoders');
 asn1.encoders = require('./asn1/encoders');
 
-},{"./asn1/api":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/api.js","./asn1/base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/index.js","./asn1/constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js","./asn1/decoders":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./asn1/encoders":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/api.js":[function(require,module,exports){
+},{"./asn1/api":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/api.js","./asn1/base":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/index.js","./asn1/constants":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js","./asn1/decoders":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./asn1/encoders":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/api.js":[function(require,module,exports){
 'use strict';
 
 const encoders = require('./encoders');
@@ -39282,7 +39282,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"./decoders":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./encoders":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js":[function(require,module,exports){
+},{"./decoders":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js","./encoders":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -39437,7 +39437,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
   return out;
 };
 
-},{"../base/reporter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safer-buffer/safer.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/index.js":[function(require,module,exports){
+},{"../base/reporter":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/index.js":[function(require,module,exports){
 'use strict';
 
 const base = exports;
@@ -39447,7 +39447,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","./node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","./reporter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/node.js":[function(require,module,exports){
+},{"./buffer":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","./node":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","./reporter":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js":[function(require,module,exports){
 'use strict';
 
 const Reporter = require('../base/reporter').Reporter;
@@ -40087,7 +40087,7 @@ Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '()+,-./:=?]*$/.test(str);
 };
 
-},{"../base/buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/reporter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js":[function(require,module,exports){
+},{"../base/buffer":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/reporter":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/reporter.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -40212,7 +40212,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js":[function(require,module,exports){
+},{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js":[function(require,module,exports){
 'use strict';
 
 // Helper
@@ -40272,7 +40272,7 @@ exports.tag = {
 };
 exports.tagByName = reverse(exports.tag);
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/index.js":[function(require,module,exports){
 'use strict';
 
 const constants = exports;
@@ -40295,7 +40295,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -40632,7 +40632,7 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../base/buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js":[function(require,module,exports){
+},{"../base/buffer":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/buffer.js","../base/node":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/index.js":[function(require,module,exports){
 'use strict';
 
 const decoders = exports;
@@ -40640,7 +40640,7 @@ const decoders = exports;
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/pem.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -40693,7 +40693,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
   return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safer-buffer/safer.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/decoders/der.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -40990,7 +40990,7 @@ function encodeTag(tag, primitive, cls, reporter) {
   return res;
 }
 
-},{"../base/node":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safer-buffer/safer.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js":[function(require,module,exports){
+},{"../base/node":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/base/node.js","../constants/der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/constants/der.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safer-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safer-buffer/safer.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/index.js":[function(require,module,exports){
 'use strict';
 
 const encoders = exports;
@@ -40998,7 +40998,7 @@ const encoders = exports;
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","./pem":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","./pem":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/pem.js":[function(require,module,exports){
 'use strict';
 
 const inherits = require('inherits');
@@ -41023,7 +41023,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"./der":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+},{"./der":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1/encoders/der.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -44471,7 +44471,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/assert.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/assert/assert.js":[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -44982,7 +44982,7 @@ var objectKeys = Object.keys || function (obj) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"object-assign":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/object-assign/index.js","util/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+},{"object-assign":"/home/runner/work/privatesky/privatesky/node_modules/object-assign/index.js","util/":"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -45007,14 +45007,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/util/util.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/util/util.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -45605,7 +45605,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/base64-js/index.js":[function(require,module,exports){
+},{"./support/isBuffer":"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/base64-js/index.js":[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -45757,7 +45757,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -49306,7 +49306,7 @@ function fromByteArray (uint8) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/brorand/index.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/brorand/index.js":[function(require,module,exports){
 var r;
 
 module.exports = function rand(len) {
@@ -49373,9 +49373,9 @@ if (typeof self === 'object') {
   }
 }
 
-},{"crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js":[function(require,module,exports){
+},{"crypto":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js":[function(require,module,exports){
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/aes.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/aes.js":[function(require,module,exports){
 // based on the aes implimentation in triple sec
 // https://github.com/keybase/triplesec
 // which is in turn based on the one from crypto-js
@@ -49605,7 +49605,7 @@ AES.prototype.scrub = function () {
 
 module.exports.AES = AES
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/authCipher.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/authCipher.js":[function(require,module,exports){
 var aes = require('./aes')
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('cipher-base')
@@ -49724,7 +49724,7 @@ StreamCipher.prototype.setAAD = function setAAD (buf) {
 
 module.exports = StreamCipher
 
-},{"./aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/aes.js","./ghash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/ghash.js","./incr32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js","cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/browser.js":[function(require,module,exports){
+},{"./aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/aes.js","./ghash":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/ghash.js","./incr32":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js","cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/browser.js":[function(require,module,exports){
 var ciphers = require('./encrypter')
 var deciphers = require('./decrypter')
 var modes = require('./modes/list.json')
@@ -49739,7 +49739,7 @@ exports.createDecipher = exports.Decipher = deciphers.createDecipher
 exports.createDecipheriv = exports.Decipheriv = deciphers.createDecipheriv
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"./decrypter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/decrypter.js","./encrypter":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/encrypter.js","./modes/list.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/list.json"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/decrypter.js":[function(require,module,exports){
+},{"./decrypter":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/decrypter.js","./encrypter":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/encrypter.js","./modes/list.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/list.json"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/decrypter.js":[function(require,module,exports){
 var AuthCipher = require('./authCipher')
 var Buffer = require('safe-buffer').Buffer
 var MODES = require('./modes')
@@ -49865,7 +49865,7 @@ function createDecipher (suite, password) {
 exports.createDecipher = createDecipher
 exports.createDecipheriv = createDecipheriv
 
-},{"./aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/encrypter.js":[function(require,module,exports){
+},{"./aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/runner/work/privatesky/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/encrypter.js":[function(require,module,exports){
 var MODES = require('./modes')
 var AuthCipher = require('./authCipher')
 var Buffer = require('safe-buffer').Buffer
@@ -49981,7 +49981,7 @@ function createCipher (suite, password) {
 exports.createCipheriv = createCipheriv
 exports.createCipher = createCipher
 
-},{"./aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/ghash.js":[function(require,module,exports){
+},{"./aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/aes.js","./authCipher":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/authCipher.js","./modes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/index.js","./streamCipher":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/streamCipher.js","cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","evp_bytestokey":"/home/runner/work/privatesky/privatesky/node_modules/evp_bytestokey/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/ghash.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var ZEROES = Buffer.alloc(16, 0)
 
@@ -50072,7 +50072,7 @@ GHASH.prototype.final = function (abl, bl) {
 
 module.exports = GHASH
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/incr32.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/incr32.js":[function(require,module,exports){
 function incr32 (iv) {
   var len = iv.length
   var item
@@ -50089,7 +50089,7 @@ function incr32 (iv) {
 }
 module.exports = incr32
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cbc.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cbc.js":[function(require,module,exports){
 var xor = require('buffer-xor')
 
 exports.encrypt = function (self, block) {
@@ -50108,7 +50108,7 @@ exports.decrypt = function (self, block) {
   return xor(out, pad)
 }
 
-},{"buffer-xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb.js":[function(require,module,exports){
+},{"buffer-xor":"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var xor = require('buffer-xor')
 
@@ -50143,7 +50143,7 @@ exports.encrypt = function (self, data, decrypt) {
   return out
 }
 
-},{"buffer-xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb1.js":[function(require,module,exports){
+},{"buffer-xor":"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb1.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 function encryptByte (self, byteParam, decrypt) {
@@ -50187,7 +50187,7 @@ exports.encrypt = function (self, chunk, decrypt) {
   return out
 }
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb8.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb8.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 function encryptByte (self, byteParam, decrypt) {
@@ -50214,7 +50214,7 @@ exports.encrypt = function (self, chunk, decrypt) {
   return out
 }
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ctr.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ctr.js":[function(require,module,exports){
 var xor = require('buffer-xor')
 var Buffer = require('safe-buffer').Buffer
 var incr32 = require('../incr32')
@@ -50246,7 +50246,7 @@ exports.encrypt = function (self, chunk) {
   return xor(chunk, pad)
 }
 
-},{"../incr32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ecb.js":[function(require,module,exports){
+},{"../incr32":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/incr32.js","buffer-xor":"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ecb.js":[function(require,module,exports){
 exports.encrypt = function (self, block) {
   return self._cipher.encryptBlock(block)
 }
@@ -50255,7 +50255,7 @@ exports.decrypt = function (self, block) {
   return self._cipher.decryptBlock(block)
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/index.js":[function(require,module,exports){
 var modeModules = {
   ECB: require('./ecb'),
   CBC: require('./cbc'),
@@ -50275,7 +50275,7 @@ for (var key in modes) {
 
 module.exports = modes
 
-},{"./cbc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cbc.js","./cfb":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb.js","./cfb1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb1.js","./cfb8":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/cfb8.js","./ctr":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ctr.js","./ecb":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ecb.js","./list.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/list.json","./ofb":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ofb.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/list.json":[function(require,module,exports){
+},{"./cbc":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cbc.js","./cfb":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb.js","./cfb1":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb1.js","./cfb8":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/cfb8.js","./ctr":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ctr.js","./ecb":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ecb.js","./list.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/list.json","./ofb":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ofb.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/list.json":[function(require,module,exports){
 module.exports={
   "aes-128-ecb": {
     "cipher": "AES",
@@ -50468,7 +50468,7 @@ module.exports={
   }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/ofb.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/ofb.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var xor = require('buffer-xor')
 
@@ -50489,7 +50489,7 @@ exports.encrypt = function (self, chunk) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","buffer-xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/streamCipher.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","buffer-xor":"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/streamCipher.js":[function(require,module,exports){
 var aes = require('./aes')
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('cipher-base')
@@ -50518,7 +50518,7 @@ StreamCipher.prototype._final = function () {
 
 module.exports = StreamCipher
 
-},{"./aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/aes.js","cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-cipher/browser.js":[function(require,module,exports){
+},{"./aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/aes.js","cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-cipher/browser.js":[function(require,module,exports){
 var DES = require('browserify-des')
 var aes = require('browserify-aes/browser')
 var aesModes = require('browserify-aes/modes')
@@ -50587,7 +50587,7 @@ exports.createDecipher = exports.Decipher = createDecipher
 exports.createDecipheriv = exports.Decipheriv = createDecipheriv
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"browserify-aes/browser":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/browser.js","browserify-aes/modes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/modes/index.js","browserify-des":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-des/index.js","browserify-des/modes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-des/modes.js","evp_bytestokey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/evp_bytestokey/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-des/index.js":[function(require,module,exports){
+},{"browserify-aes/browser":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/browser.js","browserify-aes/modes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/modes/index.js","browserify-des":"/home/runner/work/privatesky/privatesky/node_modules/browserify-des/index.js","browserify-des/modes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-des/modes.js","evp_bytestokey":"/home/runner/work/privatesky/privatesky/node_modules/evp_bytestokey/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-des/index.js":[function(require,module,exports){
 var CipherBase = require('cipher-base')
 var des = require('des.js')
 var inherits = require('inherits')
@@ -50639,7 +50639,7 @@ DES.prototype._final = function () {
   return Buffer.from(this._des.final())
 }
 
-},{"cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","des.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-des/modes.js":[function(require,module,exports){
+},{"cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","des.js":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-des/modes.js":[function(require,module,exports){
 exports['des-ecb'] = {
   key: 8,
   iv: 0
@@ -50665,7 +50665,7 @@ exports['des-ede'] = {
   iv: 0
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-rsa/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-rsa/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var BN = require('bn.js')
 var randomBytes = require('randombytes')
@@ -50705,10 +50705,10 @@ module.exports = crt
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/bn.js/lib/bn.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/algos.js":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/bn.js/lib/bn.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/algos.js":[function(require,module,exports){
 module.exports = require('./browser/algorithms.json')
 
-},{"./browser/algorithms.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/algorithms.json"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/algorithms.json":[function(require,module,exports){
+},{"./browser/algorithms.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/algorithms.json"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/algorithms.json":[function(require,module,exports){
 module.exports={
   "sha224WithRSAEncryption": {
     "sign": "rsa",
@@ -50862,7 +50862,7 @@ module.exports={
   }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/curves.json":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/curves.json":[function(require,module,exports){
 module.exports={
   "1.3.132.0.10": "secp256k1",
   "1.3.132.0.33": "p224",
@@ -50872,7 +50872,7 @@ module.exports={
   "1.3.132.0.35": "p521"
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var createHash = require('create-hash')
 var stream = require('readable-stream')
@@ -50966,7 +50966,7 @@ module.exports = {
   createVerify: createVerify
 }
 
-},{"./algorithms.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/verify.js","create-hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
+},{"./algorithms.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/algorithms.json","./sign":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/sign.js","./verify":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/verify.js","create-hash":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/sign.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var Buffer = require('safe-buffer').Buffer
 var createHmac = require('create-hmac')
@@ -51111,7 +51111,7 @@ module.exports = sign
 module.exports.getKey = getKey
 module.exports.makeKey = makeKey
 
-},{"./curves.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-rsa/index.js","create-hmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hmac/browser.js","elliptic":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
+},{"./curves.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/runner/work/privatesky/privatesky/node_modules/browserify-rsa/index.js","create-hmac":"/home/runner/work/privatesky/privatesky/node_modules/create-hmac/browser.js","elliptic":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/verify.js":[function(require,module,exports){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var Buffer = require('safe-buffer').Buffer
 var BN = require('bn.js')
@@ -51197,7 +51197,7 @@ function checkValue (b, q) {
 
 module.exports = verify
 
-},{"./curves.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/bn.js/lib/bn.js","elliptic":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+},{"./curves.json":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/curves.json","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/bn.js/lib/bn.js","elliptic":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic.js","parse-asn1":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
 'use strict';
 
 function _inheritsLoose(subClass, superClass) { subClass.prototype = Object.create(superClass.prototype); subClass.prototype.constructor = subClass; subClass.__proto__ = superClass; }
@@ -51326,7 +51326,7 @@ createErrorType('ERR_UNKNOWN_ENCODING', function (arg) {
 createErrorType('ERR_STREAM_UNSHIFT_AFTER_END_EVENT', 'stream.unshift() after end event');
 module.exports.codes = codes;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -51469,7 +51469,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+},{"./_stream_readable":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -51509,7 +51509,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_transform":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -52637,7 +52637,7 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -52839,7 +52839,7 @@ function done(stream, er, data) {
   if (stream._transformState.transforming) throw new ERR_TRANSFORM_ALREADY_TRANSFORMING();
   return stream.push(null);
 }
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -53540,7 +53540,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util-deprecate/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/runner/work/privatesky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -53751,7 +53751,7 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+},{"./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
 'use strict';
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -53962,7 +53962,7 @@ function () {
 
   return BufferList;
 }();
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -54071,7 +54071,7 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
 'use strict';
@@ -54176,12 +54176,12 @@ function eos(stream, opts, callback) {
 }
 
 module.exports = eos;
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
 module.exports = function () {
   throw new Error('Readable.from is not available in the browser')
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
 // Ported from https://github.com/mafintosh/pump with
 // permission from the author, Mathias Buus (@mafintosh).
 'use strict';
@@ -54279,7 +54279,7 @@ function pipeline() {
 }
 
 module.exports = pipeline;
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
 'use strict';
 
 var ERR_INVALID_OPT_VALUE = require('../../../errors').codes.ERR_INVALID_OPT_VALUE;
@@ -54307,10 +54307,10 @@ function getHighWaterMark(state, options, duplexKey, isDuplex) {
 module.exports = {
   getHighWaterMark: getHighWaterMark
 };
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+},{"events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -54321,7 +54321,7 @@ exports.PassThrough = require('./lib/_stream_passthrough.js');
 exports.finished = require('./lib/internal/streams/end-of-stream.js');
 exports.pipeline = require('./lib/internal/streams/pipeline.js');
 
-},{"./lib/_stream_duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-zlib/lib/binding.js":[function(require,module,exports){
 (function (process,Buffer){(function (){
 'use strict';
 /* eslint camelcase: "off" */
@@ -54734,7 +54734,7 @@ Zlib.prototype._reset = function () {
 exports.Zlib = Zlib;
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/assert.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","pako/lib/zlib/constants":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/constants.js","pako/lib/zlib/deflate.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/deflate.js","pako/lib/zlib/inflate.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inflate.js","pako/lib/zlib/zstream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/zstream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-zlib/lib/index.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","assert":"/home/runner/work/privatesky/privatesky/node_modules/assert/assert.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","pako/lib/zlib/constants":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/constants.js","pako/lib/zlib/deflate.js":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/deflate.js","pako/lib/zlib/inflate.js":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inflate.js","pako/lib/zlib/zstream":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/zstream.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-zlib/lib/index.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -55347,9 +55347,9 @@ util.inherits(InflateRaw, Zlib);
 util.inherits(Unzip, Zlib);
 }).call(this)}).call(this,require('_process'))
 
-},{"./binding":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-zlib/lib/binding.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/assert.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify/lib/_empty.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer-xor/index.js":[function(require,module,exports){
+},{"./binding":"/home/runner/work/privatesky/privatesky/node_modules/browserify-zlib/lib/binding.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","assert":"/home/runner/work/privatesky/privatesky/node_modules/assert/assert.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/util/util.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/buffer-xor/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = function xor (a, b) {
   var length = Math.min(a.length, b.length)
@@ -55364,7 +55364,7 @@ module.exports = function xor (a, b) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -57146,7 +57146,7 @@ function numberIsNaN (obj) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"base64-js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/base64-js/index.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","ieee754":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ieee754/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/builtin-status-codes/browser.js":[function(require,module,exports){
+},{"base64-js":"/home/runner/work/privatesky/privatesky/node_modules/base64-js/index.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","ieee754":"/home/runner/work/privatesky/privatesky/node_modules/ieee754/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/builtin-status-codes/browser.js":[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -57212,7 +57212,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('stream').Transform
 var StringDecoder = require('string_decoder').StringDecoder
@@ -57313,7 +57313,7 @@ CipherBase.prototype._toString = function (value, enc, fin) {
 
 module.exports = CipherBase
 
-},{"inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js","stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js","string_decoder":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
+},{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js","string_decoder":"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js"}],"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -57422,7 +57422,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/browser.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var elliptic = require('elliptic')
 var BN = require('bn.js')
@@ -57551,9 +57551,9 @@ function formatReturnValue (bn, enc, len) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","elliptic":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","elliptic":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var MD5 = require('md5.js')
@@ -57585,14 +57585,14 @@ module.exports = function createHash (alg) {
   return new Hash(sha(alg))
 }
 
-},{"cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","md5.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/md5.js/index.js","ripemd160":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ripemd160/index.js","sha.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/md5.js":[function(require,module,exports){
+},{"cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","md5.js":"/home/runner/work/privatesky/privatesky/node_modules/md5.js/index.js","ripemd160":"/home/runner/work/privatesky/privatesky/node_modules/ripemd160/index.js","sha.js":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-hash/md5.js":[function(require,module,exports){
 var MD5 = require('md5.js')
 
 module.exports = function (buffer) {
   return new MD5().update(buffer).digest()
 }
 
-},{"md5.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/md5.js/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hmac/browser.js":[function(require,module,exports){
+},{"md5.js":"/home/runner/work/privatesky/privatesky/node_modules/md5.js/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-hmac/browser.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var Legacy = require('./legacy')
@@ -57656,7 +57656,7 @@ module.exports = function createHmac (alg, key) {
   return new Hmac(alg, key)
 }
 
-},{"./legacy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hmac/legacy.js","cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","create-hash/md5":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/md5.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","ripemd160":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hmac/legacy.js":[function(require,module,exports){
+},{"./legacy":"/home/runner/work/privatesky/privatesky/node_modules/create-hmac/legacy.js","cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","create-hash/md5":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/md5.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","ripemd160":"/home/runner/work/privatesky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/create-hmac/legacy.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var Buffer = require('safe-buffer').Buffer
@@ -57704,7 +57704,7 @@ Hmac.prototype._final = function () {
 }
 module.exports = Hmac
 
-},{"cipher-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/cipher-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/crypto-browserify/index.js":[function(require,module,exports){
+},{"cipher-base":"/home/runner/work/privatesky/privatesky/node_modules/cipher-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js":[function(require,module,exports){
 'use strict'
 
 exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = require('randombytes')
@@ -57803,7 +57803,7 @@ exports.constants = {
   'POINT_CONVERSION_HYBRID': 6
 }
 
-},{"browserify-cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-cipher/browser.js","browserify-sign":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/browser/index.js","browserify-sign/algos":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/algos.js","create-ecdh":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-ecdh/browser.js","create-hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js","create-hmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hmac/browser.js","diffie-hellman":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/browser.js","pbkdf2":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/browser.js","public-encrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/browser.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js","randomfill":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randomfill/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des.js":[function(require,module,exports){
+},{"browserify-cipher":"/home/runner/work/privatesky/privatesky/node_modules/browserify-cipher/browser.js","browserify-sign":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/browser/index.js","browserify-sign/algos":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/algos.js","create-ecdh":"/home/runner/work/privatesky/privatesky/node_modules/create-ecdh/browser.js","create-hash":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js","create-hmac":"/home/runner/work/privatesky/privatesky/node_modules/create-hmac/browser.js","diffie-hellman":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/browser.js","pbkdf2":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/browser.js","public-encrypt":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/browser.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js","randomfill":"/home/runner/work/privatesky/privatesky/node_modules/randomfill/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des.js":[function(require,module,exports){
 'use strict';
 
 exports.utils = require('./des/utils');
@@ -57812,7 +57812,7 @@ exports.DES = require('./des/des');
 exports.CBC = require('./des/cbc');
 exports.EDE = require('./des/ede');
 
-},{"./des/cbc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cbc.js","./des/cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cipher.js","./des/des":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/des.js","./des/ede":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/ede.js","./des/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cbc.js":[function(require,module,exports){
+},{"./des/cbc":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cbc.js","./des/cipher":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cipher.js","./des/des":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/des.js","./des/ede":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/ede.js","./des/utils":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cbc.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -57879,7 +57879,7 @@ proto._update = function _update(inp, inOff, out, outOff) {
   }
 };
 
-},{"inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cipher.js":[function(require,module,exports){
+},{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cipher.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -58022,7 +58022,7 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
   return this._unpad(out);
 };
 
-},{"minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/des.js":[function(require,module,exports){
+},{"minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/des.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -58166,7 +58166,7 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
   utils.rip(l, r, out, off);
 };
 
-},{"./cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cipher.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/utils.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/ede.js":[function(require,module,exports){
+},{"./cipher":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cipher.js","./utils":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/utils.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/ede.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -58222,7 +58222,7 @@ EDE.prototype._update = function _update(inp, inOff, out, outOff) {
 EDE.prototype._pad = DES.prototype._pad;
 EDE.prototype._unpad = DES.prototype._unpad;
 
-},{"./cipher":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/cipher.js","./des":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/des.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/des.js/lib/des/utils.js":[function(require,module,exports){
+},{"./cipher":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/cipher.js","./des":"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/des.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/des.js/lib/des/utils.js":[function(require,module,exports){
 'use strict';
 
 exports.readUInt32BE = function readUInt32BE(bytes, off) {
@@ -58480,7 +58480,7 @@ exports.padSplit = function padSplit(num, size, group) {
   return out.join(' ');
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/browser.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var generatePrime = require('./lib/generatePrime')
 var primes = require('./lib/primes.json')
@@ -58527,7 +58527,7 @@ exports.createDiffieHellman = exports.DiffieHellman = createDiffieHellman
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./lib/dh":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/dh.js","./lib/generatePrime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","./lib/primes.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/primes.json","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/dh.js":[function(require,module,exports){
+},{"./lib/dh":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/dh.js","./lib/generatePrime":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","./lib/primes.json":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/primes.json","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/dh.js":[function(require,module,exports){
 (function (Buffer){(function (){
 var BN = require('bn.js');
 var MillerRabin = require('miller-rabin');
@@ -58696,7 +58696,7 @@ function formatReturnValue(bn, enc) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./generatePrime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","miller-rabin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/generatePrime.js":[function(require,module,exports){
+},{"./generatePrime":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","miller-rabin":"/home/runner/work/privatesky/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/generatePrime.js":[function(require,module,exports){
 var randomBytes = require('randombytes');
 module.exports = findPrime;
 findPrime.simpleSieve = simpleSieve;
@@ -58803,7 +58803,7 @@ function findPrime(bits, gen) {
 
 }
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","miller-rabin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/lib/primes.json":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js","miller-rabin":"/home/runner/work/privatesky/privatesky/node_modules/miller-rabin/lib/mr.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/lib/primes.json":[function(require,module,exports){
 module.exports={
     "modp1": {
         "gen": "02",
@@ -58838,9 +58838,9 @@ module.exports={
         "prime": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a92108011a723c12a787e6d788719a10bdba5b2699c327186af4e23c1a946834b6150bda2583e9ca2ad44ce8dbbbc2db04de8ef92e8efc141fbecaa6287c59474e6bc05d99b2964fa090c3a2233ba186515be7ed1f612970cee2d7afb81bdd762170481cd0069127d5b05aa993b4ea988d8fddc186ffb7dc90a6c08f4df435c93402849236c3fab4d27c7026c1d4dcb2602646dec9751e763dba37bdf8ff9406ad9e530ee5db382f413001aeb06a53ed9027d831179727b0865a8918da3edbebcf9b14ed44ce6cbaced4bb1bdb7f1447e6cc254b332051512bd7af426fb8f401378cd2bf5983ca01c64b92ecf032ea15d1721d03f482d7ce6e74fef6d55e702f46980c82b5a84031900b1c9e59e7c97fbec7e8f323a97a7e36cc88be0f1d45b7ff585ac54bd407b22b4154aacc8f6d7ebf48e1d814cc5ed20f8037e0a79715eef29be32806a1d58bb7c5da76f550aa3d8a1fbff0eb19ccb1a313d55cda56c9ec2ef29632387fe8d76e3c0468043e8f663f4860ee12bf2d5b0b7474d6e694f91e6dbe115974a3926f12fee5e438777cb6a932df8cd8bec4d073b931ba3bc832b68d9dd300741fa7bf8afc47ed2576f6936ba424663aab639c5ae4f5683423b4742bf1c978238f16cbe39d652de3fdb8befc848ad922222e04a4037c0713eb57a81a23f0c73473fc646cea306b4bcbc8862f8385ddfa9d4b7fa2c087e879683303ed5bdd3a062b3cf5b3a278a66d2a13f83f44f82ddf310ee074ab6a364597e899a0255dc164f31cc50846851df9ab48195ded7ea1b1d510bd7ee74d73faf36bc31ecfa268359046f4eb879f924009438b481c6cd7889a002ed5ee382bc9190da6fc026e479558e4475677e9aa9e3050e2765694dfc81f56e880b96e7160c980dd98edd3dfffffffffffffffff"
     }
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/diffie-hellman/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic.js":[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
@@ -58855,7 +58855,7 @@ elliptic.curves = require('./elliptic/curves');
 elliptic.ec = require('./elliptic/ec');
 elliptic.eddsa = require('./elliptic/eddsa');
 
-},{"../package.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/package.json","./elliptic/curve":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./elliptic/curves":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curves.js","./elliptic/ec":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js","./elliptic/eddsa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js","./elliptic/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","brorand":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/brorand/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js":[function(require,module,exports){
+},{"../package.json":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/package.json","./elliptic/curve":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./elliptic/curves":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","./elliptic/ec":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js","./elliptic/eddsa":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js","./elliptic/utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","brorand":"/home/runner/work/privatesky/privatesky/node_modules/brorand/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -59238,7 +59238,7 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -59675,7 +59675,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js":[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -59685,7 +59685,7 @@ curve.short = require('./short');
 curve.mont = require('./mont');
 curve.edwards = require('./edwards');
 
-},{"./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","./edwards":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js","./mont":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js","./short":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js":[function(require,module,exports){
+},{"./base":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","./edwards":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/edwards.js","./mont":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js","./short":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/mont.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -59865,7 +59865,7 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/short.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -60805,7 +60805,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curves.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./base":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/base.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curves.js":[function(require,module,exports){
 'use strict';
 
 var curves = exports;
@@ -61013,7 +61013,7 @@ defineCurve('secp256k1', {
   ],
 });
 
-},{"./curve":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./precomputed/secp256k1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","hash.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js":[function(require,module,exports){
+},{"./curve":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curve/index.js","./precomputed/secp256k1":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js","./utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","hash.js":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/index.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -61258,7 +61258,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../curves":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js","./signature":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","brorand":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/brorand/index.js","hmac-drbg":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js":[function(require,module,exports){
+},{"../curves":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js","./signature":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","brorand":"/home/runner/work/privatesky/privatesky/node_modules/brorand/index.js","hmac-drbg":"/home/runner/work/privatesky/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/key.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -61381,7 +61381,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/ec/signature.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -61549,7 +61549,7 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/index.js":[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -61669,7 +61669,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../curves":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js","./signature":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js","hash.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js":[function(require,module,exports){
+},{"../curves":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/curves.js","../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","./key":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js","./signature":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js","hash.js":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/key.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -61766,7 +61766,7 @@ KeyPair.prototype.getPublic = function getPublic(enc) {
 
 module.exports = KeyPair;
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/eddsa/signature.js":[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -61833,7 +61833,7 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js":[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
@@ -62615,7 +62615,7 @@ module.exports = {
   },
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/lib/elliptic/utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/lib/elliptic/utils.js":[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -62736,9 +62736,9 @@ function intFromLE(bytes) {
 utils.intFromLE = intFromLE;
 
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
 module.exports={
   "_from": "elliptic@^6.5.3",
   "_id": "elliptic@6.5.4",
@@ -62763,7 +62763,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.4.tgz",
   "_shasum": "da37cebd31e79a1367e941b592ed1fbebd58abbb",
   "_spec": "elliptic@^6.5.3",
-  "_where": "/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign",
+  "_where": "/home/runner/work/privatesky/privatesky/node_modules/browserify-sign",
   "author": {
     "name": "Fedor Indutny",
     "email": "fedor@indutny.com"
@@ -62825,7 +62825,7 @@ module.exports={
   "version": "6.5.4"
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/events/events.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -63350,7 +63350,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/evp_bytestokey/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/evp_bytestokey/index.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 var MD5 = require('md5.js')
 
@@ -63397,7 +63397,7 @@ function EVP_BytesToKey (password, salt, keyBits, ivLen) {
 
 module.exports = EVP_BytesToKey
 
-},{"md5.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/md5.js/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/index.js":[function(require,module,exports){
+},{"md5.js":"/home/runner/work/privatesky/privatesky/node_modules/md5.js/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/index.js":[function(require,module,exports){
 'use strict'
 var Buffer = require('safe-buffer').Buffer
 var Transform = require('readable-stream').Transform
@@ -63494,9 +63494,9 @@ HashBase.prototype._digest = function () {
 
 module.exports = HashBase
 
-},{"inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -63639,9 +63639,9 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
-},{"./_stream_transform":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_readable":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
+},{"./_stream_transform":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -64769,9 +64769,9 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -65472,7 +65472,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util-deprecate/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/runner/work/privatesky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -65683,9 +65683,9 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -65794,19 +65794,19 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash.js":[function(require,module,exports){
 var hash = exports;
 
 hash.utils = require('./hash/utils');
@@ -65823,7 +65823,7 @@ hash.sha384 = hash.sha.sha384;
 hash.sha512 = hash.sha.sha512;
 hash.ripemd160 = hash.ripemd.ripemd160;
 
-},{"./hash/common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js","./hash/hmac":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/hmac.js","./hash/ripemd":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/ripemd.js","./hash/sha":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha.js","./hash/utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js":[function(require,module,exports){
+},{"./hash/common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js","./hash/hmac":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/hmac.js","./hash/ripemd":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/ripemd.js","./hash/sha":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha.js","./hash/utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -65917,7 +65917,7 @@ BlockHash.prototype._pad = function pad() {
   return res;
 };
 
-},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/hmac.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/hmac.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -65966,7 +65966,7 @@ Hmac.prototype.digest = function digest(enc) {
   return this.outer.digest(enc);
 };
 
-},{"./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/ripemd.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/ripemd.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -66114,7 +66114,7 @@ var sh = [
   8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11
 ];
 
-},{"./common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha.js":[function(require,module,exports){
+},{"./common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js","./utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha.js":[function(require,module,exports){
 'use strict';
 
 exports.sha1 = require('./sha/1');
@@ -66123,7 +66123,7 @@ exports.sha256 = require('./sha/256');
 exports.sha384 = require('./sha/384');
 exports.sha512 = require('./sha/512');
 
-},{"./sha/1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/1.js","./sha/224":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/224.js","./sha/256":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/256.js","./sha/384":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/384.js","./sha/512":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/1.js":[function(require,module,exports){
+},{"./sha/1":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/1.js","./sha/224":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/224.js","./sha/256":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/256.js","./sha/384":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/384.js","./sha/512":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/1.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66199,7 +66199,7 @@ SHA1.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/common.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/224.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/common.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/224.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66231,7 +66231,7 @@ SHA224.prototype._digest = function digest(enc) {
 };
 
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","./256":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/256.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/256.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","./256":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/256.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/256.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66338,7 +66338,7 @@ SHA256.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/common.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/384.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","./common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/common.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/384.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66375,7 +66375,7 @@ SHA384.prototype._digest = function digest(enc) {
     return utils.split32(this.h.slice(0, 12), 'big');
 };
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","./512":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/512.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","./512":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/512.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/512.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66707,7 +66707,7 @@ function g1_512_lo(xh, xl) {
   return r;
 }
 
-},{"../common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/sha/common.js":[function(require,module,exports){
+},{"../common":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/common.js","../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/sha/common.js":[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -66758,7 +66758,7 @@ function g1_256(x) {
 }
 exports.g1_256 = g1_256;
 
-},{"../utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash/utils.js":[function(require,module,exports){
+},{"../utils":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash/utils.js":[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -67038,7 +67038,7 @@ function shr64_lo(ah, al, num) {
 }
 exports.shr64_lo = shr64_lo;
 
-},{"inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js":[function(require,module,exports){
+},{"inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/hmac-drbg/lib/hmac-drbg.js":[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -67153,7 +67153,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
   return utils.encode(res, enc);
 };
 
-},{"hash.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash.js/lib/hash.js","minimalistic-assert":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/https-browserify/index.js":[function(require,module,exports){
+},{"hash.js":"/home/runner/work/privatesky/privatesky/node_modules/hash.js/lib/hash.js","minimalistic-assert":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js","minimalistic-crypto-utils":"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js"}],"/home/runner/work/privatesky/privatesky/node_modules/https-browserify/index.js":[function(require,module,exports){
 var http = require('http')
 var url = require('url')
 
@@ -67186,7 +67186,7 @@ function validateParams (params) {
   return params
 }
 
-},{"http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/index.js","url":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/url.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ieee754/index.js":[function(require,module,exports){
+},{"http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","url":"/home/runner/work/privatesky/privatesky/node_modules/url/url.js"}],"/home/runner/work/privatesky/privatesky/node_modules/ieee754/index.js":[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -67273,7 +67273,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -67302,7 +67302,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js":[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -67325,14 +67325,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/isarray/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/isarray/index.js":[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/md5.js/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/md5.js/index.js":[function(require,module,exports){
 'use strict'
 var inherits = require('inherits')
 var HashBase = require('hash-base')
@@ -67480,7 +67480,7 @@ function fnI (a, b, c, d, m, k, s) {
 
 module.exports = MD5
 
-},{"hash-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/miller-rabin/lib/mr.js":[function(require,module,exports){
+},{"hash-base":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/miller-rabin/lib/mr.js":[function(require,module,exports){
 var bn = require('bn.js');
 var brorand = require('brorand');
 
@@ -67597,9 +67597,9 @@ MillerRabin.prototype.getDivisor = function getDivisor(n, k) {
   return false;
 };
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js","brorand":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/brorand/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-assert/index.js":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js","brorand":"/home/runner/work/privatesky/privatesky/node_modules/brorand/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/miller-rabin/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-assert/index.js":[function(require,module,exports){
 module.exports = assert;
 
 function assert(val, msg) {
@@ -67612,7 +67612,7 @@ assert.equal = function assertEqual(l, r, msg) {
     throw new Error(msg || ('Assertion failed: ' + l + ' != ' + r));
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/minimalistic-crypto-utils/lib/utils.js":[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -67672,7 +67672,7 @@ utils.encode = function encode(arr, enc) {
     return arr;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/object-assign/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/object-assign/index.js":[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -67764,7 +67764,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/os-browserify/browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js":[function(require,module,exports){
 exports.endianness = function () { return 'LE' };
 
 exports.hostname = function () {
@@ -67815,7 +67815,7 @@ exports.homedir = function () {
 	return '/'
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/utils/common.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/utils/common.js":[function(require,module,exports){
 'use strict';
 
 
@@ -67922,7 +67922,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/adler32.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/adler32.js":[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -67975,7 +67975,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/constants.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/constants.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -68045,7 +68045,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/crc32.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/crc32.js":[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -68106,7 +68106,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/deflate.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/deflate.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -69982,7 +69982,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/crc32.js","./messages":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/messages.js","./trees":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/trees.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inffast.js":[function(require,module,exports){
+},{"../utils/common":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/crc32.js","./messages":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/messages.js","./trees":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/trees.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inffast.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -70329,7 +70329,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inflate.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inflate.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -71887,7 +71887,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/crc32.js","./inffast":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inffast.js","./inftrees":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inftrees.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/inftrees.js":[function(require,module,exports){
+},{"../utils/common":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/utils/common.js","./adler32":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/adler32.js","./crc32":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/crc32.js","./inffast":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inffast.js","./inftrees":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inftrees.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/inftrees.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -72232,7 +72232,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/messages.js":[function(require,module,exports){
+},{"../utils/common":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/messages.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -72266,7 +72266,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/trees.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/trees.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -73490,7 +73490,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pako/lib/zlib/zstream.js":[function(require,module,exports){
+},{"../utils/common":"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/utils/common.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pako/lib/zlib/zstream.js":[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -73539,7 +73539,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/aesid.json":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/aesid.json":[function(require,module,exports){
 module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.2": "aes-128-cbc",
 "2.16.840.1.101.3.4.1.3": "aes-128-ofb",
@@ -73553,7 +73553,7 @@ module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.43": "aes-256-ofb",
 "2.16.840.1.101.3.4.1.44": "aes-256-cfb"
 }
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/asn1.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/asn1.js":[function(require,module,exports){
 // from https://github.com/indutny/self-signed/blob/gh-pages/lib/asn1.js
 // Fedor, you are amazing.
 'use strict'
@@ -73677,7 +73677,7 @@ exports.signature = asn1.define('signature', function () {
   )
 })
 
-},{"./certificate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/certificate.js","asn1.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/certificate.js":[function(require,module,exports){
+},{"./certificate":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/certificate.js","asn1.js":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/certificate.js":[function(require,module,exports){
 // from https://github.com/Rantanen/node-dtls/blob/25a7dc861bda38cfeac93a723500eea4f0ac2e86/Certificate.js
 // thanks to @Rantanen
 
@@ -73768,7 +73768,7 @@ var X509Certificate = asn.define('X509Certificate', function () {
 
 module.exports = X509Certificate
 
-},{"asn1.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/fixProc.js":[function(require,module,exports){
+},{"asn1.js":"/home/runner/work/privatesky/privatesky/node_modules/asn1.js/lib/asn1.js"}],"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/fixProc.js":[function(require,module,exports){
 // adapted from https://github.com/apatil/pemstrip
 var findProc = /Proc-Type: 4,ENCRYPTED[\n\r]+DEK-Info: AES-((?:128)|(?:192)|(?:256))-CBC,([0-9A-H]+)[\n\r]+([0-9A-z\n\r+/=]+)[\n\r]+/m
 var startRegex = /^-----BEGIN ((?:.*? KEY)|CERTIFICATE)-----/m
@@ -73801,7 +73801,7 @@ module.exports = function (okey, password) {
   }
 }
 
-},{"browserify-aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/browser.js","evp_bytestokey":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/evp_bytestokey/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/index.js":[function(require,module,exports){
+},{"browserify-aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/browser.js","evp_bytestokey":"/home/runner/work/privatesky/privatesky/node_modules/evp_bytestokey/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/index.js":[function(require,module,exports){
 var asn1 = require('./asn1')
 var aesid = require('./aesid.json')
 var fixProc = require('./fixProc')
@@ -73910,7 +73910,7 @@ function decrypt (data, password) {
   return Buffer.concat(out)
 }
 
-},{"./aesid.json":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/aesid.json","./asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/asn1.js","./fixProc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/fixProc.js","browserify-aes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-aes/browser.js","pbkdf2":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/path-browserify/index.js":[function(require,module,exports){
+},{"./aesid.json":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/aesid.json","./asn1":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/asn1.js","./fixProc":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/fixProc.js","browserify-aes":"/home/runner/work/privatesky/privatesky/node_modules/browserify-aes/browser.js","pbkdf2":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js":[function(require,module,exports){
 (function (process){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
@@ -74217,11 +74217,11 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/browser.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/browser.js":[function(require,module,exports){
 exports.pbkdf2 = require('./lib/async')
 exports.pbkdf2Sync = require('./lib/sync')
 
-},{"./lib/async":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
+},{"./lib/async":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/async.js","./lib/sync":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/sync-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/async.js":[function(require,module,exports){
 (function (global){(function (){
 var Buffer = require('safe-buffer').Buffer
 
@@ -74344,7 +74344,7 @@ module.exports = function (password, salt, iterations, keylen, digest, callback)
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./default-encoding":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/to-buffer.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
+},{"./default-encoding":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/precondition.js","./sync":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/sync-browser.js","./to-buffer":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/default-encoding.js":[function(require,module,exports){
 (function (process,global){(function (){
 var defaultEncoding
 /* istanbul ignore next */
@@ -74361,7 +74361,7 @@ module.exports = defaultEncoding
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/precondition.js":[function(require,module,exports){
 var MAX_ALLOC = Math.pow(2, 30) - 1 // default in iojs
 
 module.exports = function (iterations, keylen) {
@@ -74382,7 +74382,7 @@ module.exports = function (iterations, keylen) {
   }
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/sync-browser.js":[function(require,module,exports){
 var md5 = require('create-hash/md5')
 var RIPEMD160 = require('ripemd160')
 var sha = require('sha.js')
@@ -74489,7 +74489,7 @@ function pbkdf2 (password, salt, iterations, keylen, digest) {
 
 module.exports = pbkdf2
 
-},{"./default-encoding":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
+},{"./default-encoding":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/default-encoding.js","./precondition":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/precondition.js","./to-buffer":"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/to-buffer.js","create-hash/md5":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/md5.js","ripemd160":"/home/runner/work/privatesky/privatesky/node_modules/ripemd160/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js","sha.js":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/pbkdf2/lib/to-buffer.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 module.exports = function (thing, encoding, name) {
@@ -74504,7 +74504,7 @@ module.exports = function (thing, encoding, name) {
   }
 }
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/process-nextick-args/index.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -74554,7 +74554,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -74740,7 +74740,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/browser.js":[function(require,module,exports){
 exports.publicEncrypt = require('./publicEncrypt')
 exports.privateDecrypt = require('./privateDecrypt')
 
@@ -74752,7 +74752,7 @@ exports.publicDecrypt = function publicDecrypt (key, buf) {
   return exports.privateDecrypt(key, buf, true)
 }
 
-},{"./privateDecrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/privateDecrypt.js","./publicEncrypt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/publicEncrypt.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/mgf.js":[function(require,module,exports){
+},{"./privateDecrypt":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/privateDecrypt.js","./publicEncrypt":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/publicEncrypt.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/mgf.js":[function(require,module,exports){
 var createHash = require('create-hash')
 var Buffer = require('safe-buffer').Buffer
 
@@ -74773,9 +74773,9 @@ function i2ops (c) {
   return out
 }
 
-},{"create-hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/privateDecrypt.js":[function(require,module,exports){
+},{"create-hash":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/privateDecrypt.js":[function(require,module,exports){
 var parseKeys = require('parse-asn1')
 var mgf = require('./mgf')
 var xor = require('./xor')
@@ -74882,7 +74882,7 @@ function compare (a, b) {
   return dif
 }
 
-},{"./mgf":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/publicEncrypt.js":[function(require,module,exports){
+},{"./mgf":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/runner/work/privatesky/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/publicEncrypt.js":[function(require,module,exports){
 var parseKeys = require('parse-asn1')
 var randomBytes = require('randombytes')
 var createHash = require('create-hash')
@@ -74972,7 +74972,7 @@ function nonZero (len) {
   return out
 }
 
-},{"./mgf":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/parse-asn1/index.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/withPublic.js":[function(require,module,exports){
+},{"./mgf":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/mgf.js","./withPublic":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/withPublic.js","./xor":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/xor.js","bn.js":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","browserify-rsa":"/home/runner/work/privatesky/privatesky/node_modules/browserify-rsa/index.js","create-hash":"/home/runner/work/privatesky/privatesky/node_modules/create-hash/browser.js","parse-asn1":"/home/runner/work/privatesky/privatesky/node_modules/parse-asn1/index.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/withPublic.js":[function(require,module,exports){
 var BN = require('bn.js')
 var Buffer = require('safe-buffer').Buffer
 
@@ -74986,7 +74986,7 @@ function withPublic (paddedMsg, key) {
 
 module.exports = withPublic
 
-},{"bn.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/public-encrypt/xor.js":[function(require,module,exports){
+},{"bn.js":"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/node_modules/bn.js/lib/bn.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/public-encrypt/xor.js":[function(require,module,exports){
 module.exports = function xor (a, b) {
   var len = a.length
   var i = -1
@@ -74996,7 +74996,7 @@ module.exports = function xor (a, b) {
   return a
 }
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/punycode/punycode.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/punycode/punycode.js":[function(require,module,exports){
 (function (global){(function (){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -75534,7 +75534,7 @@ module.exports = function xor (a, b) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/decode.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/decode.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -75620,7 +75620,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/encode.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/encode.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -75707,13 +75707,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/index.js":[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/decode.js","./encode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/encode.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js":[function(require,module,exports){
+},{"./decode":"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/decode.js","./encode":"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/encode.js"}],"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js":[function(require,module,exports){
 (function (process,global){(function (){
 'use strict'
 
@@ -75768,7 +75768,7 @@ function randomBytes (size, cb) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randomfill/browser.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/randomfill/browser.js":[function(require,module,exports){
 (function (process,global){(function (){
 'use strict'
 
@@ -75881,10 +75881,10 @@ function randomFillSync (buf, offset, size) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","randombytes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/duplex-browser.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","randombytes":"/home/runner/work/privatesky/privatesky/node_modules/randombytes/browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/duplex-browser.js":[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
-},{"./lib/_stream_duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -76016,7 +76016,7 @@ Duplex.prototype._destroy = function (err, cb) {
 
   pna.nextTick(cb, err);
 };
-},{"./_stream_readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_writable.js","core-util-is":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process-nextick-args/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+},{"./_stream_readable":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_writable.js","core-util-is":"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/runner/work/privatesky/privatesky/node_modules/process-nextick-args/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -76064,7 +76064,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_transform.js","core-util-is":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_transform":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_transform.js","core-util-is":"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -77087,7 +77087,7 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/BufferList":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","core-util-is":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js","events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","isarray":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/isarray/index.js","process-nextick-args":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","string_decoder/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+},{"./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/BufferList":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","core-util-is":"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js","events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","isarray":"/home/runner/work/privatesky/privatesky/node_modules/isarray/index.js","process-nextick-args":"/home/runner/work/privatesky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","string_decoder/":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -77302,7 +77302,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","core-util-is":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","core-util-is":"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global,setImmediate){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -77993,7 +77993,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
 
-},{"./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","core-util-is":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","timers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/timers-browserify/main.js","util-deprecate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util-deprecate/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js":[function(require,module,exports){
+},{"./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","core-util-is":"/home/runner/work/privatesky/privatesky/node_modules/core-util-is/lib/util.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","process-nextick-args":"/home/runner/work/privatesky/privatesky/node_modules/process-nextick-args/index.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","timers":"/home/runner/work/privatesky/privatesky/node_modules/timers-browserify/main.js","util-deprecate":"/home/runner/work/privatesky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/BufferList.js":[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -78073,7 +78073,7 @@ if (util && util.inspect && util.inspect.custom) {
     return this.constructor.name + ' ' + obj;
   };
 }
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -78148,9 +78148,9 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process-nextick-args/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js":[function(require,module,exports){
+},{"process-nextick-args":"/home/runner/work/privatesky/privatesky/node_modules/process-nextick-args/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js":[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -78214,7 +78214,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -78511,10 +78511,10 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/passthrough.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/passthrough.js":[function(require,module,exports){
 module.exports = require('./readable').PassThrough
 
-},{"./readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+},{"./readable":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -78523,13 +78523,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/transform.js":[function(require,module,exports){
+},{"./lib/_stream_duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/transform.js":[function(require,module,exports){
 module.exports = require('./readable').Transform
 
-},{"./readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/writable-browser.js":[function(require,module,exports){
+},{"./readable":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/readable-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/writable-browser.js":[function(require,module,exports){
 module.exports = require('./lib/_stream_writable.js');
 
-},{"./lib/_stream_writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/ripemd160/index.js":[function(require,module,exports){
+},{"./lib/_stream_writable.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/lib/_stream_writable.js"}],"/home/runner/work/privatesky/privatesky/node_modules/ripemd160/index.js":[function(require,module,exports){
 'use strict'
 var Buffer = require('buffer').Buffer
 var inherits = require('inherits')
@@ -78694,7 +78694,7 @@ function fn5 (a, b, c, d, e, m, k, s) {
 
 module.exports = RIPEMD160
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","hash-base":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/hash-base/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","hash-base":"/home/runner/work/privatesky/privatesky/node_modules/hash-base/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js":[function(require,module,exports){
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
@@ -78761,7 +78761,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safer-buffer/safer.js":[function(require,module,exports){
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/safer-buffer/safer.js":[function(require,module,exports){
 (function (process){(function (){
 /* eslint-disable node/no-deprecated-api */
 
@@ -78843,7 +78843,7 @@ module.exports = safer
 
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js":[function(require,module,exports){
 var Buffer = require('safe-buffer').Buffer
 
 // prototype class for hash functions
@@ -78926,7 +78926,7 @@ Hash.prototype._update = function () {
 
 module.exports = Hash
 
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/index.js":[function(require,module,exports){
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/index.js":[function(require,module,exports){
 var exports = module.exports = function SHA (algorithm) {
   algorithm = algorithm.toLowerCase()
 
@@ -78943,7 +78943,7 @@ exports.sha256 = require('./sha256')
 exports.sha384 = require('./sha384')
 exports.sha512 = require('./sha512')
 
-},{"./sha":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha.js","./sha1":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha1.js","./sha224":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha224.js","./sha256":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha256.js","./sha384":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha384.js","./sha512":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha512.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha.js":[function(require,module,exports){
+},{"./sha":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha.js","./sha1":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha1.js","./sha224":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha224.js","./sha256":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha256.js","./sha384":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha384.js","./sha512":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha512.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-0, as defined
  * in FIPS PUB 180-1
@@ -79039,7 +79039,7 @@ Sha.prototype._hash = function () {
 
 module.exports = Sha
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha1.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha1.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -79140,7 +79140,7 @@ Sha1.prototype._hash = function () {
 
 module.exports = Sha1
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha224.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha224.js":[function(require,module,exports){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
  * in FIPS 180-2
@@ -79195,7 +79195,7 @@ Sha224.prototype._hash = function () {
 
 module.exports = Sha224
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","./sha256":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha256.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha256.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","./sha256":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha256.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha256.js":[function(require,module,exports){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
  * in FIPS 180-2
@@ -79332,7 +79332,7 @@ Sha256.prototype._hash = function () {
 
 module.exports = Sha256
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha384.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha384.js":[function(require,module,exports){
 var inherits = require('inherits')
 var SHA512 = require('./sha512')
 var Hash = require('./hash')
@@ -79391,7 +79391,7 @@ Sha384.prototype._hash = function () {
 
 module.exports = Sha384
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","./sha512":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha512.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/sha512.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","./sha512":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha512.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/sha.js/sha512.js":[function(require,module,exports){
 var inherits = require('inherits')
 var Hash = require('./hash')
 var Buffer = require('safe-buffer').Buffer
@@ -79653,7 +79653,7 @@ Sha512.prototype._hash = function () {
 
 module.exports = Sha512
 
-},{"./hash":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/sha.js/hash.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-browserify/index.js":[function(require,module,exports){
+},{"./hash":"/home/runner/work/privatesky/privatesky/node_modules/sha.js/hash.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -79782,7 +79782,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","readable-stream/duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/duplex-browser.js","readable-stream/passthrough.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/passthrough.js","readable-stream/readable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/readable-browser.js","readable-stream/transform.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/transform.js","readable-stream/writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/writable-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/index.js":[function(require,module,exports){
+},{"events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream/duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/duplex-browser.js","readable-stream/passthrough.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/passthrough.js","readable-stream/readable.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/readable-browser.js","readable-stream/transform.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/transform.js","readable-stream/writable.js":"/home/runner/work/privatesky/privatesky/node_modules/readable-stream/writable-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js":[function(require,module,exports){
 (function (global){(function (){
 var ClientRequest = require('./lib/request')
 var response = require('./lib/response')
@@ -79871,7 +79871,7 @@ http.METHODS = [
 ]
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./lib/request":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/request.js","./lib/response":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/response.js","builtin-status-codes":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/builtin-status-codes/browser.js","url":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/url.js","xtend":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/xtend/immutable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/capability.js":[function(require,module,exports){
+},{"./lib/request":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/request.js","./lib/response":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/response.js","builtin-status-codes":"/home/runner/work/privatesky/privatesky/node_modules/builtin-status-codes/browser.js","url":"/home/runner/work/privatesky/privatesky/node_modules/url/url.js","xtend":"/home/runner/work/privatesky/privatesky/node_modules/xtend/immutable.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/capability.js":[function(require,module,exports){
 (function (global){(function (){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
 
@@ -79935,7 +79935,7 @@ xhr = null // Help gc
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/request.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/request.js":[function(require,module,exports){
 (function (process,global,Buffer){(function (){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -80292,7 +80292,7 @@ var unsafeHeaders = [
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"./capability":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/capability.js","./response":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/response.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/response.js":[function(require,module,exports){
+},{"./capability":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/capability.js","./response":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/response.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/response.js":[function(require,module,exports){
 (function (process,global,Buffer){(function (){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -80508,9 +80508,9 @@ IncomingMessage.prototype._onXHRProgress = function (resetTimers) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"./capability":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/lib/capability.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
+},{"./capability":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/lib/capability.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","readable-stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js":[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -80653,9 +80653,9 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 });
 }).call(this)}).call(this,require('_process'))
 
-},{"./_stream_readable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
-},{"./_stream_transform":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
+},{"./_stream_readable":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./_stream_writable":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_passthrough.js"][0].apply(exports,arguments)
+},{"./_stream_transform":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -81783,9 +81783,9 @@ function indexOf(xs, x) {
 }
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/async_iterator":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js","./internal/streams/buffer_list":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/from":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","string_decoder/":"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/_stream_transform.js"][0].apply(exports,arguments)
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -82486,7 +82486,7 @@ Writable.prototype._destroy = function (err, cb) {
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util-deprecate/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
+},{"../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./_stream_duplex":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./internal/streams/destroy":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js","./internal/streams/state":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js","./internal/streams/stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/inherits/inherits_browser.js","util-deprecate":"/home/runner/work/privatesky/privatesky/node_modules/util-deprecate/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/async_iterator.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -82697,9 +82697,9 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 module.exports = createReadableStreamAsyncIterator;
 }).call(this)}).call(this,require('_process'))
 
-},{"./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
-},{"buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/buffer/index.js","util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browser-resolve/empty.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
+},{"./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/buffer_list.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/buffer_list.js"][0].apply(exports,arguments)
+},{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","util":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict'; // undocumented cb() API, needed for core, not for public API
 
@@ -82808,21 +82808,21 @@ module.exports = {
 };
 }).call(this)}).call(this,require('_process'))
 
-},{"_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
-},{"../../../errors":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
-},{"events":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/events/events.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js"][0].apply(exports,arguments)
-},{"safe-buffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/safe-buffer/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/timers-browserify/main.js":[function(require,module,exports){
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/from-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/from-browser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/pipeline.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js"][0].apply(exports,arguments)
+},{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js"][0].apply(exports,arguments)
+},{"events":"/home/runner/work/privatesky/privatesky/node_modules/events/events.js"}],"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/readable-browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/readable-browser.js"][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_duplex.js","./lib/_stream_passthrough.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_passthrough.js","./lib/_stream_readable.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_readable.js","./lib/_stream_transform.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_transform.js","./lib/_stream_writable.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/_stream_writable.js","./lib/internal/streams/end-of-stream.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/end-of-stream.js","./lib/internal/streams/pipeline.js":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/node_modules/readable-stream/lib/internal/streams/pipeline.js"}],"/home/runner/work/privatesky/privatesky/node_modules/string_decoder/lib/string_decoder.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/readable-stream/node_modules/string_decoder/lib/string_decoder.js"][0].apply(exports,arguments)
+},{"safe-buffer":"/home/runner/work/privatesky/privatesky/node_modules/safe-buffer/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/timers-browserify/main.js":[function(require,module,exports){
 (function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -82902,7 +82902,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 };
 }).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 
-},{"process/browser.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","timers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/timers-browserify/main.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/url.js":[function(require,module,exports){
+},{"process/browser.js":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","timers":"/home/runner/work/privatesky/privatesky/node_modules/timers-browserify/main.js"}],"/home/runner/work/privatesky/privatesky/node_modules/url/url.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -83636,7 +83636,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/util.js","punycode":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/punycode/punycode.js","querystring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/querystring-es3/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/url/util.js":[function(require,module,exports){
+},{"./util":"/home/runner/work/privatesky/privatesky/node_modules/url/util.js","punycode":"/home/runner/work/privatesky/privatesky/node_modules/punycode/punycode.js","querystring":"/home/runner/work/privatesky/privatesky/node_modules/querystring-es3/index.js"}],"/home/runner/work/privatesky/privatesky/node_modules/url/util.js":[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -83654,7 +83654,7 @@ module.exports = {
   }
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util-deprecate/browser.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/util-deprecate/browser.js":[function(require,module,exports){
 (function (global){(function (){
 
 /**
@@ -83726,11 +83726,11 @@ function config (name) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
-arguments[4]["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js"][0].apply(exports,arguments)
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/util.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/inherits/inherits_browser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
+arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/assert/node_modules/util/support/isBufferBrowser.js"][0].apply(exports,arguments)
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/util/util.js":[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -84321,7 +84321,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/support/isBufferBrowser.js","_process":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/process/browser.js","inherits":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/vm-browserify/index.js":[function(require,module,exports){
+},{"./support/isBuffer":"/home/runner/work/privatesky/privatesky/node_modules/util/support/isBufferBrowser.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","inherits":"/home/runner/work/privatesky/privatesky/node_modules/util/node_modules/inherits/inherits_browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/vm-browserify/index.js":[function(require,module,exports){
 var indexOf = function (xs, item) {
     if (xs.indexOf) return xs.indexOf(item);
     else for (var i = 0; i < xs.length; i++) {
@@ -84472,7 +84472,7 @@ exports.createContext = Script.createContext = function (context) {
     return copy;
 };
 
-},{}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/node_modules/xtend/immutable.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/node_modules/xtend/immutable.js":[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -84629,7 +84629,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/cache/index.js","./config":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/crypto/index.js","./db":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/index.js","./dc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dc/index.js","./dt":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/enclave/index.js","./error":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/error/index.js","./http":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/sc/index.js","./storage":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/storage/index.js","./system":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/system/index.js","./utils":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/workers/index.js"}],"swarm-engine/bootScripts/browser/sw":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"swarm-engine/bootScripts/browser/sw":[function(require,module,exports){
 (function (global){(function (){
 const SWBootScript = require("./SWBootScript");
 const server = require("ssapp-middleware").getMiddleware();
@@ -85086,8 +85086,8 @@ function deleteHandler(req, res) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../../../utils/SWChannelsManager":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/utils/utilFunctions.js","../../Uploader":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js","../util/MimeType":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","./RawDossierHelper":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","opendsu":"opendsu","ssapp-middleware":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/skutner/WebstormProjects/work/epi-workspace/privatesky/builds/tmp/swBoot.js"])
+},{"../../../utils/SWChannelsManager":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/SWChannelsManager.js","../../../utils/utilFunctions":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/utils/utilFunctions.js","../../Uploader":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/Uploader/index.js","../util/MimeType":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/util/MimeType.js","./RawDossierHelper":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/sw/RawDossierHelper.js","./SWBootScript":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/browser/sw/SWBootScript.js","opendsu":"opendsu","ssapp-middleware":"/home/runner/work/privatesky/privatesky/modules/ssapp-middleware/index.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/swBoot.js"])
                     ;(function(global) {
-                        global.bundlePaths = {"webshims":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/psknode/bundles/testRunnerBoot.js"};
+                        global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
                     })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
                 
