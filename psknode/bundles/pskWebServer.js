@@ -34626,25 +34626,11 @@ const mainEnclaveIsInitialised = ()=>{
 }
 
 const getMainEnclaveDB = (callback) => {
-    const sc = require("opendsu").loadAPI("sc").getSecurityContext();
-    if (sc.isInitialised()) {
-        return sc.getMainEnclaveDB(callback);
-    } else {
-        sc.on("initialised", () => {
-            sc.getMainEnclaveDB(callback);
-        });
-    }
+    require("opendsu").loadAPI("sc").getMainEnclave(callback);
 }
 
 const getSharedEnclaveDB = (callback) => {
-    const sc = require("opendsu").loadAPI("sc").getSecurityContext();
-    if (sc.isInitialised()) {
-        sc.getSharedEnclaveDB(callback);
-    } else {
-        sc.on("initialised", () => {
-            sc.getSharedEnclaveDB(callback);
-        });
-    }
+     require("opendsu").loadAPI("sc").getSharedEnclave(callback);
 }
 module.exports = {
     getBasicDB,
@@ -40040,16 +40026,15 @@ function enable(handler){
 module.exports = {enable};
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
-const crypto = require("../crypto");
 const keySSIFactory = keySSIResolver.KeySSIFactory;
 const SSITypes = keySSIResolver.SSITypes;
-const dbAPI = require("opendsu").loadAPI("db");
+const openDSU = require("opendsu");
 const parse = (ssiString, options) => {
     return keySSIFactory.create(ssiString, options);
 };
 
 const createSeedSSI = (domain, vn, hint, callback) => {
-    return we_createSeedSSI(dbAPI.getMainEnclave(), domain, vn, hint, callback);
+    return we_createSeedSSI(openDSU.loadAPI("sc").getMainEnclave(), domain, vn, hint, callback);
 };
 
 const we_createSeedSSI = (enclave, domain, vn, hint, callback) => {
@@ -40150,7 +40135,7 @@ const createTemplateWalletSSI = (domain, arrayWIthCredentials, hint) => {
 };
 
 const createConstSSI = (domain, constString, vn, hint) => {
-    return we_createConstSSI(dbAPI.getMainEnclave(), domain, constString, vn, hint)
+    return we_createConstSSI(openDSU.loadAPI("sc").getMainEnclave(), domain, constString, vn, hint)
 };
 
 const we_createConstSSI = (enclave, domain, constString, vn, hint, callback) => {
@@ -40167,7 +40152,7 @@ const we_createConstSSI = (enclave, domain, constString, vn, hint, callback) => 
 };
 
 const createArraySSI = (domain, arr, vn, hint, callback) => {
-    return we_createArraySSI(dbAPI.getMainEnclave(), domain, arr, vn, hint);
+    return we_createArraySSI(openDSU.loadAPI("sc").getMainEnclave(), domain, arr, vn, hint);
 }
 
 const we_createArraySSI = (enclave, domain, arr, vn, hint, callback) => {
@@ -40310,7 +40295,7 @@ module.exports = {
     we_createArraySSI
 };
 
-},{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
+},{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
 const apis = {};
 function defineApi(name, implementation){
 	if(typeof implementation !== "function"){
@@ -43065,7 +43050,7 @@ const getDIDDomain = (callback) => {
     config.getEnv(constants.DID_DOMAIN, callback);
 }
 
-const securityContextIsInitialised = ()=>{
+const securityContextIsInitialised = () => {
     if (typeof $$.sc === "undefined") {
         return false;
     }
@@ -43086,6 +43071,28 @@ const refreshSecurityContext = () => {
     return $$.sc;
 };
 
+const getMainEnclave = (callback) => {
+    const sc = getSecurityContext();
+    if (sc.isInitialised()) {
+        return sc.getMainEnclaveDB(callback);
+    } else {
+        sc.on("initialised", () => {
+            sc.getMainEnclaveDB(callback);
+        });
+    }
+}
+
+const getSharedEnclave = (callback) => {
+    const sc = getSecurityContext();
+    if (sc.isInitialised()) {
+        sc.getSharedEnclaveDB(callback);
+    } else {
+        sc.on("initialised", () => {
+            sc.getSharedEnclaveDB(callback);
+        });
+    }
+}
+
 module.exports = {
     getMainDSU,
     setMainDSU,
@@ -43093,7 +43100,9 @@ module.exports = {
     getSecurityContext,
     refreshSecurityContext,
     getDIDDomain,
-    securityContextIsInitialised
+    securityContextIsInitialised,
+    getMainEnclave,
+    getSharedEnclave
 };
 
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","fs":false,"opendsu":"opendsu","os":false,"path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
