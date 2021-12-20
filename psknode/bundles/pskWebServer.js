@@ -6417,7 +6417,7 @@ function getEncryptionKey(encryptionKeyPath, callback) {
     }
     fs.readFile(encryptionKeyPath, (err, _encKey) => {
         if (err) {
-            _encKey = crypto.generateRandom(32);
+            _encKey = require("crypto").randomBytes(32);
             encryptionKey = _encKey;
             fs.writeFile(encryptionKeyPath, _encKey, (err) => callback(undefined, _encKey));
             return
@@ -6631,7 +6631,8 @@ module.exports = {
     validateEncryptedAccessToken,
     getUrlsToSkip
 }
-},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js":[function(require,module,exports){
+
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","crypto":false,"fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js":[function(require,module,exports){
 function setupRequestEnhancements(server) {
     const constants = require("./../../moduleConstants");
 
