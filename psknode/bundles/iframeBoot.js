@@ -3578,7 +3578,7 @@ function StaticServer(server) {
     const fs = require("fs");
     const path = require('swarmutils').path;
     const utils = require("../../utils");
-
+    const config = require("../../config");
     function sendFiles(req, res, next) {
         const prefix = "/directory-summary/";
         requestValidation(req, "GET", prefix, function (notOurResponsibility, targetPath) {
@@ -3681,6 +3681,15 @@ function StaticServer(server) {
     }
 
     function sendFile(res, file) {
+        let componentsConfig = config.getConfig("componentsConfig");
+        if (componentsConfig && componentsConfig.staticServer && componentsConfig.staticServer.excludedFiles) {
+            const fileIndex = componentsConfig.staticServer.excludedFiles.findIndex(excludedFile => file.endsWith(excludedFile));
+            if (fileIndex >= 0) {
+                res.statusCode = 403;
+                res.end();
+                return;
+            }
+        }
         let stream = fs.createReadStream(file);
         let ext = path.extname(file);
 
@@ -3693,7 +3702,6 @@ function StaticServer(server) {
 
         // instruct to not store response into cache
         res.setHeader('Cache-Control', 'no-store');
-
         res.statusCode = 200;
         stream.pipe(res);
         stream.on('finish', () => {
@@ -3721,17 +3729,17 @@ function StaticServer(server) {
         const rootFolder = server.rootFolder;
         const path = require("swarmutils").path;
         let requestedUrl = new URL(req.url, `http://${req.headers.host}`);
-		let requestedUrlPathname = requestedUrl.pathname;
+        let requestedUrlPathname = requestedUrl.pathname;
         if (urlPrefix) {
             requestedUrlPathname = requestedUrlPathname.replace(urlPrefix, "");
         }
         let targetPath = path.resolve(path.join(rootFolder, requestedUrlPathname));
         //if we detect tricks that tries to make us go above our rootFolder to don't resolve it!!!!
-       
+
         if (targetPath.indexOf(rootFolder) !== 0) {
             return callback(true);
         }
-       
+
         callback(false, targetPath);
     }
 
@@ -3748,20 +3756,20 @@ function StaticServer(server) {
                     res.end();
                     return;
                 }
-                
+
                 if (stats.isDirectory()) {
 
-					let protocol = req.socket.encrypted ? "https" : "http";
-					let url = new URL(req.url, `${protocol}://${req.headers.host}`);
+                    let protocol = req.socket.encrypted ? "https" : "http";
+                    let url = new URL(req.url, `${protocol}://${req.headers.host}`);
 
                     if (url.pathname[url.pathname.length - 1] !== "/") {
                         res.writeHead(302, {
-                            'Location': url.pathname + "/" +url.search
+                            'Location': url.pathname + "/" + url.search
                         });
                         res.end();
                         return;
                     }
-                    
+
                     const defaultFileName = "index.html";
                     const defaultPath = path.join(targetPath, defaultFileName);
                     fs.stat(defaultPath, function (err) {
@@ -3770,7 +3778,7 @@ function StaticServer(server) {
                             res.end();
                             return;
                         }
-                        
+
                         return sendFile(res, defaultPath);
                     });
                 } else {
@@ -3786,7 +3794,7 @@ function StaticServer(server) {
 
 module.exports = StaticServer;
 
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
 (function (process){(function (){
 const http = require('http');
 const { URL } = require('url');
