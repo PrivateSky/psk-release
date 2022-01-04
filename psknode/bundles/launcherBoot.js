@@ -20427,7 +20427,6 @@ class OIDC {
         try {
             await this.refreshTokenSet();
         } catch (err) {
-            debugger
             console.log('periodicRefresh.tokenSetError', err);
         } finally {
             this.setPeriodicRefreshTimeout();
