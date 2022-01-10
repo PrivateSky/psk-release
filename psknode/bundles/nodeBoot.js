@@ -21930,7 +21930,11 @@ const getSharedEnclave = (callback) => {
     }
 }
 
-const configEnvironment = (config, callback) => {
+const configEnvironment = (config, refreshSecurityContext, callback) => {
+    if (typeof refreshSecurityContext === "function") {
+        callback = refreshSecurityContext;
+        refreshSecurityContext = true;
+    }
     getMainDSU((err, mainDSU) => {
         if (err) {
             return callback(createOpenDSUErrorWrapper("Failed to get main DSU", err));
@@ -21954,11 +21958,20 @@ const configEnvironment = (config, callback) => {
                     return callback(createOpenDSUErrorWrapper("Failed to write env", err));
                 }
 
-                const sc = refreshSecurityContext();
-                sc.on("initialised", () => callback(undefined, sc));
+                if (refreshSecurityContext) {
+                    const sc = refreshSecurityContext();
+                    sc.on("initialised", () => callback(undefined, sc));
+                } else {
+                    const sc = getSecurityContext();
+                    if (securityContextIsInitialised()) {
+                        return callback(undefined, sc);
+                    }
+
+                    sc.on("initialised", () => callback(undefined, sc));
+                }
             });
         })
-    })
+    });
 }
 
 module.exports = {
