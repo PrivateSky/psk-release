@@ -50863,13 +50863,13 @@ function SwarmEngine(identity) {
             const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
             const swarmTargetIdentity = swarmHeader.swarmTarget;
 
-            if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
+            //if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
                 if (myOwnIdentity === swarmTargetIdentity || myOwnIdentity === "*") {
                     const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
                     protectedFunctions.execute_swarm(deserializedSwarm);
                     return;
                 }
-            }
+            //}
 
             const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.prototype.WILD_CARD_IDENTITY);
 
@@ -50944,7 +50944,10 @@ function SwarmEngine(identity) {
         const swarm = createBaseSwarm(swarmTypeName);
         swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
 
-        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        //we set a timeout 0 in order to allow local swarm executions and listeners setup
+        setTimeout(()=>{
+            protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        }, 0);
         return swarm;
     };
 
@@ -52226,7 +52229,129 @@ function SSAppPowerCord(reference){
 
 module.exports = SSAppPowerCord;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/EgressPowerCord.js":[function(require,module,exports){
+(function (Buffer){(function (){
+function EgressPowerCord(senderDIDDocument) {
+	/* this.on = function(swarmId, swarmName, swarmPhase, callback){
+		 $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+	 };
+
+	 this.off = function(swarmId, swarmName, swarmPhase, callback){
+
+	 };*/
+
+	function testFormat(identity){
+		const vRegex = /^(did)(:.*)*/g;
+		return !!identity.match(vRegex);
+	}
+
+	this.sendSwarm = function (swarmSerialization) {
+		const openDSU = require("opendsu");
+		const SwarmEngine = require("../../SwarmEngine");
+
+		let identity = this.identity;
+
+		if(identity === SwarmEngine.prototype.WILD_CARD_IDENTITY){
+			const swarmUtils = require("swarmutils");
+			const SwarmPacker = swarmUtils.SwarmPacker;
+			let header = SwarmPacker.getHeader(swarmSerialization);
+			identity = header.swarmTarget;
+		}
+
+		if(!testFormat(identity)){
+			throw new Error(`Identity < ${identity} > is not a valid DID`);
+		}
+
+		swarmSerialization.getSerialisation = function(){
+			let data = new DataView(swarmSerialization);
+			let bufferObject = new Buffer.alloc(swarmSerialization.byteLength);
+			for (let i = 0; i < data.byteLength; i++) {
+				bufferObject[i] = data.getUint8(i);
+			}
+			return Buffer.from(bufferObject.toString("base64")).toString();
+		}
+
+		senderDIDDocument.sendMessage(swarmSerialization, identity, (err) => {
+			if (err) {
+				throw err;
+			}
+		});
+	};
+
+	return this;
+}
+
+module.exports = EgressPowerCord;
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","buffer":false,"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/IngressPowerCord.js":[function(require,module,exports){
+(function (Buffer){(function (){
+
+function IngressPowerCord() {
+
+	let setup = async () => {
+		let myIdentity = this.identity;
+		const openDSU = require("opendsu");
+		const w3cDID = openDSU.loadAPI("w3cdid");
+		let didDocument;
+		try{
+			didDocument = await $$.promisify(w3cDID.resolveDID)(myIdentity);
+		}catch(err){
+			throw err;
+		}
+
+		didDocument.readMessage((err, swarmSerialization) => {
+			if (err) {
+				return console.log(err);
+			}
+			convertToArrayBuffer = function (buffer) {
+				buffer = Buffer.from(buffer,'base64');
+				let source = new ArrayBuffer(buffer.byteLength);
+				let res = new DataView(source);
+				for(let i=0; i<buffer.byteLength; i++){
+					res.setUint8(i, buffer[i]);
+				}
+				return source;
+			}
+			//todo: test if the message is a swarm serialization or not
+			this.transfer(convertToArrayBuffer(swarmSerialization));
+		});
+	};
+
+	/* this.on = function(swarmId, swarmName, swarmPhase, callback){
+		 $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+	 };
+
+	 this.off = function(swarmId, swarmName, swarmPhase, callback){
+
+	 };*/
+
+	function testFormat(identity){
+		const vRegex = /^(did)(:.*)*/g;
+		return identity.match(vRegex);
+	}
+
+	this.sendSwarm = function (swarmSerialization) {
+		throw new Error("Ingress PowerCord can't be used to send swarms! Please investigate plugged PCs and their identities");
+	};
+
+	return new Proxy(this, {
+		set: async (target, p, value, receiver) => {
+			target[p] = value;
+			if (p === 'identity') {
+				await setup();
+			}
+			return true;
+		}
+	});
+}
+
+module.exports = IngressPowerCord;
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
 module.exports = function(swarmEngineApi){
     const cm = require("callflow");
     const swarmUtils = require("./swarm_template-se");
@@ -55896,6 +56021,9 @@ module.exports = {
         if(typeof $$.swarmEngine === "undefined"){
             const SwarmEngine = require('./SwarmEngine');
             $$.swarmEngine = new SwarmEngine(...args);
+            if(!$$.callflow){
+                require("callflow").initialise();
+            }
         }else{
             $$.throw("Swarm engine already initialized!");
         }
@@ -55907,6 +56035,8 @@ module.exports = {
     RemoteChannelPairPowerCord: require("./powerCords/RemoteChannelPairPowerCord"),
     RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord"),
     SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
+    EgressPowerCord:require("./powerCords/w3cdid/EgressPowerCord"),
+    IngressPowerCord:require("./powerCords/w3cdid/IngressPowerCord"),
     BootScripts: require('./bootScripts'),
     get SSAppPowerCord(){
         const or = require("overwrite-require");
@@ -55919,7 +56049,7 @@ module.exports = {
 };
 
 
-},{"./SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
+},{"./SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","./powerCords/w3cdid/EgressPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/EgressPowerCord.js","./powerCords/w3cdid/IngressPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/IngressPowerCord.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
