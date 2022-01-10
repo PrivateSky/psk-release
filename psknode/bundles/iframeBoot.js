@@ -43640,10 +43640,10 @@ const getSharedEnclave = (callback) => {
     }
 }
 
-const configEnvironment = (config, refreshSecurityContext, callback) => {
+const configEnvironment = (config, refreshSC, callback) => {
     if (typeof refreshSecurityContext === "function") {
-        callback = refreshSecurityContext;
-        refreshSecurityContext = true;
+        callback = refreshSC;
+        refreshSC = true;
     }
     getMainDSU((err, mainDSU) => {
         if (err) {
@@ -43668,7 +43668,7 @@ const configEnvironment = (config, refreshSecurityContext, callback) => {
                     return callback(createOpenDSUErrorWrapper("Failed to write env", err));
                 }
 
-                if (refreshSecurityContext) {
+                if (refreshSC) {
                     const sc = refreshSecurityContext();
                     sc.on("initialised", () => callback(undefined, sc));
                 } else {
