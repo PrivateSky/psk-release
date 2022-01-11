@@ -22336,8 +22336,7 @@ function executeFetch(url, options) {
     }`;
   }
 
-  const http = require("opendsu").loadAPI("http");
-  return http.fetch(url, options);
+  return fetch(url, options);
 }
 
 module.exports = {
@@ -22345,7 +22344,7 @@ module.exports = {
   fetch: executeFetch,
 };
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
     if (typeof envVariables[name] !== "undefined") {
