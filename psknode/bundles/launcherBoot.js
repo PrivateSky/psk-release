@@ -21987,7 +21987,7 @@ const getSharedEnclave = (callback) => {
 }
 
 const configEnvironment = (config, refreshSC, callback) => {
-    if (typeof refreshSecurityContext === "function") {
+    if (typeof refreshSC === "function") {
         callback = refreshSC;
         refreshSC = true;
     }
