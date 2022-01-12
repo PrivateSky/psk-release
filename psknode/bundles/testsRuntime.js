@@ -35669,6 +35669,10 @@ function setupInterceptors(handler){
                     args.push({headers: {}});
                 }
 
+                if (args.length === 2 && typeof args[1] === "undefined") {
+                    args[1] = {};
+                }
+
                 if(typeof args[1].headers === "undefined"){
                     args[1].headers = {};
                 }
@@ -39167,7 +39171,7 @@ function promisify(fun) {
   };
 }
 
-function executeFetch(url, options) {
+function executeFetch(url, ...args) {
   // check if we need to add the BASE_URL to the prefix of the url
   const isBaseUrlSet =
     $$ &&
@@ -39182,7 +39186,8 @@ function executeFetch(url, options) {
     }`;
   }
 
-  return fetch(url, options);
+  const http = require("opendsu").loadAPI("http");
+  return http.fetch(url, ...args);
 }
 
 module.exports = {
@@ -39190,7 +39195,7 @@ module.exports = {
   fetch: executeFetch,
 };
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js":[function(require,module,exports){
 const envVariables = {};
 function getEnvironmentVariable(name){
     if (typeof envVariables[name] !== "undefined") {
