@@ -38779,6 +38779,10 @@ function MemoryEnclave() {
         })
     }
 
+    this.getEnclaveType = () => {
+        return openDSU.constants.ENCLAVE_TYPES.MEMORY_ENCLAVE;
+    };
+
     this.isInitialised = () => {
         return initialised
     }
@@ -39000,7 +39004,6 @@ function WalletDBEnclave(keySSI, did) {
     EnclaveMixin(this, did);
     let enclaveDSU;
     let initialised = false;
-
     const init = async () => {
         if (!keySSI) {
             try {
@@ -39051,12 +39054,16 @@ function WalletDBEnclave(keySSI, did) {
         callback(undefined, keySSI);
     }
 
+    this.getEnclaveType = () => {
+        return openDSU.constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE;
+    };
+
     this.isInitialised = () => {
         return initialised;
     };
 
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, ["on", "off", "beginBatch", "isInitialised"]);
+    bindAutoPendingFunctions(this, ["on", "off", "beginBatch", "isInitialised", "getEnclaveType"]);
 
     init();
 }
@@ -43268,6 +43275,34 @@ const configEnvironment = (config, refreshSC, callback) => {
     });
 }
 
+const setEnclave = (enclave, type, callback)=>{
+    const config = {};
+    enclave.getDID((err, did)=>{
+        if (err) {
+            return callback(err);
+        }
+
+        config[openDSU.constants[type].DID] = did;
+        enclave.getKeySSI((err, keySSI)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            config[openDSU.constants[type].KEY_SSI] = keySSI;
+            config[openDSU.constants[type].TYPE] = enclave.getEnclaveType();
+            configEnvironment(config, callback);
+        })
+    })
+}
+
+const setMainEnclave = (enclave, callback) => {
+    setEnclave(enclave, "MAIN_ENCLAVE", callback);
+};
+
+const setSharedEnclave = (enclave, callback) => {
+    setEnclave(enclave, "SHARED_ENCLAVE", callback);
+};
+
 module.exports = {
     getMainDSU,
     setMainDSU,
@@ -43277,7 +43312,9 @@ module.exports = {
     getDIDDomain,
     securityContextIsInitialised,
     getMainEnclave,
+    setMainEnclave,
     getSharedEnclave,
+    setSharedEnclave,
     configEnvironment
 };
 
