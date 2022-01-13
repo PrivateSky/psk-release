@@ -6073,6 +6073,7 @@ module.exports = AccessTokenValidator;
 const {sendUnauthorizedResponse} = require("../../../utils/middlewares");
 const util = require("./util");
 const urlModule = require("url");
+const errorMessages = require("./errorMessages");
 
 function OAuthMiddleware(server) {
     console.log(`Registering OAuthMiddleware`);
@@ -6159,6 +6160,12 @@ function OAuthMiddleware(server) {
         res.end();
     }
 
+    function debugMessage(...args) {
+        if (oauthConfig.debugLogEnabled) {
+            console.log(...args);
+        }
+    }
+
     server.use(function (req, res, next) {
         let {url} = req;
 
@@ -6205,8 +6212,10 @@ function OAuthMiddleware(server) {
 
         if (!accessTokenCookie) {
             if (!isActiveSession) {
+                debugMessage("Redirect to start authentication flow because accessTokenCookie and isActiveSession are missing.")
                 return startAuthFlow(req, res);
             } else {
+                debugMessage("Logout because accessTokenCookie is missing and isActiveSession is present.")
                 return logout(res);
             }
         }
@@ -6215,11 +6224,16 @@ function OAuthMiddleware(server) {
         util.validateEncryptedAccessToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, jwksEndpoint, accessTokenCookie, oauthConfig.sessionTimeout, (err) => {
             if (err) {
                 if (err.message === errorMessages.ACCESS_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
+                    debugMessage("Logout because accessTokenCookie decryption failed or session expired.")
                     return logout(res);
                 }
 
                 return webClient.refreshToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, refreshTokenCookie, (err, tokenSet) => {
                     if (err) {
+                        if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED) {
+                            debugMessage("Logout because refreshTokenCookie decryption failed.")
+                            return logout(res);
+                        }
                         return sendUnauthorizedResponse(req, res, "Unable to refresh token");
                     }
 
@@ -6307,8 +6321,8 @@ function WebClient(oauthConfig) {
         });
     }
 
-    this.refreshToken = function refreshToken(encryptionKeyPath, refreshTokenCookie, callback) {
-        util.decryptRefreshTokenCookie(encryptionKeyPath, refreshTokenCookie, (err, refreshToken) => {
+    this.refreshToken = function refreshToken(currentEncryptionKeyPath, previousEncryptionKeyPath, refreshTokenCookie, callback) {
+        util.decryptRefreshTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, refreshTokenCookie, (err, refreshToken) => {
             if (err) {
                 return callback(err);
             }
@@ -6339,7 +6353,7 @@ function WebClient(oauthConfig) {
                 } catch (e) {
                     return callback(e);
                 }
-                util.encryptTokenSet(encryptionKeyPath, tokenSet, callback);
+                util.encryptTokenSet(currentEncryptionKeyPath, tokenSet, callback);
             });
         });
     }
@@ -6352,6 +6366,8 @@ module.exports = WebClient;
 },{"./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","buffer":false,"opendsu":"opendsu","url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js":[function(require,module,exports){
 module.exports = {
     ACCESS_TOKEN_DECRYPTION_FAILED: "Failed to decrypt accessTokenCookie",
+    REFRESH_TOKEN_DECRYPTION_FAILED: "Failed to decrypt refreshTokenCookie",
+    REFRESH_TOKEN_UNDEFINED: "refreshTokenCookie is undefined",
     SESSION_EXPIRED:"Session expired"
 }
 },{}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js":[function(require,module,exports){
@@ -6616,10 +6632,15 @@ function decryptAccessTokenCookie(currentEncryptionKeyPath, previousEncryptionKe
 }
 
 function decryptRefreshTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, encryptedRefreshToken, callback) {
+    if (!encryptedRefreshToken) {
+        return callback(Error(errorMessages.REFRESH_TOKEN_UNDEFINED));
+    }
+
     decryptDataWithCurrentKey(currentEncryptionKeyPath, encryptedRefreshToken, (err, refreshToken) => {
         if (err) {
             decryptDataWithPreviousKey(previousEncryptionKeyPath, encryptedRefreshToken, (err, refreshToken) => {
                 if (err) {
+                    err.message = errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED;
                     return callback(err);
                 }
 
@@ -6629,7 +6650,7 @@ function decryptRefreshTokenCookie(currentEncryptionKeyPath, previousEncryptionK
         }
 
         callback(undefined, refreshToken.toString());
-    })
+    });
 }
 
 function getPublicKey(jwksEndpoint, rawAccessToken, callback) {
