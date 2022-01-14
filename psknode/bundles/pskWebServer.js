@@ -6077,7 +6077,6 @@ module.exports = AccessTokenValidator;
 const {sendUnauthorizedResponse} = require("../../../utils/middlewares");
 const util = require("./util");
 const urlModule = require("url");
-const errorMessages = require("./errorMessages");
 
 function OAuthMiddleware(server) {
     console.log(`Registering OAuthMiddleware`);
@@ -6105,7 +6104,7 @@ function OAuthMiddleware(server) {
 
             res.writeHead(301, {
                 Location: loginContext.redirect,
-                "Set-Cookie": `loginContextCookie=${encryptedContext}; Max-Age=${oauthConfig.sessionTimeout / 1000} `,
+                "Set-Cookie": `loginContextCookie=${encryptedContext}`,
                 "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
             });
             res.end();
@@ -6116,10 +6115,20 @@ function OAuthMiddleware(server) {
         let cbUrl = req.url;
         let query = urlModule.parse(cbUrl, true).query;
         const {loginContextCookie} = util.parseCookies(req.headers.cookie);
+        if (!loginContextCookie) {
+            debugMessage("Logout because loginContextCookie is missing.")
+            return logout(res);
+        }
         util.decryptLoginInfo(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, loginContextCookie, (err, loginContext) => {
             if (err) {
                 return sendUnauthorizedResponse(req, res, "Unable to decrypt login info");
             }
+
+            if (Date.now() - loginContext.date > oauthConfig.sessionTimeout) {
+                debugMessage("Logout because loginContextCookie is expired.")
+                return logout(res);
+            }
+
             const queryCode = query['code'];
             const queryState = query['state'];
 
@@ -6143,13 +6152,13 @@ function OAuthMiddleware(server) {
 
                     res.writeHead(301, {
                         Location: "/",
-                        "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, `loginContextCookie=; Max-Age=0`],
+                        "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `loginContextCookie=; Max-Age=0`],
                         "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
                     });
                     res.end();
                 })
             });
-        })
+        });
     }
 
     function logout(res) {
@@ -6228,20 +6237,20 @@ function OAuthMiddleware(server) {
         util.validateEncryptedAccessToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, jwksEndpoint, accessTokenCookie, oauthConfig.sessionTimeout, (err) => {
             if (err) {
                 if (err.message === errorMessages.ACCESS_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
-                    debugMessage("Logout because accessTokenCookie decryption failed or session expired.")
+                    debugMessage("Logout because accessTokenCookie decryption failed or session has expired.")
                     return logout(res);
                 }
 
                 return webClient.refreshToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, refreshTokenCookie, (err, tokenSet) => {
                     if (err) {
-                        if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED) {
-                            debugMessage("Logout because refreshTokenCookie decryption failed.")
+                        if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
+                            debugMessage("Logout because refreshTokenCookie decryption failed or session has expired.")
                             return logout(res);
                         }
                         return sendUnauthorizedResponse(req, res, "Unable to refresh token");
                     }
 
-                    const cookies = [`accessTokenCookie=${tokenSet.encryptedAccessToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, `refreshTokenCookie=${tokenSet.encryptedRefreshToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`];
+                    const cookies = [`accessTokenCookie=${tokenSet.encryptedAccessToken}`, `refreshTokenCookie=${tokenSet.encryptedRefreshToken}`];
                     res.writeHead(301, {Location: "/", "Set-Cookie": cookies});
                     res.end();
                 })
@@ -6260,6 +6269,7 @@ const util = require("./util");
 const openDSU = require("opendsu");
 const http = openDSU.loadAPI("http");
 const crypto = openDSU.loadAPI("crypto");
+const errorMessages = require("./errorMessages");
 
 function WebClient(oauthConfig) {
     this.getLoginInfo = () => {
@@ -6280,7 +6290,8 @@ function WebClient(oauthConfig) {
             state,
             fingerprint,
             codeVerifier: pkce.codeVerifier,
-            redirect: url.format(authorizeUrl)
+            redirect: url.format(authorizeUrl),
+            date: Date.now()
         }
     }
 
@@ -6331,13 +6342,17 @@ function WebClient(oauthConfig) {
                 return callback(err);
             }
 
+            if ( Date.now() - refreshToken.date > oauthConfig.sessionTimeout) {
+                return callback(Error(errorMessages.SESSION_EXPIRED))
+            }
+
             const body = {
                 'grant_type': 'refresh_token',
                 'client_id': oauthConfig.client.clientId,
                 'redirect_uri': oauthConfig.client.redirectPath,
                 'refresh_token': refreshToken,
                 'client_secret': oauthConfig.client.clientSecret
-            }
+            };
             const postData = util.urlEncodeForm(body);
             const options = {
                 method: 'POST',
@@ -6367,7 +6382,7 @@ function WebClient(oauthConfig) {
 module.exports = WebClient;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","buffer":false,"opendsu":"opendsu","url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js":[function(require,module,exports){
+},{"./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","buffer":false,"opendsu":"opendsu","url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js":[function(require,module,exports){
 module.exports = {
     ACCESS_TOKEN_DECRYPTION_FAILED: "Failed to decrypt accessTokenCookie",
     REFRESH_TOKEN_DECRYPTION_FAILED: "Failed to decrypt refreshTokenCookie",
@@ -6510,10 +6525,16 @@ function rotateKey(currentEncryptionKeyPath, previousEncryptionKeyPath, callback
 }
 
 function encryptTokenSet(currentEncryptionKeyPath, tokenSet, callback) {
-    const accessTokenTimestamp = Date.now();
     const accessTokenPayload = {
-        date: accessTokenTimestamp, token: tokenSet.access_token
+        date: Date.now(),
+        token: tokenSet.access_token
     }
+
+    const refreshTokenPayload = {
+        date: Date.now(),
+        token: tokenSet.refresh_token
+    }
+
 
     getCurrentEncryptionKey(currentEncryptionKeyPath, (err, encryptionKey) => {
         if (err) {
@@ -6523,7 +6544,7 @@ function encryptTokenSet(currentEncryptionKeyPath, tokenSet, callback) {
         let encryptedTokenSet;
         try {
             let encryptedAccessToken = crypto.encrypt(JSON.stringify(accessTokenPayload), encryptionKey);
-            let encryptedRefreshToken = crypto.encrypt(tokenSet.refresh_token, encryptionKey);
+            let encryptedRefreshToken = crypto.encrypt(JSON.stringify(refreshTokenPayload), encryptionKey);
             encryptedTokenSet = {
                 encryptedAccessToken: encodeCookie(encryptedAccessToken),
                 encryptedRefreshToken: encodeCookie(encryptedRefreshToken)

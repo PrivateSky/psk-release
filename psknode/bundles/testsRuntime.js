@@ -6073,7 +6073,6 @@ module.exports = AccessTokenValidator;
 const {sendUnauthorizedResponse} = require("../../../utils/middlewares");
 const util = require("./util");
 const urlModule = require("url");
-const errorMessages = require("./errorMessages");
 
 function OAuthMiddleware(server) {
     console.log(`Registering OAuthMiddleware`);
@@ -6101,7 +6100,7 @@ function OAuthMiddleware(server) {
 
             res.writeHead(301, {
                 Location: loginContext.redirect,
-                "Set-Cookie": `loginContextCookie=${encryptedContext}; Max-Age=${oauthConfig.sessionTimeout / 1000} `,
+                "Set-Cookie": `loginContextCookie=${encryptedContext}`,
                 "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
             });
             res.end();
@@ -6112,10 +6111,20 @@ function OAuthMiddleware(server) {
         let cbUrl = req.url;
         let query = urlModule.parse(cbUrl, true).query;
         const {loginContextCookie} = util.parseCookies(req.headers.cookie);
+        if (!loginContextCookie) {
+            debugMessage("Logout because loginContextCookie is missing.")
+            return logout(res);
+        }
         util.decryptLoginInfo(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, loginContextCookie, (err, loginContext) => {
             if (err) {
                 return sendUnauthorizedResponse(req, res, "Unable to decrypt login info");
             }
+
+            if (Date.now() - loginContext.date > oauthConfig.sessionTimeout) {
+                debugMessage("Logout because loginContextCookie is expired.")
+                return logout(res);
+            }
+
             const queryCode = query['code'];
             const queryState = query['state'];
 
@@ -6139,13 +6148,13 @@ function OAuthMiddleware(server) {
 
                     res.writeHead(301, {
                         Location: "/",
-                        "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, `loginContextCookie=; Max-Age=0`],
+                        "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `loginContextCookie=; Max-Age=0`],
                         "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
                     });
                     res.end();
                 })
             });
-        })
+        });
     }
 
     function logout(res) {
@@ -6224,20 +6233,20 @@ function OAuthMiddleware(server) {
         util.validateEncryptedAccessToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, jwksEndpoint, accessTokenCookie, oauthConfig.sessionTimeout, (err) => {
             if (err) {
                 if (err.message === errorMessages.ACCESS_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
-                    debugMessage("Logout because accessTokenCookie decryption failed or session expired.")
+                    debugMessage("Logout because accessTokenCookie decryption failed or session has expired.")
                     return logout(res);
                 }
 
                 return webClient.refreshToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, refreshTokenCookie, (err, tokenSet) => {
                     if (err) {
-                        if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED) {
-                            debugMessage("Logout because refreshTokenCookie decryption failed.")
+                        if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
+                            debugMessage("Logout because refreshTokenCookie decryption failed or session has expired.")
                             return logout(res);
                         }
                         return sendUnauthorizedResponse(req, res, "Unable to refresh token");
                     }
 
-                    const cookies = [`accessTokenCookie=${tokenSet.encryptedAccessToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`, `refreshTokenCookie=${tokenSet.encryptedRefreshToken}; Max-Age=${oauthConfig.sessionTimeout / 1000}`];
+                    const cookies = [`accessTokenCookie=${tokenSet.encryptedAccessToken}`, `refreshTokenCookie=${tokenSet.encryptedRefreshToken}`];
                     res.writeHead(301, {Location: "/", "Set-Cookie": cookies});
                     res.end();
                 })
@@ -6256,6 +6265,7 @@ const util = require("./util");
 const openDSU = require("opendsu");
 const http = openDSU.loadAPI("http");
 const crypto = openDSU.loadAPI("crypto");
+const errorMessages = require("./errorMessages");
 
 function WebClient(oauthConfig) {
     this.getLoginInfo = () => {
@@ -6276,7 +6286,8 @@ function WebClient(oauthConfig) {
             state,
             fingerprint,
             codeVerifier: pkce.codeVerifier,
-            redirect: url.format(authorizeUrl)
+            redirect: url.format(authorizeUrl),
+            date: Date.now()
         }
     }
 
@@ -6327,13 +6338,17 @@ function WebClient(oauthConfig) {
                 return callback(err);
             }
 
+            if ( Date.now() - refreshToken.date > oauthConfig.sessionTimeout) {
+                return callback(Error(errorMessages.SESSION_EXPIRED))
+            }
+
             const body = {
                 'grant_type': 'refresh_token',
                 'client_id': oauthConfig.client.clientId,
                 'redirect_uri': oauthConfig.client.redirectPath,
                 'refresh_token': refreshToken,
                 'client_secret': oauthConfig.client.clientSecret
-            }
+            };
             const postData = util.urlEncodeForm(body);
             const options = {
                 method: 'POST',
@@ -6363,7 +6378,7 @@ function WebClient(oauthConfig) {
 module.exports = WebClient;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","buffer":false,"opendsu":"opendsu","url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js":[function(require,module,exports){
+},{"./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","buffer":false,"opendsu":"opendsu","url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js":[function(require,module,exports){
 module.exports = {
     ACCESS_TOKEN_DECRYPTION_FAILED: "Failed to decrypt accessTokenCookie",
     REFRESH_TOKEN_DECRYPTION_FAILED: "Failed to decrypt refreshTokenCookie",
@@ -6506,10 +6521,16 @@ function rotateKey(currentEncryptionKeyPath, previousEncryptionKeyPath, callback
 }
 
 function encryptTokenSet(currentEncryptionKeyPath, tokenSet, callback) {
-    const accessTokenTimestamp = Date.now();
     const accessTokenPayload = {
-        date: accessTokenTimestamp, token: tokenSet.access_token
+        date: Date.now(),
+        token: tokenSet.access_token
     }
+
+    const refreshTokenPayload = {
+        date: Date.now(),
+        token: tokenSet.refresh_token
+    }
+
 
     getCurrentEncryptionKey(currentEncryptionKeyPath, (err, encryptionKey) => {
         if (err) {
@@ -6519,7 +6540,7 @@ function encryptTokenSet(currentEncryptionKeyPath, tokenSet, callback) {
         let encryptedTokenSet;
         try {
             let encryptedAccessToken = crypto.encrypt(JSON.stringify(accessTokenPayload), encryptionKey);
-            let encryptedRefreshToken = crypto.encrypt(tokenSet.refresh_token, encryptionKey);
+            let encryptedRefreshToken = crypto.encrypt(JSON.stringify(refreshTokenPayload), encryptionKey);
             encryptedTokenSet = {
                 encryptedAccessToken: encodeCookie(encryptedAccessToken),
                 encryptedRefreshToken: encodeCookie(encryptedRefreshToken)
@@ -50978,13 +50999,13 @@ function SwarmEngine(identity) {
             const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
             const swarmTargetIdentity = swarmHeader.swarmTarget;
 
-            //if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
+            if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
                 if (myOwnIdentity === swarmTargetIdentity || myOwnIdentity === "*") {
                     const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
                     protectedFunctions.execute_swarm(deserializedSwarm);
                     return;
                 }
-            //}
+            }
 
             const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.prototype.WILD_CARD_IDENTITY);
 
@@ -51059,10 +51080,7 @@ function SwarmEngine(identity) {
         const swarm = createBaseSwarm(swarmTypeName);
         swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
 
-        //we set a timeout 0 in order to allow local swarm executions and listeners setup
-        setTimeout(()=>{
-            protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
-        }, 0);
+        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
         return swarm;
     };
 
@@ -52344,129 +52362,7 @@ function SSAppPowerCord(reference){
 
 module.exports = SSAppPowerCord;
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/EgressPowerCord.js":[function(require,module,exports){
-(function (Buffer){(function (){
-function EgressPowerCord(senderDIDDocument) {
-	/* this.on = function(swarmId, swarmName, swarmPhase, callback){
-		 $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
-	 };
-
-	 this.off = function(swarmId, swarmName, swarmPhase, callback){
-
-	 };*/
-
-	function testFormat(identity){
-		const vRegex = /^(did)(:.*)*/g;
-		return !!identity.match(vRegex);
-	}
-
-	this.sendSwarm = function (swarmSerialization) {
-		const openDSU = require("opendsu");
-		const SwarmEngine = require("../../SwarmEngine");
-
-		let identity = this.identity;
-
-		if(identity === SwarmEngine.prototype.WILD_CARD_IDENTITY){
-			const swarmUtils = require("swarmutils");
-			const SwarmPacker = swarmUtils.SwarmPacker;
-			let header = SwarmPacker.getHeader(swarmSerialization);
-			identity = header.swarmTarget;
-		}
-
-		if(!testFormat(identity)){
-			throw new Error(`Identity < ${identity} > is not a valid DID`);
-		}
-
-		swarmSerialization.getSerialisation = function(){
-			let data = new DataView(swarmSerialization);
-			let bufferObject = new Buffer.alloc(swarmSerialization.byteLength);
-			for (let i = 0; i < data.byteLength; i++) {
-				bufferObject[i] = data.getUint8(i);
-			}
-			return Buffer.from(bufferObject.toString("base64")).toString();
-		}
-
-		senderDIDDocument.sendMessage(swarmSerialization, identity, (err) => {
-			if (err) {
-				throw err;
-			}
-		});
-	};
-
-	return this;
-}
-
-module.exports = EgressPowerCord;
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","buffer":false,"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/IngressPowerCord.js":[function(require,module,exports){
-(function (Buffer){(function (){
-
-function IngressPowerCord() {
-
-	let setup = async () => {
-		let myIdentity = this.identity;
-		const openDSU = require("opendsu");
-		const w3cDID = openDSU.loadAPI("w3cdid");
-		let didDocument;
-		try{
-			didDocument = await $$.promisify(w3cDID.resolveDID)(myIdentity);
-		}catch(err){
-			throw err;
-		}
-
-		didDocument.readMessage((err, swarmSerialization) => {
-			if (err) {
-				return console.log(err);
-			}
-			convertToArrayBuffer = function (buffer) {
-				buffer = Buffer.from(buffer,'base64');
-				let source = new ArrayBuffer(buffer.byteLength);
-				let res = new DataView(source);
-				for(let i=0; i<buffer.byteLength; i++){
-					res.setUint8(i, buffer[i]);
-				}
-				return source;
-			}
-			//todo: test if the message is a swarm serialization or not
-			this.transfer(convertToArrayBuffer(swarmSerialization));
-		});
-	};
-
-	/* this.on = function(swarmId, swarmName, swarmPhase, callback){
-		 $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
-	 };
-
-	 this.off = function(swarmId, swarmName, swarmPhase, callback){
-
-	 };*/
-
-	function testFormat(identity){
-		const vRegex = /^(did)(:.*)*/g;
-		return identity.match(vRegex);
-	}
-
-	this.sendSwarm = function (swarmSerialization) {
-		throw new Error("Ingress PowerCord can't be used to send swarms! Please investigate plugged PCs and their identities");
-	};
-
-	return new Proxy(this, {
-		set: async (target, p, value, receiver) => {
-			target[p] = value;
-			if (p === 'identity') {
-				await setup();
-			}
-			return true;
-		}
-	});
-}
-
-module.exports = IngressPowerCord;
-
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarm-engine/swarms/index.js":[function(require,module,exports){
 module.exports = function(swarmEngineApi){
     const cm = require("callflow");
     const swarmUtils = require("./swarm_template-se");
@@ -56136,9 +56032,6 @@ module.exports = {
         if(typeof $$.swarmEngine === "undefined"){
             const SwarmEngine = require('./SwarmEngine');
             $$.swarmEngine = new SwarmEngine(...args);
-            if(!$$.callflow){
-                require("callflow").initialise();
-            }
         }else{
             $$.throw("Swarm engine already initialized!");
         }
@@ -56150,8 +56043,6 @@ module.exports = {
     RemoteChannelPairPowerCord: require("./powerCords/RemoteChannelPairPowerCord"),
     RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord"),
     SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
-    EgressPowerCord:require("./powerCords/w3cdid/EgressPowerCord"),
-    IngressPowerCord:require("./powerCords/w3cdid/IngressPowerCord"),
     BootScripts: require('./bootScripts'),
     get SSAppPowerCord(){
         const or = require("overwrite-require");
@@ -56164,7 +56055,7 @@ module.exports = {
 };
 
 
-},{"./SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","./powerCords/w3cdid/EgressPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/EgressPowerCord.js","./powerCords/w3cdid/IngressPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/w3cdid/IngressPowerCord.js","callflow":"callflow","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
+},{"./SwarmEngine":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/SwarmEngine.js","./bootScripts":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/bootScripts/index.js","./powerCords/InnerIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerIsolatePowerCord.js","./powerCords/InnerThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/InnerThreadPowerCord.js","./powerCords/OuterIsolatePowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterIsolatePowerCord.js","./powerCords/OuterThreadPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/OuterThreadPowerCord.js","./powerCords/RemoteChannelPairPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPairPowerCord.js","./powerCords/RemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/RemoteChannelPowerCord.js","./powerCords/SmartRemoteChannelPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/SmartRemoteChannelPowerCord.js","./powerCords/browser/SSAppPowerCord":"/home/runner/work/privatesky/privatesky/modules/swarm-engine/powerCords/browser/SSAppPowerCord.js","overwrite-require":"overwrite-require"}],"swarmutils":[function(require,module,exports){
 
 let cachedUIDGenerator = undefined;
 let cachedSafeUid = undefined;
