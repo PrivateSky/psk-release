@@ -3889,13 +3889,7 @@ function BrickMapController(options) {
                     return endAnchoring(listener, anchoringStatus.PERSIST_BRICKMAP_ERR, err);
                 }
 
-                const timestamp = Date.now();
-                const hashLink = keyssi.createHashLinkSSI(bricksDomain, hash, keySSI.getVn(), keySSI.getHint());
-                let dataToSign = timestamp;
-                if (state.getCurrentAnchoredHashLink()) {
-                    dataToSign = state.getCurrentAnchoredHashLink().getIdentifier() + timestamp;
-                }
-                dataToSign += keySSI.getAnchorId();
+
 
                 const __storeAnchor = (hlSSI) => {
                     //signedHashLink should not contain any hint because is not trusted
@@ -3962,16 +3956,24 @@ function BrickMapController(options) {
                         anchoring.appendToAnchor(keySSI, hlSSI, currentAnchoredHashLink, updateAnchorCallback);
                     }
                 }
+                const hashLink = keyssi.createHashLinkSSI(bricksDomain, hash, keySSI.getVn(), keySSI.getHint());
 
-                const constants = require("opendsu").constants;
-                if (keySSI.getTypeName() === constants.KEY_SSIS.CONST_SSI || keySSI.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || keySSI.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
-                    __storeAnchor(hashLink);
-                } else {
+                let lastEntryInAnchor = '';
+                const timestamp = Date.now();
+                if (state.getCurrentAnchoredHashLink()) {
+                    lastEntryInAnchor = state.getCurrentAnchoredHashLink().getIdentifier();
+                }
+                const dataToSign = keySSI.hash(keySSI.getAnchorId() + hash + lastEntryInAnchor + timestamp);
+                // const constants = require("opendsu").constants;
+                // if (keySSI.getTypeName() === constants.KEY_SSIS.CONST_SSI || keySSI.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || keySSI.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
+                    if(!keySSI.canSign()) {
+                        __storeAnchor(hashLink);
+                    } else {
                     keySSI.sign(dataToSign, (err, signature) => {
                         if (err) {
                             return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to sign data`, err));
                         }
-                        const signedHashLink = keyssi.createSignedHashLinkSSI(bricksDomain, hashLink.getHash(), timestamp, signature, keySSI.getVn());
+                        const signedHashLink = keyssi.createSignedHashLinkSSI(bricksDomain, hash, timestamp, signature, keySSI.getVn());
                         __storeAnchor(signedHashLink);
                     })
                 }
@@ -11744,7 +11746,7 @@ function CryptoAlgorithmsMixin(target) {
     };
 
     target.verify = (data, publicKey, signature) => {
-        return crypto.verify('sha256', data, publicKey, signature);
+        return crypto.verifyETH(data, signature,  publicKey);
     }
 
     target.ecies_encryption = (receiverPublicKey, message) => {
@@ -11939,18 +11941,16 @@ function SeedSSICryptoAlgorithms() {
     const self = this;
 
     self.sign = (data, privateKey) => {
-        const keyGenerator = crypto.createKeyPairGenerator();
-        const rawPublicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        return crypto.sign('sha256', data, keyGenerator.getPemKeys(privateKey, rawPublicKey).privateKey);
+        return crypto.signETH(data, privateKey);
     }
 
-    self.derivePublicKey =  (privateKey, format) => {
+    self.derivePublicKey = (privateKey, format) => {
         if (typeof format === "undefined") {
             format = "pem";
         }
         const keyGenerator = crypto.createKeyPairGenerator();
         let publicKey = keyGenerator.getPublicKey(privateKey, 'secp256k1');
-        switch(format){
+        switch (format) {
             case "raw":
                 return publicKey;
             case "pem":
@@ -12918,6 +12918,10 @@ function CZaSSI(enclave, identifier) {
     self.derive = () => {
         throw Error("Not implemented");
     };
+
+    self.canAppend = function(){
+        return false;
+    }
 }
 
 function createCZaSSI(enclave, identifier) {
@@ -13070,7 +13074,7 @@ function SignedHashLinkSSI(enclave, identifier) {
     }
 
     self.initialize = (dlDomain, hashLink, timestamp, signature, vn, hint) => {
-        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}/${signature.signature}/${signature.publicKey}`, vn, hint);
+        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}/${signature.signature}`, vn, hint);
     };
 
     self.canBeVerified = () => {
@@ -13100,15 +13104,17 @@ function SignedHashLinkSSI(enclave, identifier) {
         let control = self.getControlString();
         let splitControl = control.split("/");
         let signature = splitControl[1];
-        let publicKey = splitControl[2];
-        return {signature, publicKey};
+        return signature;
     }
 
-    self.getPublicKeyHash = function () {
-        const {publicKey} = self.getSignature();
-        const decodedPublicKey = cryptoRegistry.getDecodingFunction(self)(publicKey);
-        return cryptoRegistry.getHashFunction(self)(decodedPublicKey);
-    };
+    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
+        let prevHashLink = '';
+        const timestamp = self.getTimestamp();
+        if (previousHashLinkSSI){
+            prevHashLink = previousHashLinkSSI.getIdentifier();
+        }
+        return self.hash(anchorSSI.getIdentifier() + self.getSpecificString() + prevHashLink + timestamp);
+    }
 }
 
 function createSignedHashLinkSSI(enclave, identifier) {
@@ -13328,8 +13334,7 @@ function keySSIMixin(target, enclave) {
     let _vn = "v0";
     let _hint;
     let _hintObject = {};
-    let _dsa = false;
-    let _securityContext = false;
+    let _canSign = false;
 
     const _createHintObject = (hint = _hint) => {
         try {
@@ -13499,11 +13504,11 @@ function keySSIMixin(target, enclave) {
     }
 
     target.canSign = () => {
-        return _dsa
+        return _canSign;
     }
 
-    target.setCanSign = (dsa) => {
-        _dsa = dsa
+    target.setCanSign = (canSign) => {
+        _canSign = canSign;
     }
 
     target.canBeVerified = () => {
@@ -13515,27 +13520,28 @@ function keySSIMixin(target, enclave) {
         sc.signForKeySSI(undefined, target, dataToSign, callback);
     };
 
-    target.verify = (data, digitalProof) => {
-        if (typeof digitalProof === "string") {
-            try {
-                digitalProof = JSON.parse(digitalProof);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper("Failed to parse string signature", e);
-            }
-        }
-        const convertPublicKey = cryptoRegistry.getConvertPublicKeyFunction(target);
+    target.verify = (data, signature) => {
         const decode = cryptoRegistry.getDecodingFunction(target);
-        const decodedPublicKey = decode(digitalProof.publicKey);
-
-        const pemPublicKey = convertPublicKey(decodedPublicKey);
-        const signature = decode(digitalProof.signature);
+        signature = decode(signature);
         const verify = cryptoRegistry.getVerifyFunction(target);
 
-        return verify(data, pemPublicKey, signature);
+        return verify(data, target.getPublicKey(), signature);
     };
+
+    target.hash = (data) => {
+        return cryptoRegistry.getHashFunction(target)(data);
+    }
 
     target.toJSON = function () {
         return target.getIdentifier();
+    }
+
+    target.canAppend = function(){
+        return true;
+    }
+
+    target.isTransfer = function () {
+        return false;
     }
 }
 
@@ -14181,6 +14187,10 @@ function SReadSSI(enclave, identifier) {
     self.getEncryptionKey = () => {
         return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
     };
+
+    self.getPublicKey = (options) => {
+        return self.derive().getPublicKey(options);
+    };
 }
 
 function createSReadSSI(enclave, identifier) {
@@ -14194,6 +14204,7 @@ module.exports = {
 },{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SZaSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -14215,6 +14226,11 @@ function SZaSSI(enclave, identifier) {
         self.load(SSITypes.SZERO_ACCESS_SSI, dlDomain, '', hpk, vn, hint);
     };
 
+    self.getPublicKey = (options) => {
+        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getControlString());
+        return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
+    };
+
     self.derive = () => {
         throw Error("Not implemented");
     };
@@ -14228,7 +14244,7 @@ module.exports = {
     createSZaSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SReadSSI = require("./SReadSSI");
 const SSITypes = require("../SSITypes");
@@ -14423,6 +14439,7 @@ module.exports = {
 },{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function TransferSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -14476,6 +14493,25 @@ function TransferSSI(enclave, identifier) {
         let publicKey = splitControl[2];
         return {signature, publicKey};
     }
+
+    self.getPublicKey = (options) => {
+        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+        return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
+    };
+
+    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
+        let prevHashLinkEncoded = '';
+        const timestamp = self.getTimestamp();
+        if (previousHashLinkSSI){
+            prevHashLinkEncoded = previousHashLinkSSI.getIdentifier();
+        }
+        const newEncodedPublicKey = self.getSpecificString();
+        return self.hash(anchorSSI.getIdentifier()+prevHashLinkEncoded + timestamp+newEncodedPublicKey);
+    }
+
+    self.isTransfer = function () {
+        return true;
+    }
 }
 
 function createTransferSSI(enclave, identifier) {
@@ -14486,7 +14522,7 @@ module.exports = {
     createTransferSSI
 };
 
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function validateHashLinks(keySSI, hashLinks, callback) {
@@ -14518,7 +14554,7 @@ function validateAnchoredSSI(lastTransferSSI, currentSSI) {
     if (!lastTransferSSI) {
         return true;
     }
-    if (lastTransferSSI.getPublicKeyHash() !== currentSSI.getPublicKeyHash()) {
+    if (lastTransferSSI.getSignature() !== currentSSI.getSignature()) {
         return false;
     }
 
@@ -14534,14 +14570,15 @@ function verifySignature(keySSI, newSSI, lastSSI) {
     }
     const timestamp = newSSI.getTimestamp();
     const signature = newSSI.getSignature();
-    let dataToVerify = timestamp;
+    let lastEntryInAnchor = '';
     if (lastSSI) {
-        dataToVerify = lastSSI.getIdentifier() + dataToVerify;
+        lastEntryInAnchor = lastSSI.getIdentifier();
     }
 
+    let dataToVerify;
     if (newSSI.getTypeName() === constants.KEY_SSIS.SIGNED_HASH_LINK_SSI) {
-        dataToVerify += keySSI.getAnchorId();
-        return keySSI.verify(dataToVerify, signature)
+        dataToVerify = keySSI.hash(keySSI.getAnchorId() + newSSI.getHash() + lastEntryInAnchor + timestamp);
+        return keySSI.verify(dataToVerify, signature);
     }
     if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
         dataToVerify += newSSI.getSpecificString();
@@ -14556,75 +14593,184 @@ module.exports = {
     verifySignature
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js":[function(require,module,exports){
-const openDSU = require("opendsu");
-const keySSISpace = openDSU.loadApi("keyssi");
-const cachedStores = require("../cache/");
-const storeName = "anchors";
-
-function addVersion(anchorId, newHashLinkId, callback) {
-    const cache = cachedStores.getCacheForVault(storeName);
-    cache.get(anchorId, (err, hashLinkIds) => {
-        if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoringAbstractBehaviour.js":[function(require,module,exports){
+function AnchoringAbstractBehaviour(persistenceStrategy) {
+    const self = this;
+    const keySSI = require('../keyssi/index');
+    self.createAnchor = function (anchorId, anchorValueSSI, callback){
+        if (typeof  anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null)
+        {
+            return callback(Error(`Invalid call for create anchor ${anchorId}:${anchorValueSSI}`));
+        }
+        //convert to keySSI
+        let anchorIdKeySSI = anchorId;
+        if (typeof anchorId === "string"){
+            anchorIdKeySSI = keySSI.parse(anchorId);
+        }
+        let anchorValueSSIKeySSI = anchorValueSSI;
+        if (typeof anchorValueSSI === "string"){
+            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
         }
 
-        if (typeof hashLinkIds === "undefined") {
-            hashLinkIds = [];
+        if (!anchorIdKeySSI.canAppend()){
+            return persistenceStrategy.createAnchor(anchorIdKeySSI.getIdentifier(),anchorValueSSIKeySSI.getIdentifier(),(err) => {
+                return callback(err);
+            });
         }
 
-        // when the anchor is first created, no version is created yet
-        if(newHashLinkId) {
-            hashLinkIds.push(newHashLinkId);
+        const signer = determineSigner(anchorIdKeySSI,[]);
+        const signature = anchorValueSSIKeySSI.getSignature();
+        const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, null);
+        if (!signer.verify(dataToVerify, signature)){
+            return callback(Error("Failed to verify the signature!"));
         }
-        cache.put(anchorId, hashLinkIds, callback);
-    });
+        persistenceStrategy.createAnchor(anchorIdKeySSI.getIdentifier(),anchorValueSSIKeySSI.getIdentifier(),(err) => {
+            return callback(err);
+        });
+    }
+
+    self.appendAnchor = function(anchorId, anchorValueSSI, callback){
+        if (typeof  anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null)
+        {
+            return callback(Error(`Invalid call for append anchor ${anchorId}:${anchorValueSSI}`));
+        }
+        //convert to keySSI
+        let anchorIdKeySSI = anchorId;
+        if (typeof anchorId === "string"){
+            anchorIdKeySSI = keySSI.parse(anchorId);
+        }
+        let anchorValueSSIKeySSI = anchorValueSSI;
+        if (typeof anchorValueSSI === "string"){
+            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+        }
+
+        if (!anchorIdKeySSI.canAppend()){
+            return callback(Error(`Cannot append anchor for ${anchorId}`));
+        }
+        persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+            if (err){
+                return callback(err);
+            }
+            if (typeof data === 'undefined' || data === null){
+                data = [];
+            }
+            const historyOfKeySSI = data.map(el => keySSI.parse(el));
+            const signer = determineSigner(anchorIdKeySSI,historyOfKeySSI);
+            const signature = anchorValueSSIKeySSI.getSignature();
+            persistenceStrategy.getLastVersion(anchorId, (err, data) => {
+                if (err){
+                    return callback(err);
+                }
+                if (typeof data === 'undefined' || data === null){
+                    return callback(`Cannot update non existing anchor ${anchorId}`);
+                }
+                const lastSignedHashLinkKeySSI = keySSI.parse(data);
+                const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, lastSignedHashLinkKeySSI);
+                if (!signer.verify(dataToVerify, signature)){
+                    return callback(Error("Failed to verify the signature!"));
+                }
+                persistenceStrategy.appendAnchor(anchorIdKeySSI.getIdentifier(),anchorValueSSIKeySSI.getIdentifier(),(err) => {
+                    return callback(err);
+                });
+            })
+        })
+
+    }
+
+    self.getAllVersions = function(anchorId, callback){
+        let anchorIdKeySSI = anchorId;
+        if (typeof anchorId === "string"){
+            anchorIdKeySSI = keySSI.parse(anchorId);
+        }
+        persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+            if (err){
+                return callback(err);
+            }
+            if (typeof data === 'undefined' || data.length === 0){
+                return callback(undefined,[]);
+            }
+            if (!anchorIdKeySSI.canAppend()){
+                //skip validation for non signing SSI
+                return callback(undefined, data);
+            }
+            const historyOfKeySSI = data.map(el => keySSI.parse(el));
+            const progressiveHistoryOfKeySSI = [];
+            let previousSignedHashLinkKeySSI = null;
+            for(let i=0; i<= historyOfKeySSI.length-1;i++){
+                const anchorValueSSIKeySSI = historyOfKeySSI[i];
+                const signer = determineSigner(anchorIdKeySSI,progressiveHistoryOfKeySSI);
+                const signature = anchorValueSSIKeySSI.getSignature();
+                const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, previousSignedHashLinkKeySSI);
+                if (!signer.verify(dataToVerify, signature)){
+                    return callback(Error("Failed to verify the signature!"));
+                }
+                //build history
+                progressiveHistoryOfKeySSI.push(anchorValueSSIKeySSI);
+                previousSignedHashLinkKeySSI = anchorValueSSIKeySSI;
+            }
+            //all history was validated
+            return callback(undefined, historyOfKeySSI.map(el => el.getIdentifier()));
+        });
+    }
+
+    self.getLastVersion = function(anchorId, callback){
+        this.getAllVersions(anchorId, (err, data) => {
+            if (err){
+                return callback(err);
+            }
+            if (data && data.length >= 1){
+                return callback(undefined,data[data.length-1]);
+            }
+            return callback(undefined,null);
+        })
+    }
+
+    function determineSigner(anchorIdKeySSI, historyOfKeySSIValues){
+        const {wasTransferred, signer} = wasHashLinkTransferred(historyOfKeySSIValues);
+        if (wasTransferred){
+            return signer;
+        }
+        return anchorIdKeySSI;
+    }
+
+    function wasHashLinkTransferred(historyOfKeySSIValues){
+        if (!Array.isArray(historyOfKeySSIValues)){
+            throw `hashLinks is not Array. Received ${historyOfKeySSIValues}`;
+        }
+        for (let i = historyOfKeySSIValues.length-1; i>=0;i--){
+            let hashLinkSSI = historyOfKeySSIValues[i];
+            if (hashLinkSSI.isTransfer()){
+                return {
+                    wasTransferred : true,
+                    signVerifier : hashLinkSSI
+                };
+            }
+        }
+        return {
+            wasTransferred: false,
+            signVerifier: undefined
+        }
+    }
 }
 
-function versions(anchorId, callback) {
-    const cache = cachedStores.getCacheForVault(storeName);
-    cache.get(anchorId, (err, hashLinkIds) => {
-        if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
-        }
-
-        if (typeof hashLinkIds === "undefined") {
-            hashLinkIds = [];
-        }
-        const hashLinkSSIs = hashLinkIds.map(hashLinkId => keySSISpace.parse(hashLinkId));
-        return callback(undefined, hashLinkSSIs);
-    });
-}
-
-function latestVersion(anchorId, callback) {
-    const cache = cachedStores.getCacheForVault(storeName);
-    cache.get(anchorId, (err, hashLinkIds) => {
-        if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor <${anchorId}> from cache`, err));
-        }
-
-        if (typeof hashLinkIds === "undefined") {
-            hashLinkIds = [];
-        }
-        const hashLinkSSIs = hashLinkIds.map(hashLinkId => keySSISpace.parse(hashLinkId));
-        return callback(undefined, hashLinkSSIs[hashLinkSSIs.length - 1]);
-    });
-}
 
 module.exports = {
-    addVersion,
-    versions,
-    latestVersion
+    AnchoringAbstractBehaviour
 }
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
-const bdns = require("../bdns");
+
+},{"../keyssi/index":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js":[function(require,module,exports){
 const keyssi = require("../keyssi");
 const {fetch, doPut} = require("../http");
 const constants = require("../moduleConstants");
 const promiseRunner = require("../utils/promise-runner");
-const cachedAnchoring = require("./cachedAnchoring");
 const config = require("../config");
 const {validateHashLinks, verifySignature} = require("./anchoring-utils");
+
+const getAnchoringBehaviour = (persistenceStrategy) => {
+        const Aab = require('./anchoringAbstractBehaviour').AnchoringAbstractBehaviour;
+        return new Aab(persistenceStrategy);
+    };
+
 
 const isValidVaultCache = () => {
     return typeof config.get(constants.CACHE.VAULT_TYPE) !== "undefined" && config.get(constants.CACHE.VAULT_TYPE) !== constants.CACHE.NO_CACHE;
@@ -14640,6 +14786,7 @@ const buildGetVersionFunction = function(processingFunction){
         const dlDomain = keySSI.getDLDomain();
         const anchorId = keySSI.getAnchorId();
 
+        const bdns = require("../bdns");
         // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
         //     return cachedAnchoring.versions(anchorId, callback);
         // }
@@ -14756,6 +14903,7 @@ const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) =>
     //     return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
     // }
 
+    const bdns = require("../bdns");
     bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
@@ -14855,6 +15003,11 @@ const getLatestVersion = (domain, ...args) => {
     callContractMethod(domain, "getLatestVersion", ...args);
 }
 
+function getAnchoringX(){
+    //todo: See below
+    //return anchoring behaviour using the persistence as apihub calls
+    //execute the integration testing using the extended FS implementation (fsx)
+}
 module.exports = {
     createAnchor,
     createNFT,
@@ -14862,10 +15015,12 @@ module.exports = {
     transferTokenOwnership,
     getAllVersions,
     getLastVersion,
-    getLatestVersion
+    getLatestVersion,
+    getAnchoringBehaviour,
+    getAnchoringX
 }
 
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./cachedAnchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/cachedAnchoring.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./anchoringAbstractBehaviour":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoringAbstractBehaviour.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
@@ -16336,6 +16491,10 @@ const decodeBase58 = (data) => {
     return decodeFn(data);
 };
 
+const generateKeyPair = () => {
+    const ecGenerator = crypto.createKeyPairGenerator();
+    return ecGenerator.generateKeyPair();
+}
 
 /**
  *
@@ -16354,7 +16513,8 @@ const convertPublicKey = (rawPublicKey, outputFormat, curveName) => {
  */
 const convertPrivateKey = (rawPrivateKey, outputFormat) => {
     const ecGenerator = crypto.createKeyPairGenerator();
-    return ecGenerator.convertPrivateKey(rawPrivateKey, {outputFormat});
+    const rawPublicKey = ecGenerator.getPublicKey(rawPrivateKey);
+    return ecGenerator.getPemKeys(rawPrivateKey, rawPublicKey, {outputFormat}).privateKey;
 }
 
 const createJWT = (seedSSI, scope, credentials, options, callback) => {
@@ -16507,6 +16667,7 @@ const base64UrlEncodeJOSE = (data) => {
     return data.toString("base64").replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
+
 module.exports = {
     getCryptoFunctionForKeySSI,
     hash,
@@ -16534,6 +16695,7 @@ module.exports = {
     createBloomFilter,
     JWT_ERRORS,
     deriveEncryptionKey,
+    generateKeyPair,
     convertPrivateKey,
     convertPublicKey,
     ecies_encrypt_ds,
@@ -23494,7 +23656,7 @@ function MappingEngine(storageService, options) {
           let messageString = JSON.stringify(message);
           const maxDisplayLength = 1024;
           console.log(`Unable to find a suitable mapping to handle the following message: ${messageString.length < maxDisplayLength ? messageString : messageString.slice(0, maxDisplayLength) + "..."}`);
-          reject(errMap.newCustomError(errMap.errorTypes.INVALID_MESSAGE_FORMAT, [{field: "messageType", message: `Wrong value. Couldn't find any mapping for ${message.messageType}`}]))
+          reject(errMap.newCustomError(errMap.errorTypes.MISSING_MAPPING, [{field: "messageType", message: `Couldn't find any mapping for ${message.messageType}`}]))
         }
         return messageDigested;
       }
@@ -23859,8 +24021,6 @@ function MQHandler(didDocument, domain, pollingTimeout) {
     let expiryTime;
     let queueName = didDocument.getHash();
 
-    domain = domain || didDocument.getDomain();
-
     function getURL(queueName, action, signature, messageID, callback) {
         let url
         if (typeof signature === "function") {
@@ -23874,34 +24034,50 @@ function MQHandler(didDocument, domain, pollingTimeout) {
             messageID = undefined;
         }
 
-        bdns.getMQEndpoints(domain, (err, mqEndpoints) => {
-            if (err) {
-                return callback(err);
-            }
+        if (!domain) {
+            const sc = require("opendsu").loadAPI("sc");
+            sc.getDIDDomain((err, didDomain) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            url = `${mqEndpoints[0]}/mq/${domain}`
-            switch (action) {
-                case "token":
-                    url = `${url}/${queueName}/token`;
-                    break;
-                case "get":
-                    url = `${url}/get/${queueName}/${signature}`;
-                    break;
-                case "put":
-                    url = `${url}/put/${queueName}`;
-                    break;
-                case "take":
-                    url = `${url}/take/${queueName}/${signature}`;
-                    break;
-                case "delete":
-                    url = `${url}/delete/${queueName}/${messageID}/${signature}`;
-                    break;
-                default:
-                    throw Error(`Invalid action received ${action}`);
-            }
+                domain = didDomain;
+                __createURL();
+            })
+        } else {
+            __createURL();
+        }
 
-            callback(undefined, url);
-        })
+        function __createURL() {
+            bdns.getMQEndpoints(domain, (err, mqEndpoints) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                url = `${mqEndpoints[0]}/mq/${domain}`
+                switch (action) {
+                    case "token":
+                        url = `${url}/${queueName}/token`;
+                        break;
+                    case "get":
+                        url = `${url}/get/${queueName}/${signature}`;
+                        break;
+                    case "put":
+                        url = `${url}/put/${queueName}`;
+                        break;
+                    case "take":
+                        url = `${url}/take/${queueName}/${signature}`;
+                        break;
+                    case "delete":
+                        url = `${url}/delete/${queueName}/${messageID}/${signature}`;
+                        break;
+                    default:
+                        throw Error(`Invalid action received ${action}`);
+                }
+
+                callback(undefined, url);
+            })
+        }
     }
 
     function ensureAuth(callback) {
@@ -24064,7 +24240,7 @@ module.exports = {
     unsubscribe,
     getMQHandlerForDID
 }
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js":[function(require,module,exports){
 /*
 KeySSI Notification API space
 */
@@ -27130,19 +27306,18 @@ function W3CDID_Mixin(target, enclave) {
             .getMQHandlerForDID(target);
         mqHandler.previewMessage((err, encryptedMessage) => {
             if (err) {
-                return mqHandler.deleteMessage(encryptedMessage.messageId, () => callback(err));
+                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
             }
 
             let message;
             try {
                 message = JSON.parse(encryptedMessage.message);
             } catch (e) {
-                return callback(e);
+                return callback(createOpenDSUErrorWrapper(`Failed to parse received message`, err));
             }
 
             mqHandler.deleteMessage(encryptedMessage.messageId, (err) => {
                 if (err) {
-                    console.log(err);
                     return callback(createOpenDSUErrorWrapper(`Failed to delete message`, err));
                 }
                 target.decryptMessage(message, callback);
@@ -28112,38 +28287,24 @@ function KeyDID_Document(enclave, isInitialisation, publicKey) {
     let privateKey;
     let domain;
     const openDSU = require("opendsu");
-    const keySSISpace = openDSU.loadAPI("keyssi");
     const crypto = openDSU.loadAPI("crypto");
-    const dbAPI = openDSU.loadAPI("db");
-    const scAPI = openDSU.loadAPI("sc");
 
     const init = async () => {
-        if (publicKey) {
-            setTimeout(()=>{
+        if (isInitialisation) {
+            const keyPair = crypto.generateKeyPair();
+            privateKey = keyPair.privateKey;
+            publicKey = crypto.encodeBase58(keyPair.publicKey);
+            setTimeout(() => {
                 this.dispatchEvent("initialised");
             })
-            return;
-        }
-        try {
-            domain = await $$.promisify(scAPI.getDIDDomain)();
-        } catch (e) {
-            throw createOpenDSUErrorWrapper(`Failed to get did domain`, e);
-        }
-
-        if (isInitialisation) {
-            let seedSSI;
-            try {
-                seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
-            } catch (e) {
-                throw createOpenDSUErrorWrapper(`Failed to create Seed SSI`, e);
-            }
-            privateKey = seedSSI.getPrivateKey();
-
-            publicKey = crypto.encodeBase58(seedSSI.getPublicKey("raw"));
-            this.dispatchEvent("initialised");
         } else {
-            this.dispatchEvent("initialised");
-        }
+            if (!publicKey) {
+                throw Error("Public key is missing from argument list.")
+            }
+            publicKey = publicKey.slice(4);
+            setTimeout(() => {
+                this.dispatchEvent("initialised");
+            });}
     };
 
     const getRawPublicKey = () => {
@@ -28173,7 +28334,7 @@ function KeyDID_Document(enclave, isInitialisation, publicKey) {
     }
 
     this.getIdentifier = () => {
-        return `did:key:${publicKey}`;
+        return `did:key:zQ3s${publicKey}`;
     };
 
     this.getPrivateKeys = () => {
@@ -31519,10 +31680,12 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
     });
 };
 },{"./decode":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/decode.js","./jwkToPemConverter":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jwkToPemConverter/index.js","./jws":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/jws/index.js","./lib/JsonWebTokenError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/JsonWebTokenError.js","./lib/NotBeforeError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/NotBeforeError.js","./lib/TokenExpiredError":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/TokenExpiredError.js","./lib/timespan":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/lib/timespan.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js":[function(require,module,exports){
+const utils = require("./utils/cryptoUtils");
+
 function ECKeyGenerator() {
     const crypto = require('crypto');
     const KeyEncoder = require('./keyEncoder');
-
+    const utils = require("./utils/cryptoUtils");
     this.generateKeyPair = (namedCurve, callback) => {
         if (typeof namedCurve === "undefined") {
             callback = undefined;
@@ -31579,15 +31742,71 @@ function ECKeyGenerator() {
         return keyEncoder.encodePublic(publicKey, options.originalFormat, options.outputFormat, options.encodingFormat)
     };
 
-    this.convertPrivateKey = (rawPrivateKey, options) => {
+    this.convertPrivateKey = (privateKey, options) => {
         options = options || {};
         options = removeUndefinedPropsInOpt(options)
         const defaultOpts = {originalFormat: 'raw', outputFormat: 'pem', namedCurve: 'secp256k1'};
         Object.assign(defaultOpts, options);
         options = defaultOpts;
-        const keyEncoder = new KeyEncoder(options.namedCurve);
-        return keyEncoder.encodePrivate(rawPrivateKey, options.originalFormat, options.outputFormat)
+
+        switch (options.outputFormat) {
+            case "pem":
+                return convertPrivateKeyToPem(privateKey, options);
+            case "der":
+                return convertPrivateKeyToDer(privateKey, options);
+            case "raw":
+                return convertPrivateKeyToRaw;
+            default:
+                throw Error("Invalid private key output format");
+        }
+
     };
+
+    const convertPrivateKeyToPem = (privateKey, options) => {
+        switch (options.originalFormat) {
+            case "raw":
+                const rawPublicKey = this.getPublicKey(privateKey, options.namedCurve);
+                const pemPrivateKey = this.getPemKeys(privateKey, rawPublicKey, options).privateKey;
+                return pemPrivateKey;
+            case "der":
+                const rawPrivateKey =  utils.convertDerPrivateKeyToRaw(privateKey);
+                const publicKey = this.getPublicKey(privateKey, options.namedCurve);
+                return this.getPemKeys(rawPrivateKey, publicKey, options).privateKey;
+            case "pem":
+                return privateKey;
+            default:
+                throw Error("Invalid private key format");
+        }
+    }
+
+    const convertPrivateKeyToDer = (privateKey, options) => {
+        switch (options.originalFormat) {
+            case "raw":
+                const rawPublicKey = this.getPublicKey(privateKey, options.namedCurve);
+                const pemPrivateKey = this.getPemKeys(privateKey, rawPublicKey, options).privateKey;
+                return utils.convertPemToDer(pemPrivateKey);
+            case "der":
+                return privateKey;
+            case "pem":
+                return utils.convertPemToDer(privateKey);
+            default:
+                throw Error("Invalid private key format");
+        }
+    }
+
+    const convertPrivateKeyToRaw = (privateKey, options) => {
+        switch (options.originalFormat) {
+            case "der":
+                return utils.convertDerPrivateKeyToRaw(privateKey);
+            case "raw":
+                return privateKey;
+            case "pem":
+                const derPrivateKey = utils.convertPemToDer(privateKey);
+                return utils.convertDerPrivateKeyToRaw(derPrivateKey);
+            default:
+                throw Error("Invalid private key format");
+        }
+    }
 
     const removeUndefinedPropsInOpt = (options) => {
         if (options) {
@@ -31606,11 +31825,11 @@ exports.createECKeyGenerator = () => {
     return new ECKeyGenerator();
 };
 
-},{"./keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
+},{"./keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js":[function(require,module,exports){
 function PskCrypto() {
     const crypto = require('crypto');
     const utils = require("./utils/cryptoUtils");
-    const derAsn1Decoder = require("./utils/DerASN1Decoder");
+    const eth = require("./utils/eth");
     const PskEncryption = require("./PskEncryption");
 
 
@@ -31644,6 +31863,10 @@ function PskCrypto() {
         verify.end();
         return verify.verify(publicKey, signature);
     };
+
+    this.signETH = eth.sign;
+
+    this.verifyETH = eth.verify;
 
     this.verifyDefault = (data, publicKey, signature) => {
         return this.verify('sha256', data, publicKey, signature);
@@ -31803,7 +32026,7 @@ function PskCrypto() {
 
         return args[args.length - 1];
     };
-    this.decodeDerToASN1ETH = (derSignatureBuffer) => derAsn1Decoder.decodeDERIntoASN1ETH(derSignatureBuffer);
+    this.decodeDerToASN1ETH = (derSignatureBuffer) => eth.decodeDERIntoASN1ETH(derSignatureBuffer);
     this.PskHash = utils.PskHash;
 
     const ecies = require("../js-mutual-auth-ecies/index");
@@ -31814,13 +32037,15 @@ function PskCrypto() {
     this.ecies_encrypt_ds = ecies.ecies_encrypt_ds;
     this.ecies_decrypt_ds = ecies.ecies_decrypt_ds;
     this.joseAPI = require("../jsonWebToken");
+    this.pskBase64Encode = utils.base64Encode;
+    this.pskBase64Decode = utils.base64Decode;
 }
 
 module.exports = new PskCrypto();
 
 
 
-},{"../js-mutual-auth-ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/DerASN1Decoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
+},{"../js-mutual-auth-ecies/index":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/js-mutual-auth-ecies/index.js","../jsonWebToken":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/jsonWebToken/index.js","../signsensusDS/ssutil":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/signsensusDS/ssutil.js","./ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","./PskEncryption":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js","./utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","./utils/eth":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/eth.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskEncryption.js":[function(require,module,exports){
 function PskEncryption(algorithm) {
     const crypto = require("crypto");
     const utils = require("./utils/cryptoUtils");
@@ -36005,6 +36230,13 @@ const SubjectPublicKeyInfoASN = asn1.define('SubjectPublicKeyInfo', function () 
     )
 })
 
+const ECDSASignature = asn1.define('ECDSASignature', function () {
+    return this.seq().obj(
+        this.key('r').int(),
+        this.key('s').int()
+    );
+});
+
 const curves = {
     secp256k1: {
         curveParameters: [1, 3, 132, 0, 10],
@@ -36030,6 +36262,7 @@ function KeyEncoder(options) {
 
 KeyEncoder.ECPrivateKeyASN = ECPrivateKeyASN;
 KeyEncoder.SubjectPublicKeyInfoASN = SubjectPublicKeyInfoASN;
+KeyEncoder.ECDSASignature = ECDSASignature;
 
 KeyEncoder.prototype.privateKeyObject = function (rawPrivateKey, rawPublicKey, encodingFormat = "hex") {
     const privateKeyObject = {
@@ -36145,111 +36378,7 @@ KeyEncoder.prototype.encodePublic = function (publicKey, originalFormat, destina
 
 module.exports = KeyEncoder;
 
-},{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DerASN1Decoder.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const asn1 = require('../asn1/asn1');
-const BN = require('../asn1/bignum/bn');
-
-const EcdsaDerSig = asn1.define('ECPrivateKey', function () {
-    return this.seq().obj(
-        this.key('r').int(),
-        this.key('s').int()
-    );
-});
-
-/// helper functions for ethereum signature encoding
-function bnToBuffer(bn) {
-    return stripZeros($$.Buffer.from(padToEven(bn.toString(16)), 'hex'));
-}
-
-function padToEven(str) {
-    return str.length % 2 ? '0' + str : str;
-}
-
-function padToLength(buff, len) {
-    const buffer = Buffer.alloc(len);
-
-    buffer.fill(0);
-    console.log(buffer);
-    const offset = len - buff.length;
-    for (let i = 0; i < len - offset; i++) {
-        buffer[i + offset] = buff[i]
-    }
-    return buffer;
-}
-
-function stripZeros(buffer) {
-    var i = 0; // eslint-disable-line
-    for (i = 0; i < buffer.length; i++) {
-        if (buffer[i] !== 0) {
-            break;
-        }
-    }
-    return i > 0 ? buffer.slice(i) : buffer;
-}
-
-function decodeDERIntoASN1ETH(derSignatureBuffer) {
-    const rsSig = EcdsaDerSig.decode(derSignatureBuffer, 'der');
-    let rBuffer = padToLength(bnToBuffer(rsSig.r), 32);
-    let sBuffer = padToLength(bnToBuffer(rsSig.s), 32);
-    //build signature
-    return '0x' + $$.Buffer.concat([rBuffer, sBuffer]).toString('hex');
-}
-
-function asn1SigSigToConcatSig(asn1SigBuffer) {
-    const rsSig = EcdsaDerSig.decode(asn1SigBuffer, 'der');
-    return $$.Buffer.concat([
-        rsSig.r.toArrayLike($$.Buffer, 'be', 32),
-        rsSig.s.toArrayLike($$.Buffer, 'be', 32)
-    ]);
-}
-
-function concatSigToAsn1SigSig(concatSigBuffer) {
-    const r = new BN(concatSigBuffer.slice(0, 32).toString('hex'), 16, 'be');
-    const s = new BN(concatSigBuffer.slice(32).toString('hex'), 16, 'be');
-    return EcdsaDerSig.encode({r, s}, 'der');
-}
-
-function ecdsaSign(data, key) {
-    if (typeof data === "string") {
-        data = $$.Buffer.from(data);
-    }
-    const crypto = require('crypto');
-    const sign = crypto.createSign('sha256');
-    sign.update(data);
-    const asn1SigBuffer = sign.sign(key, 'buffer');
-    return asn1SigSigToConcatSig(asn1SigBuffer);
-}
-
-/**
- * @return {string}
- */
-function EthRSSign(data, key) {
-    if (typeof data === "string") {
-        data = $$.Buffer.from(data);
-    }
-    //by default it will create DER encoded signature
-    const crypto = require('crypto');
-    const sign = crypto.createSign('sha256');
-    sign.update(data);
-    const derSignatureBuffer = sign.sign(key, 'buffer');
-    return decodeDERIntoASN1ETH(derSignatureBuffer);
-}
-
-function ecdsaVerify(data, signature, key) {
-    const crypto = require('crypto');
-    const verify = crypto.createVerify('SHA256');
-    verify.update(data);
-    const asn1sig = concatSigToAsn1SigSig(signature);
-    return verify.verify(key, new $$.Buffer(asn1sig, 'hex'));
-}
-
-module.exports = {
-    decodeDERIntoASN1ETH
-};
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","buffer":false,"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
+},{"./asn1/asn1":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/asn1.js","./asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/DuplexStream.js":[function(require,module,exports){
 const stream = require('stream');
 const util = require('util');
 
@@ -36409,97 +36538,349 @@ module.exports = {
     encode,
     decode
 };
+},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base64.js":[function(require,module,exports){
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const BASE_MAP = {};
+for (let i = 0; i < ALPHABET.length; i++) {
+    BASE_MAP[ALPHABET[i]] = i;
+}
+
+function encode(source) {
+    let digits = [];
+    let length = 0;
+    let b64 = '';
+    for (let i = 0; i <= source.length; i += 3) {
+        let number = 0;
+        let j;
+        for (j = i; j < i + 3 && j < source.length; j++) {
+            number = number * 256 + source.charCodeAt(j);
+        }
+
+        if (j % 3 === 1) {
+            number *= 16;
+        } else if (j % 3 === 2) {
+            number *= 4;
+        }
+
+        let previousLength = length;
+        while (number > 0) {
+            digits[length] = number % 64;
+            length++;
+            number = Math.floor(number / 64);
+        }
+        for (let k = previousLength; k < length; k++) {
+            b64 += ALPHABET[digits[length + previousLength - 1 - k]];
+        }
+    }
+    let paddingLength = 0;
+    if (length % 4 > 0) {
+        paddingLength = 4 - length % 4;
+    }
+    for (let i = 0; i < paddingLength; i++) {
+        b64 += "=";
+    }
+    return b64;
+}
+
+function decode(source) {
+    let paddingLength = 0;
+    for (let i = 0; i < source.length; i++) {
+        if (source.charAt(i) === "=") {
+            paddingLength++;
+        }
+    }
+    let digits = [];
+    let length = 0;
+    let rest = (source.length - paddingLength) % 4;
+    let size = (source.length - paddingLength - rest) * 3 / 4;
+    if (paddingLength === 2) {
+        size++;
+    } else if (paddingLength === 1) {
+        size += 2;
+    }
+
+    let b256 = '';
+    for (let i = 0; i <= source.length - paddingLength; i += 4) {
+        let number = 0;
+        let j;
+        for (j = i; j < i + 4 && j < source.length - paddingLength - 1; j++) {
+            number = number * 64 + BASE_MAP[source.charAt(j)];
+        }
+
+        if (j % 4 === 1) {
+            number = number * 4 + Math.floor(BASE_MAP[source.charAt(j)] / 16);
+        } else if (j % 4 === 2) {
+            number = number * 16 + Math.floor(BASE_MAP[source.charAt(j)] / 4);
+        } else if (j % 4 === 3) {
+            number = number * 64 + BASE_MAP[source.charAt(j)];
+        }
+
+        let previousLength = length;
+        while (length - previousLength < 3 && length < size) {
+            digits[length] = number % 256;
+            length++;
+            number = Math.floor(number / 256);
+        }
+        for (let k = previousLength; k < length; k++) {
+            b256 += String.fromCharCode(digits[length + previousLength - 1 - k]);
+        }
+    }
+
+    return b256;
+}
+
+module.exports = {
+    encode,
+    decode
+}
+
 },{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
+const base64 = require('./base64');
+const keyEncoder = require("../keyEncoder");
 
 const keySizes = [128, 192, 256];
 const authenticationModes = ["ocb", "ccm", "gcm"];
 
 function encode(buffer) {
-	return buffer.toString('base64')
-		.replace(/\+/g, '')
-		.replace(/\//g, '')
-		.replace(/=+$/, '');
+    return buffer.toString('base64')
+        .replace(/\+/g, '')
+        .replace(/\//g, '')
+        .replace(/=+$/, '');
 }
 
 function createPskHash(data, encoding) {
-	const pskHash = new PskHash();
-	pskHash.update(data);
-	return pskHash.digest(encoding);
+    const pskHash = new PskHash();
+    pskHash.update(data);
+    return pskHash.digest(encoding);
 }
 
 function PskHash() {
-	const crypto = require('crypto');
+    const crypto = require('crypto');
 
-	const sha512 = crypto.createHash('sha512');
-	const sha256 = crypto.createHash('sha256');
+    const sha512 = crypto.createHash('sha512');
+    const sha256 = crypto.createHash('sha256');
 
-	function update(data) {
-		sha512.update(data);
-	}
+    function update(data) {
+        sha512.update(data);
+    }
 
-	function digest(encoding) {
-		sha256.update(sha512.digest());
-		return sha256.digest(encoding);
-	}
+    function digest(encoding) {
+        sha256.update(sha512.digest());
+        return sha256.digest(encoding);
+    }
 
-	return {
-		update,
-		digest
-	}
+    return {
+        update, digest
+    }
 }
 
 
 function generateSalt(inputData, saltLen) {
-	const crypto = require('crypto');
-	const hash = crypto.createHash('sha512');
-	hash.update(inputData);
-	const digest = $$.Buffer.from(hash.digest('hex'), 'binary');
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha512');
+    hash.update(inputData);
+    const digest = $$.Buffer.from(hash.digest('hex'), 'binary');
 
-	return digest.slice(0, saltLen);
+    return digest.slice(0, saltLen);
 }
 
 function encryptionIsAuthenticated(algorithm) {
-	for (const mode of authenticationModes) {
-		if (algorithm.includes(mode)) {
-			return true;
-		}
-	}
+    for (const mode of authenticationModes) {
+        if (algorithm.includes(mode)) {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 function getKeyLength(algorithm) {
-	for (const len of keySizes) {
-		if (algorithm.includes(len.toString())) {
-			return len / 8;
-		}
-	}
+    for (const len of keySizes) {
+        if (algorithm.includes(len.toString())) {
+            return len / 8;
+        }
+    }
 
-	throw new Error("Invalid encryption algorithm.");
+    throw new Error("Invalid encryption algorithm.");
 }
 
 function base58Encode(data) {
-	return base58.encode(data);
+    return base58.encode(data);
 }
 
 function base58Decode(data) {
-	return base58.decode(data);
+    return base58.decode(data);
 }
 
+function base64Encode(data) {
+    return base64.encode(data);
+}
+
+function base64Decode(data) {
+    return base64.decode(data);
+}
+
+const PEM_TYPES = ["PRIVATE KEY", "PUBLIC KEY", "CERTIFICATE"];
+const isPemEncoded = (key) => {
+    if (typeof key !== "string") {
+        return false;
+    }
+
+    for (let i = 0; i < PEM_TYPES.length; i++) {
+        if (key.includes(PEM_TYPES[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const convertPemToDer = (str) => {
+    const SEP = "-----";
+    const slicedValue = str.slice(SEP.length, str.length - SEP.length);
+    const firstIndex = slicedValue.indexOf(SEP) + SEP.length;
+    const lastIndex = slicedValue.lastIndexOf(SEP);
+    return $$.Buffer.from(slicedValue.slice(firstIndex, lastIndex), "base64");
+}
+
+const convertDerPrivateKeyToRaw = (privateKey) => {
+    const keyEncoder = require("../keyEncoder");
+    const asn1PrivateKey = keyEncoder.ECPrivateKeyASN.decode(privateKey, "der");
+    return asn1PrivateKey.privateKey;
+};
+
+const convertPemPrivateKeyToRaw = (privateKey) => {
+    const derPrivateKey = convertPemToDer(privateKey);
+    return convertDerPrivateKeyToRaw(derPrivateKey);
+};
+
 module.exports = {
-	createPskHash,
-	encode,
-	generateSalt,
-	PskHash,
+    createPskHash,
+    encode,
+    generateSalt,
+    PskHash,
     base58Encode,
     base58Decode,
-	getKeyLength,
-	encryptionIsAuthenticated
+    getKeyLength,
+    encryptionIsAuthenticated,
+    base64Encode,
+    base64Decode,
+    isPemEncoded,
+    convertPemToDer,
+    convertDerPrivateKeyToRaw,
+    convertPemPrivateKeyToRaw
 };
 
 
-},{"./base58":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
+},{"../keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","./base58":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base58.js","./base64":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base64.js","crypto":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/eth.js":[function(require,module,exports){
+(function (Buffer){(function (){
+const keyEncoder = require("../keyEncoder");
+const BN = require('../asn1/bignum/bn');
+const ECKeyGenerator = require("../ECKeyGenerator");
+const utils = require("../utils/cryptoUtils");
+
+function bnToBuffer(bn) {
+    return stripZeros($$.Buffer.from(padToEven(bn.toString(16)), 'hex'));
+}
+
+function padToEven(str) {
+    return str.length % 2 ? '0' + str : str;
+}
+
+function padToLength(buff, len) {
+    const buffer = Buffer.alloc(len);
+
+    buffer.fill(0);
+    const offset = len - buff.length;
+    for (let i = 0; i < len - offset; i++) {
+        buffer[i + offset] = buff[i]
+    }
+    return buffer;
+}
+
+function stripZeros(buffer) {
+    var i = 0; // eslint-disable-line
+    for (i = 0; i < buffer.length; i++) {
+        if (buffer[i] !== 0) {
+            break;
+        }
+    }
+    return i > 0 ? buffer.slice(i) : buffer;
+}
+
+function decodeDERIntoASN1ETH(derSignatureBuffer) {
+    const rsSig = keyEncoder.ECDSASignature.decode(derSignatureBuffer, 'der');
+    let rBuffer = padToLength(bnToBuffer(rsSig.r), 32);
+    let sBuffer = padToLength(bnToBuffer(rsSig.s), 32);
+    //build signature
+    return '0x' + $$.Buffer.concat([rBuffer, sBuffer]).toString('hex');
+}
+
+function getRSFromSignature(signature) {
+    const rsSig = keyEncoder.ECDSASignature.decode(signature, 'der');
+    let r = padToLength(bnToBuffer(rsSig.r), 32);
+    let s = padToLength(bnToBuffer(rsSig.s), 32);
+    return {r, s}
+}
+
+function generateV(privateKey) {
+    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
+    const rawPublicKey = keyPairGenerator.getPublicKey(privateKey);
+
+    // const x = new BN(rawPublicKey.slice(1, 33).toString("hex"), 16);
+    const y = new BN(rawPublicKey.slice(33).toString("hex"), 16);
+    let v = 0x01;
+    if (y.isEven()) {
+        v = 0x00;
+    }
+
+    v = 0x1b + v;
+    console.log($$.Buffer.from(v.toString(16), "hex"));
+    return $$.Buffer.from(v.toString(16), "hex");
+}
+
+function convertRSVSignatureToDer(rsvSignature) {
+    const r = new BN(rsvSignature.slice(0, 32).toString("hex"), 16);
+    const s = new BN(rsvSignature.slice(32, 64).toString("hex"), 16);
+    const derEncodedSignature = keyEncoder.ECDSASignature.encode({r, s}, "der");
+    return derEncodedSignature;
+}
+
+function sign(data, privateKey) {
+    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
+    const pemPrivateKey = keyPairGenerator.convertPrivateKey(privateKey);
+    const pskcrypto = require("../PskCrypto");
+    const signature = pskcrypto.sign("sha256", data, pemPrivateKey);
+    const {r, s} = getRSFromSignature(signature);
+    const v = generateV(privateKey);
+    return $$.Buffer.concat([r, s, v]);
+}
+
+function verify(data, signature, publicKey) {
+    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
+    const pskcrypto = require("../PskCrypto");
+    if (!$$.Buffer.isBuffer(data)) {
+        data = $$.Buffer.from(data);
+    }
+    const derSignature = convertRSVSignatureToDer(signature);
+    let pemPublicKey;
+    if (utils.isPemEncoded(publicKey)) {
+        pemPublicKey = publicKey;
+    } else {
+        pemPublicKey = keyPairGenerator.convertPublicKey(publicKey);
+    }
+    return pskcrypto.verify("sha256", data, pemPublicKey, derSignature);
+}
+
+module.exports = {
+    decodeDERIntoASN1ETH,
+    sign,
+    verify
+};
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../PskCrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","../keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","../utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
 const stream = require('stream');
 
 
