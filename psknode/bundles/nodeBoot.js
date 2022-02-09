@@ -7858,6 +7858,14 @@ function CryptoAlgorithmsMixin(target) {
         return crypto.pskBase58Decode(data);
     }
 
+    target.base64Encoding = (data) => {
+        return crypto.pskBase64Encode(data);
+    }
+
+    target.base64Decoding = (data) => {
+        return crypto.pskBase64Decode(data);
+    }
+
     target.keyPairGenerator = () => {
         return crypto.createKeyPairGenerator();
     }
@@ -7868,7 +7876,7 @@ function CryptoAlgorithmsMixin(target) {
     };
 
     target.verify = (data, publicKey, signature) => {
-        return crypto.verifyETH(data, signature,  publicKey);
+        return crypto.verifyETH(data, signature, publicKey);
     }
 
     target.ecies_encryption = (receiverPublicKey, message) => {
@@ -7912,7 +7920,7 @@ function CryptoAlgorithmsMixin(target) {
         return config;
     };
 
-    target.setConfigForIES = (_config)=>{
+    target.setConfigForIES = (_config) => {
         config = _config;
     }
 
@@ -7985,6 +7993,14 @@ CryptoAlgorithmsRegistry.prototype.getDecodingFunction = (keySSI) => {
     return getCryptoFunction(keySSI, CryptoFunctionTypes.DECODING);
 };
 
+CryptoAlgorithmsRegistry.prototype.getBase64EncodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.BASE64_ENCODING);
+};
+
+CryptoAlgorithmsRegistry.prototype.getBase64DecodingFunction = (keySSI) => {
+    return getCryptoFunction(keySSI, CryptoFunctionTypes.BASE64_DECODING);
+};
+
 CryptoAlgorithmsRegistry.prototype.getKeyPairGenerator = (keySSI) => {
     return getCryptoFunction(keySSI, CryptoFunctionTypes.KEY_PAIR_GENERATOR);
 };
@@ -8046,6 +8062,8 @@ module.exports = {
     KEY_DERIVATION: "keyDerivation",
     ENCODING: "encoding",
     DECODING: "decoding",
+    BASE64_ENCODING:"base64Encoding",
+    BASE64_DECODING:"base64Decoding",
     SIGN: "sign",
     VERIFY: "verify",
     DERIVE_PUBLIC_KEY: "derivePublicKey",
@@ -8991,7 +9009,7 @@ function ArraySSI(enclave, identifier) {
             vn = 'v0';
         }
         const key = cryptoRegistry.getKeyDerivationFunction(self)(arr.join(''), 1000);
-        self.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getEncodingFunction(self)(key), "", vn, hint);
+        self.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getBase64EncodingFunction(self)(key), "", vn, hint);
     };
 
     self.derive = () => {
@@ -9077,11 +9095,11 @@ function ConstSSI(enclave, identifier) {
 
     self.initialize = (dlDomain, constString, vn, hint) => {
         const key = cryptoRegistry.getKeyDerivationFunction(self)(constString, 1000);
-        self.load(SSITypes.CONST_SSI, dlDomain, cryptoRegistry.getEncodingFunction(self)(key), "", vn, hint);
+        self.load(SSITypes.CONST_SSI, dlDomain, cryptoRegistry.getBase64EncodingFunction(self)(key), "", vn, hint);
     };
 
     self.getEncryptionKey = () => {
-        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+        return cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
     };
 
     self.derive = () => {
@@ -9184,6 +9202,7 @@ function SignedHashLinkSSI(enclave, identifier) {
         identifier = enclave;
         enclave = undefined;
     }
+    const SEPARATOR = "|";
     KeySSIMixin(this, enclave);
     const self = this;
 
@@ -9196,7 +9215,7 @@ function SignedHashLinkSSI(enclave, identifier) {
     }
 
     self.initialize = (dlDomain, hashLink, timestamp, signature, vn, hint) => {
-        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}/${signature.signature}`, vn, hint);
+        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}${SEPARATOR}${signature.signature}`, vn, hint);
     };
 
     self.canBeVerified = () => {
@@ -9219,12 +9238,12 @@ function SignedHashLinkSSI(enclave, identifier) {
 
     self.getTimestamp = function (){
         let control = self.getControlString();
-        return control.split("/")[0];
+        return control.split(SEPARATOR)[0];
     }
 
     self.getSignature = function (){
         let control = self.getControlString();
-        let splitControl = control.split("/");
+        let splitControl = control.split(SEPARATOR);
         let signature = splitControl[1];
         return signature;
     }
@@ -9643,7 +9662,7 @@ function keySSIMixin(target, enclave) {
     };
 
     target.verify = (data, signature) => {
-        const decode = cryptoRegistry.getDecodingFunction(target);
+        const decode = cryptoRegistry.getBase64DecodingFunction(target);
         signature = decode(signature);
         const verify = cryptoRegistry.getVerifyFunction(target);
 
@@ -9736,12 +9755,12 @@ function PublicKeySSI(enclave, identifier) {
     }
 
     self.initialize = (compatibleFamilyName, publicKey, vn) => {
-        publicKey = cryptoRegistry.getEncodingFunction(self)(publicKey);
+        publicKey = cryptoRegistry.getBase64EncodingFunction(self)(publicKey);
         self.load(SSITypes.PUBLIC_KEY_SSI, '', compatibleFamilyName, publicKey, vn);
     };
 
     self.getPublicKey = (format) => {
-        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getControlString());
+        let publicKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getControlString());
         if (format !== "raw") {
             publicKey = cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, {outputFormat: format});
         }
@@ -9794,14 +9813,14 @@ function SymmetricalEncryptionSSI(enclave, identifier) {
         }
 
         if ($$.Buffer.isBuffer(encryptionKey)) {
-            encryptionKey = cryptoRegistry.getEncodingFunction(self)(encryptionKey);
+            encryptionKey = cryptoRegistry.getBase64EncodingFunction(self)(encryptionKey);
         }
 
         load(subtype, dlDomain, encryptionKey, '', vn, hint);
     }
 
     self.getEncryptionKey = function() {
-        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+        return cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
     };
 
     self.derive = function (){
@@ -9880,7 +9899,7 @@ function OReadSSI(identifier) {
     };
 
     self.getEncryptionKey = () => {
-        return cryptoRegistry.getDecodingFunction(self)(self.getHashPublicKey());
+        return cryptoRegistry.getBase64DecodingFunction(self)(self.getHashPublicKey());
     };
 
     const getControlParts = function () {
@@ -9961,7 +9980,7 @@ function OwnershipSSI(identifier) {
                             createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err)
                         );
                     }
-                    privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+                    privateKey = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
                     self.load(SSITypes.OWNERSHIP_SSI, dlDomain, privateKey, levelAndToken, vn, hint);
                     if (callback) {
                         callback(undefined, self);
@@ -10005,7 +10024,7 @@ function OwnershipSSI(identifier) {
         }
         let privateKey = validSpecificString;
         if (typeof privateKey === "string") {
-            privateKey = cryptoRegistry.getDecodingFunction(self)(privateKey);
+            privateKey = cryptoRegistry.getBase64DecodingFunction(self)(privateKey);
         }
         if (format === "pem") {
             const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
@@ -10017,7 +10036,7 @@ function OwnershipSSI(identifier) {
     self.sign = function (dataToSign, callback) {
         const privateKey = self.getPrivateKey();
         const sign = cryptoRegistry.getSignFunction(self);
-        const encode = cryptoRegistry.getEncodingFunction(self);
+        const encode = cryptoRegistry.getBase64EncodingFunction(self);
         const digitalProof = {};
         digitalProof.signature = encode(sign(dataToSign, privateKey));
         digitalProof.publicKey = encode(self.getPublicKey("raw"));
@@ -10349,7 +10368,7 @@ function SZaSSI(enclave, identifier) {
     };
 
     self.getPublicKey = (options) => {
-        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getControlString());
+        let publicKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getControlString());
         return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
     };
 
@@ -10412,14 +10431,14 @@ function SeedSSI(enclave, identifier) {
                 if (err) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed generate private/public key pair`, err));
                 }
-                privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+                privateKey = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
                 self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
                 if (callback) {
                     callback(undefined, self);
                 }
             });
         } else {
-            privateKey = cryptoRegistry.getEncodingFunction(self)(privateKey);
+            privateKey = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
             self.load(SSITypes.SEED_SSI, dlDomain, privateKey, '', vn, hint);
             if (callback) {
                 callback(undefined, self);
@@ -10435,7 +10454,7 @@ function SeedSSI(enclave, identifier) {
         const privateKey = self.getPrivateKey();
         const sreadSpecificString = cryptoRegistry.getHashFunction(self)(privateKey);
         const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
-        const controlString = cryptoRegistry.getEncodingFunction(self)(publicKey);
+        const controlString = cryptoRegistry.getBase64EncodingFunction(self)(publicKey);
         sReadSSI.load(SSITypes.SREAD_SSI, self.getDLDomain(), sreadSpecificString, controlString, self.getVn(), self.getHint());
         return sReadSSI;
     };
@@ -10445,7 +10464,7 @@ function SeedSSI(enclave, identifier) {
         if (validSpecificString === undefined) {
             throw Error("Operation requested on an invalid SeedSSI. Initialise first")
         }
-        let privateKey = cryptoRegistry.getDecodingFunction(self)(validSpecificString);
+        let privateKey = cryptoRegistry.getBase64DecodingFunction(self)(validSpecificString);
         if (format === "pem") {
             const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
             privateKey = pemKeys.privateKey;
@@ -10456,7 +10475,7 @@ function SeedSSI(enclave, identifier) {
     self.sign = function (dataToSign, callback) {
         const privateKey = self.getPrivateKey();
         const sign = cryptoRegistry.getSignFunction(self);
-        const encode = cryptoRegistry.getEncodingFunction(self);
+        const encode = cryptoRegistry.getBase64EncodingFunction(self);
         const digitalProof = {};
         digitalProof.signature = encode(sign(dataToSign, privateKey));
         digitalProof.publicKey = encode(self.getPublicKey("raw"));
@@ -10617,7 +10636,7 @@ function TransferSSI(enclave, identifier) {
     }
 
     self.getPublicKey = (options) => {
-        let publicKey = cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+        let publicKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
         return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
     };
 
@@ -32629,6 +32648,9 @@ for (let i = 0; i < ALPHABET.length; i++) {
 }
 
 function encode(source) {
+    if (typeof source !== "string") {
+        source = source.toString();
+    }
     let digits = [];
     let length = 0;
     let b64 = '';
@@ -32666,6 +32688,9 @@ function encode(source) {
 }
 
 function decode(source) {
+    if (typeof source !== "string") {
+        source = source.toString();
+    }
     let paddingLength = 0;
     for (let i = 0; i < source.length; i++) {
         if (source.charAt(i) === "=") {
@@ -32709,14 +32734,29 @@ function decode(source) {
         }
     }
 
-    return b256;
+    return Buffer.from(b256);
+}
+
+function encodeBase64(data) {
+    if (!Buffer.isBuffer(data)) {
+        data = Buffer.from(data);
+    }
+
+    return data.toString("base64");
+}
+
+function decodeBase64(data) {
+    if (!Buffer.isBuffer(data)) {
+        data = Buffer.from(data);
+    }
+
+    return Buffer.from(data.toString(), "base64");
 }
 
 module.exports = {
-    encode,
-    decode
+    encode: encodeBase64,
+    decode: decodeBase64
 }
-
 },{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 const base64 = require('./base64');
@@ -32939,11 +32979,17 @@ function sign(data, privateKey) {
 }
 
 function verify(data, signature, publicKey) {
-    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
-    const pskcrypto = require("../PskCrypto");
+    if (signature.length !== 65) {
+        throw Error("Invalid signature length");
+    }
+
     if (!$$.Buffer.isBuffer(data)) {
         data = $$.Buffer.from(data);
     }
+
+    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
+    const pskcrypto = require("../PskCrypto");
+
     const derSignature = convertRSVSignatureToDer(signature);
     let pemPublicKey;
     if (utils.isPemEncoded(publicKey)) {

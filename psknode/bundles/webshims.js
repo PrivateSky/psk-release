@@ -7868,6 +7868,7 @@ module.exports = {
     decode
 };
 },{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/base64.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const BASE_MAP = {};
 for (let i = 0; i < ALPHABET.length; i++) {
@@ -7875,6 +7876,9 @@ for (let i = 0; i < ALPHABET.length; i++) {
 }
 
 function encode(source) {
+    if (typeof source !== "string") {
+        source = source.toString();
+    }
     let digits = [];
     let length = 0;
     let b64 = '';
@@ -7912,6 +7916,9 @@ function encode(source) {
 }
 
 function decode(source) {
+    if (typeof source !== "string") {
+        source = source.toString();
+    }
     let paddingLength = 0;
     for (let i = 0; i < source.length; i++) {
         if (source.charAt(i) === "=") {
@@ -7955,15 +7962,32 @@ function decode(source) {
         }
     }
 
-    return b256;
+    return Buffer.from(b256);
+}
+
+function encodeBase64(data) {
+    if (!Buffer.isBuffer(data)) {
+        data = Buffer.from(data);
+    }
+
+    return data.toString("base64");
+}
+
+function decodeBase64(data) {
+    if (!Buffer.isBuffer(data)) {
+        data = Buffer.from(data);
+    }
+
+    return Buffer.from(data.toString(), "base64");
 }
 
 module.exports = {
-    encode,
-    decode
+    encode: encodeBase64,
+    decode: decodeBase64
 }
+}).call(this)}).call(this,require("buffer").Buffer)
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
+},{"buffer":"buffer"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js":[function(require,module,exports){
 const base58 = require('./base58');
 const base64 = require('./base64');
 const keyEncoder = require("../keyEncoder");
@@ -8186,11 +8210,17 @@ function sign(data, privateKey) {
 }
 
 function verify(data, signature, publicKey) {
-    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
-    const pskcrypto = require("../PskCrypto");
+    if (signature.length !== 65) {
+        throw Error("Invalid signature length");
+    }
+
     if (!$$.Buffer.isBuffer(data)) {
         data = $$.Buffer.from(data);
     }
+
+    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
+    const pskcrypto = require("../PskCrypto");
+
     const derSignature = convertRSVSignatureToDer(signature);
     let pemPublicKey;
     if (utils.isPemEncoded(publicKey)) {
