@@ -56313,7 +56313,6 @@ function generateV(privateKey) {
     }
 
     v = 0x1b + v;
-    console.log($$.Buffer.from(v.toString(16), "hex"));
     return $$.Buffer.from(v.toString(16), "hex");
 }
 
