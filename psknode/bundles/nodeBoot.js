@@ -359,9 +359,19 @@ function Archive(archiveConfigurator) {
 
             brickDataExtractorCallback: (brickMeta, brick, callback) => {
                 brick.setTemplateKeySSI(keySSI);
-                const brickEncryptionKeySSI = brickMapController.getBrickEncryptionKeySSI(brickMeta);
-                brick.setKeySSI(brickEncryptionKeySSI);
-                brick.getRawData(callback);
+                
+                function extractData() {
+                    const brickEncryptionKeySSI = brickMapController.getBrickEncryptionKeySSI(brickMeta);
+                    brick.setKeySSI(brickEncryptionKeySSI);
+                    brick.getRawData(callback);
+                }
+
+                if (refreshInProgress) {
+                    return waitIfDSUIsRefreshing(() => {
+                        extractData();
+                    })
+                }
+                extractData();
             },
 
             fsAdapter: archiveConfigurator.getFsAdapter()
@@ -512,24 +522,21 @@ function Archive(archiveConfigurator) {
                     this.load((err) => {
                         if (err) {
                             refreshInProgress = false;
-                            resolve();
-                            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load DSU", err));
+                            return resolve(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to load DSU", err)));
                         }
 
                         // Restore auto sync settings if the archive was refreshed
                         this.enableAnchoringNotifications(publishAnchoringNotifications, publishOptions, (err) => {
                             if (err) {
                                 refreshInProgress = false;
-                                resolve();
-                                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err));
+                                return resolve(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to toggle anchoring notification publishing for mount point: ${mountPoint}`, err)));
                             }
                             this.enableAutoSync(autoSyncStatus, autoSyncOptions, (err) => {
                                 refreshInProgress = false;
-                                resolve();
                                 if (err) {
-                                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to enable auto sync for DSU", err));
+                                    return resolve(OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to enable auto sync for DSU", err)));
                                 }
-                                callback();
+                                resolve(callback());
                             });
                         });
                     });
@@ -5442,7 +5449,7 @@ function DiffStrategy(options) {
             }
 
             if (!hashLinks.length) {
-                return callback(new Error(`No data found for alias <${keySSI.getAnchorId()}>`));
+                return callback(new Error(`No data found for anchor <${keySSI.getAnchorId()}>`));
             }
 
             assembleBrickMap(hashLinks, callback);
@@ -5727,7 +5734,7 @@ function LatestVersionStrategy(options) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
             }
             if (!versionHash) {
-                return callback(new Error(`No data found for alias <${keySSI.getAnchorId()}>`));
+                return callback(new Error(`No data found for anchor <${keySSI.getAnchorId()}>`));
             }
 
             getLatestVersion(versionHash, callback);
