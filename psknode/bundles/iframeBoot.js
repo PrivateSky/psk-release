@@ -4714,6 +4714,14 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			headers['Access-Control-Allow-Credentials'] = true;
 			headers['Access-Control-Max-Age'] = '3600'; //one hour
 			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, ${conf.componentsConfig.virtualMQ.signatureHeaderName}`;
+			
+			if(conf.CORS){
+				console.log("Applying custom CORS headers");
+				for(let prop in conf.CORS){
+					headers[prop] = conf.CORS[prop];
+				}
+			}
+			
 			res.writeHead(200, headers);
 			res.end();
         });
@@ -56351,24 +56359,9 @@ function getRSFromSignature(signature) {
     return {r, s}
 }
 
-function generateV(privateKey) {
-    const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
-    const rawPublicKey = keyPairGenerator.getPublicKey(privateKey);
-
-    // const x = new BN(rawPublicKey.slice(1, 33).toString("hex"), 16);
-    const y = new BN(rawPublicKey.slice(33).toString("hex"), 16);
-    let v = 0x01;
-    if (y.isEven()) {
-        v = 0x00;
-    }
-
-    v = 0x1b + v;
-    return $$.Buffer.from(v.toString(16), "hex");
-}
-
-function convertRSVSignatureToDer(rsvSignature) {
+function convertRSSignatureToDer(rsvSignature) {
     const r = new BN(rsvSignature.slice(0, 32).toString("hex"), 16);
-    const s = new BN(rsvSignature.slice(32, 64).toString("hex"), 16);
+    const s = new BN(rsvSignature.slice(32).toString("hex"), 16);
     const derEncodedSignature = keyEncoder.ECDSASignature.encode({r, s}, "der");
     return derEncodedSignature;
 }
@@ -56379,15 +56372,10 @@ function sign(data, privateKey) {
     const pskcrypto = require("../PskCrypto");
     const signature = pskcrypto.sign("sha256", data, pemPrivateKey);
     const {r, s} = getRSFromSignature(signature);
-    const v = generateV(privateKey);
-    return $$.Buffer.concat([r, s, v]);
+    return $$.Buffer.concat([r, s]);
 }
 
 function verify(data, signature, publicKey) {
-    if (signature.length !== 65) {
-        throw Error("Invalid signature length");
-    }
-
     if (!$$.Buffer.isBuffer(data)) {
         data = $$.Buffer.from(data);
     }
@@ -56395,7 +56383,7 @@ function verify(data, signature, publicKey) {
     const keyPairGenerator = ECKeyGenerator.createECKeyGenerator();
     const pskcrypto = require("../PskCrypto");
 
-    const derSignature = convertRSVSignatureToDer(signature);
+    const derSignature = convertRSSignatureToDer(signature);
     let pemPublicKey;
     if (utils.isPemEncoded(publicKey)) {
         pemPublicKey = publicKey;
@@ -56410,6 +56398,7 @@ module.exports = {
     sign,
     verify
 };
+
 }).call(this)}).call(this,require("buffer").Buffer)
 
 },{"../ECKeyGenerator":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/ECKeyGenerator.js","../PskCrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/PskCrypto.js","../asn1/bignum/bn":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/asn1/bignum/bn.js","../keyEncoder":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/keyEncoder.js","../utils/cryptoUtils":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/cryptoUtils.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/pskcrypto/lib/utils/isStream.js":[function(require,module,exports){
