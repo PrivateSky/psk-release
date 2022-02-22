@@ -32063,7 +32063,145 @@ function pendGo(self, fn) {
   fn(pendHold(self));
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/RemotePersistence.js":[function(require,module,exports){
+function RemotePersistence() {
+    const openDSU = require("opendsu");
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const resolver = openDSU.loadAPI("resolver");
+    const http = openDSU.loadAPI("http");
+    const promiseRunner = require("../utils/promise-runner");
+
+    this.createAnchor = (capableOfSigningKeySSI, anchorValue, callback) => {
+        updateAnchor(capableOfSigningKeySSI, anchorValue, "createAnchor", callback);
+    }
+
+    const getAnchoringServices = (dlDomain, callback) => {
+        const bdns = openDSU.loadAPI("bdns");
+        bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            }
+
+            if (!anchoringServicesArray.length) {
+                return callback('No anchoring service provided');
+            }
+
+            callback(undefined, anchoringServicesArray);
+        });
+    }
+
+    const updateAnchor = (capableOfSigningKeySSI, anchorValue, anchorAction, callback) => {
+        if (typeof capableOfSigningKeySSI === "string") {
+            try {
+                capableOfSigningKeySSI = keySSISpace.parse(capableOfSigningKeySSI);
+            } catch (e) {
+                return callback(e);
+            }
+        }
+
+        if (typeof anchorValue === "string") {
+            try {
+                anchorValue = keySSISpace.parse(anchorValue);
+            } catch (e) {
+                return callback(e);
+            }
+        }
+
+        const dlDomain = capableOfSigningKeySSI.getDLDomain();
+        const anchorId = capableOfSigningKeySSI.getAnchorId();
+
+        getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const anchorHandler = getAnchorHandler(anchorId, anchorValue.getIdentifier(), dlDomain, anchorAction);
+            promiseRunner.runOneSuccessful(anchoringServicesArray, anchorHandler, callback, new Error(`Failed during execution of ${anchorAction}`));
+        })
+    }
+
+    const getAnchorHandler = (anchorId, anchorValue, dlDomain, anchorAction) => {
+        return function (service) {
+            return new Promise((resolve, reject) => {
+                const putResult = http.doPut(`${service}/anchor/${dlDomain}/${anchorAction}/${anchorId}/${anchorValue}`, "", (err, data) => {
+                    if (err) {
+                        return reject({
+                            statusCode: err.statusCode,
+                            message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
+                        });
+                    }
+
+                    resolver.invalidateDSUCache(anchorId);
+                    return resolve(data);
+                });
+                if (putResult) {
+                    putResult.then(resolve).catch(reject);
+                }
+            })
+        }
+    };
+
+    this.appendAnchor = (capableOfSigningKeySSI, anchorValue, callback) => {
+        updateAnchor(capableOfSigningKeySSI, anchorValue, "appendAnchor", callback);
+    }
+
+    const getFetchAnchor = (anchorId, dlDomain, actionName, callback) => {
+        return function (service) {
+            return http.fetch(`${service}/anchor/${dlDomain}/${actionName}/${anchorId}`)
+                .then(response => {
+                    if (actionName === "get-all-versions") {
+                        return response.json()
+                    }
+
+                    return response;
+                })
+                .then(anchorValues => callback(undefined, anchorValues))
+                .catch(err => callback(err));
+        }
+    }
+
+    const getAnchorValues = (keySSI, actionName, callback) => {
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(e);
+            }
+        }
+
+        const dlDomain = keySSI.getDLDomain();
+        const anchorId = keySSI.getAnchorId();
+        getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const fetchAnchor = getFetchAnchor(anchorId, dlDomain, actionName, callback);
+            promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
+        })
+    }
+
+    this.getAllVersions = (keySSI, callback) => {
+        getAnchorValues(keySSI, "get-all-versions", callback);
+    }
+
+    this.getLastVersion = (keySSI, callback) => {
+        getAnchorValues(keySSI, "get-last-version", callback);
+    }
+
+    this.createOrUpdateMultipleAnchors = (anchors, callback) => {
+        http.doPut(`/anchor/create-or-update-multiple-anchors`, JSON.stringify(anchors), (err, data) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(undefined, data);
+        });
+    }
+}
+
+module.exports = RemotePersistence;
+},{"../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function validateHashLinks(keySSI, hashLinks, callback) {
@@ -32544,10 +32682,13 @@ const getLatestVersion = (domain, ...args) => {
     callContractMethod(domain, "getLatestVersion", ...args);
 }
 
+
 function getAnchoringX(){
     //todo: See below
     //return anchoring behaviour using the persistence as apihub calls
     //execute the integration testing using the extended FS implementation (fsx)
+    const RemotePersistence = require("./RemotePersistence");
+    return getAnchoringBehaviour(new RemotePersistence());
 }
 module.exports = {
     createAnchor,
@@ -32561,7 +32702,7 @@ module.exports = {
     getAnchoringX
 }
 
-},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./anchoringAbstractBehaviour":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoringAbstractBehaviour.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
+},{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./RemotePersistence":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/RemotePersistence.js","./anchoring-utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoring-utils.js","./anchoringAbstractBehaviour":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/anchoringAbstractBehaviour.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 const PendingCallMixin = require("../utils/PendingCallMixin");
 const getBaseURL = require("../utils/getBaseURL");
