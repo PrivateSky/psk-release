@@ -137,6 +137,20 @@ function getHandlerForAnchorCreateOrAppend(response) {
     };
 }
 
+function getLastVersion(request, response){
+    request.strategy.getLastVersion(async (err, fileHash) =>{
+        response.setHeader("Content-Type", "application/json");
+
+        if (err) {
+            return response.send(404, "Anchor not found");
+        }
+
+        if (fileHash) {
+            return response.send(200, fileHash);
+        }
+    })
+}
+
 async function getAllVersionsFromExternalProviders(request) {
     const { domain, anchorId } = request.params;
     console.log("[Anchoring] Getting external providers...");
@@ -243,6 +257,7 @@ module.exports = {
     createAnchor,
     appendToAnchor,
     getAllVersions,
+    getLastVersion
 };
 
 },{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils/array":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/array.js","../../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
@@ -298,7 +313,7 @@ function Anchoring(server) {
         next();
     }
 
-    const { createAnchor, appendToAnchor, getAllVersions } = require("./controllers");
+    const { createAnchor, appendToAnchor, getAllVersions, getLastVersion } = require("./controllers");
 
     const { responseModifierMiddleware, requestBodyJSONMiddleware } = require("../../utils/middlewares");
 
@@ -315,6 +330,10 @@ function Anchoring(server) {
 
     server.get(`/anchor/:domain/get-all-versions/:anchorId`, requestStrategyMiddleware);
     server.get(`/anchor/:domain/get-all-versions/:anchorId`, getAllVersions);
+
+    server.get(`/anchor/:domain/get-last-version/:anchorId`, requestStrategyMiddleware);
+    server.get(`/anchor/:domain/get-last-version/:anchorId`, getLastVersion);
+
 }
 
 module.exports = Anchoring;
@@ -862,14 +881,222 @@ module.exports = {
     appendHashLink,
 };
 
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","fs":false,"opendsu":"opendsu","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js":[function(require,module,exports){
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","fs":false,"opendsu":"opendsu","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/filePersistence.js":[function(require,module,exports){
+
+function FilePersistenceStrategy(rootFolder,configuredPath){
+    const self = this;
+    const fileOperations = new FileOperations();
+    fileOperations.InitializeFolderStructure(rootFolder,configuredPath);
+
+    self.getLastVersion = function (anchorId, callback){
+        fileOperations.isFileNameValid(anchorId, (err) =>{
+            if (err){
+                return callback(err);
+            }
+            fileOperations.fileExist(anchorId,(err,exists) =>{
+                if (err){
+                    return callback(undefined,null);
+                }
+                if (!exists){
+                    return callback(undefined,null);
+                }
+                //read the last hashlink for anchorId
+                return fileOperations.getlastVersion(anchorId, callback);
+            })
+        });
+    }
+    self.getAllVersions = function (anchorId, callback){
+        // read all hashlinks for anchorId
+        fileOperations.isFileNameValid(anchorId, (err) =>{
+            if (err){
+                return callback(err);
+            }
+            fileOperations.fileExist(anchorId,(err, exists) =>{
+                if (err){
+                    return callback(undefined,[]);
+                }
+                if (!exists){
+                    return callback(undefined,[]);
+                }
+                //read the last hashlink for anchorId
+                return fileOperations.getAllVersions(anchorId,callback);
+            })
+        });
+    }
+    self.createAnchor = function (anchorId, anchorValueSSI, callback){
+        fileOperations.isFileNameValid(anchorId, (err) =>{
+            if (err){
+                return callback(err);
+            }
+            fileOperations.fileExist(anchorId,(err, exists) =>{
+                if (err){
+                    return callback(err);
+                }
+                if (!exists){
+                    //file doesnt exist
+                    return fileOperations.createAnchor(anchorId, anchorValueSSI, callback);
+                }
+                //if anchor exist, return error
+                return callback(Error(`anchor ${anchorId} already exist`));
+            })
+        });
+    }
+    self.appendAnchor = function(anchorId,anchorValueSSI, callback){
+        fileOperations.isFileNameValid(anchorId, (err) =>{
+            if (err){
+                return callback(err);
+            }
+            fileOperations.fileExist(anchorId,(err,exists) =>{
+                if (err){
+                    return callback(err);
+                }
+                if (!exists){
+                    return callback(new Error(`Anchor ${anchorId} doesn't exist`));
+                }
+                return fileOperations.appendAnchor(anchorId, anchorValueSSI, callback);
+            })
+        });
+    }
+
+}
+
+
+
+function FileOperations(){
+    const self =  this;
+    const fs = require('fs');
+    const path = require('path');
+    let anchoringFolder;
+    const endOfLine = require("os").EOL;
+
+    self.InitializeFolderStructure = function(rootFolder,configuredPath){
+        let storageFolder = path.join(rootFolder, configuredPath);
+        anchoringFolder = path.resolve(storageFolder);
+        try {
+            if (!fs.existsSync(anchoringFolder)) {
+                fs.mkdirSync(anchoringFolder, { recursive: true });
+            }
+        } catch (e) {
+            console.log("error creating anchoring folder", e);
+            throw new Error(`Failed to create folder ${anchoringFolder}`);
+        }
+    }
+
+    self.isFileNameValid = function(anchorId, callback){
+        if (!anchorId || typeof anchorId !== "string") {
+            return callback(new Error("No fileId specified."));
+        }
+
+        let forbiddenCharacters = new RegExp(/[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g);
+        if (forbiddenCharacters.test(anchorId)) {
+            console.log(`Found forbidden characters in anchorId ${anchorId}`);
+            return callback(new Error(`anchorId ${anchorId} contains forbidden characters`));
+        }
+        return callback(undefined);
+    }
+
+    self.fileExist = function(anchorId, callback){
+        const filePath = path.join(anchoringFolder, anchorId);
+        fs.stat(filePath,(err) => {
+            if (err) {
+                if (err.code === "ENOENT") {
+                    return callback(undefined,false);
+                }
+                return callback(err, false);
+            }
+            return callback(undefined, true);
+        });
+    }
+
+    self.getlastVersion = function(anchorId, callback){
+        self.getAllVersions(anchorId, (err, allVersions) =>{
+            if (err){
+                return callback(err);
+            }
+            if (allVersions.length === 0){
+                return callback(undefined,null);
+            }
+            return callback(undefined,allVersions[allVersions.length-1]);
+        });
+    }
+
+    self.getAllVersions = function(anchorId, callback){
+        const filePath = path.join(anchoringFolder, anchorId);
+        fs.readFile(filePath, (err, fileHashes) => {
+            if (err) {
+                return callback(new Error(`Failed to read file <${filePath}>`));
+            }
+            const fileContent = fileHashes.toString().trimEnd();
+            const versions = fileContent ? fileContent.split(endOfLine) : [];
+            callback(undefined, versions);
+        });
+    }
+
+    self.createAnchor = function(anchorId, anchorValueSSI, callback){
+        const fileContent = anchorValueSSI + endOfLine;
+        const filePath = path.join(anchoringFolder, anchorId);
+        fs.writeFile(filePath, fileContent, callback);
+    }
+
+    self.appendAnchor = function(anchorId, anchorValueSSI, callback){
+        const fileContent = anchorValueSSI + endOfLine;
+        const filePath = path.join(anchoringFolder, anchorId);
+        fs.appendFile(filePath,fileContent, callback);
+    }
+}
+
+
+module.exports = {
+    FilePersistenceStrategy
+}
+
+},{"fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js":[function(require,module,exports){
+
+const openDSU = require("opendsu");
+
+class FSX{
+    constructor(server, domainConfig, anchorId, jsonData) {
+        this.commandData = {};
+        this.commandData.option = domainConfig.option;
+        this.commandData.anchorId = anchorId;
+        this.commandData.jsonData = jsonData || {};
+        const FilePersistence = require('./filePersistence').FilePersistenceStrategy;
+        const fps = new FilePersistence(server.rootFolder,domainConfig.option.path);
+        this.anchoringBehaviour = openDSU.loadApi("anchoring").getAnchoringBehaviour(fps);
+    }
+
+    createAnchor(callback){
+        console.log('FSX create anchor');
+        this.anchoringBehaviour.createAnchor(this.commandData.anchorId, this.commandData.jsonData.hashLinkSSI, callback);
+    }
+
+    appendToAnchor(callback){
+        console.log('FSX append anchor');
+        this.anchoringBehaviour.appendAnchor(this.commandData.anchorId, this.commandData.jsonData.hashLinkSSI, callback);
+    }
+
+    getAllVersions(callback){
+        console.log('FSX get all versions');
+        this.anchoringBehaviour.getAllVersions(this.commandData.anchorId, callback);
+    }
+
+    getLastVersion(callback){
+        console.log('FSX get last version');
+        this.anchoringBehaviour.getLastVersion(this.commandData.anchorId, callback);
+    }
+}
+
+module.exports = FSX;
+
+},{"./filePersistence":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/filePersistence.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js":[function(require,module,exports){
 module.exports = {
     FS: require("./fs"),
     ETH: require("./eth"),
     Contract: require("./contract"),
+    FSX: require("./fsx")
 };
 
-},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./eth":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/eth/index.js","./fs":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
+},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./eth":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/eth/index.js","./fs":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
 const { clone } = require("../../../utils");
 
 const getAnchoringDomainConfig = (domain) => {
@@ -30536,9 +30763,9 @@ const DSURepresentationNames = {
 module.exports = DSURepresentationNames;
 },{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
-const { createHashLinkSSI } = require("../OtherKeySSIs/HashLinkSSI");
-const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const {createHashLinkSSI} = require("../OtherKeySSIs/HashLinkSSI");
 const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SignedHashLinkSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -30558,7 +30785,7 @@ function SignedHashLinkSSI(enclave, identifier) {
     }
 
     self.initialize = (dlDomain, hashLink, timestamp, signature, vn, hint) => {
-        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}${SEPARATOR}${signature.signature}`, vn, hint);
+        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}${SEPARATOR}${signature}`, vn, hint);
     };
 
     self.canBeVerified = () => {
@@ -30579,25 +30806,43 @@ function SignedHashLinkSSI(enclave, identifier) {
         return hashLinkSSI;
     };
 
-    self.getTimestamp = function (){
+    self.getTimestamp = function () {
         let control = self.getControlString();
         return control.split(SEPARATOR)[0];
     }
 
-    self.getSignature = function (){
+    self.getSignature = function (encoding) {
+        if (typeof encoding === "undefined") {
+            encoding = "base64";
+        }
         let control = self.getControlString();
         let splitControl = control.split(SEPARATOR);
         let signature = splitControl[1];
+        if (encoding === "raw") {
+            const base64Decode = cryptoRegistry.getBase64DecodingFunction(self);
+            return base64Decode(signature);
+        }
+
         return signature;
     }
 
-    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
-        let prevHashLink = '';
-        const timestamp = self.getTimestamp();
-        if (previousHashLinkSSI){
-            prevHashLink = previousHashLinkSSI.getIdentifier();
+    self.getDataToSign = function (anchorSSI, previousAnchorValue) {
+        const keySSIFactory = require("../KeySSIFactory");
+
+        if (typeof anchorSSI === "string") {
+            anchorSSI = keySSIFactory.create(anchorSSI);
         }
-        return self.hash(anchorSSI.getIdentifier() + self.getSpecificString() + prevHashLink + timestamp);
+
+        if (typeof previousAnchorValue === "string") {
+            previousAnchorValue = keySSIFactory.create(previousAnchorValue);
+        }
+
+        let previousIdentifier = '';
+        const timestamp = self.getTimestamp();
+        if (previousAnchorValue) {
+            previousIdentifier = previousAnchorValue.getIdentifier(true);
+        }
+        return anchorSSI.getIdentifier(true) + self.getSpecificString() + previousIdentifier + timestamp;
     }
 }
 
@@ -30609,7 +30854,7 @@ module.exports = {
     createSignedHashLinkSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -30803,7 +31048,6 @@ module.exports = new KeySSIFactory();
 
 },{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
-const CryptoFunctionTypes = require("../CryptoAlgorithms/CryptoFunctionTypes");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 
@@ -31031,7 +31275,7 @@ function keySSIMixin(target, enclave) {
 
 module.exports = keySSIMixin;
 
-},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -31819,11 +32063,9 @@ function SeedSSI(enclave, identifier) {
         const privateKey = self.getPrivateKey();
         const sign = cryptoRegistry.getSignFunction(self);
         const encode = cryptoRegistry.getBase64EncodingFunction(self);
-        const digitalProof = {};
-        digitalProof.signature = encode(sign(dataToSign, privateKey));
-        digitalProof.publicKey = encode(self.getPublicKey("raw"));
+        const signature = encode(sign(dataToSign, privateKey));
 
-        callback(undefined, digitalProof);
+        callback(undefined, signature);
     }
 
     self.getPublicKey = function (format) {
@@ -31834,7 +32076,7 @@ function SeedSSI(enclave, identifier) {
         return self.derive().getEncryptionKey();
     };
 
-    self.getKeyPair = function (){
+    self.getKeyPair = function () {
         const keyPair = {
             privateKey: self.getPrivateKey("pem"),
             publicKey: self.getPublicKey("pem")
@@ -31924,6 +32166,7 @@ module.exports = {
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const keySSIFactory = require("../KeySSIFactory");
 
 function TransferSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -31940,7 +32183,7 @@ function TransferSSI(enclave, identifier) {
         return SSITypes.TRANSFER_SSI;
     }
 
-    self.initialize = function (dlDomain, hashNewPublicKey, timestamp, signature, vn, hint, callback) {
+    self.initialize = function (dlDomain, newPublicKey, timestamp, signature, vn, hint, callback) {
         if (typeof vn === "function") {
             callback = vn;
             vn = "v0";
@@ -31950,7 +32193,7 @@ function TransferSSI(enclave, identifier) {
             hint = undefined;
         }
 
-        self.load(SSITypes.TRANSFER_SSI, dlDomain, hashNewPublicKey, `${timestamp}/${signature.signature}/${signature.publicKey}`, vn, hint);
+        self.load(SSITypes.TRANSFER_SSI, dlDomain, newPublicKey, `${timestamp}/${signature}`, vn, hint);
 
         if (callback) {
             callback(undefined, self);
@@ -31965,17 +32208,23 @@ function TransferSSI(enclave, identifier) {
         return self.getSpecificString();
     };
 
-    self.getTimestamp = function (){
+    self.getTimestamp = function () {
         let control = self.getControlString();
         return control.split("/")[0];
     }
 
-    self.getSignature = function (){
+    self.getSignature = function (encoding) {
+        if (typeof encoding === "undefined") {
+            encoding = "base64";
+        }
         let control = self.getControlString();
         let splitControl = control.split("/");
         let signature = splitControl[1];
-        let publicKey = splitControl[2];
-        return {signature, publicKey};
+        if (encoding === "raw") {
+            const base64Decode = cryptoRegistry.getBase64DecodingFunction(self);
+            return base64Decode(signature);
+        }
+        return signature;
     }
 
     self.getPublicKey = (options) => {
@@ -31983,14 +32232,21 @@ function TransferSSI(enclave, identifier) {
         return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
     };
 
-    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
-        let prevHashLinkEncoded = '';
-        const timestamp = self.getTimestamp();
-        if (previousHashLinkSSI){
-            prevHashLinkEncoded = previousHashLinkSSI.getIdentifier();
+    self.getDataToSign = function (anchorSSI, previousAnchorValue) {
+        if (typeof anchorSSI === "string") {
+            anchorSSI = keySSIFactory.create(anchorSSI);
         }
-        const newEncodedPublicKey = self.getSpecificString();
-        return self.hash(anchorSSI.getIdentifier()+prevHashLinkEncoded + timestamp+newEncodedPublicKey);
+
+        if (typeof previousAnchorValue === "string") {
+            previousAnchorValue = keySSIFactory.create(previousAnchorValue);
+        }
+
+        let previousIdentifier = '';
+        const timestamp = self.getTimestamp();
+        if (previousAnchorValue) {
+            previousIdentifier = previousAnchorValue.getIdentifier(true);
+        }
+        return anchorSSI.getIdentifier(true) + self.getSpecificString() + previousIdentifier + timestamp;
     }
 
     self.isTransfer = function () {
@@ -32006,7 +32262,7 @@ module.exports = {
     createTransferSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/node-fd-slicer/modules/node-pend/index.js":[function(require,module,exports){
 module.exports = Pend;
 
 function Pend() {
@@ -32284,11 +32540,21 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         //convert to keySSI
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try{
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            }
+            catch (err){
+                return callback(err);
+            }
         }
         let anchorValueSSIKeySSI = anchorValueSSI;
         if (typeof anchorValueSSI === "string"){
-            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            try{
+                anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            }
+            catch(err){
+                return callback(err);
+            }
         }
 
         if (!anchorIdKeySSI.canAppend()){
@@ -32316,11 +32582,19 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         //convert to keySSI
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try {
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            } catch(err){
+                return callback(err);
+            }
         }
         let anchorValueSSIKeySSI = anchorValueSSI;
         if (typeof anchorValueSSI === "string"){
-            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            try {
+                anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            } catch (err){
+                return callback(err);
+            }
         }
 
         if (!anchorIdKeySSI.canAppend()){
@@ -32359,7 +32633,11 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
     self.getAllVersions = function(anchorId, callback){
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try {
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            } catch (err){
+                return callback(err);
+            }
         }
         persistenceStrategy.getAllVersions(anchorId, (err, data) => {
             if (err){

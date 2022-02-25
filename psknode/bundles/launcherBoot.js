@@ -9232,9 +9232,9 @@ const DSURepresentationNames = {
 module.exports = DSURepresentationNames;
 },{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
-const { createHashLinkSSI } = require("../OtherKeySSIs/HashLinkSSI");
-const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const {createHashLinkSSI} = require("../OtherKeySSIs/HashLinkSSI");
 const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 
 function SignedHashLinkSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -9254,7 +9254,7 @@ function SignedHashLinkSSI(enclave, identifier) {
     }
 
     self.initialize = (dlDomain, hashLink, timestamp, signature, vn, hint) => {
-        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}${SEPARATOR}${signature.signature}`, vn, hint);
+        self.load(SSITypes.SIGNED_HASH_LINK_SSI, dlDomain, hashLink, `${timestamp}${SEPARATOR}${signature}`, vn, hint);
     };
 
     self.canBeVerified = () => {
@@ -9275,25 +9275,43 @@ function SignedHashLinkSSI(enclave, identifier) {
         return hashLinkSSI;
     };
 
-    self.getTimestamp = function (){
+    self.getTimestamp = function () {
         let control = self.getControlString();
         return control.split(SEPARATOR)[0];
     }
 
-    self.getSignature = function (){
+    self.getSignature = function (encoding) {
+        if (typeof encoding === "undefined") {
+            encoding = "base64";
+        }
         let control = self.getControlString();
         let splitControl = control.split(SEPARATOR);
         let signature = splitControl[1];
+        if (encoding === "raw") {
+            const base64Decode = cryptoRegistry.getBase64DecodingFunction(self);
+            return base64Decode(signature);
+        }
+
         return signature;
     }
 
-    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
-        let prevHashLink = '';
-        const timestamp = self.getTimestamp();
-        if (previousHashLinkSSI){
-            prevHashLink = previousHashLinkSSI.getIdentifier();
+    self.getDataToSign = function (anchorSSI, previousAnchorValue) {
+        const keySSIFactory = require("../KeySSIFactory");
+
+        if (typeof anchorSSI === "string") {
+            anchorSSI = keySSIFactory.create(anchorSSI);
         }
-        return self.hash(anchorSSI.getIdentifier() + self.getSpecificString() + prevHashLink + timestamp);
+
+        if (typeof previousAnchorValue === "string") {
+            previousAnchorValue = keySSIFactory.create(previousAnchorValue);
+        }
+
+        let previousIdentifier = '';
+        const timestamp = self.getTimestamp();
+        if (previousAnchorValue) {
+            previousIdentifier = previousAnchorValue.getIdentifier(true);
+        }
+        return anchorSSI.getIdentifier(true) + self.getSpecificString() + previousIdentifier + timestamp;
     }
 }
 
@@ -9305,7 +9323,7 @@ module.exports = {
     createSignedHashLinkSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js":[function(require,module,exports){
 const createSecretSSI = require("./SecretSSIs/SecretSSI").createSecretSSI;
 const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
@@ -9499,7 +9517,6 @@ module.exports = new KeySSIFactory();
 
 },{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
-const CryptoFunctionTypes = require("../CryptoAlgorithms/CryptoFunctionTypes");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 
@@ -9727,7 +9744,7 @@ function keySSIMixin(target, enclave) {
 
 module.exports = keySSIMixin;
 
-},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
+},{"../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./DSURepresentationNames":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/DSURepresentationNames.js","./KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","opendsu":"opendsu","pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 
@@ -10515,11 +10532,9 @@ function SeedSSI(enclave, identifier) {
         const privateKey = self.getPrivateKey();
         const sign = cryptoRegistry.getSignFunction(self);
         const encode = cryptoRegistry.getBase64EncodingFunction(self);
-        const digitalProof = {};
-        digitalProof.signature = encode(sign(dataToSign, privateKey));
-        digitalProof.publicKey = encode(self.getPublicKey("raw"));
+        const signature = encode(sign(dataToSign, privateKey));
 
-        callback(undefined, digitalProof);
+        callback(undefined, signature);
     }
 
     self.getPublicKey = function (format) {
@@ -10530,7 +10545,7 @@ function SeedSSI(enclave, identifier) {
         return self.derive().getEncryptionKey();
     };
 
-    self.getKeyPair = function (){
+    self.getKeyPair = function () {
         const keyPair = {
             privateKey: self.getPrivateKey("pem"),
             publicKey: self.getPublicKey("pem")
@@ -10620,6 +10635,7 @@ module.exports = {
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+const keySSIFactory = require("../KeySSIFactory");
 
 function TransferSSI(enclave, identifier) {
     if (typeof enclave === "string") {
@@ -10636,7 +10652,7 @@ function TransferSSI(enclave, identifier) {
         return SSITypes.TRANSFER_SSI;
     }
 
-    self.initialize = function (dlDomain, hashNewPublicKey, timestamp, signature, vn, hint, callback) {
+    self.initialize = function (dlDomain, newPublicKey, timestamp, signature, vn, hint, callback) {
         if (typeof vn === "function") {
             callback = vn;
             vn = "v0";
@@ -10646,7 +10662,7 @@ function TransferSSI(enclave, identifier) {
             hint = undefined;
         }
 
-        self.load(SSITypes.TRANSFER_SSI, dlDomain, hashNewPublicKey, `${timestamp}/${signature.signature}/${signature.publicKey}`, vn, hint);
+        self.load(SSITypes.TRANSFER_SSI, dlDomain, newPublicKey, `${timestamp}/${signature}`, vn, hint);
 
         if (callback) {
             callback(undefined, self);
@@ -10661,17 +10677,23 @@ function TransferSSI(enclave, identifier) {
         return self.getSpecificString();
     };
 
-    self.getTimestamp = function (){
+    self.getTimestamp = function () {
         let control = self.getControlString();
         return control.split("/")[0];
     }
 
-    self.getSignature = function (){
+    self.getSignature = function (encoding) {
+        if (typeof encoding === "undefined") {
+            encoding = "base64";
+        }
         let control = self.getControlString();
         let splitControl = control.split("/");
         let signature = splitControl[1];
-        let publicKey = splitControl[2];
-        return {signature, publicKey};
+        if (encoding === "raw") {
+            const base64Decode = cryptoRegistry.getBase64DecodingFunction(self);
+            return base64Decode(signature);
+        }
+        return signature;
     }
 
     self.getPublicKey = (options) => {
@@ -10679,14 +10701,21 @@ function TransferSSI(enclave, identifier) {
         return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
     };
 
-    self.getDataToSign = function(anchorSSI, previousHashLinkSSI){
-        let prevHashLinkEncoded = '';
-        const timestamp = self.getTimestamp();
-        if (previousHashLinkSSI){
-            prevHashLinkEncoded = previousHashLinkSSI.getIdentifier();
+    self.getDataToSign = function (anchorSSI, previousAnchorValue) {
+        if (typeof anchorSSI === "string") {
+            anchorSSI = keySSIFactory.create(anchorSSI);
         }
-        const newEncodedPublicKey = self.getSpecificString();
-        return self.hash(anchorSSI.getIdentifier()+prevHashLinkEncoded + timestamp+newEncodedPublicKey);
+
+        if (typeof previousAnchorValue === "string") {
+            previousAnchorValue = keySSIFactory.create(previousAnchorValue);
+        }
+
+        let previousIdentifier = '';
+        const timestamp = self.getTimestamp();
+        if (previousAnchorValue) {
+            previousIdentifier = previousAnchorValue.getIdentifier(true);
+        }
+        return anchorSSI.getIdentifier(true) + self.getSpecificString() + previousIdentifier + timestamp;
     }
 
     self.isTransfer = function () {
@@ -10702,7 +10731,7 @@ module.exports = {
     createTransferSSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/RemotePersistence.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/RemotePersistence.js":[function(require,module,exports){
 function RemotePersistence() {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi");
@@ -10923,11 +10952,21 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         //convert to keySSI
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try{
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            }
+            catch (err){
+                return callback(err);
+            }
         }
         let anchorValueSSIKeySSI = anchorValueSSI;
         if (typeof anchorValueSSI === "string"){
-            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            try{
+                anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            }
+            catch(err){
+                return callback(err);
+            }
         }
 
         if (!anchorIdKeySSI.canAppend()){
@@ -10955,11 +10994,19 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         //convert to keySSI
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try {
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            } catch(err){
+                return callback(err);
+            }
         }
         let anchorValueSSIKeySSI = anchorValueSSI;
         if (typeof anchorValueSSI === "string"){
-            anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            try {
+                anchorValueSSIKeySSI = keySSI.parse(anchorValueSSI);
+            } catch (err){
+                return callback(err);
+            }
         }
 
         if (!anchorIdKeySSI.canAppend()){
@@ -10998,7 +11045,11 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
     self.getAllVersions = function(anchorId, callback){
         let anchorIdKeySSI = anchorId;
         if (typeof anchorId === "string"){
-            anchorIdKeySSI = keySSI.parse(anchorId);
+            try {
+                anchorIdKeySSI = keySSI.parse(anchorId);
+            } catch (err){
+                return callback(err);
+            }
         }
         persistenceStrategy.getAllVersions(anchorId, (err, data) => {
             if (err){
