@@ -22790,11 +22790,16 @@ module.exports.init = function (sf, logger) {
      */
     sf.assert.addCheck('begin', function (message, cleanFunctions, timeout) {
         //logger.recordAssert(message);
+
+        if(typeof cleanFunctions === "number"){
+            timeout = cleanFunctions;
+            cleanFunctions = function(){};
+        }
         beginWasCalled = true;
         console.log(message);
         sf.assert.end(cleanFunctions, timeout, true);
     });
-
+    sf.assert.begin         = sf.assert.begin;
 
     function recordFail(...args) { //record fail only once
         if (!__failWasAlreadyGenerated) {
@@ -23240,6 +23245,59 @@ module.exports.init = function (sf, logger) {
         setTimeout(handler, timeout);
     });
 
+
+    /**
+     * Registering performance assertion based on a configuration
+     * @param config {object} - containing 3 fields: @timeOut , @minRatePerSecond and @testFunction
+     * @param callback {function} - a functioning returning errors or a result object containing statistics about execution, and in particular an @actualRate field
+     */
+    sf.assert.addCheck("performance", function(config, callback){
+        let testEnded = false;
+
+        let result ={actualRate:0};
+        let successfulTestsCounter = 0;
+
+        let actualNumberOfSeconds = 0;
+
+        if(typeof config.testFunction !== "function"){
+            throw new Error("config.testFunction should be a function");
+        }
+
+        function runTests(counter, end) {
+            for(let i =0;i<counter;i++){
+                setTimeout(function(){
+                    config.testFunction(end);
+                }, 0);
+            }
+        }
+
+        function tickPerSecond(){
+            actualNumberOfSeconds++;
+            let end;
+
+            function endTest(){
+                successfulTestsCounter++;
+                runTests(1, end);
+            }
+            end = endTest;
+
+            runTests(config.minRatePerSecond, endTest);
+            setTimeout(function(){
+                tickPerSecond();
+            }, 1000)
+        }
+
+        tickPerSecond();
+        setTimeout(function(){
+            testEnded = true;
+            result.actualRate = Math.floor(successfulTestsCounter / actualNumberOfSeconds);
+            callback(undefined, result);
+        }, config.timeOut)
+    });
+
+
+    sf.assert.end           = sf.assert.end;
+    sf.assert.performance   = sf.assert.performance;
 
 };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
