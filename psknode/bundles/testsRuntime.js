@@ -23255,9 +23255,8 @@ module.exports.init = function (sf, logger) {
         let testEnded = false;
 
         let result ={actualRate:0};
+        let errors = [];
         let successfulTestsCounter = 0;
-
-        let actualNumberOfSeconds = 0;
 
         if(typeof config.testFunction !== "function"){
             throw new Error("config.testFunction should be a function");
@@ -23271,28 +23270,29 @@ module.exports.init = function (sf, logger) {
             }
         }
 
-        function tickPerSecond(){
-            actualNumberOfSeconds++;
-            let end;
-
-            function endTest(){
-                successfulTestsCounter++;
-                runTests(1, end);
+        function endTest(err){
+            if(err){
+                errors.push(err);
             }
-            end = endTest;
-
-            runTests(config.minRatePerSecond, endTest);
-            setTimeout(function(){
-                tickPerSecond();
-            }, 1000)
+            successfulTestsCounter++;
+            runTests(1, endTest);
         }
 
-        tickPerSecond();
+
+
+
+        let startTime = Date.now();
+
         setTimeout(function(){
             testEnded = true;
+            let endTime = Date.now();
+            let actualNumberOfSeconds = (endTime - startTime) / 1000;
             result.actualRate = Math.floor(successfulTestsCounter / actualNumberOfSeconds);
-            callback(undefined, result);
-        }, config.timeOut)
+            callback(errors.length == 0?undefined:errors, result);
+        }, config.timeOut);
+
+        runTests(config.parallelCalls, endTest);
+
     });
 
 
