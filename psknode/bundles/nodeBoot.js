@@ -11846,7 +11846,6 @@ module.exports = {
 
 },{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js":[function(require,module,exports){
 const openDSU = require("opendsu");
-const bdns = openDSU.loadApi("bdns");
 const {fetch, doPut} = openDSU.loadApi("http");
 const constants = require("../moduleConstants");
 const cache = require("../cache/").getCacheForVault(constants.CACHE.ENCRYPTED_BRICKS_CACHE);
@@ -11899,6 +11898,7 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
     }
 
     function __getBrickFromEndpoint() {
+        const bdns = openDSU.loadApi("bdns");
         bdns.getBrickStorages(dlDomain, (err, brickStorageArray) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
@@ -11996,6 +11996,7 @@ const putBrick = (domain, brick, authToken, callback) => {
         return cachedBricking.putBrick(brick, callback);
     }
 
+    const bdns = openDSU.loadApi("bdns");
     bdns.getBrickStorages(domain, (err, brickStorageArray) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get brick storage services from bdns`, err));
