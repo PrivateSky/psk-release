@@ -1181,7 +1181,27 @@ module.exports = {
 };
 
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/removeDir.js":[function(require,module,exports){
+const fs = require("fs");
+const removeDir = (...args) => {
+    if (typeof fs.rm !== "function") {
+        return fs.rmdir(...args);
+    }
+    return fs.rm(...args);
+}
+
+const removeDirSync = (...args) => {
+    if (typeof fs.rmSync !== "function") {
+        return fs.rmdirSync(...args);
+    }
+    return fs.rmSync(...args);
+}
+
+module.exports = {
+    removeDirSync,
+    removeDir
+}
+},{"fs":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -1815,7 +1835,10 @@ module.exports.ensureIsBuffer = function (data) {
     return buffer;
 }
 
-},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/testRunnerBoot.js"])
+module.exports.removeDir = require("./lib/removeDir").removeDir;
+module.exports.removeDirSync = require("./lib/removeDir").removeDirSync;
+
+},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/removeDir":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/removeDir.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/testRunnerBoot.js"])
                     ;(function(global) {
                         global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
                     })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});

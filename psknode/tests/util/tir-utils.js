@@ -87,6 +87,8 @@ function createConstitutionFromSources(sources, options, callback) {
     };
 
     const dc = require("double-check");
+    const removeDir = require("swarmutils").removeDir;
+
     dc.createTestFolder("PSK_DOMAIN-", (err, tmpFolder) => {
         if (err) {
             return callback(err);
@@ -117,7 +119,7 @@ function createConstitutionFromSources(sources, options, callback) {
                     callback(undefined, path.join(outputFolder, `${internalOptions.constitutionName}.js`));
 
                     if (internalOptions.cleanupTmpDir) {
-                        fs.rmdir(tmpFolder, {recursive: true}, (err) => {
+                        removeDir(tmpFolder, {recursive: true}, (err) => {
                             if (err) {
                                 logger.warn(`Failed to delete temporary folder "${tmpFolder}"`);
                             }

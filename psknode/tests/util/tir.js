@@ -10,6 +10,7 @@ require(path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode
 const os = require("os");
 const fs = require("fs");
 const pskPath = require("swarmutils").path;
+const removeDirSync = require("swarmutils").removeDirSync;
 
 const {createKey, buildConstitution, getRandomAvailablePortAsync} = require("./tir-utils");
 const ApiHubTestNodeLauncher = require("./ApiHubTestNodeLauncher");
@@ -97,7 +98,7 @@ const Tir = function () {
         setTimeout(() => {
             try {
                 console.info("[TIR] Removing temporary folder", rootFolder);
-                fs.rmdirSync(rootFolder, {recursive: true});
+                removeDirSync(rootFolder, {recursive: true});
                 console.info("[TIR] Temporary folder removed", rootFolder);
             } catch (e) {
                 //just avoid to display error on console

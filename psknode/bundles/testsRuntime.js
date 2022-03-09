@@ -683,17 +683,14 @@ class FSX{
     }
 
     createAnchor(callback){
-        console.log('FSX create anchor');
         this.anchoringBehaviour.createAnchor(this.commandData.anchorId, this.commandData.anchorValue, callback);
     }
 
     appendAnchor(callback){
-        console.log('FSX append anchor');
         this.anchoringBehaviour.appendAnchor(this.commandData.anchorId, this.commandData.anchorValue, callback);
     }
 
     getAllVersions(callback){
-        console.log('FSX get all versions');
         this.anchoringBehaviour.getAllVersions(this.commandData.anchorId, (err, anchorValues)=>{
             if (err) {
                 return callback(err);
@@ -707,7 +704,6 @@ class FSX{
     }
 
     getLastVersion(callback){
-        console.log('FSX get last version');
         this.anchoringBehaviour.getLastVersion(this.commandData.anchorId, (err, anchorValue)=>{
             if (err) {
                 return callback(err);
@@ -20059,13 +20055,14 @@ class FSBrickStorage {
 
     async deleteBrickAsync(hash) {
         const fs = require("fs");
+        const removeDir = require("swarmutils").removeDir;
         const brickPath = fsBrickPathsManager.resolveBrickPath(this.domain, hash);
         await $$.promisify(fs.access)(brickPath);
         await $$.promisify(fs.unlink)(brickPath);
 
         const brickDirPath = fsBrickPathsManager.resolveBrickDirname(this.domain, hash);
         await $$.promisify(fs.access)(brickDirPath);
-        await $$.promisify(fs.rmdir)(brickDirPath, { recursive: true });
+        await $$.promisify(removeDir)(brickDirPath, { recursive: true });
     }
 
     get utils() {
@@ -20080,7 +20077,7 @@ function create(...params) {
 module.exports = {
     create
 };
-},{"./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/utils.js","fs":false,"opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/utils.js":[function(require,module,exports){
+},{"./utils":"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/utils.js","fs":false,"opendsu":"opendsu","path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/bricksledger/src/FSBrickStorage/utils.js":[function(require,module,exports){
 /** @deprecated */
 process.env.FOLDER_NAME_SIZE;
 
@@ -53948,7 +53945,27 @@ module.exports = {
 };
 
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/removeDir.js":[function(require,module,exports){
+const fs = require("fs");
+const removeDir = (...args) => {
+    if (typeof fs.rm !== "function") {
+        return fs.rmdir(...args);
+    }
+    return fs.rm(...args);
+}
+
+const removeDirSync = (...args) => {
+    if (typeof fs.rmSync !== "function") {
+        return fs.rmdirSync(...args);
+    }
+    return fs.rmSync(...args);
+}
+
+module.exports = {
+    removeDirSync,
+    removeDir
+}
+},{"fs":false}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js":[function(require,module,exports){
 
 function encode(buffer) {
     return buffer.toString('base64')
@@ -55889,7 +55906,8 @@ function __computeHashRecursively(folderPath, hashes = [], callback) {
 }
 
 function deleteFolderRecursive(folderPath) {
-    fs.rmdirSync(folderPath, {recursive: true, maxRetries: 10});
+    const removeDirSync = require("swarmutils").removeDirSync;
+    removeDirSync(folderPath, {recursive: true, maxRetries: 10});
 }
 
 function deleteFoldersSync(folders) {
@@ -55926,7 +55944,7 @@ Object.assign(module.exports, {
     deleteFoldersSync
 });
 
-},{"../utils/AsyncDispatcher":"/home/runner/work/privatesky/privatesky/modules/double-check/utils/AsyncDispatcher.js","./runner.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/runner.js","./standardAsserts.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardAsserts.js","./standardChecks.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardChecks.js","./standardExceptions.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardExceptions.js","./standardLogs.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardLogs.js","crypto":false,"fs":false,"os":false,"path":false}],"dsu-wizard":[function(require,module,exports){
+},{"../utils/AsyncDispatcher":"/home/runner/work/privatesky/privatesky/modules/double-check/utils/AsyncDispatcher.js","./runner.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/runner.js","./standardAsserts.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardAsserts.js","./standardChecks.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardChecks.js","./standardExceptions.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardExceptions.js","./standardLogs.js":"/home/runner/work/privatesky/privatesky/modules/double-check/lib/standardLogs.js","crypto":false,"fs":false,"os":false,"path":false,"swarmutils":"swarmutils"}],"dsu-wizard":[function(require,module,exports){
 (function (__dirname){(function (){
 function initWizard(server) {
 	const transactionManager = require("./TransactionManager");
@@ -56781,7 +56799,10 @@ module.exports.ensureIsBuffer = function (data) {
     return buffer;
 }
 
-},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
+module.exports.removeDir = require("./lib/removeDir").removeDir;
+module.exports.removeDirSync = require("./lib/removeDir").removeDirSync;
+
+},{"./lib/Combos":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Combos.js","./lib/OwM":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/OwM.js","./lib/Queue":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/Queue.js","./lib/SwarmPacker":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/SwarmPacker.js","./lib/TaskCounter":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/TaskCounter.js","./lib/beesHealer":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/beesHealer.js","./lib/path":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/path.js","./lib/pingpongFork":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pingpongFork.js","./lib/pskconsole":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/pskconsole.js","./lib/removeDir":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/removeDir.js","./lib/safe-uuid":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/safe-uuid.js","./lib/uidGenerator":"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/uidGenerator.js"}],"syndicate":[function(require,module,exports){
 const PoolConfig = require('./lib/PoolConfig');
 const WorkerPool = require('./lib/WorkerPool');
 const WorkerStrategies = require('./lib/WorkerStrategies');
