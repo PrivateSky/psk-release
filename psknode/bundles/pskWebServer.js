@@ -32235,16 +32235,14 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         }
 
         if (!anchorIdKeySSI.canAppend()) {
-            return persistenceStrategy.createAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), (err) => {
-                return callback(err);
-            });
+            return persistenceStrategy.createAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
         }
 
         const signer = determineSigner(anchorIdKeySSI, []);
         const signature = anchorValueSSIKeySSI.getSignature();
         const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, null);
         if (!signer.verify(dataToVerify, signature)) {
-            return callback(Error("Failed to verify the signature!"));
+            return callback(Error("Failed to verify signature"));
         }
         persistenceStrategy.createAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), (err) => {
             return callback(err);
@@ -32324,7 +32322,7 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
                 const signature = anchorValueSSIKeySSI.getSignature();
                 const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, previousSignedHashLinkKeySSI);
                 if (!signer.verify(dataToVerify, signature)) {
-                    return callback(Error("Failed to verify the signature!"));
+                    return callback(Error("Failed to verify signature"));
                 }
                 //build history
                 progressiveHistoryOfKeySSI.push(anchorValueSSIKeySSI);
