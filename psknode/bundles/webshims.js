@@ -9334,8 +9334,8 @@ module.exports = {
 }).call(this)}).call(this,require('_process'))
 
 },{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/swarmutils/lib/removeDir.js":[function(require,module,exports){
-const fs = require("fs");
 const removeDir = (...args) => {
+    const fs = require("fs");
     if (typeof fs.rm !== "function") {
         return fs.rmdir(...args);
     }
@@ -9343,6 +9343,7 @@ const removeDir = (...args) => {
 }
 
 const removeDirSync = (...args) => {
+    const fs = require("fs");
     if (typeof fs.rmSync !== "function") {
         return fs.rmdirSync(...args);
     }
