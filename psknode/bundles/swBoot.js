@@ -15042,6 +15042,10 @@ function BasicDB(storageStrategy) {
         this.dispatchEvent("initialised");
     });
 
+    this.refresh = (callback)=>{
+        storageStrategy.refresh(callback);
+    }
+
     this.getAllRecords = (tableName, callback) => {
         storageStrategy.getAllRecords(tableName, callback);
     }
@@ -15875,6 +15879,11 @@ function SingleDSUStorageStrategy() {
         dbName = _dbName;
         this.dispatchEvent("initialised");
     }
+
+    this.refresh = (callback) => {
+        storageDSU.refresh(callback);
+    }
+
     this.beginBatch = () => {
         storageDSU.beginBatch();
     }
@@ -16398,21 +16407,21 @@ function SingleDSUStorageStrategy() {
                     retErr = createOpenDSUErrorWrapper(`Failed to parse record in ${recordPath}: ${res}`, retErr);
                     //let's try to check if the res contains the record twice... at some point there was a bug on this topic
                     let serializedRecord = res;
-                    if(ArrayBuffer.isView(serializedRecord) || serializedRecord.buffer){
+                    if (ArrayBuffer.isView(serializedRecord) || serializedRecord.buffer) {
                         serializedRecord = new TextDecoder().decode(serializedRecord);
                     }
-                    let halfOfRes = serializedRecord.slice(0, serializedRecord.length/2);
+                    let halfOfRes = serializedRecord.slice(0, serializedRecord.length / 2);
                     let isDuplicated = (serializedRecord === halfOfRes + halfOfRes);
-                    if(isDuplicated){
-                        try{
+                    if (isDuplicated) {
+                        try {
                             record = JSON.parse(halfOfRes);
                             console.log("We caught an error during record retrieval process and fix it. (duplicate content)");
                             //we ignore the original error because we were able to fix it.
                             retErr = undefined;
-                        }catch(err){
+                        } catch (err) {
                             console.log("We caught an error during record retrieval process and we failed to fix it!");
                         }
-                    }else{
+                    } else {
                         console.log(retErr);
                     }
                 }
@@ -17119,7 +17128,7 @@ function AppBuilderService(environment, opts) {
     }
 }
 module.exports = AppBuilderService;
-},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildMainDSU.js":[function(require,module,exports){
+},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js":[function(require,module,exports){
 (function (process){(function (){
 const openDSU = require("opendsu");
 const resolver = openDSU.loadAPI("resolver");
@@ -17334,9 +17343,22 @@ const DossierBuilder = function (sourceDSU, varStore) {
         bar.getKeySSIAsString((err, barKeySSI) => {
             if (err)
                 return callback(err);
-            if (sourceDSU || cfg.skipFsWrite)
-                return callback(undefined, barKeySSI);
-            storeKeySSI(cfg.seed, barKeySSI, callback);
+            const scAPI = require("opendsu").loadAPI("sc");
+            scAPI.getSharedEnclave((err, sharedEnclave) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                sharedEnclave.getReadForKeySSI(barKeySSI, (err, readSSI) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    if (sourceDSU || cfg.skipFsWrite)
+                        return callback(undefined, readSSI);
+                    storeKeySSI(cfg.seed, readSSI, callback);
+                })
+            })
         });
     };
 
@@ -17429,20 +17451,25 @@ const DossierBuilder = function (sourceDSU, varStore) {
             });
         }
 
-        if (configOrDSU.constructor && configOrDSU.constructor.name === 'Archive')
-            return updateDossier(configOrDSU, {skipFsWrite: true}, commands, callback);
+        require("./index").initialiseBuildWallet(err => {
+            if (err) {
+                return callback(err);
+            }
+            if (configOrDSU.constructor && configOrDSU.constructor.name === 'Archive')
+                return updateDossier(configOrDSU, {skipFsWrite: true}, commands, callback);
 
-        readFile(configOrDSU.seed, (err, content) => {
-            if (err || content.length === 0)
-                return createDossier(configOrDSU, commands, callback);
-            builder(content.toString());
+            readFile(configOrDSU.seed, (err, content) => {
+                if (err || content.length === 0)
+                    return createDossier(configOrDSU, commands, callback);
+                builder(content.toString());
+            });
         });
     };
 };
 
 module.exports = DossierBuilder;
 
-},{"./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
+},{"./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js","./commands/VarStore":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/VarStore.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js":[function(require,module,exports){
 /**
  * @module dt
  */
@@ -18657,14 +18684,14 @@ module.exports = {
  */
 const Command = require('./Command');
 const ReadFileCommand = require('./readFile');
-const { _err, _getFS, _getKeySSISpace } = require('./utils');
+const {_err, _getFS, _getKeySSISpace} = require('./utils');
 
 /**
  * Mounts a DSU onto the provided path
  *
  * @class MountCommand
  */
-class MountCommand extends Command{
+class MountCommand extends Command {
     constructor(varStore, source) {
         super(varStore, source, true);
         if (!source)
@@ -18677,7 +18704,7 @@ class MountCommand extends Command{
      * @param {function(err, string[])} callback
      * @private
      */
-    _listMounts(arg, callback){
+    _listMounts(arg, callback) {
         let self = this;
         let basePath = arg.seed_path.split("*");
         const listMethod = this.source ? this.source.listMountedDSUs : _getFS().readdir;
@@ -18693,7 +18720,7 @@ class MountCommand extends Command{
      * @return {*}
      * @private
      */
-    _transform_mount_arguments(arg, args){
+    _transform_mount_arguments(arg, args) {
         return this.source
             ? args.map(m => {
                 return {
@@ -18715,7 +18742,7 @@ class MountCommand extends Command{
      * @param {function(err, string|string[]|object)} callback
      * @protected
      */
-    _parseCommand(command, next, callback){
+    _parseCommand(command, next, callback) {
         let arg = {
             "seed_path": command[0],
             "mount_point": command[1]
@@ -18742,22 +18769,35 @@ class MountCommand extends Command{
      * @protected
      */
     _runCommand(arg, bar, options, callback) {
-        let self = this;
-        if (typeof options === 'function'){
+        if (typeof options === 'function') {
             callback = options;
             options = undefined;
         }
 
-        const doMount = function(seed, callback){
-            console.log("Mounting seed " + seed + " to " + arg.mount_point);
-            bar.mount(arg.mount_point, seed, err => err
-                ? _err(`Could not perform mount of ${seed} at ${arg.seed_path}`, err, callback)
-                : callback(undefined, bar));
+        const doMount = function (seed, callback) {
+            const scAPI = require("opendsu").loadAPI("sc");
+            scAPI.getSharedEnclave((err, sharedEnclave) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                sharedEnclave.getReadForKeySSI(seed, (err, readSSI) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    console.log("Mounting sread " + readSSI + " to " + arg.mount_point);
+                    bar.mount(arg.mount_point, readSSI, err => err
+                        ? _err(`Could not perform mount of ${readSSI} at ${arg.seed_path}`, err, callback)
+                        : callback(undefined, bar));
+                })
+            })
+
         };
         try {
             if (_getKeySSISpace().parse(arg.seed_path))
                 return doMount(arg.seed_path, callback);
-        } catch (e){
+        } catch (e) {
             new ReadFileCommand(this.varStore, this.source).execute(arg.seed_path, (err, seed) => {
                 if (err)
                     return _err(`Could not read seed from ${arg.seed_path}`, err, callback);
@@ -18769,7 +18809,7 @@ class MountCommand extends Command{
 }
 
 module.exports = MountCommand;
-},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
+},{"./Command":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/Command.js","./readFile":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/readFile.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/objToArray.js":[function(require,module,exports){
 /**
  * @module Commands
  * @memberOf dt
@@ -19144,28 +19184,23 @@ module.exports = WithCommand;
  * @param callback
  * @return {DossierBuilder}
  */
-const getDossierBuilder = (sourceDSU, callback) => {
-    if (typeof sourceDSU === "function") {
-        callback = sourceDSU;
-        sourceDSU = undefined;
-    }
-    const BuildWallet = require("./BuildMainDSU");
-    BuildWallet.initialiseWallet(err => {
-        if (err) {
-            return callback(err);
-        }
-        const dossierBuilder = new (require("./DossierBuilder"))(sourceDSU);
-        callback(undefined, dossierBuilder);
-    })
+const getDossierBuilder = (sourceDSU) => {
+    return new (require("./DossierBuilder"))(sourceDSU);
+}
+
+const initialiseBuildWallet = (callback) => {
+    const BuildWallet = require("./BuildWallet");
+    BuildWallet.initialiseWallet(callback);
 }
 
 module.exports = {
     getDossierBuilder,
+    initialiseBuildWallet,
     Commands: require('./commands'),
     AppBuilderService: require('./AppBuilderService')
 }
 
-},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./BuildMainDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildMainDSU.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
+},{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./BuildWallet":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
 const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -19285,6 +19320,15 @@ function Enclave_Mixin(target, did) {
         } else {
             callback(undefined, did);
         }
+    }
+
+    target.refresh = (forDID, callback)=>{
+        if (typeof forDID === "function") {
+            callback = forDID;
+            forDID = undefined;
+        }
+
+        target.storageDB.refresh(callback);
     }
 
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
@@ -19435,10 +19479,21 @@ function Enclave_Mixin(target, did) {
     }
 
     target.getReadForKeySSI = (forDID, keySSI, callback) => {
-        if (typeof keySSI === "string") {
-
+        if (typeof keySSI === "function") {
+            callback = keySSI;
+            keySSI = forDID;
+            forDID = undefined;
         }
-        target.storageDB.getRecord(SREAD_SSIS_TABLE, keySSI, (err, record) => {
+
+        if (typeof keySSI === "string") {
+            try {
+                keySSI = keySSISpace.parse(keySSI);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI ${keySSI}`, e))
+            }
+        }
+
+        target.storageDB.getRecord(SREAD_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
             if (err) {
                 return callback(err);
             }
@@ -19578,15 +19633,6 @@ function Enclave_Mixin(target, did) {
         });
     };
 
-    // expose resolver APIs
-    const resolverAPI = openDSU.loadAPI("resolver");
-    Object.keys(resolverAPI).forEach(fnName => {
-        target[fnName] = (...args) => {
-            args.shift();
-            resolverAPI[fnName](...args);
-        }
-    })
-
 
     // expose keyssi APIs
     Object.keys(keySSISpace).forEach(fnName => {
@@ -19614,6 +19660,7 @@ function Enclave_Mixin(target, did) {
         }
     })
 
+    const resolverAPI = openDSU.loadAPI("resolver");
 
     target.createDSU = (forDID, keySSI, options, callback) => {
         if (typeof options === "function") {
@@ -20902,10 +20949,11 @@ function generateMethodForRequestWithData(httpMethod) {
 module.exports = {
 	fetch: fetch,
 	doPost: generateMethodForRequestWithData('POST'),
-	doPut: generateMethodForRequestWithData('PUT')
+	doPut: generateMethodForRequestWithData('PUT'),
+	doGet: require("./../browser").doGet
 }
 
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
+},{"./../browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
 function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 	const requests = new Map();
@@ -23869,7 +23917,13 @@ const getMainEnclave = (callback) => {
 const getSharedEnclave = (callback) => {
     const sc = getSecurityContext();
     if (sc.isInitialised()) {
-        sc.getSharedEnclaveDB(callback);
+        sc.getSharedEnclaveDB((err, sharedEnclave)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            sharedEnclave.refresh(err => callback(err, sharedEnclave));
+        });
     } else {
         sc.on("initialised", () => {
             sc.getSharedEnclaveDB(callback);
