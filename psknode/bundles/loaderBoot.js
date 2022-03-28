@@ -13656,8 +13656,9 @@ function uid(bytes = 32) {
 }  */
 
 
-function BasicDB(storageStrategy) {
+function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
     let self = this;
+    options = options || {events: false};
     ObservableMixin(this);
 
     storageStrategy.on("initialised", () => {
@@ -13665,7 +13666,7 @@ function BasicDB(storageStrategy) {
         this.dispatchEvent("initialised");
     });
 
-    this.refresh = (callback)=>{
+    this.refresh = (callback) => {
         storageStrategy.refresh(callback);
     }
 
@@ -13725,7 +13726,9 @@ function BasicDB(storageStrategy) {
                     return callback(createOpenDSUErrorWrapper(`Failed to insert record with key ${key} in table ${tableName} `, err));
                 }
 
-                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                if (options.events) {
+                    self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                }
                 callback(undefined, res);
             });
         });
@@ -13766,7 +13769,9 @@ function BasicDB(storageStrategy) {
                     return callback(createOpenDSUErrorWrapper(`Failed to update record with key ${key} in table ${tableName} `, err));
                 }
 
-                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                if (options.events) {
+                    self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                }
                 callback(undefined, newRecord);
             });
         });
@@ -13814,7 +13819,9 @@ function BasicDB(storageStrategy) {
                     return callback(createOpenDSUErrorWrapper(`Failed to update with key ${key} in table ${tableName} `, err));
                 }
 
-                self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                if (options.events) {
+                    self.dispatchEvent("change", JSON.stringify({table: tableName, pk: key}));
+                }
                 callback();
             });
         })
@@ -14004,26 +14011,21 @@ module.exports = {
 
 },{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
 let util = require("./impl/DSUDBUtil")
-const {SingleDSUStorageStrategy} = require("./storageStrategies/SingleDSUStorageStrategy");
-const {TimestampMergingStrategy: ConflictStrategy} = require("./conflictSolvingStrategies/timestampMergingStrategy");
 
-
-function getBasicDB(storageStrategy, conflictSolvingStrategy) {
+function getBasicDB(storageStrategy, conflictSolvingStrategy, options) {
     let BasicDB = require("./impl/BasicDB");
-    return new BasicDB(storageStrategy, conflictSolvingStrategy);
+    return new BasicDB(storageStrategy, conflictSolvingStrategy, options);
 }
 
 function getMultiUserDB(keySSI, dbName) {
     throw "Not implemented yet";
-    let storageStrategy = require("./storageStrategies/MultiUserStorageStrategy");
-    let conflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy");
 }
 
-let getSharedDB = function (keySSI, dbName) {
+let getSharedDB = function (keySSI, dbName, options) {
     let SingleDSUStorageStrategy = require("./storageStrategies/SingleDSUStorageStrategy").SingleDSUStorageStrategy;
     let storageStrategy = new SingleDSUStorageStrategy();
     let ConflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy").TimestampMergingStrategy;
-    let db = getBasicDB(storageStrategy, new ConflictStrategy());
+    let db = getBasicDB(storageStrategy, new ConflictStrategy(), options);
 
     util.ensure_WalletDB_DSU_Initialisation(keySSI, dbName, function (err, _storageDSU, sharableSSI) {
         if (err) {
@@ -14040,11 +14042,11 @@ let getSharedDB = function (keySSI, dbName) {
     return db;
 };
 
-let getSimpleWalletDB = (dbName) => {
+let getSimpleWalletDB = (dbName, options) => {
     let SingleDSUStorageStrategy = require("./storageStrategies/SingleDSUStorageStrategy").SingleDSUStorageStrategy;
     let storageStrategy = new SingleDSUStorageStrategy();
     let ConflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy").TimestampMergingStrategy;
-    let db = getBasicDB(storageStrategy, new ConflictStrategy());
+    let db = getBasicDB(storageStrategy, new ConflictStrategy(), options);
 
     util.initialiseWalletDB(dbName, (err, _storageDSU, keySSI) => {
         if (err) {
@@ -14101,7 +14103,7 @@ module.exports = {
     getSharedEnclaveDB
 }
 
-},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/MultiUserStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
+},{"./conflictSolvingStrategies/timestampMergingStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js","./impl/BasicDB":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/BasicDB.js","./impl/DSUDBUtil":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js","./storageStrategies/MemoryStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js","./storageStrategies/SingleDSUStorageStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/SingleDSUStorageStrategy.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MemoryStorageStrategy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function MemoryStorageStrategy() {
     const ObservableMixin = require("../../utils/ObservableMixin");
@@ -14364,21 +14366,7 @@ function MemoryStorageStrategy() {
 module.exports = MemoryStorageStrategy;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/MultiUserStorageStrategy.js":[function(require,module,exports){
-
-function MultiUserStorageStrategy(){
-
-
-    this.initialise = function(_storageDSU, _dbName, _onInitialisationDone){
-        storageDSU              = _storageDSU;
-        afterInitialisation     = _afterInitialisation;
-        dbName                  = _dbName;
-    }
-
-
-}
-module.exports = MultiUserStorageStrategy;
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Query":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js","./operators":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/operators.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/storageStrategies/Query.js":[function(require,module,exports){
 function Query(queryArray) {
     let conditions = [];
     const operators = require("./operators");
@@ -22540,13 +22528,7 @@ const getMainEnclave = (callback) => {
 const getSharedEnclave = (callback) => {
     const sc = getSecurityContext();
     if (sc.isInitialised()) {
-        sc.getSharedEnclaveDB((err, sharedEnclave)=>{
-            if (err) {
-                return callback(err);
-            }
-
-            sharedEnclave.refresh(err => callback(err, sharedEnclave));
-        });
+        sc.getSharedEnclaveDB(callback);
     } else {
         sc.on("initialised", () => {
             sc.getSharedEnclaveDB(callback);
@@ -22554,7 +22536,7 @@ const getSharedEnclave = (callback) => {
     }
 }
 
-const sharedEnclaveExists = ()=>{
+const sharedEnclaveExists = () => {
     const sc = getSecurityContext();
     return sc.sharedEnclaveExists();
 }
