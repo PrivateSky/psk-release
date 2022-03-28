@@ -15785,6 +15785,11 @@ function BuildWallet() {
                 } catch (e) {
                     return callback(e);
                 }
+
+                writableDSU = wallet.getWritableDSU();
+                for (let prop in writableDSU) {
+                    this[prop] = writableDSU[prop];
+                }
             }
 
             writableDSU = wallet.getWritableDSU();
@@ -15792,7 +15797,7 @@ function BuildWallet() {
         })
     }
 
-    this.ensureSharedEnclaveExists = (callback) => {
+    const ensureEnclaveExists = (enclaveType, callback) => {
         writableDSU.readFile("/environment.json", async (err, env) => {
             if (err) {
                 return callback(err);
@@ -15804,11 +15809,24 @@ function BuildWallet() {
                 return callback(e);
             }
 
-            if (typeof env[openDSU.constants.SHARED_ENCLAVE.KEY_SSI] === "undefined") {
-                const sharedEnclave = enclaveAPI.initialiseWalletDBEnclave();
-                sharedEnclave.on("initialised", async () => {
+            if (typeof env[openDSU.constants[enclaveType].KEY_SSI] === "undefined") {
+                let seedDSU;
+                try {
+                    seedDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
+                } catch (e) {
+                    return callback(e);
+                }
+
+                let keySSI;
+                try {
+                    keySSI = await $$.promisify(seedDSU.getKeySSIAsString)();
+                } catch (e) {
+                    return callback(e);
+                }
+                const enclave = enclaveAPI.initialiseWalletDBEnclave(keySSI);
+                enclave.on("initialised", async () => {
                     try {
-                        await $$.promisify(scAPI.setSharedEnclave)(sharedEnclave);
+                        await $$.promisify(scAPI.setEnclave)(enclave, enclaveType);
                         callback();
                     } catch (e) {
                         callback(createOpenDSUErrorWrapper("Failed to set shared enclave", e));
@@ -15820,12 +15838,11 @@ function BuildWallet() {
         });
     }
 
-    this.writeFile = (path, data, callback) => {
-        writableDSU.writeFile(path, data, callback);
+    this.ensureMainEnclaveExists = (callback) => {
+        ensureEnclaveExists("MAIN_ENCLAVE", callback);
     }
-
-    this.readFile = (path, callback) => {
-        writableDSU.readFile(path, callback);
+    this.ensureSharedEnclaveExists = (callback) => {
+        ensureEnclaveExists("SHARED_ENCLAVE", callback);
     }
 }
 
@@ -15838,7 +15855,12 @@ const initialiseWallet = (callback) => {
         }
 
         scAPI.setMainDSU(buildWallet);
-        buildWallet.ensureSharedEnclaveExists(callback);
+        buildWallet.ensureMainEnclaveExists(err => {
+            if (err) {
+                return callback(err);
+            }
+            buildWallet.ensureSharedEnclaveExists(callback);
+        })
     });
 }
 
@@ -22627,6 +22649,7 @@ module.exports = {
     setMainEnclave,
     getSharedEnclave,
     setSharedEnclave,
+    setEnclave,
     configEnvironment,
     sharedEnclaveExists
 };
@@ -22640,13 +22663,25 @@ function InMemoryMainDSU() {
         didDomain: "vault"
     }))
 
+    obj["environment.json"] = obj["/environment.json"];
+
     this.writeFile = (path, data, callback) => {
+        if (!path.startsWith("/")) {
+            path = `/${path}`;
+        }
         obj[path] = data;
         callback();
     }
 
     this.readFile = (path, callback) => {
+        if (!path.startsWith("/")) {
+            path = `/${path}`;
+        }
         callback(undefined, obj[path]);
+    }
+
+    this.refresh = (callback)=>{
+        callback();
     }
 }
 
