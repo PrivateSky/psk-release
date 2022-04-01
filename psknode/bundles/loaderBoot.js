@@ -12620,7 +12620,8 @@ module.exports = {
     setEnv,
     getEnv,
     autoconfigFromEnvironment,
-    disableLocalVault
+    disableLocalVault,
+    readEnvFile
 };
 
 
