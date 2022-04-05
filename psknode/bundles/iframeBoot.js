@@ -4575,7 +4575,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS';
 			headers['Access-Control-Allow-Credentials'] = true;
 			headers['Access-Control-Max-Age'] = '3600'; //one hour
-			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, ${conf.componentsConfig.virtualMQ.signatureHeaderName}`;
+			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, ${conf.componentsConfig.virtualMQ.signatureHeaderName}, token`;
 			
 			if(conf.CORS){
 				console.log("Applying custom CORS headers");
@@ -20216,9 +20216,10 @@ exports.createForObject = function(valueObject, thisObject, localId){
 },{"./base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const loki = require("./lib/lokijs/src/lokijs.js");
-const lfsa = require("./lib/lokijs/src/loki-fs-structured-adapter.js");
+const lfsa = require("./lib/lokijs/src/loki-fs-sync-adapter.js");
+const lfssa = require("./lib/lokijs/src/loki-fs-structured-adapter");
 
-const adapter = new lfsa();
+const adapter = new lfssa();
 let bindAutoPendingFunctions = require("../opendsu/utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
 let filterOperationsMap = {
@@ -20231,7 +20232,7 @@ let filterOperationsMap = {
     "like": "$regex"
 }
 
-function DefaultEnclave(rootFolder) {
+function DefaultEnclave(rootFolder, autosaveInterval) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
     const w3cDID = openDSU.loadAPI("w3cdid")
@@ -20243,7 +20244,8 @@ function DefaultEnclave(rootFolder) {
     const SEED_SSIS_TABLE = "seedssis";
     const DIDS_PRIVATE_KEYS = "dids_private";
 
-    const AUTOSAVE_INTERVAL = 10000;
+    const AUTOSAVE_INTERVAL = 1000;
+    autosaveInterval = autosaveInterval || AUTOSAVE_INTERVAL;
     if (typeof rootFolder === "undefined") {
         throw Error("Root folder was not specified for DefaultEnclave");
     }
@@ -20252,8 +20254,12 @@ function DefaultEnclave(rootFolder) {
         autoload: true,
         autoloadCallback: initialized.bind(this),
         autosave: true,
-        autosaveInterval: AUTOSAVE_INTERVAL
+        autosaveInterval: autosaveInterval
     });
+
+    this.refresh = function (callback) {
+        db.loadDatabaseInternal(undefined, callback);
+    }
 
     this.count = function (tableName, callback) {
         let table = db.getCollection(tableName);
@@ -20289,7 +20295,9 @@ function DefaultEnclave(rootFolder) {
             return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err))
         }
 
-        db.saveDatabase(callback)
+        setTimeout(() => {
+            db.saveDatabaseInternal(callback)
+        }, autosaveInterval)
     }
 
     this.updateRecord = function (forDID, tableName, pk, record, callback) {
@@ -20303,7 +20311,9 @@ function DefaultEnclave(rootFolder) {
         } catch (err) {
             return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err));
         }
-        db.saveDatabase(callback)
+        setTimeout(() => {
+            db.saveDatabaseInternal(callback)
+        }, autosaveInterval)
     }
 
     this.deleteRecord = function (forDID, tableName, pk, callback) {
@@ -20321,7 +20331,9 @@ function DefaultEnclave(rootFolder) {
             return callback(createOpenDSUErrorWrapper(`Couldn't do remove for pk ${pk} in ${tableName}`, err))
         }
 
-        db.saveDatabase(callback)
+        setTimeout(() => {
+            db.saveDatabaseInternal(callback)
+        }, autosaveInterval)
     }
 
     this.getRecord = function (forDID, tableName, pk, callback) {
@@ -20493,7 +20505,7 @@ function DefaultEnclave(rootFolder) {
             onlyFirstN = undefined;
         }
 
-        self.filter(forDID, queueName, {}, "insertTime " + sortAfterInsertTime, onlyFirstN, (err, result) => {
+        self.filter(forDID, queueName, undefined, sortAfterInsertTime, onlyFirstN, (err, result) => {
             if (err) {
                 return callback(err);
             }
@@ -20638,7 +20650,7 @@ function DefaultEnclave(rootFolder) {
 
     this.signForDID = (forDID, didThatIsSigning, hash, callback) => {
         const __signForDID = (didThatIsSigning, callback) => {
-            getPrivateInfoForDID(didThatIsSigning.getIdentifier(),  (err, privateKeys) => {
+            getPrivateInfoForDID(didThatIsSigning.getIdentifier(), (err, privateKeys) => {
                 if (err) {
                     return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
                 }
@@ -20724,7 +20736,7 @@ function initialized() {
 module.exports = DefaultEnclave;
 }).call(this)}).call(this,{"isBuffer":require("../../node_modules/is-buffer/index.js")})
 
-},{"../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-structured-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js":[function(require,module,exports){
+},{"../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-structured-adapter":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js","./lib/lokijs/src/loki-fs-sync-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js":[function(require,module,exports){
 
 /*
   Loki (node) fs structured Adapter (need to require this script to instance and use it).
@@ -21015,7 +21027,114 @@ module.exports = DefaultEnclave;
   }());
 }));
 
-},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","readline":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-indexed-adapter.js":[function(require,module,exports){
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","readline":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","stream":"/home/runner/work/privatesky/privatesky/node_modules/stream-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js":[function(require,module,exports){
+/*
+  A synchronous version of the Loki Filesystem adapter for node.js
+
+  Intended for diagnostics or environments where synchronous i/o is required.
+
+  This adapter will perform worse than the default LokiFsAdapter but 
+  is provided for quick adaptation to synchronous code.
+*/
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD
+        define([], factory);
+    } else if (typeof exports === 'object') {
+        // Node, CommonJS-like
+        module.exports = factory();
+    } else {
+        // Browser globals (root is window)
+        root.LokiFsSyncAdapter = factory();
+    }
+}(this, function () {
+  return (function() {
+    'use strict';
+
+    /**
+     * A loki persistence adapter which persists using node fs module
+     * @constructor LokiFsSyncAdapter
+     */
+    function LokiFsSyncAdapter() {
+      this.fs = require('fs');
+    }
+
+    /**
+     * loadDatabase() - Load data from file, will throw an error if the file does not exist
+     * @param {string} dbname - the filename of the database to load
+     * @param {function} callback - the callback to handle the result
+     * @memberof LokiFsSyncAdapter
+     */
+    LokiFsSyncAdapter.prototype.loadDatabase = function loadDatabase(dbname, callback) {
+      var self = this;
+      var contents;
+
+      try {
+        var stats = this.fs.statSync(dbname);
+        if (stats.isFile()) {
+          contents = self.fs.readFileSync(dbname, {
+            encoding: 'utf8'
+          });
+          
+          callback(contents);
+        }
+        else {
+          callback(null);
+        }
+      }
+      catch (err) {
+        // first autoload when file doesn't exist yet
+        // should not throw error but leave default
+        // blank database.
+        if (err.code === "ENOENT") {
+          callback(null);
+        }
+        
+        callback(err);
+      }
+    };
+
+    /**
+     * saveDatabase() - save data to file, will throw an error if the file can't be saved
+     * might want to expand this to avoid dataloss on partial save
+     * @param {string} dbname - the filename of the database to load
+     * @param {function} callback - the callback to handle the result
+     * @memberof LokiFsSyncAdapter
+     */
+    LokiFsSyncAdapter.prototype.saveDatabase = function saveDatabase(dbname, dbstring, callback) {
+      try {
+        this.fs.writeFileSync(dbname, dbstring);
+        callback();
+      }
+      catch (err) {
+        callback(err);
+      }
+    };
+
+    /**
+     * deleteDatabase() - delete the database file, will throw an error if the
+     * file can't be deleted
+     * @param {string} dbname - the filename of the database to delete
+     * @param {function} callback - the callback to handle the result
+     * @memberof LokiFsSyncAdapter
+     */
+    LokiFsSyncAdapter.prototype.deleteDatabase = function deleteDatabase(dbname, callback) {
+      try {
+        this.fs.unlinkSync(dbname);
+        callback();
+      }
+      catch (err) {
+        callback(err);
+      }
+    };
+
+    return LokiFsSyncAdapter;
+
+  }());
+}));
+
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-indexed-adapter.js":[function(require,module,exports){
 /*
   Loki IndexedDb Adapter (need to include this script to use it)
 
@@ -39583,6 +39702,18 @@ function Enclave_Mixin(target, did) {
         }
 
         target.storageDB.refresh(callback);
+    }
+
+    target.addIndex = (forDID, table, field, forceReindex, callback)=>{
+        if (typeof forceReindex === "function") {
+            callback = forceReindex;
+            forceReindex = false;
+        }
+        target.storageDB.addIndex(table, field, forceReindex, callback);
+    }
+
+    target.getIndexedFields = (forDID, table, callback)=>{
+        target.storageDB.getIndexedFields(table, callback);
     }
 
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
