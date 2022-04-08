@@ -15193,6 +15193,7 @@ module.exports = {
 html API space
 */
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js":[function(require,module,exports){
+(function (process){(function (){
 /**
  * @module dt
  */
@@ -15232,7 +15233,7 @@ const {_getResolver, _getKeySSISpace} = require('./commands/utils');
  * </pre>
  */
 const OPTIONS = {
-    anchoring: "default",
+    anchoring: process.env.VAULT_DOMAIN || "vault",
     publicSecretsKey: '-$Identity-',
     environmentKey: "-$Environment-",
     basePath: "",
@@ -15747,7 +15748,9 @@ function AppBuilderService(environment, opts) {
     }
 }
 module.exports = AppBuilderService;
-},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js":[function(require,module,exports){
+}).call(this)}).call(this,require('_process'))
+
+},{"./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./FileService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/FileService.js","./commands/utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/utils.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js":[function(require,module,exports){
 (function (process){(function (){
 const openDSU = require("opendsu");
 const resolver = openDSU.loadAPI("resolver");
