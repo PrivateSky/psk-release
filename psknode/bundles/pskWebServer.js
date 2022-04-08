@@ -19555,298 +19555,7 @@ exports.createForObject = function(valueObject, thisObject, localId){
 	var ret = require("./base").createForObject(valueObject, thisObject, localId);
 	return ret;
 };
-},{"./base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js":[function(require,module,exports){
-
-/*
-  Loki (node) fs structured Adapter (need to require this script to instance and use it).
-
-  This adapter will save database container and each collection to separate files and
-  save collection only if it is dirty.  It is also designed to use a destructured serialization 
-  method intended to lower the memory overhead of json serialization.
-  
-  This adapter utilizes ES6 generator/iterator functionality to stream output and
-  uses node linereader module to stream input.  This should lower memory pressure 
-  in addition to individual object serializations rather than loki's default deep object
-  serialization.
-*/
-
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD
-        define([], factory);
-    } else if (typeof exports === 'object') {
-        // Node, CommonJS-like
-        module.exports = factory();
-    } else {
-        // Browser globals (root is window)
-        root.LokiFsStructuredAdapter = factory();
-    }
-}(this, function () {
-  return (function() {
-
-    const fs = require('fs');
-    const readline = require('readline');
-    const stream = require('stream');
-
-    /**
-     * Loki structured (node) filesystem adapter class.
-     *     This class fulfills the loki 'reference' abstract adapter interface which can be applied to other storage methods. 
-     *
-     * @constructor LokiFsStructuredAdapter
-     *
-     */
-    function LokiFsStructuredAdapter()
-    {
-        this.mode = "reference";
-        this.dbref = null;
-        this.dirtyPartitions = [];
-    }
-
-    /**
-     * Generator for constructing lines for file streaming output of db container or collection.
-     *
-     * @param {object=} options - output format options for use externally to loki
-     * @param {int=} options.partition - can be used to only output an individual collection or db (-1)
-     *
-     * @returns {string|array} A custom, restructured aggregation of independent serializations.
-     * @memberof LokiFsStructuredAdapter
-     */
-    LokiFsStructuredAdapter.prototype.generateDestructured = function*(options) {
-      var idx, sidx;
-      var dbcopy;
-
-      options = options || {};
-
-      if (!options.hasOwnProperty("partition")) {
-        options.partition = -1;
-      }
-
-      // if partition is -1 we will return database container with no data
-      if (options.partition === -1) {
-        // instantiate lightweight clone and remove its collection data
-        dbcopy = this.dbref.copy();
-        
-        for(idx=0; idx < dbcopy.collections.length; idx++) {
-          dbcopy.collections[idx].data = [];
-        }
-
-        yield dbcopy.serialize({
-          serializationMethod: "normal"
-        });
-
-        return;
-      }
-
-      // 'partitioned' along with 'partition' of 0 or greater is a request for single collection serialization
-      if (options.partition >= 0) {
-        var doccount,
-          docidx;
-
-        // dbref collections have all data so work against that
-        doccount = this.dbref.collections[options.partition].data.length;
-
-        for(docidx=0; docidx<doccount; docidx++) {
-          yield JSON.stringify(this.dbref.collections[options.partition].data[docidx]);
-        }
-      }
-    };
-
-    /**
-     * Loki persistence adapter interface function which outputs un-prototype db object reference to load from.
-     *
-     * @param {string} dbname - the name of the database to retrieve.
-     * @param {function} callback - callback should accept string param containing db object reference.
-     * @memberof LokiFsStructuredAdapter
-     */
-    LokiFsStructuredAdapter.prototype.loadDatabase = function(dbname, callback)
-    {
-      var instream,
-        outstream,
-        rl,
-        self=this;
-
-      this.dbref = null;
-
-      // make sure file exists
-      fs.stat(dbname, function (fileErr, stats) {
-        var jsonErr;
-
-        if (fileErr) {
-          if (fileErr.code === "ENOENT") {
-            // file does not exist, so callback with null
-            callback(null);
-            return;
-          }
-          else {
-            // some other file system error.
-            callback(fileErr);
-            return;
-          }
-        }
-        else if (!stats.isFile()) {
-          // something exists at this path but it isn't a file.
-          callback(new Error(dbname + " is not a valid file."));
-          return;
-        }
-
-        instream = fs.createReadStream(dbname);
-        outstream = new stream();
-        rl = readline.createInterface(instream, outstream);
-
-        // first, load db container component
-        rl.on('line', function(line) {
-          // it should single JSON object (a one line file)
-          if (self.dbref === null && line !== "") {              
-            try {                
-              self.dbref = JSON.parse(line);
-            } catch (e) {
-              jsonErr = e;
-            }
-          }
-        });
-
-        // when that is done, examine its collection array to sequence loading each
-        rl.on('close', function() {
-          if (jsonErr) {
-            // a json error was encountered reading the container file.
-            callback(jsonErr);
-          } 
-          else if (self.dbref.collections.length > 0) {
-            self.loadNextCollection(dbname, 0, function() {
-              callback(self.dbref);
-            });
-          }
-        });
-      });
-    };
-
-    /**
-     * Recursive function to chain loading of each collection one at a time. 
-     * If at some point i can determine how to make async driven generator, this may be converted to generator.
-     *
-     * @param {string} dbname - the name to give the serialized database within the catalog.
-     * @param {int} collectionIndex - the ordinal position of the collection to load.
-     * @param {function} callback - callback to pass to next invocation or to call when done
-     * @memberof LokiFsStructuredAdapter
-     */
-    LokiFsStructuredAdapter.prototype.loadNextCollection = function(dbname, collectionIndex, callback) {
-      var instream = fs.createReadStream(dbname + "." + collectionIndex);
-      var outstream = new stream();
-      var rl = readline.createInterface(instream, outstream);
-      var self=this,
-        obj;
-
-      rl.on('line', function (line) {
-        if (line !== "") {
-          try {
-            obj = JSON.parse(line);
-          } catch(e) {
-            callback(e);
-          }
-          self.dbref.collections[collectionIndex].data.push(obj);
-        }
-      });
-
-      rl.on('close', function (line) {
-        instream = null;
-        outstream = null;
-        rl = null;
-        obj = null;
-
-        // if there are more collections, load the next one
-        if (++collectionIndex < self.dbref.collections.length) {
-          self.loadNextCollection(dbname, collectionIndex, callback);
-        }
-        // otherwise we are done, callback to loadDatabase so it can return the new db object representation.
-        else {
-          callback();
-        }
-      });
-    };
-
-    /**
-     * Generator for yielding sequence of dirty partition indices to iterate.
-     *
-     * @memberof LokiFsStructuredAdapter
-     */
-    LokiFsStructuredAdapter.prototype.getPartition = function*() {
-      var idx,
-        clen = this.dbref.collections.length;
-
-      // since database container (partition -1) doesn't have dirty flag at db level, always save
-      yield -1;
-      
-      // yield list of dirty partitions for iterateration
-      for(idx=0; idx<clen; idx++) {
-        if (this.dbref.collections[idx].dirty) {
-          yield idx;
-        }
-      }
-    };
-
-    /**
-     * Loki reference adapter interface function.  Saves structured json via loki database object reference.
-     *
-     * @param {string} dbname - the name to give the serialized database within the catalog.
-     * @param {object} dbref - the loki database object reference to save.
-     * @param {function} callback - callback passed obj.success with true or false
-     * @memberof LokiFsStructuredAdapter
-     */
-    LokiFsStructuredAdapter.prototype.exportDatabase = function(dbname, dbref, callback)
-    {
-      var idx;
-
-      this.dbref = dbref;
-
-      // create (dirty) partition generator/iterator
-      var pi = this.getPartition();
-
-      this.saveNextPartition(dbname, pi, function() {
-        callback(null);
-      });
-      
-    };
-
-    /**
-     * Utility method for queueing one save at a time
-     */
-    LokiFsStructuredAdapter.prototype.saveNextPartition = function(dbname, pi, callback) {
-      var li;
-      var filename;
-      var self = this;
-      var pinext = pi.next();
-
-      if (pinext.done) {
-        callback();
-        return;
-      }
-
-      // db container (partition -1) uses just dbname for filename,
-      // otherwise append collection array index to filename
-      filename = dbname + ((pinext.value === -1)?"":("." + pinext.value));
-
-      var wstream = fs.createWriteStream(filename);
-      //wstream.on('finish', function() {
-      wstream.on('close', function() {
-        self.saveNextPartition(dbname, pi, callback);
-      });
-
-      li = this.generateDestructured({ partition: pinext.value });
-
-      // iterate each of the lines generated by generateDestructured()
-      for(var outline of li) {
-        wstream.write(outline + "\n");
-      }
-
-      wstream.end();
-    };
-    
-    return LokiFsStructuredAdapter;
-
-  }());
-}));
-
-},{"fs":false,"readline":false,"stream":false}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js":[function(require,module,exports){
+},{"./base":"/home/runner/work/privatesky/privatesky/modules/callflow/lib/utilityFunctions/base.js"}],"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js":[function(require,module,exports){
 /*
   A synchronous version of the Loki Filesystem adapter for node.js
 
@@ -33338,10 +33047,6 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
         authToken = undefined;
     }
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedBricking.getBrick(brickHash, callback);
-    }
-
     if (typeof cache === "undefined") {
         __getBrickFromEndpoint();
     } else {
@@ -33409,28 +33114,39 @@ const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
     const dlDomain = hashLinkSSIList[0].getDLDomain();
     const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedBricking.getMultipleBricks(bricksHashes, callback);
+    function executeGetBricks(hashLinkSSIList){
+        // The bricks need to be returned in the same order they were requested
+        let brickPromise = Promise.resolve();
+        for (const hl of hashLinkSSIList) {
+            // TODO: FIX ME
+            // This is a HACK. It should cover 99% of the cases
+            // but it might still fail if the brick data transfer
+            // is delayed due to network issues and the next iteration
+            // resolves faster. The correct solution involves changing
+            // multiple layers
+            brickPromise = brickPromise.then(() => {
+                return new Promise((resolve) => {
+                    getBrick(hl, authToken, (err, brick) => {
+                        callback(err, brick);
+                        resolve();
+                    });
+                })
+            })
+        }
     }
 
-    // The bricks need to be returned in the same order they were requested
-    let brickPromise = Promise.resolve();
-    for (const hl of hashLinkSSIList) {
-        // TODO: FIX ME
-        // This is a HACK. It should cover 99% of the cases
-        // but it might still fail if the brick data transfer
-        // is delayed due to network issues and the next iteration
-        // resolves faster. The correct solution involves changing
-        // multiple layers
-        brickPromise = brickPromise.then(() => {
-            return new Promise((resolve) => {
-                getBrick(hl, authToken, (err, brick) => {
-                    callback(err, brick);
-                    resolve();
-                });
-            })
-        })
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getMultipleBricks(bricksHashes, (err, brickData)=>{
+            let newTarget = [hashLinkSSIList.shift()];
+            if(err || !brickData){
+                executeGetBricks(newTarget);
+                return;
+            }
+            callback(err, brickData);
+        });
     }
+
+    executeGetBricks(hashLinkSSIList);
 };
 
 
@@ -40791,6 +40507,7 @@ function generateMethodForRequestWithData(httpMethod) {
 						try {
 							response = response !== '' ? JSON.parse(rawData) : response;
 						} catch (e) {
+							console.log("Caught an error during JSON.parse", rawData);
 							console.log('May or not be important, for safety check it! Failed to parse the error from the response due to', e);
 							// the received response is not a JSON, so we keep it as it is
 						}
@@ -44264,7 +43981,7 @@ function SecurityContext(target) {
 
     const wrapEnclave = (asDID, enclave) => {
         const wrappedEnclave = {};
-        let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords"];
+        let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords", "addIndex"];
         for (let i = 0; i < asyncDBMethods.length; i++) {
             wrappedEnclave[asyncDBMethods[i]] = (...args) => {
                 enclave[asyncDBMethods[i]](asDID, ...args);
@@ -44341,6 +44058,7 @@ function SecurityContext(target) {
 }
 
 module.exports = SecurityContext;
+
 },{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
 const { fetch } = require("./utils");
 
@@ -58472,7 +58190,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 		server.use(function (req, res, next) {
 			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${conf.componentsConfig.virtualMQ.signatureHeaderName}`);
+			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${conf.componentsConfig.virtualMQ.signatureHeaderName}, token`);
 			res.setHeader('Access-Control-Allow-Credentials', true);
 			next();
 		});
@@ -59176,9 +58894,9 @@ module.exports = {
 (function (Buffer){(function (){
 const loki = require("./lib/lokijs/src/lokijs.js");
 const lfsa = require("./lib/lokijs/src/loki-fs-sync-adapter.js");
-const lfssa = require("./lib/lokijs/src/loki-fs-structured-adapter");
+// const lfssa = require("./lib/lokijs/src/loki-fs-structured-adapter");
 
-const adapter = new lfssa();
+const adapter = new lfsa();
 let bindAutoPendingFunctions = require("../opendsu/utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
 let filterOperationsMap = {
@@ -59695,7 +59413,7 @@ function initialized() {
 module.exports = DefaultEnclave;
 }).call(this)}).call(this,{"isBuffer":require("../../node_modules/is-buffer/index.js")})
 
-},{"../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-structured-adapter":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-structured-adapter.js","./lib/lokijs/src/loki-fs-sync-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu","path":false}],"dossier":[function(require,module,exports){
+},{"../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../opendsu/utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./lib/lokijs/src/loki-fs-sync-adapter.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/loki-fs-sync-adapter.js","./lib/lokijs/src/lokijs.js":"/home/runner/work/privatesky/privatesky/modules/default-enclave/lib/lokijs/src/lokijs.js","opendsu":"opendsu","path":false}],"dossier":[function(require,module,exports){
 function envSetup(powerCord, seed, identity, callback){
     let cord_identity;
     try{

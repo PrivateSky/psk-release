@@ -12046,10 +12046,6 @@ const getBrick = (hashLinkSSI, authToken, callback) => {
         authToken = undefined;
     }
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedBricking.getBrick(brickHash, callback);
-    }
-
     if (typeof cache === "undefined") {
         __getBrickFromEndpoint();
     } else {
@@ -12117,28 +12113,39 @@ const getMultipleBricks = (hashLinkSSIList, authToken, callback) => {
     const dlDomain = hashLinkSSIList[0].getDLDomain();
     const bricksHashes = hashLinkSSIList.map((hashLinkSSI) => hashLinkSSI.getHash());
 
-    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        return cachedBricking.getMultipleBricks(bricksHashes, callback);
+    function executeGetBricks(hashLinkSSIList){
+        // The bricks need to be returned in the same order they were requested
+        let brickPromise = Promise.resolve();
+        for (const hl of hashLinkSSIList) {
+            // TODO: FIX ME
+            // This is a HACK. It should cover 99% of the cases
+            // but it might still fail if the brick data transfer
+            // is delayed due to network issues and the next iteration
+            // resolves faster. The correct solution involves changing
+            // multiple layers
+            brickPromise = brickPromise.then(() => {
+                return new Promise((resolve) => {
+                    getBrick(hl, authToken, (err, brick) => {
+                        callback(err, brick);
+                        resolve();
+                    });
+                })
+            })
+        }
     }
 
-    // The bricks need to be returned in the same order they were requested
-    let brickPromise = Promise.resolve();
-    for (const hl of hashLinkSSIList) {
-        // TODO: FIX ME
-        // This is a HACK. It should cover 99% of the cases
-        // but it might still fail if the brick data transfer
-        // is delayed due to network issues and the next iteration
-        // resolves faster. The correct solution involves changing
-        // multiple layers
-        brickPromise = brickPromise.then(() => {
-            return new Promise((resolve) => {
-                getBrick(hl, authToken, (err, brick) => {
-                    callback(err, brick);
-                    resolve();
-                });
-            })
-        })
+    if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        return cachedBricking.getMultipleBricks(bricksHashes, (err, brickData)=>{
+            let newTarget = [hashLinkSSIList.shift()];
+            if(err || !brickData){
+                executeGetBricks(newTarget);
+                return;
+            }
+            callback(err, brickData);
+        });
     }
+
+    executeGetBricks(hashLinkSSIList);
 };
 
 
@@ -19508,6 +19515,7 @@ function generateMethodForRequestWithData(httpMethod) {
 						try {
 							response = response !== '' ? JSON.parse(rawData) : response;
 						} catch (e) {
+							console.log("Caught an error during JSON.parse", rawData);
 							console.log('May or not be important, for safety check it! Failed to parse the error from the response due to', e);
 							// the received response is not a JSON, so we keep it as it is
 						}
@@ -22984,7 +22992,7 @@ function SecurityContext(target) {
 
     const wrapEnclave = (asDID, enclave) => {
         const wrappedEnclave = {};
-        let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords"];
+        let asyncDBMethods = ["insertRecord", "updateRecord", "getRecord", "deleteRecord", "filter", "commitBatch", "cancelBatch", "getKeySSI", "readKey", "writeKey", "getAllRecords", "addIndex"];
         for (let i = 0; i < asyncDBMethods.length; i++) {
             wrappedEnclave[asyncDBMethods[i]] = (...args) => {
                 enclave[asyncDBMethods[i]](asDID, ...args);
@@ -23061,6 +23069,7 @@ function SecurityContext(target) {
 }
 
 module.exports = SecurityContext;
+
 },{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/DSUStorage.js":[function(require,module,exports){
 const { fetch } = require("./utils");
 
