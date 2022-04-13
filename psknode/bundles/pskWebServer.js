@@ -37543,7 +37543,7 @@ class AddFolderCommand extends Command {
             callback = next;
             next = undefined;
         }
-        callback(undefined, command[0]);
+        callback(undefined, command);
     }
 
     /**
@@ -37564,9 +37564,13 @@ class AddFolderCommand extends Command {
         }
 
         options = options || {batch: false, encrypt: false};
-        console.log("Adding Folder " + '/' + arg)
-        bar.addFolder(arg, '/', options, err => err
-            ? _err(`Could not add folder at '${'/' + arg}'`, err, callback)
+        let src = arg[0];
+        let dst = arg[1] || "/";
+        let commandLog = "Adding Folder " + src + " to " + dst;
+        console.log(commandLog);
+
+        bar.addFolder(src, dst, options, err => err
+            ? _err(`Failed to: `+commandLog, err, callback)
             : callback(undefined, bar));
     }
 }
@@ -41484,12 +41488,16 @@ function addNewErrorType(key, code, message, detailsFn) {
   }
 
 }
+function setErrorMessage(key, message){
+  errorTypes[key].message = message;
+}
 
 module.exports = {
   errorTypes,
   newCustomError,
   getErrorKeyByCode,
   getErrorKeyByMessage,
+  setErrorMessage,
   addNewErrorType
 }
 
