@@ -20258,8 +20258,6 @@ async function digestMessage(message){
 
 mappingRegistry.defineMapping(validateMessage, digestMessage);
 },{"./../mappingRegistry.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/mappingRegistry.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/errorsMap.js":[function(require,module,exports){
-const openDSU = require("opendsu");
-
 errorTypes = {
   "UNKNOWN": {
     errorCode: 0,
@@ -20268,8 +20266,8 @@ errorTypes = {
       return [{
         errorType: this.errorCode,
         errorMessage: this.message,
-        errorDetails: "",
-        errorField: data
+        errorDetails: data,
+        errorField: "unknown"
       }]
     }
   },
@@ -20383,7 +20381,7 @@ function getErrorKeyByMessage(errMessage) {
     console.log('Could not find mapping for ', errMessage);
   }
 
-  return errorTypes.UNKNOWN.defaultDetails.detailsMessage = errMessage;
+  return errorTypes.UNKNOWN.getDetails(errMessage)
 }
 
 function newCustomError(errorObj, detailsObj) {
@@ -20408,7 +20406,8 @@ function addNewErrorType(key, code, message, detailsFn) {
   }
 
 }
-function setErrorMessage(key, message){
+
+function setErrorMessage(key, message) {
   errorTypes[key].message = message;
 }
 
@@ -20421,7 +20420,7 @@ module.exports = {
   addNewErrorType
 }
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js":[function(require,module,exports){
 const mappingRegistry = require("./mappingRegistry.js");
 const apisRegistry = require("./apisRegistry.js");
 const errMap = require("./errorsMap.js")
