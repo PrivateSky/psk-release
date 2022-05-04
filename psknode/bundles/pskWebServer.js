@@ -3511,73 +3511,119 @@ module.exports = mqManager;
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const fs = require("fs");
+const path = require("path");
 
 function secrets(server) {
-  const fs = require('fs');
-  server.get("/getSecret/:appName/:userId", function (request, response) {
-    let userId = request.params.userId;
-    let appName = request.params.appName;
-    let result;
-    const fileDir = `${server.rootFolder}/secrets/${appName}`
-    try {
-      if (fs.existsSync(`${server.rootFolder}/secrets/${appName}/${userId}.json`)) {
-        result = fs.readFileSync(`${fileDir}/${userId}.json`);
-        if (result) {
-          response.statusCode = 200;
-          response.end(JSON.stringify({secret: result.toString()}));
-        } else {
-          response.statusCode = 404;
-          response.end(JSON.stringify({error: `Couldn't find a secret for ${userId}`}));
-        }
-      } else {
-        response.statusCode = 204;
-        response.end(JSON.stringify({error: `${userId} not found`}));
-      }
+    const fs = require("fs");
+    const path = require("path");
+    const secretsFolderPath = path.join(server.rootFolder, "external-volume", "secrets");
+    server.get("/getSecret/:appName/:userId", function (request, response) {
+        let userId = request.params.userId;
+        let appName = request.params.appName;
+        const fileDir = path.join(secretsFolderPath, appName);
+        const filePath = path.join(fileDir, `${userId}.json`);
+        fs.access(filePath, (err) => {
+            if (err) {
+                response.statusCode = 204;
+                response.end(JSON.stringify({error: `${userId} not found`}));
+                return;
+            }
 
-    } catch (e) {
-      response.statusCode = 405;
-      response.end(JSON.stringify(e));
-    }
-  });
+            fs.readFile(filePath, (err, fileData) => {
+                if (err) {
+                    response.statusCode = 404;
+                    response.end(JSON.stringify({error: `Couldn't find a secret for ${userId}`}));
+                    return
+                }
 
-  server.put('/putSecret/:appName/:userId', function (request, response) {
-    let userId = request.params.userId;
-    let appName = request.params.appName;
-    let data = []
-    request.on('data', (chunk) => {
-      data.push(chunk);
+                response.statusCode = 200;
+                response.end(JSON.stringify({secret: fileData.toString()}));
+            })
+        })
     });
 
-    request.on('end', async () => {
-      try {
-        let body = Buffer.concat(data).toString();
-        let msgToPersist = JSON.parse(body).secret;
-        const fileDir = `${server.rootFolder}/secrets/${appName}`
-        if (!fs.existsSync(fileDir)) {
-          fs.mkdirSync(fileDir, {recursive: true});
-        }
-        if (fs.existsSync(`${fileDir}/${userId}.json`)) {
-          response.statusCode = 403;
-          response.end(err);
-        } else {
-          fs.writeFileSync(`${fileDir}/${userId}.json`, msgToPersist);
-          response.statusCode = 200;
-          response.end();
-        }
+    function ensureFolderExists(folderPath, callback) {
+        fs.access(folderPath, (err)=>{
+            if (err) {
+                fs.mkdir(folderPath, {recursive: true}, callback);
+                return;
+            }
 
-      } catch (e) {
-        response.statusCode = 500;
-        response.end(e);
-      }
-    })
-  });
+            callback();
+        })
+    }
+
+    function writeSecret(filePath, secret, request, response) {
+        fs.access(filePath, (err)=>{
+            if (!err) {
+                console.log("File Already exists");
+                response.statusCode = 403;
+                response.end(Error(`File ${filePath} already exists`));
+                return;
+            }
+
+            console.log("Writing file to ", filePath);
+            fs.writeFile(filePath, secret, (err)=>{
+                if (err) {
+                    console.log("Error at writing file", err);
+                    response.statusCode = 500;
+                    response.end(err);
+                    return;
+                }
+
+                console.log("file written success")
+                response.statusCode = 200;
+                response.end();
+            });
+        })
+    }
+
+    server.put('/putSecret/:appName/:userId', function (request, response) {
+        let userId = request.params.userId;
+        let appName = request.params.appName;
+        let data = []
+
+        request.on('error', (err) => {
+            response.statusCode = 500;
+            response.end(err);
+        });
+
+        request.on('data', (chunk) => {
+            data.push(chunk);
+        });
+
+        request.on('end', async () => {
+            const fileDir = path.join(secretsFolderPath, appName);
+            const filePath = path.join(fileDir, `${userId}.json`);
+            let body;
+            let msgToPersist;
+            try {
+                body = Buffer.concat(data).toString();
+                msgToPersist = JSON.parse(body).secret;
+            } catch (e) {
+                console.log("Failed to parse body", data);
+                response.statusCode = 500;
+                response.end(e);
+            }
+
+            ensureFolderExists(fileDir, (err)=>{
+                if (err) {
+                    response.statusCode = 500;
+                    response.end(err);
+                    return;
+                }
+
+                writeSecret(filePath, msgToPersist, request, response);
+            })
+        })
+    });
 }
 
 module.exports = secrets;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"fs":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js":[function(require,module,exports){
+},{"buffer":false,"fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js":[function(require,module,exports){
 function StaticServer(server) {
     const fs = require("fs");
     const path = require('swarmutils').path;
@@ -6087,9 +6133,14 @@ function OAuthMiddleware(server) {
             return sendUnauthorizedResponse(req, res, "Unable to encrypt access token");
           }
           const {payload} = util.parseAccessToken(tokenSet.access_token);
+          const SSOUserEmail = payload.email || payload.preferred_username || payload.upn;
+          if (!SSOUserEmail) {
+            res.writeHead(400, {'Content-Type': 'text/plain'});
+            res.end(`Error: User email is not configured. Please check account configurations and set a valid email.`);
+          }
           res.writeHead(301, {
             Location: "/",
-            "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSOUserEmail = ${payload.email}`, `loginContextCookie=; Max-Age=0`],
+            "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSOUserEmail = ${SSOUserEmail}`, `loginContextCookie=; Max-Age=0`],
             "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
           });
           res.end();
@@ -9233,14 +9284,16 @@ function Archive(archiveConfigurator) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to anchor`, err));
                 }
 
-                this.refresh((err) => {
-                    batchOperationsInProgress = false;
-
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to reload current DSU`, err));
-                    }
-                    callback(undefined, result);
-                })
+                batchOperationsInProgress = false;
+                callback(undefined, result);
+                // this.refresh((err) => {
+                //     batchOperationsInProgress = false;
+                //
+                //     if (err) {
+                //         return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to reload current DSU`, err));
+                //     }
+                //     callback(undefined, result);
+                // })
             });
         });
     };
@@ -41587,7 +41640,11 @@ function MappingEngine(storageService, options) {
       const mappingFnc = await getMappingFunction(message);
       if (mappingFnc) {
         const instance = buildMappingInstance();
-        await mappingFnc.call(instance, message);
+        try {
+          await mappingFnc.call(instance, message);
+        } catch (err) {
+          reject(err);
+        }
         return resolve({registeredDSUs: instance.registeredDSUs});
       } else {
         let messageString = JSON.stringify(message);

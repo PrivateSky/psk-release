@@ -1919,14 +1919,16 @@ function Archive(archiveConfigurator) {
                     return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to anchor`, err));
                 }
 
-                this.refresh((err) => {
-                    batchOperationsInProgress = false;
-
-                    if (err) {
-                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to reload current DSU`, err));
-                    }
-                    callback(undefined, result);
-                })
+                batchOperationsInProgress = false;
+                callback(undefined, result);
+                // this.refresh((err) => {
+                //     batchOperationsInProgress = false;
+                //
+                //     if (err) {
+                //         return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to reload current DSU`, err));
+                //     }
+                //     callback(undefined, result);
+                // })
             });
         });
     };
@@ -24403,7 +24405,11 @@ function MappingEngine(storageService, options) {
       const mappingFnc = await getMappingFunction(message);
       if (mappingFnc) {
         const instance = buildMappingInstance();
-        await mappingFnc.call(instance, message);
+        try {
+          await mappingFnc.call(instance, message);
+        } catch (err) {
+          reject(err);
+        }
         return resolve({registeredDSUs: instance.registeredDSUs});
       } else {
         let messageString = JSON.stringify(message);
