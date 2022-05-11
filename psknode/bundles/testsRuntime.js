@@ -2771,18 +2771,23 @@ module.exports = KeySSINotifications;
 (function (Buffer){(function (){
 function LocalMQAdapter(server, prefix, domain, configuration) {
 	const subscribers = {};
-
+	const config = require("../../../config");
 	const utils = require('./../../../utils');
 	const swarmUtils = require('swarmutils');
 	let path = swarmUtils.path;
 	const readBody = utils.streams.readStringFromStream;
-	const serverConfig = require("./../../../config");
+	let storage = config.getConfig('componentsConfig', 'mqs', 'storage');
+	if (typeof storage === "undefined") {
+		storage = path.join(server.rootFolder, "external-volume", "mqs", domain);
+	} else {
+		storage = path.join(path.resolve(storage), domain);
+	}
 
 	const settings = {
-		mq_fsStrategyStorageFolder: path.join(path.resolve(serverConfig.getConfig("storage")), "mqs", domain),
+		mq_fsStrategyStorageFolder: storage,
 		mq_fsMessageMaxSize: 10 * 1024,
 		mq_fsQueueLength: 100
-	}
+	};
 
 	Object.assign(settings, configuration);
 
@@ -3070,7 +3075,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 module.exports = LocalMQAdapter;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"./../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","buffer":false,"fs":false,"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","buffer":false,"fs":false,"opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js":[function(require,module,exports){
 function SolaceMQAdapter(configuration){
 	throw new Error("Not Implemented!!!");
 }
@@ -4140,7 +4145,8 @@ function migrate(oldConfig, configFolderPath) {
         const serverJsonConfigPath = path.join(configFolderPath, "server.json");
         fs.unlinkSync(serverJsonConfigPath);
     } catch (error) {
-        console.log("Could not delete old server.json file", error);
+        //We ignore this error because is not relevant.
+        //Until now most of the implementations for sure switched from server.json to apihub.json
     }
 }
 
@@ -6058,17 +6064,23 @@ const urlModule = require("url");
 
 function OAuthMiddleware(server) {
   console.log(`Registering OAuthMiddleware`);
-
-  const path = require("path");
-  const PREVIOUS_ENCRYPTION_KEY_PATH = path.join(server.rootFolder, "previousEncryptionKey.secret");
-  const CURRENT_ENCRYPTION_KEY_PATH = path.join(server.rootFolder, "currentEncryptionKey.secret");
-  const urlsToSkip = util.getUrlsToSkip();
+  const fs = require("fs");
   const config = require("../../../config");
   const oauthConfig = config.getConfig("oauthConfig");
+  const path = require("path");
+  const ENCRYPTION_KEYS_LOCATION = oauthConfig.encryptionKeysLocation || path.join(server.rootFolder, "external-volume", "encryption-keys");
+  const PREVIOUS_ENCRYPTION_KEY_PATH = path.join(ENCRYPTION_KEYS_LOCATION, "previousEncryptionKey.secret");
+  const CURRENT_ENCRYPTION_KEY_PATH = path.join(ENCRYPTION_KEYS_LOCATION, "currentEncryptionKey.secret");
+  const urlsToSkip = util.getUrlsToSkip();
+
   const WebClient = require("./WebClient");
   const webClient = new WebClient(oauthConfig);
   const errorMessages = require("./errorMessages");
-
+  try {
+    fs.accessSync(ENCRYPTION_KEYS_LOCATION);
+  } catch (e) {
+    fs.mkdirSync(ENCRYPTION_KEYS_LOCATION, {recursive: true});
+  }
   setInterval(() => {
     util.rotateKey(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, () => {
     })
@@ -6256,7 +6268,7 @@ function OAuthMiddleware(server) {
 
 module.exports = OAuthMiddleware;
 
-},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./WebClient":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/WebClient.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","path":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/WebClient.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./WebClient":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/WebClient.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","./util":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/util.js","fs":false,"path":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/WebClient.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const url = require('url');
 const util = require("./util");
@@ -37441,14 +37453,14 @@ function MappingEngine(storageService, options) {
         try {
           await mappingFnc.call(instance, message);
         } catch (err) {
-          reject(err);
+          return reject(err);
         }
         return resolve({registeredDSUs: instance.registeredDSUs});
       } else {
         let messageString = JSON.stringify(message);
         const maxDisplayLength = 1024;
         console.log(`Unable to find a suitable mapping to handle the following message: ${messageString.length < maxDisplayLength ? messageString : messageString.slice(0, maxDisplayLength) + "..."}`);
-        reject(errMap.newCustomError(errMap.errorTypes.MISSING_MAPPING, [{
+        return reject(errMap.newCustomError(errMap.errorTypes.MISSING_MAPPING, [{
           field: "messageType",
           message: `Couldn't find any mapping for ${message.messageType}`
         }]));
@@ -37495,26 +37507,36 @@ function MappingEngine(storageService, options) {
         let commitPromisses = [];
         let mappingsInstances = [];
 
+        let failedMessages = [];
+
+        function handleErrorsDuringPromiseResolving(err) {
+          reject(err);
+        }
+
         for (let i = 0; i < messages.length; i++) {
           let message = messages[i];
           if (typeof message !== "object") {
             throw errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}])
           }
 
-          function handleErrorsDuringPromiseResolving(err) {
-            reject(err);
-          }
 
           try {
             let mappingInstance = await executeMappingFor(message);
             mappingsInstances.push(mappingInstance);
           } catch (err) {
             errorHandler.reportUserRelevantError("Caught error during message digest", err);
+            failedMessages.push({
+              message: message,
+              reason: err.message,
+              error: err
+            })
           }
+
         }
 
+
         function digestConfirmation(results) {
-          let failedMessages = [];
+
           for (let index = 0; index < results.length; index++) {
             let result = results[index];
             switch (result.status) {
