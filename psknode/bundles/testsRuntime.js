@@ -105,12 +105,336 @@ if (typeof $$ !== "undefined") {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","dsu-wizard":"dsu-wizard","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
+},{"apihub":"apihub","bar":"bar","bar-fs-adapter":"bar-fs-adapter","blockchain":"blockchain","bricksledger":"bricksledger","buffer-crc32":"buffer-crc32","callflow":"callflow","dossier":"dossier","double-check":"double-check","dsu-wizard":"dsu-wizard","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu","overwrite-require":"overwrite-require","psk-cache":"psk-cache","pskcrypto":"pskcrypto","queue":"queue","soundpubsub":"soundpubsub","swarm-engine":"swarm-engine","swarmutils":"swarmutils","syndicate":"syndicate","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js":[function(require,module,exports){
+const DATABASE_NAME = "adminEnclave";
+
+const DOMAINS_TABLE = "domains";
+const ADMINS_TABLE = "admins";
+const TEMPLATES_TABLE = "templates";
+
+const DID_replacement = "";
+
+let internalServerRef;
+
+function getStorageFolder(){
+    const config = internalServerRef.config;
+
+    return require("path").join(internalServerRef.rootFolder, config.componentsConfig.admin.storageFolder);
+}
+
+function getMainDomainStorageFile() {
+    const storageFolder = getStorageFolder();
+    return require("path").join(storageFolder, "mainDomain");
+}
+
+function getEnclave() {
+    const storageFolder = require("path").join(getStorageFolder(), DATABASE_NAME);
+    const Enclave = require("default-enclave");
+    return new Enclave(storageFolder);
+}
+
+function getMainDomain(callback) {
+    const FS = "fs";
+    const fs = require(FS);
+    fs.readFile(getMainDomainStorageFile(), callback);
+}
+
+function saveMainDomain(domain, callback) {
+    getMainDomain((err, mainDomain) => {
+        if (err || !mainDomain) {
+            const FS = "fs";
+            const fs = require(FS);
+            fs.mkdir(getStorageFolder(), {recursive: true}, (err)=>{
+                if(err){
+                    return callback(err);
+                }
+                fs.writeFile(getMainDomainStorageFile(), domain, {}, callback);
+            });
+        } else {
+            return callback(`There is a domain set as mainDomain. Not able to save <${domain}> as main domain.`);
+        }
+    });
+}
+
+function isMainDomain(domain, callback) {
+    getMainDomain((err, mainDomain) => {
+        if (err || !mainDomain) {
+            return saveMainDomain(domain, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                callback(undefined, true);
+            });
+        }
+        return callback(undefined, mainDomain.toString() === domain);
+    });
+}
+
+function AdminComponentHandler(server) {
+
+    internalServerRef = server;
+
+    let adminService = new AdminService(true);
+
+    async function enforceMainDomainMiddleware(req, res, next){
+        let {mainDomain} = req.params;
+        let testIfMainDomain = $$.promisify(isMainDomain);
+        try{
+            let isMain = await testIfMainDomain(mainDomain);
+            if (!isMain) {
+                res.statusCode = 403;
+                return res.end();
+            }
+        }catch(err){
+            res.statusCode = 500;
+            return res.end();
+        }
+        next();
+    }
+
+    async function addDomain(req, res) {
+        let {domainName, timestamp, signature, cloneFromDomain} = req.body;
+
+        if(!cloneFromDomain){
+            res.statusCode = 403;
+            res.end();
+        }
+
+        try {
+            await adminService.addDomainAsync(domainName, cloneFromDomain, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    async function disableDomain(req, res) {
+        let {domainName, timestamp, signature} = req.body;
+        try {
+            await adminService.disableDomainAsync(domainName, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    async function addAdmin(req, res) {
+        let {did, timestamp, signature} = req.body;
+
+        try {
+            await adminService.registerAdminAsync(did, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    async function addDomainAdmin(req, res) {
+        let {domain, did, timestamp, signature} = req.body;
+
+        try {
+            await adminService.registerDomainAdminAsync(domain, did, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    async function registerTemplate(req, res) {
+        let {path, content, timestamp, signature} = req.body;
+        try {
+            await adminService.registerTemplateAsync(path, content, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    async function setVariable(req, res){
+        let {domainName} = req.params;
+        let {variableName, variableContent, timestamp, signature} = req.body;
+
+        try {
+            await adminService.registerVariableToDomainAsync(domainName, variableName, variableContent, timestamp, signature);
+        } catch (err) {
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        res.statusCode = 200;
+        res.end();
+    }
+
+    server.use("/admin/:mainDomain/*", enforceMainDomainMiddleware);
+
+    server.use("/admin/*", require("./../../utils/middlewares/index").requestBodyJSONMiddleware);
+
+    server.post("/admin/:mainDomain/addDomain", addDomain);
+    server.post("/admin/:mainDomain/disableDomain", disableDomain);
+    server.post("/admin/:mainDomain/addAdmin", addAdmin);
+    server.post("/admin/:mainDomain/addDomainAdmin", addDomainAdmin);
+    server.post("/admin/:mainDomain/:domainName/storeVariable", setVariable);
+    server.post("/admin/:mainDomain/registerTemplate", registerTemplate);
+}
+
+function AdminService(exposeAllApis) {
+    const enclave = getEnclave();
+
+    this.getDomains = function (callback) {
+        enclave.getAllRecords(DID_replacement, DOMAINS_TABLE, callback);
+    }
+
+    this.getDomainInfo = function (domainName, callback){
+        enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domainInfo)=>{
+            //cleanup domain obj before returning it
+            return callback(err, domainInfo);
+        });
+    }
+
+    this.getMainDomain = getMainDomain;
+
+    this.checkForTemplate = function (path, callback) {
+        enclave.getRecord(DID_replacement, TEMPLATES_TABLE, path, (err, template)=>{
+            //cleanup template obj before returning it
+            return callback(err, template);
+        });
+    }
+
+    this.checkIfAdmin = function(did, callback){
+        enclave.getRecord(DID_replacement, ADMINS_TABLE, did, (err, admin)=>{
+            if(err || !admin){
+                return callback(undefined, false);
+            }
+            return callback(undefined, true);
+        });
+    }
+
+    this.checkIfDomainAdmin = function(domainName, did, callback){
+        enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+            if(err || !domain || !domain.admins || domain.admins.indexOf(did) === -1){
+                return callback(undefined, false);
+            }
+
+            return callback(undefined, true);
+        });
+    }
+
+    this.getDomainSpecificVariables = function(domainName, callback){
+        enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+            if(err){
+                return callback(err);
+            }
+
+            if(!domain){
+                return callback(`Not able to find domain ${domainName}.`);
+            }
+
+            return callback(undefined, domain.variables || {});
+        });
+    }
+
+    //from this line down there are only methods that change the state of the enclave.
+    if (exposeAllApis) {
+        this.addDomain = async function (domainName, cloneFromDomain, timestamp, signature, callback) {
+            enclave.insertRecord(DID_replacement, DOMAINS_TABLE, domainName, {name:domainName, active: true, cloneFromDomain}, callback);
+        }
+
+        this.addDomainAsync = $$.promisify(this.addDomain);
+
+        this.disableDomain = async function (domainName, timestamp, signature, callback) {
+            enclave.updateRecord(DID_replacement, DOMAINS_TABLE, domainName, {name: domainName, active:false}, callback);
+        }
+
+        this.disableDomainAsync = $$.promisify(this.disableDomain);
+
+        this.registerAdmin = function (did, timestamp, signature, callback) {
+            enclave.insertRecord(DID_replacement, ADMINS_TABLE, did, {did, active: true}, callback);
+        }
+
+        this.registerAdminAsync = $$.promisify(this.registerAdmin);
+
+        this.registerDomainAdmin = function (domainName, did, timestamp, signature, callback) {
+            enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+                if(err){
+                    return callback(err);
+                }
+
+                if(!domain.admins){
+                    domain.admins = [];
+                }
+                domain.admins.push(did);
+
+                enclave.updateRecord(DID_replacement, DOMAINS_TABLE, domainName, domain, callback);
+            });
+        }
+
+        this.registerDomainAdminAsync = $$.promisify(this.registerDomainAdmin);
+
+        this.registerVariableToDomain = function (domainName, variableName, variableContent, timestamp, signature, callback){
+            enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+                if(err){
+                    return callback(err);
+                }
+
+                if(!domain.variables){
+                    domain.variables = {};
+                }
+
+                domain.variables[variableName] = variableContent;
+
+                enclave.updateRecord(DID_replacement, DOMAINS_TABLE, domainName, domain, callback);
+            });
+        }
+        this.registerVariableToDomainAsync = $$.promisify(this.registerVariableToDomain);
+
+        this.registerTemplate = function (path, content, timestamp, signature, callback) {
+            enclave.getRecord(DID_replacement, TEMPLATES_TABLE, path, (err, template)=>{
+                if(err || !template){
+                    return enclave.insertRecord(DID_replacement, TEMPLATES_TABLE, path, {content}, callback);
+                }
+                enclave.updateRecord(DID_replacement, TEMPLATES_TABLE, path, {content}, callback);
+            })
+        }
+
+        this.registerTemplateAsync = $$.promisify(this.registerTemplate);
+    }
+
+    return this;
+}
+
+function getAdminService() {
+    if (!internalServerRef) {
+        throw new Error("AdminComponentHandler is not enabled!");
+    }
+
+    return new AdminService();
+}
+
+module.exports = {
+    AdminComponentHandler,
+    getAdminService
+};
+},{"./../../utils/middlewares/index":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","default-enclave":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
 const {ALIAS_SYNC_ERR_CODE} = require("../utils");
 const utils = require("../utils");
 const anchoringStrategies = require("../strategies");
 
-const getStrategy = (request) => {
+const getStrategy = async (request) => {
     let receivedDomain;
     let domainConfig;
     if (request.params.anchorId && request.params.domain) {
@@ -124,7 +448,7 @@ const getStrategy = (request) => {
             throw Error(`[Anchoring] Domain mismatch: '${receivedDomain}' != '${request.params.domain}'`);
         }
 
-        domainConfig = utils.getAnchoringDomainConfig(receivedDomain);
+        domainConfig = await utils.getAnchoringDomainConfig(receivedDomain);
         if (!domainConfig) {
             throw Error(`[Anchoring] Domain '${receivedDomain}' not found`);
         }
@@ -165,10 +489,10 @@ function getWritingHandler(response) {
     };
 }
 
-function updateAnchor(action, request, response) {
+async function updateAnchor(action, request, response) {
     let strategy;
     try {
-        strategy = getStrategy(request);
+        strategy = await getStrategy(request);
     } catch (e) {
         return response.send(500, e);
     }
@@ -194,10 +518,10 @@ function getReadingHandler(response) {
     }
 }
 
-function readDataForAnchor(action, request, response) {
+async function readDataForAnchor(action, request, response) {
     let strategy;
     try {
-        strategy = getStrategy(request);
+        strategy = await getStrategy(request);
     } catch (e) {
         return response.send(500, e);
     }
@@ -729,10 +1053,27 @@ module.exports = {
 
 },{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
 const { clone } = require("../../../utils");
+const config = require("../../../config");
 
-const getAnchoringDomainConfig = (domain) => {
+const getAnchoringDomainConfig = async (domain) => {
     const config = require("../../../config");
-    const domainConfiguration = config.getDomainConfig(domain);
+    let domainConfiguration = config.getDomainConfig(domain);
+
+    if(!domainConfiguration){
+        //if you don't have config we try to use admin service info to create one at runtime
+        try{
+            let adminService = require("./../../admin").getAdminService();
+            const getDomainInfo = $$.promisify(adminService.getDomainInfo);
+            let domainInfo = await getDomainInfo(domain);
+            if(domainInfo && domain.active && domainInfo.cloneFromDomain){
+                const clonedDomainConfiguration = config.getDomainConfig(domainInfo.cloneFromDomain);
+                domainConfiguration = clonedDomainConfiguration;
+                console.log(`Config for domain '${domain}' was loaded from admin service.`);
+            }
+        }catch(err){
+            //we ignore any errors in this try-catch block because admin component may be disabled
+        }
+    }
 
     if (!domainConfiguration) {
         return;
@@ -773,15 +1114,27 @@ const ANCHOR_ALREADY_EXISTS_ERR_CODE = "anchor-already-exists";
 
 module.exports = { getAnchoringDomainConfig, getDomainFromKeySSI, ALIAS_SYNC_ERR_CODE, ANCHOR_ALREADY_EXISTS_ERR_CODE };
 
-},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js":[function(require,module,exports){
 function BDNS(server) {
+    const DOMAIN_TEMPLATE = {
+        "replicas": [],
+        "brickStorages": [
+            "$ORIGIN"
+        ],
+        "anchoringServices": [
+            "$ORIGIN"
+        ],
+        "notifications": [
+            "$ORIGIN"
+        ]
+    };
     const URL_PREFIX = "/bdns";
     const {headersMiddleware} = require('../../utils/middlewares');
 
     let bdnsCache;
 
     let init_process_runned = false;
-    function initialize(){
+    async function initialize(){
         if(init_process_runned){
            return true;
         }
@@ -792,11 +1145,34 @@ function BDNS(server) {
         const bdnsHostsPath = path.join(process.env.PSK_CONFIG_LOCATION, "bdns.hosts");
 
         bdnsCache = fs.readFileSync(bdnsHostsPath).toString();
+
+        try{
+            console.log("Testing to see if admin component is active and can be used to expand BDNS configuration.");
+            let adminService = require("./../admin").getAdminService();
+            let getDomains = $$.promisify(adminService.getDomains);
+            let domains = await getDomains();
+            if(domains){
+                let bdnsExtensions = {};
+                for(let i=0; i<domains.length; i++){
+                    let domain = domains[i];
+                    if(domain.active){
+                        bdnsExtensions[domain.name] = DOMAIN_TEMPLATE;
+                    }
+                }
+                let newRegistry = JSON.parse(bdnsCache);
+                Object.assign(newRegistry, bdnsExtensions);
+                bdnsCache = JSON.stringify(newRegistry);
+            }
+            console.log("BDNS configuration was updated accordingly to information retrieved from admin service");
+        }catch(err){
+            console.log(err);
+            console.info("Due to the error above not able to read any domains from admin service. This is not a problem, it's a configuration.");
+        }
     }
 
-    function bdnsHandler(request, response, next) {
+    async function bdnsHandler(request, response, next) {
         try {
-            initialize();
+            await initialize();
         } catch (e) {
             response.statusCode = 500;
             return response.end('Failed to initialize BDNS');
@@ -819,7 +1195,7 @@ function BDNS(server) {
 
 module.exports = BDNS;
 
-},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
+},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
 const { getBrickWithExternalProvidersFallbackAsync } = require("./utils");
 
 async function getBrick(request, response) {
@@ -914,10 +1290,10 @@ function Bricks(server) {
 module.exports = Bricks;
 
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js","./middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/middlewares.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/middlewares.js":[function(require,module,exports){
-function requestFSBrickStorageMiddleware(request, response, next) {
+async function requestFSBrickStorageMiddleware(request, response, next) {
     const { domain: domainName } = request.params;
 
-    const domainConfig = require("./utils").getBricksDomainConfig(domainName);
+    const domainConfig = await require("./utils").getBricksDomainConfig(domainName);
     if (!domainConfig || !domainConfig.path) {
         const message = `[Bricking] Domain '${domainName}' not found!`;
         console.error(message);
@@ -940,6 +1316,7 @@ module.exports = {
 },{"./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js","bricksledger":"bricksledger"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js":[function(require,module,exports){
 const { clone } = require("../../utils");
 const { getLocalBdnsEntryListExcludingSelfAsync, getHeadersWithExcludedProvidersIncludingSelf } = require("../../utils/request-utils");
+const config = require("../../config");
 
 function convertReadableStreamToBuffer(readStream, callback) {
     let buffers = [];
@@ -951,9 +1328,26 @@ function convertReadableStreamToBuffer(readStream, callback) {
     readStream.on("end", () => callback(undefined, $$.Buffer.concat(buffers)));
 }
 
-function getBricksDomainConfig(domain) {
+async function getBricksDomainConfig(domain) {
     const config = require("../../config");
-    const domainConfiguration = config.getDomainConfig(domain);
+    let domainConfiguration = config.getDomainConfig(domain);
+
+    if(!domainConfiguration){
+        //if you don't have config we try to use admin service info to create one at runtime
+        try{
+            let adminService = require("./../admin").getAdminService();
+            const getDomainInfo = $$.promisify(adminService.getDomainInfo);
+            let domainInfo = await getDomainInfo(domain);
+            if(domainInfo && domain.active && domainInfo.cloneFromDomain){
+                const clonedDomainConfiguration = config.getDomainConfig(domainInfo.cloneFromDomain);
+                domainConfiguration = clonedDomainConfiguration;
+                console.log(`Config for domain '${domain}' was loaded from admin service.`);
+            }
+        }catch(err){
+            //we ignore any errors in this try-catch block because admin component may be disabled
+        }
+    }
+
     if (!domainConfiguration) {
         return;
     }
@@ -1028,7 +1422,7 @@ module.exports = {
     getBrickWithExternalProvidersFallbackAsync,
 };
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
 const URL_PREFIX='/bricksFabric';
 
 module.exports = {URL_PREFIX};
@@ -3737,6 +4131,68 @@ function StaticServer(server) {
 
     }
 
+    function tryToCreateAtRuntimeFromTemplates(req, callback){
+        let extractSubdomain = function(url){
+            let regex = new RegExp(/^([a-z]+\:\/{2})?([\w-]+\.[\w-]+\.\w+(\:[0-9]*)?)$/);
+            if(!!url.match(regex)){
+                let components = url.split(".");
+                return components[0];
+            }
+            return undefined;
+        }
+
+        let adminService;
+        try{
+            adminService = require("./../admin").getAdminService();
+        }catch(err){
+            return callback(err);
+        }
+
+        adminService.checkForTemplate(req.url, (err, template)=>{
+            if(err){
+                return callback(err);
+            }
+            if(template){
+                let fileContent = template.content;
+                let host = req.headers.host;
+                let subdomain = extractSubdomain(host);
+                if(!subdomain){
+                    return callback(new Error("Not able to detect a subdomain. Skipping template lookup."));
+                }
+
+                return adminService.getDomainInfo(subdomain, (err, domainInfo)=>{
+                    if(err || !domainInfo){
+                        return callback(err);
+                    }
+                    let domainVariables = Object.keys(domainInfo.variables);
+                    for(let i=0; i<domainVariables.length; i++){
+                        let variableName = domainVariables[i];
+                        let variableValue = domainInfo.variables[variableName];
+
+                        const lookupFor = "${"+variableName+"}";
+                        fileContent = fileContent.split(lookupFor).join(variableValue);
+                    }
+
+                    return callback(undefined, fileContent);
+                });
+            }else{
+                return callback(new Error(`Not template found for ${req.url}`));
+            }
+        });
+    }
+
+    function resolveFileAndSend(req, res, file){
+        tryToCreateAtRuntimeFromTemplates(req,(err, content)=>{
+            if(err){
+                //if any error... we fallback to normal sendFile method
+                return sendFile(res, file);
+            }
+            res.statusCode = 200;
+            res.setHeader('Cache-Control', 'no-store');
+            res.end(content);
+        });
+    }
+
     function sendFile(res, file) {
         if (excludedFilesRegex) {
             let index = excludedFilesRegex.findIndex(regExp => file.match(regExp) !== null);
@@ -3808,9 +4264,17 @@ function StaticServer(server) {
             //remove existing query params
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
-                    res.statusCode = 404;
-                    res.end();
-                    return;
+                    return tryToCreateAtRuntimeFromTemplates(req,(err, content)=>{
+                        if(err){
+                            //if any error... we have to return 404
+                            res.statusCode = 404;
+                            res.end();
+                            return;
+                        }
+                        res.statusCode = 200;
+                        res.setHeader('Cache-Control', 'no-store');
+                        res.end(content);
+                    });
                 }
 
                 if (stats.isDirectory()) {
@@ -3835,10 +4299,10 @@ function StaticServer(server) {
                             return;
                         }
 
-                        return sendFile(res, defaultPath);
+                        return resolveFileAndSend(req, res, defaultPath);
                     });
                 } else {
-                    return sendFile(res, targetPath);
+                    return resolveFileAndSend(req, res, targetPath);
                 }
             });
         });
@@ -3850,7 +4314,7 @@ function StaticServer(server) {
 
 module.exports = StaticServer;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","fs":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
 const http = require('http');
 const { URL } = require('url');
 const swarmUtils = require('swarmutils');
@@ -4165,7 +4629,7 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeComponents": ["config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "staticServer"],
+    "activeComponents": ["admin", "config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "staticServer"],
     "componentsConfig": {
         "mq":{
             "module": "./components/mqHub",
@@ -4180,16 +4644,16 @@ const defaultConfig = {
         },
         "messaging": {
             "module": "./components/mqManager",
-            "workingDirPath": "./messaging",
-            "storageDirPath": "./messaging/storage"
+            "workingDirPath": "./external-volume/messaging",
+            "storageDirPath": "./external-volume/messaging/storage"
         },
         "notifications": {
             "module": "./components/keySsiNotifications",
-            "workingDirPath": "./notifications"
+            "workingDirPath": "./external-volume/notifications"
         },
         "virtualMQ": {
             "module": "./components/channelManager",
-            "channelsFolderName": "channels",
+            "channelsFolderName": "external-volume/channels",
             "maxSize": 100,
             "tokenSize": 48,
             "tokenHeaderName": "x-tokenHeader",
@@ -4236,6 +4700,11 @@ const defaultConfig = {
         "contracts": {
             "module": "./components/contracts",
             "domainsPath": "/external-volume/domains"
+        },
+        "admin": {
+            "module": "./components/admin",
+            "function": "AdminComponentHandler",
+            "storageFolder": './external-volume/config/admin'
         }
     },
     "tokenBucket": {
@@ -4273,7 +4742,8 @@ const defaultConfig = {
         "/secrets",
         "/logs"
     ],
-    "iframeHandlerDsuBootPath": "./psknode/bundles/nodeBoot.js"
+    "iframeHandlerDsuBootPath": "./psknode/bundles/nodeBoot.js",
+    "enableStreamHandler": true
 };
 
 module.exports = Object.freeze(defaultConfig);
@@ -6141,14 +6611,10 @@ function OAuthMiddleware(server) {
             return sendUnauthorizedResponse(req, res, "Unable to encrypt access token");
           }
           const {payload} = util.parseAccessToken(tokenSet.access_token);
-          const SSOUserEmail = payload.email || payload.preferred_username || payload.upn;
-          if (!SSOUserEmail) {
-            res.writeHead(400, {'Content-Type': 'text/plain'});
-            res.end(`Error: User email is not configured. Please check account configurations and set a valid email.`);
-          }
+          const SSODetectedId = payload.email || payload.preferred_username || payload.upn || payload.sub;
           res.writeHead(301, {
             Location: "/",
-            "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSOUserEmail = ${SSOUserEmail}`, `loginContextCookie=; Max-Age=0`],
+            "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSODetectedId = ${SSODetectedId}`, `loginContextCookie=; Max-Age=0`],
             "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
           });
           res.end();
@@ -6837,7 +7303,187 @@ function ResponseHeaders(server) {
 
 module.exports = ResponseHeaders;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/index.js":[function(require,module,exports){
+(function (global){(function (){
+function getNodeWorkerBootScript() {
+    const openDSUScriptPath = global.bundlePaths.openDSU.replace(/\\/g, "\\\\").replace(".js", "");
+    return `
+        require("${openDSUScriptPath}");
+        (${require("./worker-script").toString()})();
+    `;
+}
+
+function StreamHandler(server) {
+    console.log(`Registering StreamHandler middleware`);
+
+    const syndicate = require("syndicate");
+
+    const dsuWorkers = {};
+
+    // // if a listening event is fired from this point on...
+    // // it means that a restart was triggered
+    // server.on("listening", () => {
+    //     console.log(`[StreamHandler] Restarting process in progress...`);
+    //     console.log(`[StreamHandler] Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
+    //     for (let seed in dsuWorkers) {
+    //         let worker = dsuWorkers[seed];
+    //         if (worker && worker.terminate) {
+    //             worker.terminate();
+    //         }
+    //     }
+    // });
+
+    server.use(async (req, res, next) => {
+        const { method, url } = req;
+
+        if (url.indexOf("stream") === -1) {
+            // not an stream related request so skip it
+            next();
+            return;
+        }
+
+        let keySSI = url.substr(url.indexOf("stream") + "stream".length + 1);
+        let requestedPath = "";
+        if (!keySSI || keySSI === "null") {
+            res.statusCode = 500;
+            return res.end("empty keySSI");
+        }
+
+        const urlPathInfoMatch = keySSI.match(/^([^\/\?]*)[\/\?](.*)$/);
+        if (urlPathInfoMatch) {
+            const keySSIPart = urlPathInfoMatch[1];
+            const separator = keySSI[keySSIPart.length];
+            keySSI = keySSIPart;
+            requestedPath = `${separator !== "/" ? "/" : ""}${separator}${urlPathInfoMatch[2]}`;
+        }
+
+        let range = req.headers.range;
+        if (!range) {
+            res.statusCode = 400;
+            return res.end("Requires Range header");
+        }
+
+        let dsuWorker = dsuWorkers[keySSI];
+        if (!dsuWorker) {
+            dsuWorker = syndicate.createWorkerPool({
+                bootScript: getNodeWorkerBootScript(),
+                maximumNumberOfWorkers: 1,
+                workerOptions: {
+                    eval: true,
+                    workerData: {
+                        keySSI,
+                    },
+                },
+            });
+            dsuWorkers[keySSI] = dsuWorker;
+        }
+
+        const sendTaskToWorker = (task, callback) => {
+            dsuWorker.addTask(task, (err, message) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                let { error, result } = typeof Event !== "undefined" && message instanceof Event ? message.data : message;
+
+                if (error) {
+                    return callback(error);
+                }
+
+                if (result && result.buffer && result.buffer instanceof Uint8Array) {
+                    result.buffer = $$.Buffer.from(result.buffer);
+                }
+
+                callback(error, result);
+            });
+        };
+
+        const task = {
+            requestedPath,
+            range,
+        };
+
+        try {
+            const taskResult = await $$.promisify(sendTaskToWorker)(task);
+            res.writeHead(206, taskResult.headers);
+            res.end(taskResult.buffer);
+        } catch (error) {
+            console.log("[StreamHandler] error", error);
+            res.statusCode = 500;
+            return res.end(error);
+        }
+    });
+}
+
+module.exports = StreamHandler;
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./worker-script":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/worker-script.js","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/worker-script.js":[function(require,module,exports){
+(function (Buffer){(function (){
+module.exports = async () => {
+    //we inject a supplementary tag in order make it more clear the source of the log
+    let originalLog = console.log;
+    console.log = function (...args) {
+        originalLog("\t[StreamHandler]", ...args);
+    };
+
+    const worker_threads = "worker_threads";
+    const { parentPort, workerData } = require(worker_threads);
+    console.log(`Node worker started for: `, workerData);
+
+    const resolver = require("opendsu").loadApi("resolver");
+    const dsu = await $$.promisify(resolver.loadDSU)(workerData.keySSI);
+
+    parentPort.postMessage("ready");
+
+    const CHUNK_SIZE = 1024 * 1024;
+
+    parentPort.on("message", async (task) => {
+        console.log("Handling task", task);
+        const { requestedPath, range } = task;
+
+        try {
+            const start = Number(range.replace(/\D/g, ""));
+            const end = start + CHUNK_SIZE;
+
+            const streamRange = { start, end };
+            const { totalSize, stream } = await $$.promisify(dsu.createBigFileReadStreamWithRange)(requestedPath, streamRange);
+            const actualEnd = Math.min(end, totalSize - 1);
+            const contentLength = actualEnd - start + 1;
+            const headers = {
+                "Content-Range": `bytes ${start}-${actualEnd}/${totalSize}`,
+                "Accept-Ranges": "bytes",
+                "Content-Length": contentLength,
+                "Content-Type": "video/mp4",
+            };
+
+            function streamToBuffer(stream) {
+                const chunks = [];
+                return new Promise((resolve, reject) => {
+                    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+                    stream.on("error", (err) => reject(err));
+                    stream.on("end", () => resolve(Buffer.concat(chunks)));
+                });
+            }
+            const buffer = await streamToBuffer(stream);
+
+            parentPort.postMessage({ result: { headers, buffer } });
+        } catch (error) {
+            parentPort.postMessage({ error });
+        }
+    });
+
+    process.on("uncaughtException", (error) => {
+        console.error("[StreamHandler] uncaughtException inside node worker", error);
+
+        setTimeout(() => process.exit(1), 100);
+    });
+};
+
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js":[function(require,module,exports){
 module.exports = {
 	LOG_IDENTIFIER: "[API-HUB]"
 };
@@ -8046,6 +8692,37 @@ function Archive(archiveConfigurator) {
         });
     };
 
+        /**
+     * @param {string} barPath
+     * @param {object[]} bricks
+     * @param {callback} callback
+     */
+    const _writeFileFromBricks = (barPath, bricks, callback) => {
+        barPath = pskPth.normalize(barPath);    
+        brickMapController.addFile(barPath, bricks, callback);
+    };
+
+    /**
+     * @param {object} bricksMeta
+     */
+    const _isSizeSSIPresentInBricksMeta = (bricksMeta) => {
+        return !!bricksMeta && !!bricksMeta[0] && !!bricksMeta[0].size;
+    }
+
+    const _isSizeSSIPresentInBricksMetaAndIsValid = (bricksMeta) => {
+        if(!_isSizeSSIPresentInBricksMeta(bricksMeta)) {
+            return false;
+        }
+
+        try {
+            const keySSISpace = require("opendsu").loadAPI("keyssi");
+            sizeSSI = keySSISpace.parse(bricksMeta[0].size);
+            return true;
+        } catch (error) {
+            return false;   
+        }        
+    }
+
     /**
      * @param {string} barPath
      * @param {callback} callback
@@ -8061,6 +8738,10 @@ function Archive(archiveConfigurator) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath + " in brickmap", err));
         }
 
+        if(_isSizeSSIPresentInBricksMeta(bricksMeta)) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read big file as normal file for path ${barPath}`));
+        }
+
         brickStorageService.createBufferFromBricks(bricksMeta, (err, buffer) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create buffer from bricks", err));
@@ -8074,7 +8755,7 @@ function Archive(archiveConfigurator) {
      * @param {string} barPath
      * @param {callback} callback
      */
-    const _createReadStream = (barPath, callback) => {
+     const _createReadStream = (barPath, callback) => {
         barPath = pskPth.normalize(barPath);
 
         let bricksMeta;
@@ -8084,12 +8765,61 @@ function Archive(archiveConfigurator) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath, err));
         }
 
+        if(_isSizeSSIPresentInBricksMeta(bricksMeta)) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read big file as normal file for path ${barPath}`));
+        }
+
         brickStorageService.createStreamFromBricks(bricksMeta, (err, stream) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create stream from bricks", err));
             }
 
             callback(undefined, stream);
+        });
+    };
+
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     */
+    const _createBigFileReadStreamWithRange = (barPath, range, callback) => {
+        barPath = pskPth.normalize(barPath);
+
+        let bricksMeta;
+        try {
+            bricksMeta = brickMapController.getBricksMeta(barPath);
+        } catch (err) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath, err));
+        }
+
+        if(!bricksMeta || !bricksMeta.length) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath, err));
+        }
+
+        if(!bricksMeta[0].size) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Cannot stream path ${barPath} since it's not a BigFile`));
+        }
+
+        let sizeSSI;
+        try {
+            const keySSISpace = require("opendsu").loadAPI("keyssi");
+            sizeSSI = keySSISpace.parse(bricksMeta[0].size);
+        } catch (e) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`The provided keyssi is not a valid SSI string.`, e));
+        }
+
+        let canCreateStream = !!sizeSSI && !!sizeSSI.isSizeSSI && sizeSSI.isSizeSSI();
+        if(!canCreateStream) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Cannot stream path ${barPath} since it's not a BigFile`));
+        }
+
+        bricksMeta = bricksMeta.slice(1); // remove SizeSSI from bricksMeta
+        brickStorageService.createStreamFromBricksWithRange(sizeSSI, bricksMeta, range, (err, stream) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to create stream from bricks", err));
+            }
+
+            callback(undefined, { totalSize: sizeSSI.getTotalSize(), stream });
         });
     };
 
@@ -8631,6 +9361,37 @@ function Archive(archiveConfigurator) {
         })
     };
 
+    this.createBigFileReadStreamWithRange = (fileBarPath, range, options, callback) => {
+        waitIfDSUIsRefreshing(() => {
+            const defaultOpts = {encrypt: true, ignoreMounts: false};
+            if (typeof options === "function") {
+                callback = options;
+                options = {};
+            }
+            if(typeof range === "function") {
+                callback = range;
+                range = {start: 0};
+                options = {};                
+            }
+
+            callback = $$.makeSaneCallback(callback);
+            Object.assign(defaultOpts, options);
+            options = defaultOpts;
+            if (options.ignoreMounts === true) {
+                _createBigFileReadStreamWithRange(fileBarPath, range, callback);
+            } else {
+                this.getArchiveForPath(fileBarPath, (err, result) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${fileBarPath}`, err));
+                    }
+
+                    options.ignoreMounts = true;
+                    result.archive.createBigFileReadStreamWithRange(result.relativePath, range, options, callback);
+                });
+            }
+        })
+    };
+
     this.extractFolder = (fsFolderPath, barPath, options, callback) => {
         waitIfDSUIsRefreshing(() => {
             const defaultOpts = {ignoreMounts: false};
@@ -8726,6 +9487,46 @@ function Archive(archiveConfigurator) {
             }
         })
     };
+
+    this.writeFileFromBricks = (path, bricks, options, callback) => {
+        waitIfDSUIsRefreshing(() => {
+            const defaultOpts = {ignoreMounts: false};
+            if (typeof options === "function") {
+                callback = options;
+                options = {};
+            }
+            if (typeof options === "undefined") {
+                options = {};
+            }
+
+            callback = $$.makeSaneCallback(callback);
+            if(typeof path !== "string") {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Provided path for writeFileFromBricks must be a string"));
+            }
+            if(!Array.isArray(bricks) || !_isSizeSSIPresentInBricksMetaAndIsValid(bricks)) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Provided bricks for writeFileFromBricks must be an array of a single sizeSSI and multiple hashlinks"));
+            }
+
+            Object.assign(defaultOpts, options);
+            options = defaultOpts;
+
+            if (options.ignoreMounts === true) {
+                _writeFileFromBricks(path, bricks, callback);
+            } else {
+                this.getArchiveForPath(path, (err, dossierContext) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                    }
+                    if (dossierContext.readonly === true) {
+                        return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                    }
+
+                    options.ignoreMounts = true;
+                    dossierContext.archive.writeFileFromBricks(dossierContext.relativePath, bricks, options, callback);
+                });
+            }
+        });
+    }
 
 
     this.delete = (path, options, callback) => {
@@ -11904,6 +12705,9 @@ const BrickMapMixin = {
             checkSum: brick.checkSum,
             hashLink: brick.hashLink
         };
+        if(brick.size) {
+            brickObj.size = brick.size;
+        }
 
         if (brick.encryptionKey) {
             brickObj.key = brick.encryptionKey
@@ -11979,7 +12783,7 @@ const BrickMapMixin = {
      * @return {Array<object>}
      * @throws {Error}
      */
-    getBricksMeta: function (filePath) {
+     getBricksMeta: function (filePath) {
         const fileNode = this.getDeepestNode(filePath);
         if (!fileNode) {
             throw new Error(`Path <${filePath}> not found.`);
@@ -14304,6 +15108,68 @@ function Service(options) {
                 this.push(data);
 
                 if (brickIndex >= (bricksMeta.length - 1)) {
+                    this.push(null);
+                }
+            });
+        };
+
+        callback(undefined, readableStream);
+    };
+
+    /**
+     * Retrieve all the Bricks identified by `sizeSSI` and `bricksMeta`
+     * from storage and create a readable stream
+     * from their data
+     *
+     * @param {SizeSSI} sizeSSI
+     * @param {Array<object>} bricksMeta
+     * @param {callback} callback
+     */
+     this.createStreamFromBricksWithRange = (sizeSSI, bricksMeta, range, callback) => {
+        const totalSize = sizeSSI.getTotalSize();
+        const bufferSize = sizeSSI.getBufferSize();
+        const {start, end} = range;
+        let brickIndex = Math.floor(start/bufferSize);
+
+        const readableStream = new stream.Readable({
+            read() {
+                if (!bricksMeta.length) {
+                    return this.push(null);
+                }
+
+                if (brickIndex < bricksMeta.length) {
+                    this.readBrickData(brickIndex++);
+                }
+            }
+        });
+
+        readableStream.readBrickData = function (brickIndex) {
+            const brickMeta = bricksMeta[brickIndex];
+            getBrickAsBuffer(brickMeta, (err, data) => {
+                if (err) {
+                    this.destroy(err);
+                    return;
+                }
+
+                const currentIndexStartByte = brickIndex > 0 ? brickIndex * bufferSize : 0;
+                const currentIndexEndByte = currentIndexStartByte + data.byteLength;
+
+                const isCurrentBrickAfterStart = currentIndexStartByte >= start;
+                if(isCurrentBrickAfterStart) {
+                    const slice = end < currentIndexEndByte
+                        ? data.slice(0, end - currentIndexStartByte + 1)
+                        : data.slice(0);
+                    this.push(slice);
+                } else {
+                    let offset = start - currentIndexStartByte;
+                    const mustSliceBeforeCurrentIndexEnd = end < currentIndexEndByte && end < totalSize;
+                    const slice = mustSliceBeforeCurrentIndexEnd
+                        ? data.slice(offset, end - currentIndexStartByte + 1)
+                        : data.slice(offset);
+                    this.push(slice);
+                }
+
+                if(currentIndexEndByte > end || brickIndex >= (bricksMeta.length - 1)) {
                     this.push(null);
                 }
             });
@@ -26280,6 +27146,8 @@ const createPublicKeySSI = require("./OtherKeySSIs/PublicKeySSI").createPublicKe
 
 const createAliasSSI = require("./OtherKeySSIs/AliasSSI").createAliasSSI;
 
+const createSizeSSI = require("./OtherKeySSIs/SizeSSI").createSizeSSI;
+
 const SSITypes = require("./SSITypes");
 
 const registry = {};
@@ -26445,9 +27313,11 @@ KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_KEY_SSI, 'v0', undefined
 
 KeySSIFactory.prototype.registerFactory(SSITypes.ALIAS_SSI, 'v0', undefined, createAliasSSI);
 
+KeySSIFactory.prototype.registerFactory(SSITypes.SIZE_SSI, 'v0', undefined, createSizeSSI);
+
 module.exports = new KeySSIFactory();
 
-},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/AliasSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/AliasSSI.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/AliasSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/AliasSSI.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SizeSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SizeSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
@@ -26893,7 +27763,67 @@ module.exports = {
     createPublicKeySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SizeSSI.js":[function(require,module,exports){
+const SSITypes = require("../SSITypes");
+const KeySSIMixin = require("../KeySSIMixin");
+
+function SizeSSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+
+    KeySSIMixin(this);
+    const self = this;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.initialize = (domain, totalSize, bufferSize, vn, hint) => {
+        if (!domain) {
+            throw new Error("domain is required");
+        }
+        if (totalSize == null) {
+            throw new Error("totalSize is required");
+        }
+        if (bufferSize == null) {
+            bufferSize = totalSize;
+            vn = "v0";
+        }
+        if (vn == null) {
+            vn = "v0";
+        }
+
+        self.load(SSITypes.SIZE_SSI, domain, totalSize, bufferSize, vn, hint);
+    };
+
+    self.isSizeSSI = () => {
+        return true;
+    };
+
+    self.getTotalSize = () => {
+        return parseInt(self.getSpecificString(), 10);
+    };
+
+    self.getBufferSize = () => {
+        return parseInt(self.getControlString(), 10);
+    };
+
+    self.derive = () => {
+        throw Error("Size SSI cannot be derived");
+    };
+}
+
+const createSizeSSI = (enclave, identifier) => {
+    return new SizeSSI(enclave, identifier);
+};
+
+module.exports = {
+    createSizeSSI,
+};
+
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SSITypes = require("../SSITypes");
 const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
@@ -27259,7 +28189,8 @@ module.exports = {
     SIGNED_HASH_LINK_SSI: "shl",
     CONSENSUS_SSI: "consensus",
     PUBLIC_KEY_SSI: "pk",
-    ALIAS_SSI: "alias"
+    ALIAS_SSI: "alias",
+    SIZE_SSI: "size",
 };
 
 },{}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js":[function(require,module,exports){
@@ -29074,9 +30005,48 @@ const putBrick = (domain, brick, authToken, callback) => {
     });
 };
 
-module.exports = {getBrick, putBrick, getMultipleBricks};
+const constructBricksFromData = (keySSI, data, options, callback) => {
+    const MAX_BRICK_SIZE = 1024 * 1024; // 1MB
+    const defaultOpts = { encrypt: true, maxBrickSize: MAX_BRICK_SIZE };
 
-},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
+    if(typeof options === "function") {
+        callback = options;
+        options = {
+            maxBrickSize: MAX_BRICK_SIZE
+        };
+    }
+
+    options = Object.assign({}, defaultOpts, options);
+
+    const bar = require("bar");
+    const archiveConfigurator = bar.createArchiveConfigurator();
+    archiveConfigurator.setBufferSize(MAX_BRICK_SIZE);
+    archiveConfigurator.setKeySSI(keySSI);
+    
+    const envTypes = require("overwrite-require").constants;
+    if($$.environmentType !== envTypes.BROWSER_ENVIRONMENT_TYPE &&
+        $$.environmentType !== envTypes.SERVICE_WORKER_ENVIRONMENT_TYPE &&
+        $$.environmentType !== envTypes.WEB_WORKER_ENVIRONMENT_TYPE){
+            const fsAdapter = require('bar-fs-adapter');
+            const ArchiveConfigurator = require("bar").ArchiveConfigurator;
+            ArchiveConfigurator.prototype.registerFsAdapter("FsAdapter", fsAdapter.createFsAdapter);
+            archiveConfigurator.setFsAdapter("FsAdapter");
+    }
+
+    const brickStorageService = bar.createBrickStorageService(archiveConfigurator, keySSI);
+
+    brickStorageService.ingestData(data, options, (err, result) => {
+        if (err) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to ingest data into brick storage service", err));
+        }
+
+        callback(undefined, result);
+    });
+}
+
+module.exports = {getBrick, putBrick, getMultipleBricks, constructBricksFromData};
+
+},{"../cache/":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","../config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","./cachedBricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/cachedBricking.js","bar":"bar","bar-fs-adapter":"bar-fs-adapter","opendsu":"opendsu","overwrite-require":"overwrite-require","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/FSCache.js":[function(require,module,exports){
 let stores = {};
 const config = require("opendsu").loadApi("config");
 const CacheMixin = require("../utils/PendingCallMixin");
@@ -29801,7 +30771,1371 @@ module.exports = {
 
 }).call(this)}).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")})
 
-},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":"/home/runner/work/privatesky/privatesky/node_modules/is-buffer/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/promise-runner":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/promise-runner.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/InstanceReadyMixin.js":[function(require,module,exports){
+function InstanceReadyMixin(target) {
+
+	target.isInstanceReady = false;
+	target.instanceReadyCallback = null;
+
+	target.onInstanceReady = (callback) => {
+		if (target.isInstanceReady) {
+			callback(...target.args);
+			target.args = null;
+			return;
+		}
+
+		target.instanceReadyCallback = callback;
+	};
+
+	target.notifyInstanceReady = (...args) => {
+		target.isInstanceReady = true;
+		if (typeof target.instanceReadyCallback === 'function') {
+			target.instanceReadyCallback(...args);
+			target.isInstanceReady = false;
+			target.instanceReadyCallback = null;
+		} else {
+			target.args = [...args];
+		}
+	};
+}
+
+module.exports = InstanceReadyMixin;
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js":[function(require,module,exports){
+const JWT_ERRORS = {
+	EMPTY_JWT_PROVIDED: 'EMPTY_JWT_PROVIDED',
+	INVALID_JWT_FORMAT: 'INVALID_JWT_FORMAT',
+	INVALID_JWT_HEADER: 'INVALID_JWT_HEADER',
+	INVALID_JWT_HEADER_TYPE: 'INVALID_JWT_HEADER_TYPE',
+	INVALID_JWT_PAYLOAD: 'INVALID_JWT_PAYLOAD',
+	INVALID_JWT_SIGNATURE: 'INVALID_JWT_SIGNATURE',
+	INVALID_ISSUER_FORMAT: 'INVALID_ISSUER_FORMAT',
+	INVALID_SUBJECT_FORMAT: 'INVALID_SUBJECT_FORMAT',
+	INVALID_EXPIRATION_DATE: 'INVALID_EXPIRATION_DATE',
+	INVALID_PUBLIC_CLAIM: 'INVALID_PUBLIC_CLAIM',
+	INVALID_SUBJECT_CLAIM: 'INVALID_SUBJECT_CLAIM',
+	IMMUTABLE_PUBLIC_CLAIM: 'IMMUTABLE_PUBLIC_CLAIM',
+	INVALID_CONTEXT_URI: 'INVALID_CONTEXT_URI',
+	INVALID_CONTEXT_TYPE: 'INVALID_CONTEXT_TYPE',
+	IMMUTABLE_SUBJECT_CLAIM: 'IMMUTABLE_SUBJECT_CLAIM',
+	INVALID_SUBJECT_ID: 'INVALID_SUBJECT_ID',
+	PROVIDED_SUBJECT_ID_NOT_PRESENT: 'PROVIDED_SUBJECT_ID_NOT_PRESENT',
+	JWT_TOKEN_EXPIRED: 'JWT_TOKEN_EXPIRED',
+	JWT_TOKEN_NOT_ACTIVE: 'JWT_TOKEN_NOT_ACTIVE',
+	ROOT_OF_TRUST_NOT_VALID: 'ROOT_OF_TRUST_NOT_VALID',
+	AUDIENCE_OF_PRESENTATION_NOT_DEFINED: 'AUDIENCE_OF_PRESENTATION_NOT_DEFINED',
+	HOLDER_AND_AUDIENCE_MUST_BE_DID: 'HOLDER_AND_AUDIENCE_MUST_BE_DID'
+};
+
+
+const JWT_DEFAULTS = {
+	ALG: 'ES256',
+	TYP: 'JWT',
+	VC_VP_CONTEXT_CREDENTIALS: 'https://www.w3.org/2018/credentials/v1',
+	VC_TYPE: 'VerifiableCredential',
+	VP_TYPE: 'VerifiablePresentation',
+	EXP: (365 * 24 * 60 * 60), // 1 year default,
+	EMPTY_VC_VP: {
+		context: [], type: []
+	}
+};
+
+const LABELS = {
+	ISSUER_DID: 'issuerDID',
+	ISSUER_SSI: 'issuerSSI',
+	SUBJECT_DID: 'subjectDID',
+	SUBJECT_SSI: 'subjectSSI'
+};
+
+const VALIDATION_STRATEGIES = {
+	SIGNATURE: 'SIGNATURE',
+	ROOTS_OF_TRUST: 'ROOTS_OF_TRUST',
+	ZERO_KNOWLEDGE_PROOF_CREDENTIAL: 'ZERO_KNOWLEDGE_PROOF_CREDENTIAL',
+	INVALID_VALIDATION_STRATEGY: 'INVALID_VALIDATION_STRATEGY'
+};
+
+function getDefaultJWTOptions() {
+	const now = Date.now();
+	return {
+		iat: now, nbf: now, exp: now + JWT_DEFAULTS.EXP
+	};
+}
+
+const IMMUTABLE_PUBLIC_CLAIMS = ['vc', 'vp', 'iss', 'sub', 'iat', 'verifiableCredential', 'holder'];
+
+module.exports = {
+	JWT_DEFAULTS,
+	JWT_ERRORS,
+	LABELS,
+	IMMUTABLE_PUBLIC_CLAIMS,
+	getDefaultJWTOptions: getDefaultJWTOptions,
+	VALIDATION_STRATEGIES
+};
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js":[function(require,module,exports){
+const { createJWTVc, loadJWTVc } = require('./vc/jwtVc');
+const { createJWTVp, loadJWTVp } = require('./vp/jwtVp');
+
+function createJWTVerifiableCredential(issuer, subject, options, callback) {
+	if (typeof options === 'function') {
+		callback = options;
+		options = {};
+	}
+
+	const jwtInstance = createJWTVc(issuer, subject, options);
+	jwtInstance.onInstanceReady((err) => {
+		if (err) {
+			return callback(err);
+		}
+
+		callback(undefined, jwtInstance);
+	});
+}
+
+async function createJWTVerifiableCredentialAsync(issuer, subject, options) {
+	return $$.promisify(createJWTVerifiableCredential)(issuer, subject, options);
+}
+
+function loadJWTVerifiableCredential(encodedJWTVc, callback) {
+	const jwtInstance = loadJWTVc(encodedJWTVc);
+	jwtInstance.onInstanceReady((err) => {
+		if (err) {
+			return callback(err);
+		}
+
+		callback(undefined, jwtInstance);
+	});
+}
+
+async function loadJWTVerifiableCredentialAsync(encodedJWTVc) {
+	return $$.promisify(loadJWTVerifiableCredential)(encodedJWTVc);
+}
+
+function createJWTVerifiablePresentation(issuer, options, callback) {
+	if (typeof options === 'function') {
+		callback = options;
+		options = {};
+	}
+
+	const jwtInstance = createJWTVp(issuer, options);
+	jwtInstance.onInstanceReady((err) => {
+		if (err) {
+			return callback(err);
+		}
+
+		callback(undefined, jwtInstance);
+	});
+}
+
+async function createJWTVerifiablePresentationAsync(issuer, options) {
+	return $$.promisify(createJWTVerifiablePresentation)(issuer, options);
+}
+
+function loadJWTVerifiablePresentation(encodedJWTVp, callback) {
+	const jwtInstance = loadJWTVp(encodedJWTVp);
+	jwtInstance.onInstanceReady((err) => {
+		if (err) {
+			return callback(err);
+		}
+
+		callback(undefined, jwtInstance);
+	});
+}
+
+async function loadJWTVerifiablePresentationAsync(encodedJWTVp) {
+	return $$.promisify(loadJWTVerifiablePresentation)(encodedJWTVp);
+}
+
+module.exports = {
+	createJWTVerifiableCredential,
+	createJWTVerifiableCredentialAsync,
+	createJWTVerifiablePresentation,
+	createJWTVerifiablePresentationAsync,
+	loadJWTVerifiableCredential,
+	loadJWTVerifiableCredentialAsync,
+	loadJWTVerifiablePresentation,
+	loadJWTVerifiablePresentationAsync,
+
+	JWT_ERRORS: require('./constants').JWT_ERRORS
+};
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./vc/jwtVc":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/jwtVc.js","./vp/jwtVp":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js":[function(require,module,exports){
+const { JWT_ERRORS, IMMUTABLE_PUBLIC_CLAIMS } = require('../constants');
+const { base64UrlEncode } = require('../utils');
+const { signJWT } = require('./sign');
+const instanceReadyMixin = require('../InstanceReadyMixin');
+
+class JWT {
+
+	constructor() {
+		this.jwtHeader = null;
+		this.jwtPayload = null;
+		instanceReadyMixin(this);
+	}
+
+	getEncodedJWT(callback) {
+		signJWT(this.jwtHeader, this.jwtPayload, (err, jwtSignature) => {
+			if (err) {
+				return callback(err);
+			}
+
+			const encodedJWT = [base64UrlEncode(JSON.stringify(this.jwtHeader)), base64UrlEncode(JSON.stringify(this.jwtPayload)), jwtSignature].join('.');
+			callback(undefined, encodedJWT);
+		});
+	};
+
+	async getEncodedJWTAsync() {
+		return this.asyncMyFunction(this.getEncodedJWT, [...arguments]);
+	}
+
+	/**
+	 * This method embeds one or more public claims about the JWT. These claims are not reflected within VC body
+	 * @param claimName {string} - The name of the public claim. Reserved public claims: "vc", "vp", "iss", "sub", "iat"
+	 * @param claimValue - The value of the public claim
+	 * @param callback
+	 */
+	embedClaim(claimName, claimValue, callback) {
+		if (typeof claimName !== 'string') {
+			return callback(JWT_ERRORS.INVALID_PUBLIC_CLAIM);
+		}
+
+		if (IMMUTABLE_PUBLIC_CLAIMS.findIndex(cl => cl === claimName) !== -1) {
+			return callback(JWT_ERRORS.IMMUTABLE_PUBLIC_CLAIM);
+		}
+
+		this.jwtPayload[claimName] = claimValue;
+		callback(undefined, true);
+	};
+
+	async embedClaimAsync(claimName, claimValue) {
+		return this.asyncMyFunction(this.embedClaim, [...arguments]);
+	}
+
+	/**
+	 * This method is used to extend the expiration date of a JWT
+	 * @param timeInSeconds {Number}
+	 * @param callback
+	 */
+	extendExpirationDate(timeInSeconds, callback) {
+		if (typeof timeInSeconds !== 'number' || timeInSeconds <= 0) {
+			return callback(JWT_ERRORS.INVALID_EXPIRATION_DATE);
+		}
+
+		this.jwtPayload.exp = this.jwtPayload.exp + timeInSeconds * 1000;
+		callback(undefined, true);
+	};
+
+	async extendExpirationDateAsync(timeInSeconds) {
+		return this.asyncMyFunction(this.extendExpirationDate, [...arguments]);
+	}
+
+	asyncMyFunction = (func, params) => {
+		func = func.bind(this);
+		return new Promise((resolve, reject) => {
+			func(...params, (err, data) => {
+				if (err) {
+					return reject(err);
+				}
+				resolve(data);
+			});
+		});
+	};
+}
+
+module.exports = JWT;
+},{"../InstanceReadyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/InstanceReadyMixin.js","../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","./sign":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/sign.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js":[function(require,module,exports){
+const { JWT_DEFAULTS, JWT_ERRORS, getDefaultJWTOptions } = require('../constants');
+const utils = require('../utils');
+
+/**
+ * This method creates the header of a JWT according to the W3c Standard
+ * @param options
+ * @returns {{typ: string, alg: string}}
+ */
+function getRequiredJWTHeader(options) {
+	const { alg, typ } = options; // can be extended with other attributes
+
+	return {
+		alg: alg || JWT_DEFAULTS.ALG,
+		typ: typ || JWT_DEFAULTS.TYP
+	};
+}
+
+/**
+ * This method creates the payload of a JWT according to the W3c Standard
+ * @param options {Object}
+ * @returns {{sub, nbf, iss, exp, iat, aud, nonce}}
+ */
+function getRequiredJWTPayloadModel(options) {
+	let { sub, iss, nbf, exp, iat, aud, jti, nonce } = options; // can be extended with other attributes
+
+	// jti: Unique identifier; can be used to prevent the JWT from being replayed (allows a token to be used only once)
+	return {
+		sub, iss, nbf, exp, iat, aud, jti, nonce
+	};
+}
+
+/**
+ * This method creates the first signed JWT during a JWT instance initialisation
+ * @param issuer
+ * @param options
+ * @param callback
+ */
+function defaultJWTBuilder(issuer, options, callback) {
+	options = Object.assign({}, getDefaultJWTOptions(), options);
+
+	issuer = utils.getReadableIdentity(issuer);
+	if (!issuer) return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+
+	const issuerFormat = utils.getIssuerFormat(issuer);
+	if (!issuerFormat) return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+
+	options.iss = issuer;
+	const jwtHeader = getRequiredJWTHeader(options);
+	const jwtPayload = getRequiredJWTPayloadModel(options);
+
+	callback(undefined, { jwtHeader, jwtPayload, options });
+}
+
+/**
+ *
+ * @param encodedJWT {string}
+ * @param callback {Function}
+ */
+function defaultJWTParser(encodedJWT, callback) {
+	utils.parseJWTSegments(encodedJWT, (err, result) => {
+		if (err) {
+			return callback(err);
+		}
+
+		const { jwtHeader, jwtPayload } = result;
+		if (!jwtHeader.typ || !jwtHeader.alg) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
+		if (!jwtPayload.iss) return callback(JWT_ERRORS.INVALID_JWT_ISSUER);
+
+		callback(undefined, result);
+	});
+}
+
+module.exports = {
+	defaultJWTBuilder, defaultJWTParser
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/sign.js":[function(require,module,exports){
+const openDSU = require('opendsu');
+const w3cDID = openDSU.loadAPI('w3cdid');
+const crypto = openDSU.loadAPI('crypto');
+const keySSISpace = openDSU.loadApi('keyssi');
+const keySSIResolver = require('key-ssi-resolver');
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+
+const { LABELS, JWT_ERRORS } = require('../constants');
+const { base64UrlEncode, getIssuerFormat } = require('../utils');
+
+/**
+ * This method is signing the encoded header and payload of a JWT and returns the full signed JWT (header.payload.signature)
+ * The JWT will be signed according to the type of the issuer (KeySSI, DID)
+ * @param jwtHeader
+ * @param jwtPayload
+ * @param callback {Function}
+ */
+function signJWT(jwtHeader, jwtPayload, callback) {
+	const issuer = jwtPayload.iss;
+	const issuerType = getIssuerFormat(issuer);
+	const dataToSign = [base64UrlEncode(JSON.stringify(jwtHeader)), base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
+
+	switch (issuerType) {
+		case LABELS.ISSUER_SSI: {
+			return signUsingSSI(issuer, dataToSign, callback);
+		}
+
+		case LABELS.ISSUER_DID: {
+			return signUsingDID(issuer, dataToSign, callback);
+		}
+
+		default: {
+			return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+		}
+	}
+}
+
+/**
+ * This method is signing a JWT using KeySSI
+ * @param issuer
+ * @param dataToSign
+ * @param callback {Function}
+ */
+function signUsingSSI(issuer, dataToSign, callback) {
+	try {
+		const issuerKeySSI = keySSISpace.parse(issuer);
+		const sign = cryptoRegistry.getSignFunction(issuerKeySSI);
+		if (typeof sign !== 'function') {
+			return callback(new Error('Signing not available for ' + issuerKeySSI.getIdentifier(true)));
+		}
+
+		const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
+		const hashResult = hashFn(dataToSign);
+		const signResult = sign(hashResult, issuerKeySSI.getPrivateKey());
+		const encodedSignResult = base64UrlEncode(signResult);
+		callback(undefined, encodedSignResult);
+	} catch (e) {
+		return callback(e);
+	}
+}
+
+/**
+ * This method is signing a JWT using DID
+ * @param issuer
+ * @param dataToSign
+ * @param callback {Function}
+ */
+function signUsingDID(issuer, dataToSign, callback) {
+	w3cDID.resolveDID(issuer, (err, didDocument) => {
+		if (err) {
+			return callback(`Failed to resolve did ${issuer}`);
+		}
+
+		const hashResult = crypto.sha256(dataToSign);
+		didDocument.sign(hashResult, (signError, signResult) => {
+			if (signError || !signResult) return callback(signError);
+			const encodedSignResult = base64UrlEncode(signResult);
+			callback(undefined, encodedSignResult);
+		});
+	});
+}
+
+module.exports = {
+	signJWT
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js":[function(require,module,exports){
+const opendsu = require('opendsu');
+const w3cDID = opendsu.loadAPI('w3cdid');
+const scAPI = opendsu.loadAPI('sc');
+const keySSIResolver = require('key-ssi-resolver');
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+const SSITypes = keySSIResolver.SSITypes;
+const keySSIFactory = keySSIResolver.KeySSIFactory;
+const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
+templateSeedSSI.load(SSITypes.SEED_SSI, 'default');
+
+const { LABELS, JWT_ERRORS } = require('./constants');
+
+function base58Decode(data, keepBuffer) {
+	const decodedValue = cryptoRegistry.getDecodingFunction(templateSeedSSI).call(this, data);
+	if (keepBuffer) {
+		return decodedValue;
+	}
+	return decodedValue ? decodedValue.toString() : null;
+}
+
+function base64UrlEncode(source) {
+	const buffer = $$.Buffer.from(source, 'utf-8');
+	return buffer.toString('base64')
+		.replace(/=/g, '')
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_');
+}
+
+function base64UrlDecode(source, keepAsBuffer = false) {
+	const buffer = $$.Buffer.from(source, 'base64');
+	if (keepAsBuffer) {
+		return buffer;
+	}
+
+	return buffer.toString('utf-8');
+}
+
+function dateTimeFormatter(timestamp) {
+	if (!timestamp) {
+		return null;
+	}
+
+	return new Date(timestamp).toISOString().split('.')[0] + 'Z';
+}
+
+function isValidURL(str) {
+	const pattern = new RegExp('https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)', 'i');
+	return !!pattern.test(str);
+}
+
+/**
+ * This method returns the readable format of an SSI or a DID
+ * @param identity {string | Object} - The KeySSI instance | readable SSI string | DIDInstance | readable DID string
+ */
+function getReadableIdentity(identity) {
+	if (!identity) return null;
+
+	if (typeof identity === 'string' && (identity.indexOf('ssi') === 0 || identity.indexOf('did') === 0)) {
+		// ssi/did is actually the readable ssi/did
+		return identity;
+	}
+
+	identity = identity.getIdentifier ? identity.getIdentifier() : identity;
+	if (identity.indexOf('did') === 0) {
+		return identity;
+	}
+
+	let readableSSI = base58Decode(identity);
+	if (!readableSSI) {
+		// invalid base58 string
+		return null;
+	}
+	if (readableSSI.indexOf('ssi') !== 0) {
+		// invalid ssi format
+		return null;
+	}
+
+	return readableSSI;
+}
+
+/**
+ * This method is decoding a JSON string and returns the JSON object
+ * @param data {string}
+ * @param keepBuffer {boolean}
+ * @returns {Object|Error}
+ */
+function safeParseEncodedJson(data, keepBuffer = false) {
+	try {
+		return JSON.parse(base64UrlDecode(data, keepBuffer));
+	} catch (e) {
+		return e;
+	}
+}
+
+/**
+ * This method decodes the JWT and returns the segments
+ * @param jwt {string}
+ * @param callback
+ */
+function parseJWTSegments(jwt, callback) {
+	if (!jwt) return callback(JWT_ERRORS.EMPTY_JWT_PROVIDED);
+	if (typeof jwt !== 'string') return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+	const segments = jwt.split('.');
+	if (segments.length !== 3) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+
+	const jwtHeader = safeParseEncodedJson(segments[0]);
+	if (jwtHeader instanceof Error || !jwtHeader) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
+
+	const jwtPayload = safeParseEncodedJson(segments[1]);
+	if (jwtPayload instanceof Error || !jwtPayload) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+
+	const encodedJWTHeaderAndBody = `${segments[0]}.${segments[1]}`;
+	const jwtSignature = base64UrlDecode(segments[2], true);
+	if (!jwtSignature) {
+		return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+	}
+
+	callback(undefined, { jwtHeader, jwtPayload, jwtSignature, encodedJWTHeaderAndBody });
+}
+
+/**
+ * This method provides the format of the issuer in order to be processed accordingly.
+ * Allowed formats:
+ * DID Identifier format
+ * SSI format
+ * @param issuer {string}
+ * @returns {null | string}
+ */
+function getIssuerFormat(issuer) {
+	if (issuer.indexOf('did') === 0) {
+		return LABELS.ISSUER_DID;
+	}
+
+	if (issuer.indexOf('ssi') === 0) {
+		return LABELS.ISSUER_SSI;
+	}
+
+	return null;
+}
+
+/**
+ * This method provides the format of the subject in order to be processed accordingly.
+ * Allowed formats:
+ * DID Identifier format
+ * sReadSSI format
+ * @param subject {string}
+ * @returns {null | string}
+ */
+function getSubjectFormat(subject) {
+	if (subject.indexOf('did') === 0) {
+		return LABELS.SUBJECT_DID;
+	}
+
+	if (subject.indexOf('ssi') === 0) {
+		return LABELS.SUBJECT_SSI;
+	}
+
+	return null;
+}
+
+/**
+ * This method checks if a JWT is expired
+ * @param payload {Object}
+ * @param atDate
+ * @returns {boolean}
+ */
+function isJWTExpired(payload, atDate) {
+	return new Date(payload.exp).getTime() < new Date(atDate).getTime();
+}
+
+/**
+ * This method checks if a JWT is active
+ * @param payload {Object}
+ * @param atDate
+ * @returns {boolean}
+ */
+function isJWTNotActive(payload, atDate) {
+	return new Date(payload.nbf).getTime() >= new Date(atDate).getTime();
+}
+
+function createZeroKnowledgeProofCredential(holder, audience, encodedJwtVc, callback) {
+	const issuerFormat = getIssuerFormat(holder);
+	const audienceFormat = getSubjectFormat(audience);
+	if (issuerFormat !== LABELS.ISSUER_DID || audienceFormat !== LABELS.SUBJECT_DID) {
+		return callback(JWT_ERRORS.HOLDER_AND_AUDIENCE_MUST_BE_DID);
+	}
+
+	const securityContext = scAPI.getSecurityContext();
+	const resolveDids = async () => {
+		try {
+			const holderDidDocument = await $$.promisify(w3cDID.resolveDID)(holder);
+			const audienceDidDocument = await $$.promisify(w3cDID.resolveDID)(audience);
+
+			holderDidDocument.encryptMessage(audienceDidDocument, encodedJwtVc, (err, encryptedJwtVc) => {
+				if (err) {
+					return callback(err);
+				}
+
+				callback(undefined, base64UrlEncode(JSON.stringify(encryptedJwtVc)));
+			});
+		} catch (e) {
+			return callback(e);
+		}
+	};
+
+	if (securityContext.isInitialised()) {
+		resolveDids();
+	} else {
+		securityContext.on('initialised', resolveDids);
+	}
+}
+
+function loadZeroKnowledgeProofCredential(audience, zkpCredential, callback) {
+	const audienceFormat = getSubjectFormat(audience);
+	if (audienceFormat !== LABELS.SUBJECT_DID) {
+		return callback(JWT_ERRORS.HOLDER_AND_AUDIENCE_MUST_BE_DID);
+	}
+
+	const encryptedZKPCredential = JSON.parse(base64UrlDecode(zkpCredential));
+	const securityContext = scAPI.getSecurityContext();
+	const resolveDid = async () => {
+		try {
+			const audienceDidDocument = await $$.promisify(w3cDID.resolveDID)(audience);
+			audienceDidDocument.decryptMessage(encryptedZKPCredential, (err, decryptedJwtVc) => {
+				if (err) {
+					return callback(err);
+				}
+
+				callback(undefined, decryptedJwtVc);
+			});
+		} catch (e) {
+			return callback(e);
+		}
+	};
+
+	if (securityContext.isInitialised()) {
+		resolveDid();
+	} else {
+		securityContext.on('initialised', resolveDid);
+	}
+}
+
+module.exports = {
+	base64UrlEncode,
+	base58Decode,
+
+	dateTimeFormatter,
+	isValidURL,
+
+	getIssuerFormat,
+	getSubjectFormat,
+	isJWTExpired,
+	isJWTNotActive,
+	getReadableIdentity,
+	safeParseEncodedJson,
+	parseJWTSegments,
+
+	createZeroKnowledgeProofCredential,
+	loadZeroKnowledgeProofCredential
+};
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js":[function(require,module,exports){
+const VALIDATION_STRATEGIES = require('../constants').VALIDATION_STRATEGIES;
+
+const signatureValidation = require('./signatureValidation');
+const rootsOfTrustValidation = require('./rootsOfTrustValidation');
+const zkpCredentialValidation = require('./zkpCredentialValidation');
+
+const validationStrategies = {};
+
+function registerValidationStrategy(type, implementation) {
+	validationStrategies[type] = implementation;
+}
+
+registerValidationStrategy(VALIDATION_STRATEGIES.SIGNATURE, signatureValidation);
+registerValidationStrategy(VALIDATION_STRATEGIES.ROOTS_OF_TRUST, rootsOfTrustValidation);
+registerValidationStrategy(VALIDATION_STRATEGIES.ZERO_KNOWLEDGE_PROOF_CREDENTIAL, zkpCredentialValidation);
+
+function verifyJWTUsingStrategy(strategy, ...args) {
+	if (typeof validationStrategies[strategy] !== 'function') {
+		throw VALIDATION_STRATEGIES.INVALID_VALIDATION_STRATEGY;
+	}
+
+	validationStrategies[strategy](...args);
+}
+
+module.exports = verifyJWTUsingStrategy;
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./rootsOfTrustValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootsOfTrustValidation.js","./signatureValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/signatureValidation.js","./zkpCredentialValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/zkpCredentialValidation.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootsOfTrustValidation.js":[function(require,module,exports){
+const { JWT_ERRORS } = require('../constants');
+const { parseJWTSegments } = require('../utils');
+
+/**
+ * This method verifies if the roots of trust are the actual issuers of the verifiable credentials
+ * @param jwtPayload
+ * @param rootsOfTrust
+ * @param callback
+ */
+function verifyRootsOfTrust(jwtPayload, rootsOfTrust, callback) {
+	const jwtVcList = jwtPayload.vp.verifiableCredential;
+	let verifyResult = { verifyResult: true, verifiableCredential: [] };
+
+	const chain = (index) => {
+		if (index === jwtVcList.length) {
+			return callback(undefined, verifyResult);
+		}
+
+		const jwtVc = jwtVcList[index];
+		parseJWTSegments(jwtVc, (err, result) => {
+			if (err) {
+				verifyResult.verifyResult = false;
+				verifyResult.verifiableCredential.push({
+					jwtVc: jwtVc,
+					errorMessage: err
+				});
+				return chain(++index);
+			}
+
+			let jwtPayload = result.jwtPayload;
+			const rootOfTrust = rootsOfTrust.find(r => r === jwtPayload.iss);
+			if (!rootOfTrust) {
+				verifyResult.verifyResult = false;
+				verifyResult.verifiableCredential.push({
+					jwtVc: jwtVc,
+					errorMessage: JWT_ERRORS.ROOT_OF_TRUST_NOT_VALID
+				});
+				return chain(++index);
+			}
+
+			verifyResult.verifiableCredential.push(result.jwtPayload);
+			chain(++index);
+		});
+	};
+
+	chain(0);
+}
+
+module.exports = verifyRootsOfTrust;
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/signatureValidation.js":[function(require,module,exports){
+const openDSU = require('opendsu');
+const w3cDID = openDSU.loadAPI('w3cdid');
+const crypto = openDSU.loadAPI('crypto');
+const keySSISpace = openDSU.loadApi('keyssi');
+const keySSIResolver = require('key-ssi-resolver');
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+
+const { LABELS, JWT_ERRORS } = require('../constants');
+const { getIssuerFormat } = require('../utils');
+
+/**
+ * This method is verifying the encoded JWT from the current instance according to the issuerType
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param callback {Function}
+ */
+function verifyJWT(issuer, signature, signedData, callback) {
+	const issuerType = getIssuerFormat(issuer);
+	switch (issuerType) {
+		case LABELS.ISSUER_SSI: {
+			return verifyUsingSSI(issuer, signature, signedData, callback);
+		}
+
+		case LABELS.ISSUER_DID: {
+			return verifyUsingDID(issuer, signature, signedData, callback);
+		}
+
+		default: {
+			callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+		}
+	}
+}
+
+/**
+ * This method is verifying an SSI signed JWT
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param callback {Function}
+ */
+function verifyUsingSSI(issuer, signature, signedData, callback) {
+	try {
+		const issuerKeySSI = keySSISpace.parse(issuer);
+		const publicKey = issuerKeySSI.getPublicKey();
+		const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
+		const hashResult = hashFn(signedData);
+
+		const verify = cryptoRegistry.getVerifyFunction(issuerKeySSI);
+		const verifyResult = verify(hashResult, publicKey, signature);
+		callback(undefined, verifyResult);
+	} catch (e) {
+		return callback(e);
+	}
+}
+
+/**
+ * This method is verifying a DID signed JWT
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param callback {Function}
+ */
+function verifyUsingDID(issuer, signature, signedData, callback) {
+	w3cDID.resolveDID(issuer, (err, didDocument) => {
+		if (err) {
+			return callback(`Failed to resolve did ${issuer}`);
+		}
+
+		const hashResult = crypto.sha256(signedData);
+		didDocument.verify(hashResult, signature, (verifyError, verifyResult) => {
+			if (verifyError) {
+				return callback(verifyError);
+			}
+
+			callback(null, verifyResult);
+		});
+	});
+}
+
+module.exports = verifyJWT;
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/zkpCredentialValidation.js":[function(require,module,exports){
+const { JWT_ERRORS } = require('../constants');
+const { loadZeroKnowledgeProofCredential, parseJWTSegments } = require('../utils');
+
+/**
+ * This method verifies the encrypted credentials using the private key of the audience. <br />
+ * Only the intended audience can decrypt the zkp credential to validate it.
+ * @param jwtPayload
+ * @param callback
+ */
+function verifyZKPCredential(jwtPayload, callback) {
+	const verifyResult = { verifyResult: true, verifiableCredential: [] };
+	const zkpCredentials = jwtPayload.vp.verifiableCredential;
+	const audience = jwtPayload.aud;
+	if (!audience) {
+		verifyResult.verifyResult = false;
+		verifyResult.verifiableCredential.push({
+			errorMessage: JWT_ERRORS.AUDIENCE_OF_PRESENTATION_NOT_DEFINED
+		});
+
+		return callback(undefined, verifyResult);
+	}
+
+	const chain = (index) => {
+		if (index === zkpCredentials.length) {
+			return callback(undefined, verifyResult);
+		}
+
+		const zkpCredential = zkpCredentials[index];
+		loadZeroKnowledgeProofCredential(audience, zkpCredential, (err, decryptedJWTVc) => {
+			if (err) {
+				verifyResult.verifyResult = false;
+				verifyResult.verifiableCredential.push({
+					jwtVc: zkpCredential,
+					errorMessage: err
+				});
+
+				return chain(++index);
+			}
+
+			parseJWTSegments(decryptedJWTVc, (err, result) => {
+				if (err) {
+					verifyResult.verifyResult = false;
+					verifyResult.verifiableCredential.push({
+						jwtVc: zkpCredential,
+						errorMessage: err
+					});
+
+					return chain(++index);
+				}
+
+				verifyResult.verifiableCredential.push(result.jwtPayload);
+				chain(++index);
+			});
+		});
+	};
+
+	chain(0);
+}
+
+module.exports = verifyZKPCredential;
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/jwtVc.js":[function(require,module,exports){
+const JWT = require('../jwt');
+const JWT_ERRORS = require('../constants').JWT_ERRORS;
+const { dateTimeFormatter, isValidURL } = require('../utils');
+const { jwtVcBuilder, jwtVcParser, jwtVcVerifier } = require('./model');
+
+class JwtVC extends JWT {
+	constructor(issuer, subject, options, isInitialisation = false) {
+		super();
+
+		if (isInitialisation === true) {
+			jwtVcBuilder(issuer, subject, options, (err, result) => {
+				if (err) {
+					return this.notifyInstanceReady(err);
+				}
+
+				this.jwtHeader = result.jwtHeader;
+				this.jwtPayload = result.jwtPayload;
+				this.notifyInstanceReady();
+			});
+		}
+	}
+
+	/**
+	 * This method embeds one or more public claims about the JWT. These claims are not reflected within VC body
+	 * @param claimName {string} - The name of the public claim. Reserved public claims: "vc", "vp", "iss", "sub", "iat"
+	 * @param claimValue - The value of the public claim
+	 * @param callback
+	 */
+	embedClaim(claimName, claimValue, callback) {
+		super.embedClaim(claimName, claimValue, (err) => {
+			if (err) {
+				return callback(err);
+			}
+
+			if (claimName === 'nbf') {
+				this.jwtPayload.vc.issuanceDate = dateTimeFormatter(claimValue);
+			}
+			if (claimName === 'exp') {
+				this.jwtPayload.vc.expirationDate = dateTimeFormatter(claimValue);
+			}
+
+			callback(undefined, true);
+		});
+	}
+
+	/**
+	 * This method is used to extend the expiration date of a JWT
+	 * @param timeInSeconds {Number}
+	 * @param callback
+	 */
+	extendExpirationDate(timeInSeconds, callback) {
+		super.extendExpirationDate(timeInSeconds, (err) => {
+			if (err) {
+				return callback(err);
+			}
+
+			const newExpirationDate = this.jwtPayload.exp + timeInSeconds * 1000;
+			this.jwtPayload.vc.expirationDate = dateTimeFormatter(newExpirationDate);
+
+			callback(undefined, true);
+		});
+	}
+
+	/**
+	 * This method embeds a new claim about the subject(s) of the JWT.
+	 * Subject is mandatory if credentialSubject is an array of subjects. (To be extended tp crete JWT based on multiple subjects)
+	 * @param context {string} - URI - https://www.w3.org/TR/vc-data-model/#contexts
+	 * @param type {string} - Any other custom VC Types must be reflected within @context (a URI with a schema must be added)
+	 * @param subjectClaims {Object} - Any claims related to the subject
+	 * @param subject {string | Function} - It is mandatory if the credentialSubjects are more than one.
+	 * @param callback
+	 */
+	embedSubjectClaim(context, type, subjectClaims, subject, callback) {
+		if (typeof subject === 'function') {
+			callback = subject;
+			subject = null;
+		}
+
+		if (!context || typeof context !== 'string' || !isValidURL(context)) return callback(JWT_ERRORS.INVALID_CONTEXT_URI);
+		if (!type || typeof type !== 'string') return callback(JWT_ERRORS.INVALID_CONTEXT_TYPE);
+		if (!subjectClaims || typeof subjectClaims !== 'object') return callback(JWT_ERRORS.INVALID_SUBJECT_CLAIM);
+		if (subjectClaims.id) return callback(JWT_ERRORS.IMMUTABLE_SUBJECT_CLAIM);
+
+		const vc = this.jwtPayload.vc;
+		if (Array.isArray(vc.credentialSubject)) {
+			if (!subject || typeof subject !== 'string') {
+				return callback(JWT_ERRORS.INVALID_SUBJECT_ID);
+			}
+
+			const targetSubjectIndex = vc.credentialSubject.findIndex(subject => subject.id === subject);
+			if (targetSubjectIndex === -1) {
+				return callback(JWT_ERRORS.PROVIDED_SUBJECT_ID_NOT_PRESENT);
+			}
+
+			Object.assign(vc.credentialSubject[targetSubjectIndex], subjectClaims);
+		} else {
+			Object.assign(vc.credentialSubject, subjectClaims);
+		}
+
+		vc['@context'].push(context);
+		vc.type.push(type);
+		this.jwtPayload.vc = JSON.parse(JSON.stringify(vc));
+
+		callback(undefined, true);
+	};
+
+	async embedSubjectClaimAsync(context, type, subjectClaims, subject) {
+		return this.asyncMyFunction(this.embedSubjectClaim, [...arguments]);
+	}
+
+	loadEncodedJWTVc(encodedJWT) {
+		jwtVcParser(encodedJWT, (err, result) => {
+			if (err) {
+				return this.notifyInstanceReady(err);
+			}
+
+			this.jwtHeader = result.jwtHeader;
+			this.jwtPayload = result.jwtPayload;
+			this.jwtSignature = result.jwtSignature;
+			this.notifyInstanceReady();
+		});
+	};
+
+	verifyJWT(atDate, rootsOfTrust, callback) {
+		if (typeof rootsOfTrust === 'function') {
+			callback = rootsOfTrust;
+			rootsOfTrust = [];
+		}
+
+		const decodedJWT = { jwtHeader: this.jwtHeader, jwtPayload: this.jwtPayload, jwtSignature: this.jwtSignature };
+		jwtVcVerifier(decodedJWT, atDate, rootsOfTrust, (err, result) => {
+			if (err) {
+				return callback(undefined, { verifyResult: false, errorMessage: err });
+			}
+
+			callback(undefined, { verifyResult: result, ...JSON.parse(JSON.stringify(this.jwtPayload)) });
+		});
+	}
+
+	verifyJWTAsync(adDate, rootsOfTrust) {
+		return this.asyncMyFunction(this.verifyJWT, [...arguments]);
+	}
+}
+
+/**
+ * This method prepares the initial JWT options object based on the inputs. <br />
+ * Points to the specific create JWT method according to the subject type
+ * @param issuer
+ * @param subject
+ * @param options {Object}
+ */
+function createJWTVc(issuer, subject, options = {}) {
+	return new JwtVC(issuer, subject, options, true);
+}
+
+/**
+ * This method is parsing an encoded verifiable credential according to the requested type and returns the instance of the verifiable credential. <br />
+ * @param encodedJWTVc {string}
+ */
+function loadJWTVc(encodedJWTVc) {
+	const jwtInstance = new JwtVC();
+	jwtInstance.loadEncodedJWTVc(encodedJWTVc);
+
+	return jwtInstance;
+}
+
+module.exports = {
+	createJWTVc, loadJWTVc
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","./model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/model.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/model.js":[function(require,module,exports){
+const { JWT_DEFAULTS, JWT_ERRORS, VALIDATION_STRATEGIES } = require('../constants');
+const { defaultJWTParser, defaultJWTBuilder } = require('../jwt/model');
+const verifyJWTUsingStrategy = require('../validationStrategies');
+const utils = require('../utils');
+
+/**
+ * This method creates "vc" object from the payload of a JWT according to the W3c Standard
+ * @param jwtPayload
+ * @param options {Object}
+ * @returns {{credentialSubject: {id}, issuanceDate: string, type: *[], "@context": *[], issuer, expirationDate: string}}
+ */
+function getRequiredJWTVCModel(jwtPayload, options) {
+	options = Object.assign({}, options, jwtPayload);
+	let { vc, sub, iss, nbf, exp } = options; // can be extended with other attributes
+	if (!vc) {
+		vc = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
+	}
+
+	return {
+		// id: jti reflected - not mandatory
+		'@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vc.context], // Mandatory and this must be the first URI from the list reference: https://www.w3.org/TR/vc-data-model/#contexts
+		type: [JWT_DEFAULTS.VC_TYPE, ...vc.type], // Any other custom VC Types must be reflected within @context (a URI with a schema must be added)
+		// Inside "credentialSubject" object are defined all the claims about the subject
+		credentialSubject: {
+			id: sub
+		}, // Either single object, or an array of objects - id is mandatory and is reflected from "sub" attribute,
+		issuer: iss, // reflected from "iss" attribute
+		issuanceDate: utils.dateTimeFormatter(nbf), // reflected from "nbf" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
+		expirationDate: utils.dateTimeFormatter(exp) // reflected from "exp" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
+	};
+}
+
+function jwtVcBuilder(issuer, subject, options, callback) {
+	defaultJWTBuilder(issuer, options, (err, result) => {
+		if (err) {
+			return callback(err);
+		}
+
+		const { jwtHeader, jwtPayload } = result;
+		subject = utils.getReadableIdentity(subject);
+		if (!subject) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
+
+		const subjectFormat = utils.getSubjectFormat(subject);
+		if (!subjectFormat) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
+
+		jwtPayload.sub = subject;
+		options.sub = subject;
+		jwtPayload.vc = getRequiredJWTVCModel(jwtPayload, options);
+
+		callback(undefined, { jwtHeader, jwtPayload });
+	});
+}
+
+function jwtVcParser(encodedJWTVc, callback) {
+	defaultJWTParser(encodedJWTVc, (err, decodedJWT) => {
+		if (err) {
+			return callback(err);
+		}
+
+		if (!decodedJWT.jwtPayload.vc) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+		callback(undefined, decodedJWT);
+	});
+}
+
+function jwtVcVerifier(decodedJWT, atDate, rootsOfTrust, callback) {
+	const { jwtHeader, jwtPayload, jwtSignature } = decodedJWT;
+	const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
+	if (utils.isJWTExpired(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
+	if (utils.isJWTNotActive(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+
+	verifyJWTUsingStrategy(VALIDATION_STRATEGIES.SIGNATURE, jwtPayload.iss, jwtSignature, dataToSign, (err, verifyResult) => {
+		if (err) return callback(err);
+		if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+
+		callback(undefined, true);
+	});
+}
+
+module.exports = {
+	jwtVcBuilder, jwtVcParser, jwtVcVerifier
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","../validationStrategies":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js":[function(require,module,exports){
+const JWT = require('../jwt');
+const JWT_ERRORS = require('../constants').JWT_ERRORS;
+const { jwtVpBuilder, jwtVpParser, jwtVpVerifier } = require('./model');
+const { createZeroKnowledgeProofCredential } = require('../utils');
+
+class JwtVP extends JWT {
+	constructor(issuer, options, isInitialisation = false) {
+		super();
+
+		if (isInitialisation === true) {
+			jwtVpBuilder(issuer, options, (err, result) => {
+				if (err) {
+					return this.notifyInstanceReady(err);
+				}
+
+				this.jwtHeader = result.jwtHeader;
+				this.jwtPayload = result.jwtPayload;
+				this.notifyInstanceReady();
+			});
+		}
+	}
+
+	addVerifiableCredential = (encodedJWTVc, callback) => {
+		if (!encodedJWTVc) {
+			return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+		}
+
+		this.jwtPayload.vp.verifiableCredential.push(encodedJWTVc);
+		callback(undefined, true);
+	};
+
+	async addVerifiableCredentialAsync(encodedJWTVc) {
+		return this.asyncMyFunction(this.addVerifiableCredential, [...arguments]);
+	}
+
+	addZeroKnowledgeProofCredential = (encodedJwtVc, callback) => {
+		if (!encodedJwtVc) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+		if (!this.jwtPayload.aud) return callback(JWT_ERRORS.AUDIENCE_OF_PRESENTATION_NOT_DEFINED);
+
+		const { iss, aud } = this.jwtPayload;
+		createZeroKnowledgeProofCredential(iss, aud, encodedJwtVc, (err, zkpCredential) => {
+			if (err) {
+				return callback(err);
+			}
+
+			this.jwtPayload.vp.verifiableCredential.push(zkpCredential);
+			callback(undefined, true);
+		});
+	};
+
+	async addZeroKnowledgeProofCredentialAsync(encodedJwtVc) {
+		return this.asyncMyFunction(this.addZeroKnowledgeProofCredential, [...arguments]);
+	}
+
+	loadEncodedJWTVp(encodedJWTVp) {
+		jwtVpParser(encodedJWTVp, (err, result) => {
+			if (err) {
+				return this.notifyInstanceReady(err);
+			}
+
+			this.jwtHeader = result.jwtHeader;
+			this.jwtPayload = result.jwtPayload;
+			this.jwtSignature = result.jwtSignature;
+			this.notifyInstanceReady();
+		});
+	}
+
+	verifyJWT(atDate, rootsOfTrust, callback) {
+		if (typeof rootsOfTrust === 'function') {
+			callback = rootsOfTrust;
+			rootsOfTrust = [];
+		}
+
+		const decodedJWT = { jwtHeader: this.jwtHeader, jwtPayload: this.jwtPayload, jwtSignature: this.jwtSignature };
+		jwtVpVerifier(decodedJWT, atDate, rootsOfTrust, (err, result) => {
+			if (err) {
+				return callback(undefined, { verifyResult: false, errorMessage: err });
+			}
+
+			const verifyResultObj = { verifyResult: true };
+			const decodedClaims = JSON.parse(JSON.stringify(this.jwtPayload));
+			if (result.verifiableCredential) {
+				decodedClaims.vp.verifiableCredential = result.verifiableCredential;
+				if (result.verifyResult === false) {
+					verifyResultObj.verifyResult = false;
+					verifyResultObj.errorMessage = result.verifiableCredential.find(vc => typeof vc.errorMessage === 'string').errorMessage;
+				}
+			}
+
+			const verifyResult = { ...verifyResultObj, ...decodedClaims };
+			callback(undefined, verifyResult);
+		});
+	}
+
+	async verifyJWTAsync(adDate, rootsOfTrust) {
+		return this.asyncMyFunction(this.verifyJWT, [...arguments]);
+	}
+}
+
+/**
+ * This method prepares the initial JWT options object based on the inputs. <br />
+ * Points to the specific create JWT method according to the subject type
+ * @param issuer
+ * @param options {Object}
+ */
+function createJWTVp(issuer, options = {}) {
+	return new JwtVP(issuer, options, true);
+}
+
+/**
+ * This method is parsing an encoded verifiable credential according to the requested type and returns the instance of the verifiable credential. <br />
+ * @param encodedJWTVp {string}
+ */
+function loadJWTVp(encodedJWTVp) {
+	const jwtInstance = new JwtVP();
+	jwtInstance.loadEncodedJWTVp(encodedJWTVp);
+
+	return jwtInstance;
+}
+
+module.exports = {
+	createJWTVp, loadJWTVp
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","./model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/model.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/model.js":[function(require,module,exports){
+const { JWT_DEFAULTS, JWT_ERRORS, VALIDATION_STRATEGIES } = require('../constants');
+const { defaultJWTParser, defaultJWTBuilder } = require('../jwt/model');
+const verifyJWTUsingStrategy = require('../validationStrategies');
+const utils = require('../utils');
+
+/**
+ * This method creates "vp" object from the payload of a JWT according to the W3c Standard
+ * @param jwtPayload
+ * @param options {Object}
+ */
+function getRequiredJWTVPModel(jwtPayload, options) {
+	options = Object.assign({}, options, jwtPayload);
+	let { vp, iss, id } = options; // can be extended with other attributes
+	if (!vp) {
+		vp = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
+	}
+
+	return {
+		'@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vp.context],
+		type: [JWT_DEFAULTS.VP_TYPE, ...vp.type],
+		id: id, // uuid of the presentation (optional)
+		verifiableCredential: options.credentialsToPresent || [],
+		holder: iss // reflected from "iss" attribute
+	};
+}
+
+function jwtVpBuilder(issuer, options, callback) {
+	defaultJWTBuilder(issuer, options, (err, result) => {
+		if (err) {
+			return callback(err);
+		}
+
+		const { jwtHeader, jwtPayload } = result;
+		jwtPayload.vp = getRequiredJWTVPModel(jwtPayload, options);
+
+		callback(undefined, { jwtHeader, jwtPayload });
+	});
+}
+
+function jwtVpParser(encodedJWTVp, callback) {
+	defaultJWTParser(encodedJWTVp, (err, decodedJWT) => {
+		if (err) {
+			return callback(err);
+		}
+
+		if (!decodedJWT.jwtPayload.vp) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+		callback(undefined, decodedJWT);
+	});
+}
+
+function jwtVpVerifier(decodedJWT, atDate, rootsOfTrust, callback) {
+	const { jwtHeader, jwtPayload, jwtSignature } = decodedJWT;
+	const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
+	if (utils.isJWTExpired(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
+	if (utils.isJWTNotActive(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+
+	if (jwtPayload.aud) {
+		return verifyJWTUsingStrategy(VALIDATION_STRATEGIES.ZERO_KNOWLEDGE_PROOF_CREDENTIAL, jwtPayload, callback);
+	}
+
+	if (rootsOfTrust.length > 0) {
+		return verifyJWTUsingStrategy(VALIDATION_STRATEGIES.ROOTS_OF_TRUST, jwtPayload, rootsOfTrust, callback);
+	}
+
+	verifyJWTUsingStrategy(VALIDATION_STRATEGIES.SIGNATURE, jwtPayload.iss, jwtSignature, dataToSign, (err, verifyResult) => {
+		if (err) return callback(err);
+		if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+
+		callback(undefined, true);
+	});
+}
+
+module.exports = {
+	jwtVpBuilder, jwtVpParser, jwtVpVerifier
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","../validationStrategies":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
@@ -30738,7 +33072,6 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
 module.exports = BasicDB;
 
 },{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
-const {createOpenDSUErrorWrapper} = require("../../error");
 module.exports = {
     ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
         let resolver = require("../../resolver");
@@ -30824,11 +33157,15 @@ module.exports = {
         }
 
     },
-    initialiseWalletDB: function (dbName, callback) {
+    initialiseWalletDB: function (dbName, keySSI, callback) {
+        if (typeof keySSI === "function") {
+            callback = keySSI;
+            keySSI = undefined;
+        }
         const openDSU = require("opendsu");
         let resolver = openDSU.loadAPI("resolver");
         let scAPI = openDSU.loadAPI("sc");
-        let keySSI;
+        let keySSISpace = openDSU.loadAPI("keyssi");
         let storageDSU;
         const DB_KEY_SSI_PATH = `/db/${dbName}`;
         scAPI.getMainDSU(async (err, mainDSU) => {
@@ -30836,35 +33173,38 @@ module.exports = {
                 return callback(err);
             }
 
-            try {
-                keySSI = await $$.promisify(mainDSU.readFile)(DB_KEY_SSI_PATH);
-                keySSI = keySSI.toString();
-            } catch (e) {
-                let vaultDomain;
+            if(!keySSI){
                 try {
-                    vaultDomain = await $$.promisify(scAPI.getVaultDomain)();
-                } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get vault domain`, e));
-                }
-                try {
-                    storageDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
-                } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to create Seed DSU`, e));
-                }
+                    keySSI = await $$.promisify(mainDSU.readFile)(DB_KEY_SSI_PATH);
+                    keySSI = keySSI.toString();
 
-                try {
-                    keySSI = await $$.promisify(storageDSU.getKeySSIAsObject)();
                 } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to get storageDSU's keySSI`, e));
-                }
+                    let vaultDomain;
+                    try {
+                        vaultDomain = await $$.promisify(scAPI.getVaultDomain)();
+                    } catch (e) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to get vault domain`, e));
+                    }
+                    try {
+                        storageDSU = await $$.promisify(resolver.createSeedDSU)(vaultDomain);
+                    } catch (e) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to create Seed DSU`, e));
+                    }
 
-                try {
-                    await $$.promisify(mainDSU.writeFile)(DB_KEY_SSI_PATH, keySSI.getIdentifier());
-                } catch (e) {
-                    return callback(createOpenDSUErrorWrapper(`Failed to store key SSI in mainDSU for db <${dbName}>`, e));
-                }
+                    try {
+                        keySSI = await $$.promisify(storageDSU.getKeySSIAsObject)();
+                    } catch (e) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to get storageDSU's keySSI`, e));
+                    }
 
-                return callback(undefined, storageDSU, keySSI);
+                    try {
+                        await $$.promisify(mainDSU.writeFile)(DB_KEY_SSI_PATH, keySSI.getIdentifier());
+                    } catch (e) {
+                        return callback(createOpenDSUErrorWrapper(`Failed to store key SSI in mainDSU for db <${dbName}>`, e));
+                    }
+
+                    return callback(undefined, storageDSU, keySSI);
+                }
             }
 
             try {
@@ -30872,13 +33212,28 @@ module.exports = {
             } catch (e) {
                 return callback(createOpenDSUErrorWrapper(`Failed to load storage DSU for db <${dbName}>`, e));
             }
+
+            if(typeof keySSI === "string") {
+                try{
+                    keySSI = keySSISpace.parse(keySSI);
+                }catch (e) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to parse keySSI <${keySSI}>`, e));
+                }
+            }
+            try {
+                await $$.promisify(mainDSU.writeFile)(DB_KEY_SSI_PATH, keySSI.getIdentifier());
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to store key SSI in mainDSU for db <${dbName}>`, e));
+            }
+
+            return callback(undefined, storageDSU, keySSI);
         })
     },
     ensure_MultiUserDB_DSU_Initialisation: function (keySSI, dbName, userId, callback) {
     }
 }
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
+},{"../../keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js":[function(require,module,exports){
 let util = require("./impl/DSUDBUtil")
 
 function getBasicDB(storageStrategy, conflictSolvingStrategy, options) {
@@ -30912,12 +33267,13 @@ let getSharedDB = function (keySSI, dbName, options) {
 };
 
 let getSimpleWalletDB = (dbName, options) => {
+    options = options || {};
     let SingleDSUStorageStrategy = require("./storageStrategies/SingleDSUStorageStrategy").SingleDSUStorageStrategy;
     let storageStrategy = new SingleDSUStorageStrategy();
     let ConflictStrategy = require("./conflictSolvingStrategies/timestampMergingStrategy").TimestampMergingStrategy;
     let db = getBasicDB(storageStrategy, new ConflictStrategy(), options);
 
-    util.initialiseWalletDB(dbName, (err, _storageDSU, keySSI) => {
+    util.initialiseWalletDB(dbName, options.keySSI, (err, _storageDSU, keySSI) => {
         if (err) {
             return OpenDSUSafeCallback()(createOpenDSUErrorWrapper("Failed to initialise WalletDB_DSU " + dbName, err));
         }
@@ -35593,7 +37949,7 @@ function WalletDBEnclave(keySSI, did) {
             }
         }
 
-        this.storageDB = db.getWalletDB(keySSI, DB_NAME);
+        this.storageDB = db.getSimpleWalletDB(DB_NAME, {keySSI});
         this.storageDB.on("initialised", () => {
             initialised = true;
             this.finishInitialisation();
@@ -36968,6 +39324,12 @@ const createAliasSSI = (domain, alias, callback) => {
     return aliasSSI;
 }
 
+const createSizeSSI = (domain, totalSize, bufferSize) => {
+    const sizeSSI = keySSIFactory.createType(SSITypes.SIZE_SSI);
+    sizeSSI.initialize(domain, totalSize, bufferSize);
+    return sizeSSI;
+}
+
 module.exports = {
     parse,
     createSeedSSI,
@@ -36991,7 +39353,8 @@ module.exports = {
     we_createSeedSSI,
     we_createConstSSI,
     we_createArraySSI,
-    createAliasSSI
+    createAliasSSI,
+    createSizeSSI
 };
 
 },{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
@@ -39478,60 +41841,67 @@ const configEnvironment = (config, refreshSC, callback) => {
             return callback(createOpenDSUErrorWrapper("Failed to get main DSU", err));
         }
 
-        mainDSU.readFile(constants.ENVIRONMENT_PATH, (err, env) => {
+        mainDSU.writeFile(constants.ENVIRONMENT_PATH, JSON.stringify(config), (err) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to read env", err));
+                return callback(createOpenDSUErrorWrapper("Failed to write env", err));
             }
 
-            try {
-                env = JSON.parse(env.toString());
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper("Failed to parse env", e));
+            if (refreshSC) {
+                const sc = refreshSecurityContext();
+                sc.on("initialised", () => callback(undefined, sc));
+            } else {
+                const sc = getSecurityContext();
+                if (securityContextIsInitialised()) {
+                    return callback(undefined, sc);
+                }
+
+                sc.on("initialised", () => {
+                    callback(undefined, sc)
+                });
             }
-
-            Object.assign(env, config);
-            config = env;
-            mainDSU.writeFile(constants.ENVIRONMENT_PATH, JSON.stringify(config), (err) => {
-                if (err) {
-                    return callback(createOpenDSUErrorWrapper("Failed to write env", err));
-                }
-
-                if (refreshSC) {
-                    const sc = refreshSecurityContext();
-                    sc.on("initialised", () => callback(undefined, sc));
-                } else {
-                    const sc = getSecurityContext();
-                    if (securityContextIsInitialised()) {
-                        return callback(undefined, sc);
-                    }
-
-                    sc.on("initialised", () => {
-                        callback(undefined, sc)
-                    });
-                }
-            });
-        })
+        });
     });
 }
 
 const setEnclave = (enclave, type, callback) => {
-    const config = {};
-    enclave.getDID((err, did) => {
+    config.readEnvFile((err, config) => {
         if (err) {
             return callback(err);
         }
-
-        config[openDSU.constants[type].DID] = did;
-        enclave.getKeySSI((err, keySSI) => {
+        enclave.getDID((err, did) => {
             if (err) {
                 return callback(err);
             }
 
-            config[openDSU.constants[type].KEY_SSI] = keySSI;
-            config[openDSU.constants[type].TYPE] = enclave.getEnclaveType();
-            configEnvironment(config, callback);
+            config[openDSU.constants[type].DID] = did;
+            enclave.getKeySSI((err, keySSI) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                config[openDSU.constants[type].KEY_SSI] = keySSI;
+                config[openDSU.constants[type].TYPE] = enclave.getEnclaveType();
+                configEnvironment(config, callback);
+            })
         })
     })
+}
+
+const deleteEnclave = (type, callback) => {
+    config.readEnvFile((err, env) => {
+        if (err) {
+            return callback(err);
+        }
+
+        delete env[openDSU.constants[type].DID];
+        delete env[openDSU.constants[type].KEY_SSI];
+        delete env[openDSU.constants[type].TYPE];
+        configEnvironment(env, callback);
+    })
+}
+
+const deleteSharedEnclave = (callback) => {
+    deleteEnclave("SHARED_ENCLAVE", callback);
 }
 
 const setMainEnclave = (enclave, callback) => {
@@ -39555,6 +41925,7 @@ module.exports = {
     getSharedEnclave,
     setSharedEnclave,
     setEnclave,
+    deleteSharedEnclave,
     configEnvironment,
     sharedEnclaveExists
 };
@@ -55333,6 +57704,7 @@ const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 (function loadDefaultComponents(){
 	//next require lines are only for browserify build purpose
 	// Remove mock
+	require('./components/admin');
 	require('./components/config');
 	require('./components/contracts');
 	require('./components/bricking');
@@ -55503,6 +57875,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			const ResponseHeaderMiddleware = require('./middlewares/responseHeader');
 			const genericErrorMiddleware = require('./middlewares/genericErrorMiddleware');
 			const requestEnhancements = require('./middlewares/requestEnhancements');
+			const StreamHandlerMiddleware = require('./middlewares/streamHandler');
 
 			if(conf.enableRequestLogger) {
 				new LoggerMiddleware(server);
@@ -55526,6 +57899,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             if(conf.enableInstallationDetails) {
                 const enableInstallationDetails = require("./components/installation-details");
                 enableInstallationDetails(server);
+            }
+            if(conf.enableStreamHandler) {
+                new StreamHandlerMiddleware(server);
             }
 
         }
@@ -55628,7 +58004,7 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 
-},{"./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./middlewares/streamHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
@@ -55638,6 +58014,8 @@ module.exports.createFsAdapter = () => {
 const ArchiveConfigurator = require("./lib/ArchiveConfigurator");
 const createFolderBrickStorage = require("./lib/obsolete/FolderBrickStorage").createFolderBrickStorage;
 const createFileBrickStorage = require("./lib/obsolete/FileBrickStorage").createFileBrickStorage;
+const BrickStorageService = require('./lib/BrickStorageService').Service;
+const BrickMapController = require('./lib/BrickMapController');
 
 ArchiveConfigurator.prototype.registerStorageProvider("FolderBrickStorage", createFolderBrickStorage);
 ArchiveConfigurator.prototype.registerStorageProvider("FileBrickStorage", createFileBrickStorage);
@@ -55672,7 +58050,47 @@ module.exports.BrickMapStrategyMixin = require('./lib/BrickMapStrategy/BrickMapS
 module.exports.createFolderBrickStorage = createFolderBrickStorage;
 module.exports.createFileBrickStorage = createFileBrickStorage;
 
-},{"./lib/Archive":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/obsolete/FileBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"blockchain":[function(require,module,exports){
+module.exports.createBrickStorageService = (archiveConfigurator, keySSI) => {
+    const brickStorageService = new BrickStorageService({
+        cache: archiveConfigurator.getCache(),
+        bufferSize: archiveConfigurator.getBufferSize(),
+        keySSI,
+
+        brickFactoryFunction: (encrypt) => {
+            const Brick = require("./lib/Brick");
+            encrypt = (typeof encrypt === 'undefined') ? true : !!encrypt;
+            // Strip the encryption key from the SeedSSI
+            return new Brick({templateKeySSI: keySSI, encrypt});
+        },
+
+        brickDataExtractorCallback: (brickMeta, brick, callback) => {
+            brick.setTemplateKeySSI(keySSI);
+
+            function extractData() {
+                const brickEncryptionKeySSI = brickMapController.getBrickEncryptionKeySSI(brickMeta);
+                brick.setKeySSI(brickEncryptionKeySSI);
+                brick.getRawData(callback);
+            }
+
+            if (refreshInProgress) {
+                return waitIfDSUIsRefreshing(() => {
+                    extractData();
+                })
+            }
+            extractData();
+        },
+
+        fsAdapter: archiveConfigurator.getFsAdapter()
+    });
+    const brickMapController = new BrickMapController({
+        config: archiveConfigurator,
+        brickStorageService,
+        keySSI
+    });
+
+    return brickStorageService;
+};
+},{"./lib/Archive":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Archive.js","./lib/ArchiveConfigurator":"/home/runner/work/privatesky/privatesky/modules/bar/lib/ArchiveConfigurator.js","./lib/Brick":"/home/runner/work/privatesky/privatesky/modules/bar/lib/Brick.js","./lib/BrickMap":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMap.js","./lib/BrickMapController":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapController.js","./lib/BrickMapDiff":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapDiff.js","./lib/BrickMapStrategy":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/index.js","./lib/BrickMapStrategy/BrickMapStrategyMixin":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickMapStrategy/BrickMapStrategyMixin.js","./lib/BrickStorageService":"/home/runner/work/privatesky/privatesky/modules/bar/lib/BrickStorageService/index.js","./lib/obsolete/FileBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FileBrickStorage.js","./lib/obsolete/FolderBrickStorage":"/home/runner/work/privatesky/privatesky/modules/bar/lib/obsolete/FolderBrickStorage.js"}],"blockchain":[function(require,module,exports){
 ___DISABLE_OBSOLETE_ZIP_ARCHIVER_WAIT_FOR_BARS = true;
 //require("../../../psknode/bundles/pskruntime.js");
 var callflowModule = require("callflow");
@@ -56701,6 +59119,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "m2dsu":return require("./m2dsu"); break;
             case "workers":return require("./workers"); break;
             case "storage": return require("./storage"); break;
+            case "credentials": return require("./credentials"); break;
             default: throw new Error("Unknown API space " + apiSpaceName);
         }
     }
@@ -56774,7 +59193,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./credentials":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
