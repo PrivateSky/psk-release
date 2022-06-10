@@ -394,8 +394,8 @@ function AdminService(exposeAllApis) {
 
         this.registerVariable = function (dnsDomain, variableName, variableContent, timestamp, signature, callback) {
             enclave.getRecord(DID_replacement, VARIABLES_TABLE, dnsDomain, (err, entry) => {
-                if (err) {
-                    let entry = {
+                if (err || !entry) {
+                    entry = {
                         variables: {}
                     };
                     entry.variables[variableName] = variableContent;
