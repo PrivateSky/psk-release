@@ -110,6 +110,7 @@ const DATABASE_NAME = "adminEnclave";
 
 const DOMAINS_TABLE = "domains";
 const ADMINS_TABLE = "admins";
+const VARIABLES_TABLE = "variables";
 const TEMPLATES_TABLE = "templates";
 
 const DID_replacement = "";
@@ -266,11 +267,10 @@ function AdminComponentHandler(server) {
     }
 
     async function setVariable(req, res){
-        let {domainName} = req.params;
-        let {variableName, variableContent, timestamp, signature} = req.body;
+        let {dnsDomain, variableName, variableContent, timestamp, signature} = req.body;
 
         try {
-            await adminService.registerVariableToDomainAsync(domainName, variableName, variableContent, timestamp, signature);
+            await adminService.registerVariableAsync(dnsDomain, variableName, variableContent, timestamp, signature);
         } catch (err) {
             res.statusCode = 500;
             return res.end();
@@ -288,7 +288,7 @@ function AdminComponentHandler(server) {
     server.post("/admin/:mainDomain/disableDomain", disableDomain);
     server.post("/admin/:mainDomain/addAdmin", addAdmin);
     server.post("/admin/:mainDomain/addDomainAdmin", addDomainAdmin);
-    server.post("/admin/:mainDomain/:domainName/storeVariable", setVariable);
+    server.post("/admin/:mainDomain/storeVariable", setVariable);
     server.post("/admin/:mainDomain/registerTemplate", registerTemplate);
 }
 
@@ -334,17 +334,17 @@ function AdminService(exposeAllApis) {
         });
     }
 
-    this.getDomainSpecificVariables = function(domainName, callback){
-        enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+    this.getDomainSpecificVariables = function(dnsDomainName, callback){
+        enclave.getRecord(DID_replacement, VARIABLES_TABLE, dnsDomainName, (err, entry)=>{
             if(err){
                 return callback(err);
             }
 
-            if(!domain){
-                return callback(`Not able to find domain ${domainName}.`);
+            if(!entry){
+                return callback(`Not able to find domain ${dnsDomainName}.`);
             }
 
-            return callback(undefined, domain.variables || {});
+            return callback(undefined, entry.variables || {});
         });
     }
 
@@ -385,22 +385,22 @@ function AdminService(exposeAllApis) {
 
         this.registerDomainAdminAsync = $$.promisify(this.registerDomainAdmin);
 
-        this.registerVariableToDomain = function (domainName, variableName, variableContent, timestamp, signature, callback){
-            enclave.getRecord(DID_replacement, DOMAINS_TABLE, domainName, (err, domain)=>{
+        this.registerVariable = function (dnsDomain, variableName, variableContent, timestamp, signature, callback){
+            enclave.getRecord(DID_replacement, VARIABLES_TABLE, dnsDomain, (err, entry)=>{
                 if(err){
                     return callback(err);
                 }
 
-                if(!domain.variables){
-                    domain.variables = {};
+                if(!entry.variables){
+                    entry.variables = {};
                 }
 
-                domain.variables[variableName] = variableContent;
+                entry.variables[variableName] = variableContent;
 
-                enclave.updateRecord(DID_replacement, DOMAINS_TABLE, domainName, domain, callback);
+                enclave.updateRecord(DID_replacement, VARIABLES_TABLE, dnsDomain, entry, callback);
             });
         }
-        this.registerVariableToDomainAsync = $$.promisify(this.registerVariableToDomain);
+        this.registerVariableAsync = $$.promisify(this.registerVariable);
 
         this.registerTemplate = function (path, content, timestamp, signature, callback) {
             enclave.getRecord(DID_replacement, TEMPLATES_TABLE, path, (err, template)=>{
@@ -4132,14 +4132,6 @@ function StaticServer(server) {
     }
 
     function tryToCreateAtRuntimeFromTemplates(req, callback){
-        let extractSubdomain = function(url){
-            let regex = new RegExp(/^([a-z]+\:\/{2})?([\w-]+\.[\w-]+\.\w+(\:[0-9]*)?)$/);
-            if(!!url.match(regex)){
-                let components = url.split(".");
-                return components[0];
-            }
-            return undefined;
-        }
 
         let adminService;
         try{
@@ -4154,20 +4146,16 @@ function StaticServer(server) {
             }
             if(template){
                 let fileContent = template.content;
-                let host = req.headers.host;
-                let subdomain = extractSubdomain(host);
-                if(!subdomain){
-                    return callback(new Error("Not able to detect a subdomain. Skipping template lookup."));
-                }
+                let hostname = req.hostname;
 
-                return adminService.getDomainInfo(subdomain, (err, domainInfo)=>{
-                    if(err || !domainInfo){
+                return adminService.getDomainSpecificVariables(hostname, (err, entry)=>{
+                    if(err || !entry){
                         return callback(err);
                     }
-                    let domainVariables = Object.keys(domainInfo.variables);
+                    let domainVariables = Object.keys(entry.variables);
                     for(let i=0; i<domainVariables.length; i++){
                         let variableName = domainVariables[i];
-                        let variableValue = domainInfo.variables[variableName];
+                        let variableValue = entry.variables[variableName];
 
                         const lookupFor = "${"+variableName+"}";
                         fileContent = fileContent.split(lookupFor).join(variableValue);
@@ -4188,9 +4176,23 @@ function StaticServer(server) {
                 return sendFile(res, file);
             }
             res.statusCode = 200;
+
+            setMimeTypeOnResponse(req.url, res);
+
             res.setHeader('Cache-Control', 'no-store');
             res.end(content);
         });
+    }
+
+    function setMimeTypeOnResponse(file, res){
+        let ext = path.extname(file);
+
+        if (ext !== "") {
+            ext = ext.replace(".", "");
+            res.setHeader('Content-Type', utils.getMimeTypeFromExtension(ext).name);
+        } else {
+            res.setHeader('Content-Type', "application/octet-stream");
+        }
     }
 
     function sendFile(res, file) {
@@ -4203,14 +4205,8 @@ function StaticServer(server) {
             }
         }
         let stream = fs.createReadStream(file);
-        let ext = path.extname(file);
+        setMimeTypeOnResponse(file, res);
 
-        if (ext !== "") {
-            ext = ext.replace(".", "");
-            res.setHeader('Content-Type', utils.getMimeTypeFromExtension(ext).name);
-        } else {
-            res.setHeader('Content-Type', "application/octet-stream");
-        }
 
         // instruct to not store response into cache
         res.setHeader('Cache-Control', 'no-store');
