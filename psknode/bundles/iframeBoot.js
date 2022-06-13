@@ -1269,22 +1269,26 @@ function convertReadableStreamToBuffer(readStream, callback) {
 }
 
 async function getBricksDomainConfig(domain) {
+    console.log("Looking for domain", domain);
     const config = require("../../config");
     let domainConfiguration = config.getDomainConfig(domain);
 
     if(!domainConfiguration){
+        //console.log("First domain search failed. Searchig for dinamic domains.");
         //if you don't have config we try to use admin service info to create one at runtime
         try{
             let adminService = require("./../admin").getAdminService();
             const getDomainInfo = $$.promisify(adminService.getDomainInfo);
             let domainInfo = await getDomainInfo(domain);
-            if(domainInfo && domain.active && domainInfo.cloneFromDomain){
+            //console.log("domainInfo", domainInfo);
+            if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
                 const clonedDomainConfiguration = config.getDomainConfig(domainInfo.cloneFromDomain);
                 domainConfiguration = clonedDomainConfiguration;
                 console.log(`Config for domain '${domain}' was loaded from admin service.`);
             }
         }catch(err){
             //we ignore any errors in this try-catch block because admin component may be disabled
+            //console.log(err);
         }
     }
 
@@ -2053,7 +2057,248 @@ module.exports = ChannelsManager;
 
 }).call(this)}).call(this,require('_process'),"/modules/apihub/components/channelManager")
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/runner/work/privatesky/privatesky/modules/zmq_adapter/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js","zmq_adapter":"/home/runner/work/privatesky/privatesky/modules/zmq_adapter/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/controller.js":[function(require,module,exports){
+(function (process){(function (){
+const http = require("http");
+const crypto = require("crypto");
+const worker_threads = "worker_threads";
+const { Worker } = require(worker_threads);
+const config = require("../../config");
+const path = require("swarmutils").path;
+
+let dsuBootPath;
+const dsuWorkers = {};
+
+const getElapsedTime = (timer) => {
+    const elapsed = process.hrtime(timer)[1] / 1000000;
+    return `${elapsed.toFixed(3)} ms`;
+};
+
+const INVALID_DSU_HTML_RESPONSE = `
+    <html>
+    <body>
+        <p>
+            The application has encountered an unexpected error. <br/>
+            If you have network issues please use the following to refresh the application.
+        </p>
+        <button id="refresh">Refresh</button>
+        <script>
+            document.getElementById("refresh").addEventListener("click", function() {
+                window.top.location.reload();
+            });
+        </script>
+    </body>
+    </html>
+`;
+
+function addDsuWorker(seed) {
+    const workerStartTime = process.hrtime();
+    const dsuWorker = {
+        port: null,
+        authorizationKey: null,
+        resolver: new Promise((resolve, reject) => {
+            crypto.randomBytes(64, (err, randomBuffer) => {
+                if (err) {
+                    console.log("[CloudWallet] Error while generating worker authorizationKey", err);
+                    return reject(err);
+                }
+
+                const authorizationKey = randomBuffer.toString("hex");
+                dsuWorker.authorizationKey = authorizationKey;
+
+                console.log(`[CloudWallet] Starting worker for handling seed ${seed}`);
+                const worker = new Worker(dsuBootPath, {
+                    workerData: {
+                        seed,
+                        authorizationKey,
+                    },
+                });
+
+                worker.on("message", (message) => {
+                    if (message.error) {
+                        dsuWorkers[seed] = null;
+                        return reject(message.error);
+                    }
+                    if (message.port) {
+                        console.log(
+                            `[CloudWallet] Running worker on PORT ${message.port} for seed ${seed}. Startup took ${getElapsedTime(
+                                workerStartTime
+                            )}`
+                        );
+                        dsuWorker.port = message.port;
+                        resolve(worker);
+                    }
+                });
+                worker.on("error", (error) => {
+                    console.log("[CloudWallet] worker error", error);
+                });
+                worker.on("exit", (code) => {
+                    if (code !== 0) {
+                        console.log(`[CloudWallet] Worker stopped with exit code ${code}`);
+                        // remove the worker from list in order to be recreated when needed
+                        delete dsuWorkers[seed];
+                    }
+                });
+
+                dsuWorker.terminate = function () {
+                    worker.terminate();
+                };
+            });
+        }),
+    };
+    dsuWorkers[seed] = dsuWorker;
+    return dsuWorker;
+}
+
+function forwardRequestToWorker(dsuWorker, req, res) {
+    const method = req.method;
+    const { keySSI } = req.params;
+    let requestedPath = req.url.substr(req.url.indexOf(keySSI) + keySSI.length);
+    if (!requestedPath) {
+        requestedPath = "/";
+    }
+    if (!requestedPath.startsWith("/")) {
+        requestedPath = `/${requestedPath}`;
+    }
+
+    const options = {
+        hostname: "localhost",
+        port: dsuWorker.port,
+        path: requestedPath,
+        method,
+        headers: {
+            authorization: dsuWorker.authorizationKey,
+        },
+    };
+
+    if (req.headers["content-type"]) {
+        options.headers["content-type"] = req.headers["content-type"];
+    }
+
+    const workerRequest = http.request(options, (response) => {
+        const { statusCode, headers } = response;
+        res.statusCode = statusCode;
+        const contentType = headers ? headers["content-type"] : null;
+        res.setHeader("Content-Type", contentType || "text/html");
+
+        if (statusCode < 200 || statusCode >= 300) {
+            return res.end();
+        }
+
+        let data = [];
+        response.on("data", (chunk) => {
+            data.push(chunk);
+        });
+
+        response.on("end", () => {
+            try {
+                const bodyContent = $$.Buffer.concat(data);
+                res.statusCode = statusCode;
+                res.end(bodyContent);
+            } catch (err) {
+                console.log("[CloudWallet] worker response error", err);
+                res.statusCode = 500;
+                res.end();
+            }
+        });
+    });
+    workerRequest.on("error", (err) => {
+        console.log("[CloudWallet] worker request error", err);
+        res.statusCode = 500;
+        res.end();
+    });
+
+    if (method === "POST" || method === "PUT") {
+        let data = [];
+        req.on("data", (chunk) => {
+            console.log("[CloudWallet] data.push(chunk);", chunk);
+            data.push(chunk);
+        });
+
+        req.on("end", () => {
+            try {
+                const bodyContent = $$.Buffer.concat(data);
+                workerRequest.write(bodyContent);
+                workerRequest.end();
+            } catch (err) {
+                console.log("[CloudWallet] worker response error", err);
+                res.statusCode = 500;
+                res.end();
+            }
+        });
+        return;
+    }
+    workerRequest.end();
+}
+
+function init(server) {
+    console.log(`Registering CloudWallet component`);
+
+    dsuBootPath = config.getConfig("componentsConfig", "cloudWallet", "dsuBootPath");
+
+    if (dsuBootPath.startsWith(".")) {
+        dsuBootPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, dsuBootPath));
+    }
+
+    console.log(`[CloudWallet] Using boot script for worker: ${dsuBootPath}`);
+
+    //if a listening event is fired from this point on...
+    //it means that a restart was triggered
+    server.on("listening", () => {
+        console.log(`[CloudWallet] Restarting process in progress...`);
+        console.log(`[CloudWallet] Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
+        for (let seed in dsuWorkers) {
+            let worker = dsuWorkers[seed];
+            if (worker && worker.terminate) {
+                worker.terminate();
+            }
+        }
+    });
+}
+
+function handleCloudWalletRequest(request, response) {
+    const { keySSI } = request.params;
+
+    let dsuWorker = dsuWorkers[keySSI];
+    if (!dsuWorker) {
+        dsuWorker = addDsuWorker(keySSI);
+    }
+
+    dsuWorker.resolver
+        .then(() => {
+            forwardRequestToWorker(dsuWorker, request, response);
+        })
+        .catch((error) => {
+            console.log("[CloudWallet] worker resolver error", error);
+            res.setHeader("Content-Type", "text/html");
+            res.statusCode = 400;
+            res.end(INVALID_DSU_HTML_RESPONSE);
+        });
+}
+
+module.exports = {
+    init,
+    handleCloudWalletRequest,
+};
+
+}).call(this)}).call(this,require('_process'))
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js":[function(require,module,exports){
+function Iframe(server) {
+    const { init, handleCloudWalletRequest } = require("./controller");
+    init(server);
+
+    server.use(`/cloud-wallet/:keySSI/*`, handleCloudWalletRequest);
+    server.use(`/:walletName/loader/cloud-wallet/:keySSI/*`, handleCloudWalletRequest);
+
+    // keep old URl style
+    server.use(`/iframe/:keySSI/*`, handleCloudWalletRequest);
+    server.use(`/:walletName/loader/iframe/:keySSI/*`, handleCloudWalletRequest);
+}
+
+module.exports = Iframe;
+
+},{"./controller":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/controller.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js":[function(require,module,exports){
 const config = require("../../config");
 
 function Config(server) {
@@ -4080,14 +4325,14 @@ function StaticServer(server) {
         try{
             adminService = require("./../admin").getAdminService();
         }catch(err){
-            console.log("Caught an error durring admin service initialization", err);
+            //console.log("Caught an error durring admin service initialization", err);
             return callback(err);
         }
 
         adminService.checkForTemplate(req.url, (err, template)=>{
             if(err){
-                console.log("Not able to find template for", req.url);
-                console.trace(err);
+                //console.log("Not able to find template for", req.url);
+                //console.trace(err);
                 return callback(err);
             }
             if(template){
@@ -4095,17 +4340,17 @@ function StaticServer(server) {
                 const urlObject = new URL(req.url, `http://${req.headers.host}`);
                 let hostname = urlObject.hostname;
                 console.log("Preparing to read vars for ", hostname);
-                return adminService.getDomainSpecificVariables(hostname, (err, entry)=>{
-                    if(err || !entry){
+                return adminService.getDomainSpecificVariables(hostname, (err, variables)=>{
+                    if(err || !variables){
                         console.log("Not able to get any variable for ", hostname);
-                        console.log(err);
+                        //console.log(err);
                         return callback(err);
                     }
-                    let domainVariables = Object.keys(entry.variables);
+                    let domainVariables = Object.keys(variables);
                     console.log("Domain variables found:", JSON.stringify(domainVariables));
                     for(let i=0; i<domainVariables.length; i++){
                         let variableName = domainVariables[i];
-                        let variableValue = entry.variables[variableName];
+                        let variableValue = variables[variableName];
 
                         const lookupFor = "${"+variableName+"}";
                         fileContent = fileContent.split(lookupFor).join(variableValue);
@@ -4122,7 +4367,7 @@ function StaticServer(server) {
     function resolveFileAndSend(req, res, file){
         tryToCreateAtRuntimeFromTemplates(req,(err, content)=>{
             if(err){
-                console.trace(err);
+                //console.trace(err);
                 //if any error... we fallback to normal sendFile method
                 return sendFile(res, file);
             }
@@ -4262,7 +4507,166 @@ function StaticServer(server) {
 
 module.exports = StaticServer;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/controller.js":[function(require,module,exports){
+(function (global){(function (){
+const syndicate = require("syndicate");
+
+const dsuWorkers = {};
+
+function getNodeWorkerBootScript() {
+    const openDSUScriptPath = global.bundlePaths.openDSU.replace(/\\/g, "\\\\").replace(".js", "");
+    return `
+        require("${openDSUScriptPath}");
+        (${require("./worker-script").toString()})();
+    `;
+}
+
+async function handleStreamRequest(request, response) {
+    const { keySSI } = request.params;
+    let requestedPath = request.url.substr(request.url.indexOf(keySSI) + keySSI.length);
+    if (!requestedPath) {
+        requestedPath = "/";
+    }
+    if (!requestedPath.startsWith("/")) {
+        requestedPath = `/${requestedPath}`;
+    }
+
+    let range = request.headers.range;
+    if (!range) {
+        response.statusCode = 400;
+        return response.end("Requires Range header");
+    }
+
+    let dsuWorker = dsuWorkers[keySSI];
+    if (!dsuWorker) {
+        dsuWorker = syndicate.createWorkerPool({
+            bootScript: getNodeWorkerBootScript(),
+            maximumNumberOfWorkers: 1,
+            workerOptions: {
+                eval: true,
+                workerData: {
+                    keySSI,
+                },
+            },
+        });
+        dsuWorkers[keySSI] = dsuWorker;
+    }
+
+    const sendTaskToWorker = (task, callback) => {
+        dsuWorker.addTask(task, (err, message) => {
+            if (err) {
+                return callback(err);
+            }
+
+            let { error, result } = typeof Event !== "undefined" && message instanceof Event ? message.data : message;
+
+            if (error) {
+                return callback(error);
+            }
+
+            if (result && result.buffer && result.buffer instanceof Uint8Array) {
+                result.buffer = $$.Buffer.from(result.buffer);
+            }
+
+            callback(error, result);
+        });
+    };
+
+    const task = {
+        requestedPath,
+        range,
+    };
+
+    try {
+        const taskResult = await $$.promisify(sendTaskToWorker)(task);
+        response.writeHead(206, taskResult.headers);
+        response.end(taskResult.buffer);
+    } catch (error) {
+        console.log("[Stream] error", error);
+        response.statusCode = 500;
+        return response.end(error);
+    }
+}
+
+module.exports = {
+    handleStreamRequest,
+};
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./worker-script":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/worker-script.js","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js":[function(require,module,exports){
+function Iframe(server) {
+    const { handleStreamRequest } = require("./controller");
+    server.use(`/stream/:keySSI/*`, handleStreamRequest);
+}
+
+module.exports = Iframe;
+
+},{"./controller":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/controller.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/worker-script.js":[function(require,module,exports){
+(function (process,Buffer){(function (){
+module.exports = async () => {
+    //we inject a supplementary tag in order make it more clear the source of the log
+    let originalLog = console.log;
+    console.log = function (...args) {
+        originalLog("\t[StreamHandler]", ...args);
+    };
+
+    const worker_threads = "worker_threads";
+    const { parentPort, workerData } = require(worker_threads);
+    console.log(`Node worker started for: `, workerData);
+
+    const resolver = require("opendsu").loadApi("resolver");
+    const dsu = await $$.promisify(resolver.loadDSU)(workerData.keySSI);
+
+    parentPort.postMessage("ready");
+
+    const CHUNK_SIZE = 1024 * 1024;
+
+    parentPort.on("message", async (task) => {
+        console.log("Handling task", task);
+        const { requestedPath, range } = task;
+
+        try {
+            const start = Number(range.replace(/\D/g, ""));
+            const end = start + CHUNK_SIZE;
+
+            const streamRange = { start, end };
+            const { totalSize, stream } = await $$.promisify(dsu.createBigFileReadStreamWithRange)(requestedPath, streamRange);
+            const actualEnd = Math.min(end, totalSize - 1);
+            const contentLength = actualEnd - start + 1;
+            const headers = {
+                "Content-Range": `bytes ${start}-${actualEnd}/${totalSize}`,
+                "Accept-Ranges": "bytes",
+                "Content-Length": contentLength,
+                "Content-Type": "video/mp4",
+            };
+
+            function streamToBuffer(stream) {
+                const chunks = [];
+                return new Promise((resolve, reject) => {
+                    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+                    stream.on("error", (err) => reject(err));
+                    stream.on("end", () => resolve(Buffer.concat(chunks)));
+                });
+            }
+            const buffer = await streamToBuffer(stream);
+
+            parentPort.postMessage({ result: { headers, buffer } });
+        } catch (error) {
+            parentPort.postMessage({ error });
+        }
+    });
+
+    process.on("uncaughtException", (error) => {
+        console.error("[StreamHandler] uncaughtException inside node worker", error);
+
+        setTimeout(() => process.exit(1), 100);
+    });
+};
+
+}).call(this)}).call(this,require('_process'),require("buffer").Buffer)
+
+},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
 (function (process){(function (){
 const http = require('http');
 const { URL } = require('url');
@@ -4581,7 +4985,7 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeComponents": ["admin", "config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "staticServer"],
+    "activeComponents": ["admin", "config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "cloudWallet", "stream", "staticServer"],
     "componentsConfig": {
         "mq":{
             "module": "./components/mqHub",
@@ -4657,6 +5061,13 @@ const defaultConfig = {
             "module": "./components/admin",
             "function": "AdminComponentHandler",
             "storageFolder": './external-volume/config/admin'
+        },
+        "cloudWallet": {
+            "module": "./components/cloudWallet",
+            "dsuBootPath": "./psknode/bundles/nodeBoot.js"
+        },
+        "stream": {
+            "module": "./components/stream"
         }
     },
     "tokenBucket": {
@@ -4693,9 +5104,7 @@ const defaultConfig = {
         "/enclave",
         "/secrets",
         "/logs"
-    ],
-    "iframeHandlerDsuBootPath": "./psknode/bundles/nodeBoot.js",
-    "enableStreamHandler": true
+    ]
 };
 
 module.exports = Object.freeze(defaultConfig);
@@ -4980,6 +5389,8 @@ const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 	require('./components/mqHub');
 	require('./components/enclave');
 	require('./components/secrets');
+	require('./components/cloudWallet');
+	require('./components/stream');
 	//end
 })();
 
@@ -5131,11 +5542,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			const LoggerMiddleware = require('./middlewares/logger');
 			const AuthorisationMiddleware = require('./middlewares/authorisation');
 			const OAuth = require('./middlewares/oauth');
-			const IframeHandlerMiddleware = require('./middlewares/iframeHandler');
 			const ResponseHeaderMiddleware = require('./middlewares/responseHeader');
 			const genericErrorMiddleware = require('./middlewares/genericErrorMiddleware');
 			const requestEnhancements = require('./middlewares/requestEnhancements');
-			const StreamHandlerMiddleware = require('./middlewares/streamHandler');
 
 			if(conf.enableRequestLogger) {
 				new LoggerMiddleware(server);
@@ -5153,17 +5562,10 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			if(conf.responseHeaders){
 				new ResponseHeaderMiddleware(server);
 			}
-            if(conf.iframeHandlerDsuBootPath) {
-                new IframeHandlerMiddleware(server);
-            }
             if(conf.enableInstallationDetails) {
                 const enableInstallationDetails = require("./components/installation-details");
                 enableInstallationDetails(server);
             }
-            if(conf.enableStreamHandler) {
-                new StreamHandlerMiddleware(server);
-            }
-
         }
 
         function addComponent(componentName, componentConfig) {
@@ -5203,6 +5605,27 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
                 	return include;
 				})
                 .filter(activeComponentName => !requiredComponentNames.includes(activeComponentName));
+
+			if(!middlewareList.includes("cloudWallet")) {
+				console.warn("WARNING: cloudWallet component is not configured inside activeComponents!")
+				console.warn("WARNING: temporary adding cloudWallet component to activeComponents! Please make sure to include cloudWallet component inside activeComponents!")
+
+				const addCloudWalletToComponentList = (list) => {
+					const indexOfStaticServer = list.indexOf("staticServer");
+					if(indexOfStaticServer !== -1) {
+						// staticServer needs to load last
+						list.splice(indexOfStaticServer, 0, "cloudWallet");
+					} else {
+						list.push("cloudWallet");
+					}
+				}
+
+				addCloudWalletToComponentList(middlewareList);
+				// need to also register to defaultComponents in order to be able to load the module correctly
+				addCloudWalletToComponentList(conf.defaultComponents);
+
+				console.log("Final comp:", middlewareList, conf.defaultComponents)
+			}
 
 			middlewareList.forEach(componentName => {
                 const componentConfig = conf.componentsConfig[componentName];
@@ -5266,7 +5689,7 @@ module.exports.anchoringStrategies = require("./components/anchoring/strategies"
 
 }).call(this)}).call(this,require('_process'))
 
-},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/iframeHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./middlewares/streamHandler":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
+},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","callflow":"/home/runner/work/privatesky/privatesky/modules/callflow/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js":[function(require,module,exports){
 const stateStorageFileName = 'queues.json';
 
 function NotificationsManager(workingFolderPath, storageFolderPath) {
@@ -6468,238 +6891,7 @@ function setupGenericErrorMiddleware(server) {
 
 module.exports = setupGenericErrorMiddleware;
 
-},{"./../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/iframeHandler/index.js":[function(require,module,exports){
-(function (process){(function (){
-const http = require("http");
-const crypto = require("crypto");
-const worker_threads = "worker_threads";
-const { Worker } = require(worker_threads);
-const config = require("../../config").getConfig();
-const path = require("swarmutils").path;
-
-const getElapsedTime = (timer) => {
-    const elapsed = process.hrtime(timer)[1] / 1000000;
-    return `${elapsed.toFixed(3)} ms`;
-};
-
-const INVALID_DSU_HTML_RESPONSE = `
-    <html>
-    <body>
-        <p>
-            The application has encountered an unexpected error. <br/>
-            If you have network issues please use the following to refresh the application.
-        </p>
-        <button id="refresh">Refresh</button>
-        <script>
-            document.getElementById("refresh").addEventListener("click", function() {
-                window.top.location.reload();
-            });
-        </script>
-    </body>
-    </html>
-`;
-
-function IframeHandler(server) {
-    console.log(`Registering IframeHandler middleware`);
-
-    let { iframeHandlerDsuBootPath } = config;
-
-    if (iframeHandlerDsuBootPath.startsWith(".")) {
-        iframeHandlerDsuBootPath = path.resolve(
-            path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, iframeHandlerDsuBootPath)
-        );
-    }
-
-    console.log(`Using boot script for worker: ${iframeHandlerDsuBootPath}`);
-
-    const dsuWorkers = {};
-
-    const addDsuWorker = (seed) => {
-        const workerStartTime = process.hrtime();
-        const dsuWorker = {
-            port: null,
-            authorizationKey: null,
-            resolver: new Promise((resolve, reject) => {
-                crypto.randomBytes(64, (err, randomBuffer) => {
-                    if (err) {
-                        console.log("Error while generating worker authorizationKey", err);
-                        return reject(err);
-                    }
-
-                    const authorizationKey = randomBuffer.toString("hex");
-                    dsuWorker.authorizationKey = authorizationKey;
-
-                    console.log(`Starting worker for handling seed ${seed}`);
-                    const worker = new Worker(iframeHandlerDsuBootPath, {
-                        workerData: {
-                            seed,
-                            authorizationKey,
-                        },
-                    });
-
-                    worker.on("message", (message) => {
-                        if (message.error) {
-                            dsuWorkers[seed] = null;
-                            return reject(message.error);
-                        }
-                        if (message.port) {
-                            console.log(
-                                `Running worker on PORT ${message.port} for seed ${seed}. Startup took ${getElapsedTime(
-                                    workerStartTime
-                                )}`
-                            );
-                            dsuWorker.port = message.port;
-                            resolve(worker);
-                        }
-                    });
-                    worker.on("error", (error) => {
-                        console.log("worker error", error);
-                    });
-                    worker.on("exit", (code) => {
-                        if (code !== 0) {
-                            console.log(`Worker stopped with exit code ${code}`);
-                            // remove the worker from list in order to be recreated when needed
-                            delete dsuWorkers[seed];
-                        }
-                    });
-
-                    dsuWorker.terminate = function(){
-                        worker.terminate();
-                    }
-                });
-            }),
-        };
-        dsuWorkers[seed] = dsuWorker;
-        return dsuWorker;
-    };
-
-    //if a listening event is fired from this point on...
-    //it means that a restart was triggered
-    server.on("listening", ()=>{
-        console.log(`Restarting process in progress...`);
-        console.log(`Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
-        for(let seed in dsuWorkers){
-            let worker = dsuWorkers[seed];
-            if(worker && worker.terminate){
-                worker.terminate();
-            }
-        }
-    });
-
-    server.use(function (req, res, next) {
-        const { method, url } = req;
-
-        if (url.indexOf("iframe") === -1) {
-            // not an iframe related request so skip it
-            next();
-            return;
-        }
-
-        let keySSI = url.substr(url.indexOf("iframe") + "iframe".length + 1);
-        let requestedPath = "";
-        if (!keySSI || keySSI === "null") {
-            res.statusCode = 500;
-            return res.end("empty keySSI");
-        }
-
-        const urlPathInfoMatch = keySSI.match(/^([^\/\?]*)[\/\?](.*)$/);
-        if (urlPathInfoMatch) {
-            const keySSIPart = urlPathInfoMatch[1];
-            const separator = keySSI[keySSIPart.length];
-            keySSI = keySSIPart;
-            requestedPath = `${separator !== "/" ? "/" : ""}${separator}${urlPathInfoMatch[2]}`;
-        }
-
-        let dsuWorker = dsuWorkers[keySSI];
-        if (!dsuWorker) {
-            dsuWorker = addDsuWorker(keySSI);
-        }
-
-        const forwardRequestToWorker = () => {
-            const options = {
-                hostname: "localhost",
-                port: dsuWorker.port,
-                path: requestedPath,
-                method,
-                headers: {
-                    authorization: dsuWorker.authorizationKey,
-                }
-            };
-
-            if (req.headers["content-type"]) {
-                options.headers["content-type"] = req.headers["content-type"];
-            }
-
-            const workerRequest = http.request(options, (response) => {
-                const { statusCode, headers } = response;
-                res.statusCode = statusCode;
-                const contentType = headers ? headers["content-type"] : null;
-                res.setHeader("Content-Type", contentType || "text/html");
-
-                if (statusCode < 200 || statusCode >= 300) {
-                    return res.end();
-                }
-
-                let data = [];
-                response.on("data", (chunk) => {
-                    data.push(chunk);
-                });
-
-                response.on("end", () => {
-                    try {
-                        const bodyContent = $$.Buffer.concat(data);
-                        res.statusCode = statusCode;
-                        res.end(bodyContent);
-                    } catch (err) {
-                        console.log("worker response error", err);
-                        res.statusCode = 500;
-                        res.end();
-                    }
-                });
-            });
-            workerRequest.on("error", (err) => {
-                console.log("worker request error", err);
-                res.statusCode = 500;
-                res.end();
-            });
-
-            if (method === "POST" || method === "PUT") {
-                let data = [];
-                req.on("data", (chunk) => {
-                    console.log("data.push(chunk);", chunk);
-                    data.push(chunk);
-                });
-
-                req.on("end", () => {
-                    try {
-                        const bodyContent = $$.Buffer.concat(data);
-                        workerRequest.write(bodyContent);
-                        workerRequest.end();
-                    } catch (err) {
-                        console.log("worker response error", err);
-                        res.statusCode = 500;
-                        res.end();
-                    }
-                });
-                return;
-            }
-            workerRequest.end();
-        };
-
-        dsuWorker.resolver.then(forwardRequestToWorker).catch((error) => {
-            console.log("worker resolver error", error);
-            res.setHeader("Content-Type", "text/html");
-            res.statusCode = 400;
-            res.end(INVALID_DSU_HTML_RESPONSE);
-        });
-    });
-}
-
-module.exports = IframeHandler;
-
-}).call(this)}).call(this,require('_process'))
-
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","crypto":"/home/runner/work/privatesky/privatesky/node_modules/crypto-browserify/index.js","http":"/home/runner/work/privatesky/privatesky/node_modules/stream-http/index.js","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js":[function(require,module,exports){
+},{"./../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js":[function(require,module,exports){
 (function (process){(function (){
 function Logger(server) {
     console.log(`Registering Logger middleware`);
@@ -7582,187 +7774,7 @@ function ResponseHeaders(server) {
 
 module.exports = ResponseHeaders;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/index.js":[function(require,module,exports){
-(function (global){(function (){
-function getNodeWorkerBootScript() {
-    const openDSUScriptPath = global.bundlePaths.openDSU.replace(/\\/g, "\\\\").replace(".js", "");
-    return `
-        require("${openDSUScriptPath}");
-        (${require("./worker-script").toString()})();
-    `;
-}
-
-function StreamHandler(server) {
-    console.log(`Registering StreamHandler middleware`);
-
-    const syndicate = require("syndicate");
-
-    const dsuWorkers = {};
-
-    // // if a listening event is fired from this point on...
-    // // it means that a restart was triggered
-    // server.on("listening", () => {
-    //     console.log(`[StreamHandler] Restarting process in progress...`);
-    //     console.log(`[StreamHandler] Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
-    //     for (let seed in dsuWorkers) {
-    //         let worker = dsuWorkers[seed];
-    //         if (worker && worker.terminate) {
-    //             worker.terminate();
-    //         }
-    //     }
-    // });
-
-    server.use(async (req, res, next) => {
-        const { method, url } = req;
-
-        if (url.indexOf("stream") === -1) {
-            // not an stream related request so skip it
-            next();
-            return;
-        }
-
-        let keySSI = url.substr(url.indexOf("stream") + "stream".length + 1);
-        let requestedPath = "";
-        if (!keySSI || keySSI === "null") {
-            res.statusCode = 500;
-            return res.end("empty keySSI");
-        }
-
-        const urlPathInfoMatch = keySSI.match(/^([^\/\?]*)[\/\?](.*)$/);
-        if (urlPathInfoMatch) {
-            const keySSIPart = urlPathInfoMatch[1];
-            const separator = keySSI[keySSIPart.length];
-            keySSI = keySSIPart;
-            requestedPath = `${separator !== "/" ? "/" : ""}${separator}${urlPathInfoMatch[2]}`;
-        }
-
-        let range = req.headers.range;
-        if (!range) {
-            res.statusCode = 400;
-            return res.end("Requires Range header");
-        }
-
-        let dsuWorker = dsuWorkers[keySSI];
-        if (!dsuWorker) {
-            dsuWorker = syndicate.createWorkerPool({
-                bootScript: getNodeWorkerBootScript(),
-                maximumNumberOfWorkers: 1,
-                workerOptions: {
-                    eval: true,
-                    workerData: {
-                        keySSI,
-                    },
-                },
-            });
-            dsuWorkers[keySSI] = dsuWorker;
-        }
-
-        const sendTaskToWorker = (task, callback) => {
-            dsuWorker.addTask(task, (err, message) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                let { error, result } = typeof Event !== "undefined" && message instanceof Event ? message.data : message;
-
-                if (error) {
-                    return callback(error);
-                }
-
-                if (result && result.buffer && result.buffer instanceof Uint8Array) {
-                    result.buffer = $$.Buffer.from(result.buffer);
-                }
-
-                callback(error, result);
-            });
-        };
-
-        const task = {
-            requestedPath,
-            range,
-        };
-
-        try {
-            const taskResult = await $$.promisify(sendTaskToWorker)(task);
-            res.writeHead(206, taskResult.headers);
-            res.end(taskResult.buffer);
-        } catch (error) {
-            console.log("[StreamHandler] error", error);
-            res.statusCode = 500;
-            return res.end(error);
-        }
-    });
-}
-
-module.exports = StreamHandler;
-
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"./worker-script":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/worker-script.js","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/streamHandler/worker-script.js":[function(require,module,exports){
-(function (process,Buffer){(function (){
-module.exports = async () => {
-    //we inject a supplementary tag in order make it more clear the source of the log
-    let originalLog = console.log;
-    console.log = function (...args) {
-        originalLog("\t[StreamHandler]", ...args);
-    };
-
-    const worker_threads = "worker_threads";
-    const { parentPort, workerData } = require(worker_threads);
-    console.log(`Node worker started for: `, workerData);
-
-    const resolver = require("opendsu").loadApi("resolver");
-    const dsu = await $$.promisify(resolver.loadDSU)(workerData.keySSI);
-
-    parentPort.postMessage("ready");
-
-    const CHUNK_SIZE = 1024 * 1024;
-
-    parentPort.on("message", async (task) => {
-        console.log("Handling task", task);
-        const { requestedPath, range } = task;
-
-        try {
-            const start = Number(range.replace(/\D/g, ""));
-            const end = start + CHUNK_SIZE;
-
-            const streamRange = { start, end };
-            const { totalSize, stream } = await $$.promisify(dsu.createBigFileReadStreamWithRange)(requestedPath, streamRange);
-            const actualEnd = Math.min(end, totalSize - 1);
-            const contentLength = actualEnd - start + 1;
-            const headers = {
-                "Content-Range": `bytes ${start}-${actualEnd}/${totalSize}`,
-                "Accept-Ranges": "bytes",
-                "Content-Length": contentLength,
-                "Content-Type": "video/mp4",
-            };
-
-            function streamToBuffer(stream) {
-                const chunks = [];
-                return new Promise((resolve, reject) => {
-                    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-                    stream.on("error", (err) => reject(err));
-                    stream.on("end", () => resolve(Buffer.concat(chunks)));
-                });
-            }
-            const buffer = await streamToBuffer(stream);
-
-            parentPort.postMessage({ result: { headers, buffer } });
-        } catch (error) {
-            parentPort.postMessage({ error });
-        }
-    });
-
-    process.on("uncaughtException", (error) => {
-        console.error("[StreamHandler] uncaughtException inside node worker", error);
-
-        setTimeout(() => process.exit(1), 100);
-    });
-};
-
-}).call(this)}).call(this,require('_process'),require("buffer").Buffer)
-
-},{"_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js":[function(require,module,exports){
 module.exports = {
 	LOG_IDENTIFIER: "[API-HUB]"
 };
@@ -109073,8 +109085,8 @@ module.exports.isStream = require("./lib/utils/isStream");
 function setSSAppContext() {
     const baseUrl = typeof document !== "undefined" ? (document.getElementsByTagName("base")[0] || {}).href : undefined;
     let seed;
-    if (baseUrl && baseUrl.indexOf("/iframe/") !== -1) {
-        seed = baseUrl.substr(baseUrl.indexOf("/iframe/") + "/iframe/".length);
+    if (baseUrl && baseUrl.indexOf("/cloud-wallet/") !== -1) {
+        seed = baseUrl.substr(baseUrl.indexOf("/cloud-wallet/") + "/cloud-wallet/".length);
         const seedMatch = seed.match(/^([\w\d]*).*$/);
         seed = seedMatch ? seedMatch[1] : null;
 
