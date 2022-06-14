@@ -418,7 +418,7 @@ function getWritingHandler(response) {
             } else if (err.code === 403) {
                 return response.send(403, errorMessage);
             }
-
+            console.log(err);
             return response.send(500, errorMessage);
         }
 
@@ -431,6 +431,7 @@ async function updateAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
+        console.log(e);
         return response.send(500, e);
     }
     strategy[action](getWritingHandler(response));
@@ -460,6 +461,7 @@ async function readDataForAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
+        console.log(e);
         return response.send(500, e);
     }
     strategy[action](getReadingHandler(response));
@@ -990,27 +992,10 @@ module.exports = {
 
 },{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
 const { clone } = require("../../../utils");
-const config = require("../../../config");
 
 const getAnchoringDomainConfig = async (domain) => {
     const config = require("../../../config");
-    let domainConfiguration = config.getDomainConfig(domain);
-
-    if(!domainConfiguration){
-        //if you don't have config we try to use admin service info to create one at runtime
-        try{
-            let adminService = require("./../../admin").getAdminService();
-            const getDomainInfo = $$.promisify(adminService.getDomainInfo);
-            let domainInfo = await getDomainInfo(domain);
-            if(domainInfo && domain.active && domainInfo.cloneFromDomain){
-                const clonedDomainConfiguration = config.getDomainConfig(domainInfo.cloneFromDomain);
-                domainConfiguration = clonedDomainConfiguration;
-                console.log(`Config for domain '${domain}' was loaded from admin service.`);
-            }
-        }catch(err){
-            //we ignore any errors in this try-catch block because admin component may be disabled
-        }
-    }
+    let domainConfiguration = await config.getSafeDomainConfig(domain);
 
     if (!domainConfiguration) {
         return;
@@ -1051,7 +1036,7 @@ const ANCHOR_ALREADY_EXISTS_ERR_CODE = "anchor-already-exists";
 
 module.exports = { getAnchoringDomainConfig, getDomainFromKeySSI, ALIAS_SYNC_ERR_CODE, ANCHOR_ALREADY_EXISTS_ERR_CODE };
 
-},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js":[function(require,module,exports){
 (function (process){(function (){
 function BDNS(server) {
     const DOMAIN_TEMPLATE = {
@@ -1271,26 +1256,7 @@ function convertReadableStreamToBuffer(readStream, callback) {
 async function getBricksDomainConfig(domain) {
     console.log("Looking for domain", domain);
     const config = require("../../config");
-    let domainConfiguration = config.getDomainConfig(domain);
-
-    if(!domainConfiguration){
-        //console.log("First domain search failed. Searchig for dinamic domains.");
-        //if you don't have config we try to use admin service info to create one at runtime
-        try{
-            let adminService = require("./../admin").getAdminService();
-            const getDomainInfo = $$.promisify(adminService.getDomainInfo);
-            let domainInfo = await getDomainInfo(domain);
-            //console.log("domainInfo", domainInfo);
-            if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
-                const clonedDomainConfiguration = config.getDomainConfig(domainInfo.cloneFromDomain);
-                domainConfiguration = clonedDomainConfiguration;
-                console.log(`Config for domain '${domain}' was loaded from admin service.`);
-            }
-        }catch(err){
-            //we ignore any errors in this try-catch block because admin component may be disabled
-            //console.log(err);
-        }
-    }
+    let domainConfiguration = await config.getSafeDomainConfig(domain);
 
     if (!domainConfiguration) {
         return;
@@ -1366,7 +1332,7 @@ module.exports = {
     getBrickWithExternalProvidersFallbackAsync,
 };
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","../../utils/request-utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js":[function(require,module,exports){
 const URL_PREFIX='/bricksFabric';
 
 module.exports = {URL_PREFIX};
@@ -3818,7 +3784,9 @@ const defaultSettings = {
 	mq_allow_unregistered_did: false
 }
 
-function MQHub(server) {
+async function MQHub(server, signalAsyncLoading, doneLoading) {
+
+	signalAsyncLoading();
 
 	const config = require("./../../config/index");
 
@@ -3842,8 +3810,8 @@ function MQHub(server) {
 		});
 	}
 
-	function allowUnregisteredDID(domainName){
-		const domainConfig = config.getDomainConfig(domainName);
+	async function allowUnregisteredDID(domainName){
+		const domainConfig = await config.getSafeDomainConfig(domainName);
 		let allowUnregisteredDID = defaultSettings.mq_allow_unregistered_did;
 		if(domainConfig && typeof domainConfig.mq_allow_unregistered_did !== "undefined"){
 			allowUnregisteredDID = !!domainConfig.mq_allow_unregistered_did;
@@ -3851,7 +3819,7 @@ function MQHub(server) {
 		return allowUnregisteredDID;
 	}
 
-	function putMessageHandler(request, response, next) {
+	async function putMessageHandler(request, response, next) {
 		const domainName = request.params.domain;
 		if (domains.indexOf(domainName) === -1) {
 			console.log(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
@@ -3862,7 +3830,7 @@ function MQHub(server) {
 
 		let token = request.headers['authorization'];
 
-		if(!allowUnregisteredDID(domainName) && !token){
+		if(! await allowUnregisteredDID(domainName) && !token){
 			console.log(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
 			response.statusCode = 403;
 			response.end();
@@ -3886,7 +3854,7 @@ function MQHub(server) {
 		});
 	}
 
-	function getMessageHandler(request, response, next) {
+	async function getMessageHandler(request, response, next) {
 		const domainName = request.params.domain;
 		if (domains.indexOf(domainName) === -1) {
 			console.log(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
@@ -3897,7 +3865,7 @@ function MQHub(server) {
 
 		let token = request.headers['authorization'];
 
-		if(!allowUnregisteredDID(domainName) && !token){
+		if(! await allowUnregisteredDID(domainName) && !token){
 			console.log(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
 			response.statusCode = 403;
 			response.end();
@@ -3938,44 +3906,68 @@ function MQHub(server) {
 
 	server.get(`${URL_PREFIX}/:domain/take/:hashDID/:signature_of_did`, takeMessageHandler); //  > message
 
+	function testIfMQEnabled(domain, domainToBeUsedByAdapter){
+		let domainConfig = config.getDomainConfig(domain);
 
-	function setupDomainSpecificHandlers() {
+		if (domainConfig && domainConfig.enable && domainConfig.enable.indexOf("mq") !== -1) {
+			const adapterTypeName = domainConfig["mq_type"] || "local";
+			const adapter = adapterImpls[adapterTypeName];
+			if (!adapter) {
+				console.log(`Not able to recognize the mq_type < ${adapterTypeName} > from the domain < ${domain} > config.`);
+				return;
+			}
+
+			try {
+				console.log(`Preparing to register mq endpoints for domain < ${domain} > ... `);
+				adapter(server, URL_PREFIX, domainToBeUsedByAdapter || domain, domainConfig);
+			} catch (err) {
+				console.log(`Caught an error during initialization process of the mq for domain < ${domain} >`, err);
+				return;
+			}
+
+			return true;
+		}
+	}
+
+	async function setupDomainSpecificHandlers() {
 		let confDomains = typeof config.getConfiguredDomains !== "undefined" ? config.getConfiguredDomains() : ["default"];
+		try{
+			let adminService = require("./../../components/admin").getAdminService();
+			let getDomains = $$.promisify(adminService.getDomains);
+			let virtualDomains = await getDomains();
+			//console.log("virtualDomains", virtualDomains);
+			for(let i=0; i<virtualDomains.length; i++){
+				let domainInfo = virtualDomains[i];
+				//console.log("domain info", domainInfo);
+				if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
+					if(testIfMQEnabled(domainInfo.cloneFromDomain, domainInfo.pk)){
+						console.log(`Successfully register mq endpoints for virtual domain < ${domainInfo.pk} >.`);
+						domains.push(domainInfo.pk);
+					}
+				}
+			}
+		}catch(err){
+			//we ignore any errors;
+		}
 
 		for (let i = 0; i < confDomains.length; i++) {
 			let domain = confDomains[i];
-			let domainConfig = config.getDomainConfig(domain);
-
-			if (domainConfig && domainConfig.enable && domainConfig.enable.indexOf("mq") !== -1) {
-				const adapterTypeName = domainConfig["mq_type"] || "local";
-				const adapter = adapterImpls[adapterTypeName];
-				if (!adapter) {
-					console.log(`Not able to recognize the mq_type < ${adapterTypeName} > from the domain < ${domain} > config.`);
-					continue;
-				}
-
-				try {
-					console.log(`Preparing to register mq endpoints for domain < ${domain} > ... `);
-					adapter(server, URL_PREFIX, domain, domainConfig);
-				} catch (err) {
-					console.log(`Caught an error during initialization process of the mq for domain < ${domain} >`, err);
-					continue;
-				}
-
+			if(testIfMQEnabled(domain)){
 				console.log(`Successfully register mq endpoints for domain < ${domain} >.`);
 				domains.push(domain);
 			}
 		}
 	}
 
-	setupDomainSpecificHandlers();
+	await setupDomainSpecificHandlers();
+	doneLoading();
 }
 
 module.exports = {
 	MQHub
 };
 
-},{"./../../config/index":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./adapters/localMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js","./adapters/solaceMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js","./auth/JWTIssuer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/auth/JWTIssuer.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js":[function(require,module,exports){
+},{"./../../components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./../../config/index":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./adapters/localMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js","./adapters/solaceMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js","./auth/JWTIssuer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/auth/JWTIssuer.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js":[function(require,module,exports){
 const URL_PREFIX = '/mq';
 
 module.exports = { URL_PREFIX };
@@ -5300,6 +5292,24 @@ function getConfiguredDomains() {
     return Object.keys(domainConfigs);
 }
 
+async function getSafeDomainConfig(domain, ...configKeys){
+    let domainConfig = getDomainConfig(domain);
+    if(!domainConfig){
+        try{
+            let adminService = require("./../components/admin").getAdminService();
+            const getDomainInfo = $$.promisify(adminService.getDomainInfo);
+            let domainInfo = await getDomainInfo(domain);
+            if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
+                console.log(`Config for domain '${domain}' was loaded from admin service.`);
+                return getDomainConfig(domainInfo.cloneFromDomain);
+            }
+        }catch(err){
+            //we ignore any errors in this try-catch block because admin component may be disabled
+        }
+    }
+    return getDomainConfig(domain, ...configKeys);
+}
+
 function getDomainConfig(domain, ...configKeys) {
     ensureConfigsAreLoaded();
     if(!domain) {
@@ -5355,11 +5365,11 @@ function updateDomainConfig(domain, config, callback) {
     })
 }
 
-module.exports = {getConfig, getTokenIssuers, getConfiguredDomains, getDomainConfig, updateDomainConfig};
+module.exports = {getConfig, getTokenIssuers, getConfiguredDomains, getDomainConfig, getSafeDomainConfig, updateDomainConfig};
 
 }).call(this)}).call(this,require('_process'))
 
-},{"./config-migrator":"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js","./default":"/home/runner/work/privatesky/privatesky/modules/apihub/config/default.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/index.js":[function(require,module,exports){
+},{"./../components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./config-migrator":"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js","./default":"/home/runner/work/privatesky/privatesky/modules/apihub/config/default.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","swarmutils":"/home/runner/work/privatesky/privatesky/modules/swarmutils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/index.js":[function(require,module,exports){
 (function (process){(function (){
 const {LOG_IDENTIFIER} = require("./moduleConstants");
 
@@ -5568,7 +5578,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             }
         }
 
-        function addComponent(componentName, componentConfig) {
+        function addComponent(componentName, componentConfig, callback) {
             const path = require("swarmutils").path;
 
             let componentPath = componentConfig.module;
@@ -5583,15 +5593,31 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             } catch(e){
                 throw e;
             }
+			let asyncLodingComponent = false;
+			const calledByAsynLoadingComponent = (cb)=>{
+				asyncLodingComponent = true;
+				//if the component calls before returning this function means that needs more time, is doing async calls etc.
+			}
+
+			let arguments = [server];
+
+			if(callback) {
+				arguments.push(calledByAsynLoadingComponent);
+				arguments.push(callback);
+			}
 
             if (typeof componentConfig.function !== 'undefined') {
-                middlewareImplementation[componentConfig.function](server);
+                middlewareImplementation[componentConfig.function](...arguments);
             } else {
-                middlewareImplementation(server);
+                middlewareImplementation(...arguments);
             }
+
+			if(!asyncLodingComponent && callback){
+				callback();
+			}
         }
 
-		function addComponents() {
+		function addComponents(cb) {
             const requiredComponentNames = ["config"];
             addComponent("config", {module: "./components/config"});
 
@@ -5627,24 +5653,40 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 				console.log("Final comp:", middlewareList, conf.defaultComponents)
 			}
 
-			middlewareList.forEach(componentName => {
-                const componentConfig = conf.componentsConfig[componentName];
-                addComponent(componentName, componentConfig);
-            });
+			function installNextComponent(componentList){
+				const componentName = componentList[0];
+				const componentConfig = conf.componentsConfig[componentName];
+				addComponent(componentName, componentConfig, ()=>{
+					componentList.shift();
+					if(componentList.length>0){
+						return installNextComponent(componentList);
+					}
+					if(cb){
+						cb();
+					}
+				});
+			}
+
+			if(middlewareList.indexOf("staticServer") === -1) {
+				middlewareList.push("staticServer");
+			}
+
+			installNextComponent(middlewareList);
 		}
 
         addRootMiddlewares();
-		addComponents();
-		setTimeout(function () {
-			//allow other endpoints registration before registering fallback handler
+		addComponents(()=>{
+			//at this point all components were installed and we need to register the fallback handler
+			console.log(LOG_IDENTIFIER, "Registering the fallback handler. Any endpoint registered after this one will have zero changes to be executed.");
 			server.use(function (req, res) {
+				console.log(LOG_IDENTIFIER, "Response handled by fallback handler.");
 				res.statusCode = 404;
 				res.end();
 			});
 			if (callback) {
 				return callback();
 			}
-		}, 100);
+		});
 	}
 
 	return server;
