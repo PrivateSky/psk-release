@@ -761,57 +761,73 @@ function Ethx(server, domainConfig, anchorId, newAnchorValue, jsonData) {
 
 module.exports = Ethx;
 },{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/filePersistence.js":[function(require,module,exports){
-
-function FilePersistenceStrategy(rootFolder,configuredPath){
+function FilePersistenceStrategy(rootFolder, configuredPath) {
     const self = this;
     const fileOperations = new FileOperations();
-    fileOperations.InitializeFolderStructure(rootFolder,configuredPath);
+    const FSLock = require("../utils/FSLock");
+    const AnchorPathResolver = require("../utils/AnchorPathResolver");
+    const anchorPathResolver = new AnchorPathResolver(rootFolder, configuredPath);
+    fileOperations.InitializeFolderStructure(rootFolder, configuredPath);
 
-    self.getLastVersion = function (anchorId, callback){
-        fileOperations.isFileNameValid(anchorId, (err) =>{
-            if (err){
+    const fsLocks = {};
+    self.prepareAnchoring = (anchorId, callback) => {
+        const anchorPath = anchorPathResolver.getAnchorPath(anchorId);
+        const fsLock = new FSLock(anchorPath);
+        fsLocks[anchorId] = fsLock;
+        fsLock.acquireLock(err => {
+            if (err) {
+                return callback({code: 428, message: "Versions out of sync"})
+            }
+
+            callback();
+        });
+    }
+
+    self.getLastVersion = function (anchorId, callback) {
+        fileOperations.isFileNameValid(anchorId, (err) => {
+            if (err) {
                 return callback(err);
             }
-            fileOperations.fileExist(anchorId,(err,exists) =>{
-                if (err){
-                    return callback(undefined,null);
+            fileOperations.fileExist(anchorId, (err, exists) => {
+                if (err) {
+                    return callback(undefined, null);
                 }
-                if (!exists){
-                    return callback(undefined,null);
+                if (!exists) {
+                    return callback(undefined, null);
                 }
                 //read the last hashlink for anchorId
                 return fileOperations.getlastVersion(anchorId, callback);
             })
         });
     }
-    self.getAllVersions = function (anchorId, callback){
+    self.getAllVersions = function (anchorId, callback) {
         // read all hashlinks for anchorId
-        fileOperations.isFileNameValid(anchorId, (err) =>{
-            if (err){
+        fileOperations.isFileNameValid(anchorId, (err) => {
+            if (err) {
                 return callback(err);
             }
-            fileOperations.fileExist(anchorId,(err, exists) =>{
-                if (err){
-                    return callback(undefined,[]);
+            fileOperations.fileExist(anchorId, (err, exists) => {
+                if (err) {
+                    return callback(undefined, []);
                 }
-                if (!exists){
-                    return callback(undefined,[]);
+                if (!exists) {
+                    return callback(undefined, []);
                 }
                 //read the last hashlink for anchorId
-                return fileOperations.getAllVersions(anchorId,callback);
+                return fileOperations.getAllVersions(anchorId, callback);
             })
         });
     }
-    self.createAnchor = function (anchorId, anchorValueSSI, callback){
-        fileOperations.isFileNameValid(anchorId, (err) =>{
-            if (err){
+    self.createAnchor = function (anchorId, anchorValueSSI, callback) {
+        fileOperations.isFileNameValid(anchorId, (err) => {
+            if (err) {
                 return callback(err);
             }
-            fileOperations.fileExist(anchorId,(err, exists) =>{
-                if (err){
+            fileOperations.fileExist(anchorId, (err, exists) => {
+                if (err) {
                     return callback(err);
                 }
-                if (!exists){
+                if (!exists) {
                     //file doesnt exist
                     return fileOperations.createAnchor(anchorId, anchorValueSSI, callback);
                 }
@@ -820,40 +836,56 @@ function FilePersistenceStrategy(rootFolder,configuredPath){
             })
         });
     }
-    self.appendAnchor = function(anchorId,anchorValueSSI, callback){
-        fileOperations.isFileNameValid(anchorId, (err) =>{
-            if (err){
+    self.appendAnchor = function (anchorId, anchorValueSSI, callback) {
+        const anchorPath = anchorPathResolver.getAnchorPath(anchorId);
+        const fsLock = fsLocks[anchorId]
+        fsLock.isMyLock((err, isMyLock) => {
+            if (err) {
                 return callback(err);
             }
-            fileOperations.fileExist(anchorId,(err,exists) =>{
-                if (err){
+
+            if (!isMyLock) {
+                return callback(Error(`File ${anchorPath} is locked by another process.`))
+            }
+
+            fileOperations.isFileNameValid(anchorId, (err) => {
+                if (err) {
                     return callback(err);
                 }
-                if (!exists){
-                    return callback(new Error(`Anchor ${anchorId} doesn't exist`));
-                }
-                return fileOperations.appendAnchor(anchorId, anchorValueSSI, callback);
-            })
-        });
-    }
+                fileOperations.fileExist(anchorId, (err, exists) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    if (!exists) {
+                        return callback(new Error(`Anchor ${anchorId} doesn't exist`));
+                    }
+                    return fileOperations.appendAnchor(anchorId, anchorValueSSI, err => {
+                        if (err) {
+                            return callback(err);
+                        }
 
+                        fsLock.releaseLock(callback);
+                    });
+                })
+            });
+        })
+    }
 }
 
 
-
-function FileOperations(){
-    const self =  this;
+function FileOperations() {
+    const self = this;
     const fs = require('fs');
     const path = require('path');
     let anchoringFolder;
     const endOfLine = require("os").EOL;
 
-    self.InitializeFolderStructure = function(rootFolder,configuredPath){
+    self.InitializeFolderStructure = function (rootFolder, configuredPath) {
         let storageFolder = path.join(rootFolder, configuredPath);
         anchoringFolder = path.resolve(storageFolder);
         try {
             if (!fs.existsSync(anchoringFolder)) {
-                fs.mkdirSync(anchoringFolder, { recursive: true });
+                fs.mkdirSync(anchoringFolder, {recursive: true});
             }
         } catch (e) {
             console.log("error creating anchoring folder", e);
@@ -861,7 +893,7 @@ function FileOperations(){
         }
     }
 
-    self.isFileNameValid = function(anchorId, callback){
+    self.isFileNameValid = function (anchorId, callback) {
         if (!anchorId || typeof anchorId !== "string") {
             return callback(new Error("No fileId specified."));
         }
@@ -874,12 +906,12 @@ function FileOperations(){
         return callback(undefined);
     }
 
-    self.fileExist = function(anchorId, callback){
+    self.fileExist = function (anchorId, callback) {
         const filePath = path.join(anchoringFolder, anchorId);
-        fs.stat(filePath,(err) => {
+        fs.stat(filePath, (err) => {
             if (err) {
                 if (err.code === "ENOENT") {
-                    return callback(undefined,false);
+                    return callback(undefined, false);
                 }
                 return callback(err, false);
             }
@@ -887,19 +919,19 @@ function FileOperations(){
         });
     }
 
-    self.getlastVersion = function(anchorId, callback){
-        self.getAllVersions(anchorId, (err, allVersions) =>{
-            if (err){
+    self.getlastVersion = function (anchorId, callback) {
+        self.getAllVersions(anchorId, (err, allVersions) => {
+            if (err) {
                 return callback(err);
             }
-            if (allVersions.length === 0){
-                return callback(undefined,null);
+            if (allVersions.length === 0) {
+                return callback(undefined, null);
             }
-            return callback(undefined,allVersions[allVersions.length-1]);
+            return callback(undefined, allVersions[allVersions.length - 1]);
         });
     }
 
-    self.getAllVersions = function(anchorId, callback){
+    self.getAllVersions = function (anchorId, callback) {
         const filePath = path.join(anchoringFolder, anchorId);
         fs.readFile(filePath, (err, fileHashes) => {
             if (err) {
@@ -911,16 +943,16 @@ function FileOperations(){
         });
     }
 
-    self.createAnchor = function(anchorId, anchorValueSSI, callback){
+    self.createAnchor = function (anchorId, anchorValueSSI, callback) {
         const fileContent = anchorValueSSI + endOfLine;
         const filePath = path.join(anchoringFolder, anchorId);
         fs.writeFile(filePath, fileContent, callback);
     }
 
-    self.appendAnchor = function(anchorId, anchorValueSSI, callback){
+    self.appendAnchor = function (anchorId, anchorValueSSI, callback) {
         const fileContent = anchorValueSSI + endOfLine;
         const filePath = path.join(anchoringFolder, anchorId);
-        fs.appendFile(filePath,fileContent, callback);
+        fs.appendFile(filePath, fileContent, callback);
     }
 }
 
@@ -929,7 +961,7 @@ module.exports = {
     FilePersistenceStrategy
 }
 
-},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js":[function(require,module,exports){
+},{"../utils/AnchorPathResolver":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js","../utils/FSLock":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/FSLock.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js":[function(require,module,exports){
 
 const openDSU = require("opendsu");
 
@@ -941,8 +973,8 @@ class FSX{
         this.commandData.anchorValue = anchorValue;
         this.commandData.jsonData = jsonData || {};
         const FilePersistence = require('./filePersistence').FilePersistenceStrategy;
-        const fps = new FilePersistence(server.rootFolder,domainConfig.option.path);
-        this.anchoringBehaviour = openDSU.loadApi("anchoring").getAnchoringBehaviour(fps);
+        this.fps = new FilePersistence(server.rootFolder,domainConfig.option.path);
+        this.anchoringBehaviour = openDSU.loadApi("anchoring").getAnchoringBehaviour(this.fps);
     }
 
     createAnchor(callback){
@@ -988,9 +1020,230 @@ module.exports = {
     FS: require("./fsx"),
     ETH: require("./ethx"),
     Contract: require("./contract"),
+    OBA: require("./oba")
 };
 
-},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
+},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js","./oba":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js":[function(require,module,exports){
+const LOG_IDENTIFIER = "[OBA]";
+
+function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
+
+    let {FS, ETH} = require("../index");
+    const fsHandler = new FS(server, domainConfig, anchorId, anchorValue, ...args);
+    const ethHandler = new ETH(server, domainConfig, anchorId, anchorValue, ...args);
+
+    this.createAnchor = function (callback) {
+        fsHandler.createAnchor((err, res) => {
+            if (err) {
+                return callback(err);
+            }
+            console.log(`${LOG_IDENTIFIER} optimistic create anchor ended with success.`);
+            ethHandler.createAnchor((err, res) => {
+                //TODO: handler err and res
+                if (err && !res) {
+                    console.log(`${LOG_IDENTIFIER} create for anchorId ${fsHandler.commandData.anchorId} will be synced later.`);
+                    return;
+                }
+                console.log(`${LOG_IDENTIFIER} create for anchorId ${fsHandler.commandData.anchorId} synced with success.`);
+            });
+            return callback(undefined, res);
+        });
+    }
+
+    this.appendAnchor = function (callback) {
+        fsHandler.appendAnchor((err, res) => {
+            if (err) {
+                return callback(err);
+            }
+            console.log(`${LOG_IDENTIFIER} optimistic append anchor ended with success.`);
+            ethHandler.appendAnchor((err, res) => {
+                //TODO: handler err and res
+                if (err && !res) {
+                    console.log(`${LOG_IDENTIFIER} update of anchorId ${fsHandler.commandData.anchorId} will be synced later.`);
+                    return;
+                }
+                console.log(`${LOG_IDENTIFIER} update of anchorId ${fsHandler.commandData.anchorId} synced with success.`);
+            });
+            return callback(undefined, res);
+        });
+    }
+
+    function readAllVersionsFromBlockchain(callback) {
+        console.log(`${LOG_IDENTIFIER} preparing to read info about anchorId ${fsHandler.commandData.anchorId} from the blockchain...`);
+        ethHandler.getAllVersions((err, anchorVersions) => {
+            if (err) {
+                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} syncing blockchain failed. ${err}`);
+                return callback(err);
+            }
+
+            let history = "";
+            for (let i = 0; i < anchorVersions.length; i++) {
+                history += anchorVersions[i];
+                if (i + 1 < anchorVersions.length) {
+                    history += require("os").EOL;
+                }
+            }
+
+            if(history === ""){
+                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
+                //if we don't retrieve info from blockchain we exit
+                return callback(undefined, anchorVersions);
+            }
+
+            console.log(`${LOG_IDENTIFIER} found info about anchorId ${fsHandler.commandData.anchorId} in blockchain.`);
+
+            //storing locally the history of the anchorId read from the blockchain
+            fsHandler.fps.createAnchor(anchorId, history, (err) => {
+                if (err) {
+                    console.log(`${LOG_IDENTIFIER} failed to store info about anchorId ${fsHandler.commandData.anchorId} on local because of ${err}`);
+                    return callback(err);
+                }
+                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} fully synced.`);
+                //even if we read all the versions of anchorId we return only the last one
+                return callback(undefined, anchorVersions);
+            });
+        });
+    }
+
+    this.getAllVersions = function (callback) {
+        fsHandler.getAllVersions((error, res) => {
+            if (error || !res) {
+                return readAllVersionsFromBlockchain((err, allVersions) => {
+                    if (err) {
+                        //we return the error from FS because we were not able to read any from blockchain.
+                        return callback(error);
+                    }
+                    return callback(undefined, allVersions);
+                });
+            }
+            return callback(undefined, res);
+        });
+    }
+
+    this.getLastVersion = function (callback) {
+        fsHandler.getLastVersion((error, res) => {
+            if (error || !res) {
+                return readAllVersionsFromBlockchain((err, allVersions) => {
+                    if (err) {
+                        //we return the error from FS because we were not able to read any from blockchain.
+                        return callback(error);
+                    }
+                    return callback(undefined, allVersions.pop());
+                });
+            }
+            return callback(undefined, res);
+        });
+    }
+}
+
+module.exports = OBA;
+
+},{"../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js":[function(require,module,exports){
+function AnchorPathResolver(rootFolder, configPath) {
+    const path = require("path");
+    const anchoringFolder = path.resolve(path.join(rootFolder, configPath));
+
+    this.getAnchorPath = (anchorId) => {
+        return path.join(anchoringFolder, anchorId);
+    }
+}
+
+module.exports = AnchorPathResolver;
+},{"path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/FSLock.js":[function(require,module,exports){
+const fs = require("fs");
+
+function FSLock(filePath, maxTimeMilliSeconds, forcedLockDelay) {
+    maxTimeMilliSeconds = maxTimeMilliSeconds || 5000;
+    forcedLockDelay = forcedLockDelay || 10000;
+    let lockCreationTime;
+
+    this.acquireLock = (callback) => {
+        fs.mkdir(getLockPath(), async err => {
+            if (err) {
+                if (await lockIsExpired()) {
+                   return attemptToReacquireExpiredLock(callback);
+                }
+
+                return callback(Error(`File ${filePath} is being updated by another process.`));
+            }
+
+            lockCreationTime = await getLockCreationTime();
+            callback();
+        })
+    }
+
+    this.releaseLock = (callback) => {
+        this.isMyLock((err, isMyLock) => {
+            if (err) {
+                return callback(err);
+            }
+            if (isMyLock) {
+                return fs.rm(getLockPath(filePath), {recursive: true}, callback);
+            }
+
+            callback(Error(`The lock is owned by another instance.`));
+        })
+    }
+
+    this.isMyLock = (callback) => {
+        getLockCreationTime(filePath).then(creationTime => {
+            let isOwnLock = false;
+            if (creationTime === lockCreationTime) {
+                isOwnLock = true;
+            }
+            callback(undefined, isOwnLock);
+        });
+    }
+
+    const lockIsExpired = async () => {
+        const lockStartingTime = await getLockCreationTime();
+        if (Date.now() - lockStartingTime > maxTimeMilliSeconds) {
+            return true;
+        }
+
+        return false;
+    };
+
+
+    const releaseExpiredLock = (callback)=>{
+        return setTimeout(() => {
+            fs.rm(getLockPath(), {recursive: true}, (err)=>{
+                if (err) {
+                    return callback(err);
+                }
+
+                callback();
+            });
+        }, forcedLockDelay);
+    }
+
+    const attemptToReacquireExpiredLock = (callback)=>{
+        releaseExpiredLock(err=>{
+            if (err) {
+                return callback(err);
+            }
+
+            this.acquireLock(callback);
+        })
+    }
+
+    const getLockCreationTime = async () => {
+        let stats;
+        try {
+            stats = await $$.promisify(fs.stat)(getLockPath());
+        } catch (e) {
+            return 0;
+        }
+        return stats.birthtimeMs;
+    }
+
+    const getLockPath = () => {
+        return `${filePath}.lock`;
+    }
+}
+
+module.exports = FSLock;
+},{"fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js":[function(require,module,exports){
 const { clone } = require("../../../utils");
 
 const getAnchoringDomainConfig = async (domain) => {
@@ -1088,8 +1341,7 @@ function BDNS(server) {
             }
             console.log("BDNS configuration was updated accordingly to information retrieved from admin service");
         }catch(err){
-            console.log(err);
-            console.info("Due to the error above not able to read any domains from admin service. This is not a problem, it's a configuration.");
+            console.info("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
         }
     }
 
@@ -4977,7 +5229,7 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeComponents": ["admin", "config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "cloudWallet", "stream", "staticServer"],
+    "activeComponents": ["config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "cloudWallet", "stream", "staticServer"],
     "componentsConfig": {
         "mq":{
             "module": "./components/mqHub",
@@ -10875,7 +11127,7 @@ function ArchiveConfigurator() {
             return callback(undefined, config.keySSI);
         }
 
-        config.keySSI.getRelatedType(keySSIType, callback);
+        config.keySSI.getDerivedType(keySSIType, callback);
     }
 
     this.getDLDomain = () => {
@@ -12560,14 +12812,20 @@ function BrickMapController(options) {
                                 // return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
                                 return anchoringx.createAnchor(keySSI.getAnchorId(), anchorValue,  updateAnchorCallback);
                             }
-
-                            // if (!version) {
-                            //     return anchoringx.createAnchor(keySSI.getAnchorId(), anchorValue, null, updateAnchorCallback);
-                            // }
                             return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                         });
                     } else {
-                        anchoringx.appendAnchor(keySSI.getAnchorId(), anchorValue, updateAnchorCallback);
+                        anchoringx.getLastVersion(keySSI, (err, version) => {
+                            if (err) {
+                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve last anchor version`, err));
+                            }
+
+                            if (version.getIdentifier() !== currentAnchoredHashLink.getIdentifier()) {
+                                return updateAnchorCallback({statusCode: 428, message: "Versions out of sync"})
+                            }
+
+                            anchoringx.appendAnchor(keySSI.getAnchorId(), anchorValue, updateAnchorCallback);
+                        });
                     }
                 }
 
@@ -21343,9 +21601,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
             return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err))
         }
 
-        setTimeout(() => {
-            db.saveDatabaseInternal(callback)
-        }, autosaveInterval)
+        callback();
     }
 
     this.updateRecord = function (forDID, tableName, pk, record, callback) {
@@ -21359,9 +21615,8 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
         } catch (err) {
             return callback(createOpenDSUErrorWrapper(` Could not insert record in table ${tableName} `, err));
         }
-        setTimeout(() => {
-            db.saveDatabaseInternal(callback)
-        }, autosaveInterval)
+
+        callback();
     }
 
     this.deleteRecord = function (forDID, tableName, pk, callback) {
@@ -21379,9 +21634,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
             return callback(createOpenDSUErrorWrapper(`Couldn't do remove for pk ${pk} in ${tableName}`, err))
         }
 
-        setTimeout(() => {
-            db.saveDatabaseInternal(callback)
-        }, autosaveInterval)
+        callback();
     }
 
     this.getRecord = function (forDID, tableName, pk, callback) {
@@ -31965,9 +32218,9 @@ KeySSIFactory.prototype.createType = (typeName)=>{
     return registry[typeName].functionFactory();
 }
 
-KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
+KeySSIFactory.prototype.getDerivedType = (keySSI, otherType, callback) => {
     if (keySSI.getTypeName() === otherType) {
-        return keySSI;
+        return callback(undefined, keySSI);
     }
     let currentEntry = registry[otherType];
     if (typeof currentEntry === "undefined") {
@@ -31976,7 +32229,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
     while (typeof currentEntry.derivedType !== "undefined") {
         if (currentEntry.derivedType === keySSI.getTypeName()) {
-            return $$.securityContext.getRelatedSSI(keySSI, otherType, callback);
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`${otherType} is not derived from ${keySSI.getTypeName()}`, err));
         }
         currentEntry = registry[currentEntry.derivedType];
     }
@@ -31990,6 +32243,11 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
     callback(undefined, derivedKeySSI);
 };
+
+KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
+    console.log(".getRelatedType function is obsolete. Use .getDerivedType instead.");
+    KeySSIFactory.prototype.getDerivedType(keySSI, otherType, callback);
+}
 
 KeySSIFactory.prototype.getAnchorType = (keySSI) => {
     let localKeySSI = keySSI;
@@ -32168,9 +32426,14 @@ function keySSIMixin(target, enclave) {
      * @param ssiType - string
      * @param callback - function
      */
-    target.getRelatedType = function (ssiType, callback) {
+    target.getDerivedType = function (ssiType, callback) {
         const KeySSIFactory = require("./KeySSIFactory");
-        KeySSIFactory.getRelatedType(target, ssiType, callback);
+        KeySSIFactory.getDerivedType(target, ssiType, callback);
+    }
+
+    target.getRelatedType = function (ssiType, callback) {
+        console.log(".getRelatedType function is obsolete. Use .getDerivedType instead.");
+        target.getDerivedType(ssiType, callback);
     }
 
     target.getRootKeySSITypeName = function () {
@@ -32256,6 +32519,11 @@ function keySSIMixin(target, enclave) {
         return clone;
     }
 
+    /*
+    * This method is meant to be used in order to cast between similar types of SSIs
+    * e.g. WalletSSI to ArraySSI
+    *
+    * */
     target.cast = function (newType) {
         target.getTypeName = () => {
             return newType;
@@ -33724,43 +33992,56 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
     }
 
     self.appendAnchor = function (anchorId, anchorValueSSI, callback) {
-        if (typeof anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null) {
-            return callback(Error(`Invalid call for append anchor ${anchorId}:${anchorValueSSI}`));
-        }
-        //convert to keySSI
-        let anchorIdKeySSI = anchorId;
-        if (typeof anchorId === "string") {
-            anchorIdKeySSI = keySSISpace.parse(anchorId);
-        }
-        let anchorValueSSIKeySSI = anchorValueSSI;
-        if (typeof anchorValueSSI === "string") {
-            anchorValueSSIKeySSI = keySSISpace.parse(anchorValueSSI);
-        }
+        const __appendAnchor = () => {
+            if (typeof anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null) {
+                return callback(Error(`Invalid call for append anchor ${anchorId}:${anchorValueSSI}`));
+            }
+            //convert to keySSI
+            let anchorIdKeySSI = anchorId;
+            if (typeof anchorId === "string") {
+                anchorIdKeySSI = keySSISpace.parse(anchorId);
+            }
+            let anchorValueSSIKeySSI = anchorValueSSI;
+            if (typeof anchorValueSSI === "string") {
+                anchorValueSSIKeySSI = keySSISpace.parse(anchorValueSSI);
+            }
 
-        if (!anchorIdKeySSI.canAppend()) {
-            return callback(Error(`Cannot append anchor for ${anchorId}`));
+            if (!anchorIdKeySSI.canAppend()) {
+                return callback(Error(`Cannot append anchor for ${anchorId} because of the keySSI type`));
+            }
+            persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+                // throw Error("Get all versions callback");
+                if (err) {
+                    return callback(err);
+                }
+                if (typeof data === 'undefined' || data === null) {
+                    data = [];
+                }
+                const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
+                const signer = determineSigner(anchorIdKeySSI, historyOfKeySSI);
+                const signature = anchorValueSSIKeySSI.getSignature();
+                if (typeof data[data.length - 1] === 'undefined') {
+                    return callback(`Cannot update non existing anchor ${anchorId}`);
+                }
+                const lastSignedHashLinkKeySSI = keySSISpace.parse(data[data.length - 1]);
+                const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, lastSignedHashLinkKeySSI);
+                if (!signer.verify(dataToVerify, signature)) {
+                    return callback({statusCode: 428, message: "Versions out of sync"});
+                }
+
+                persistenceStrategy.appendAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
+            })
         }
-        persistenceStrategy.getAllVersions(anchorId, (err, data) => {
-            // throw Error("Get all versions callback");
-            if (err) {
-                return callback(err);
-            }
-            if (typeof data === 'undefined' || data === null) {
-                data = [];
-            }
-            const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
-            const signer = determineSigner(anchorIdKeySSI, historyOfKeySSI);
-            const signature = anchorValueSSIKeySSI.getSignature();
-            if (typeof data[data.length - 1] === 'undefined') {
-                return callback(`Cannot update non existing anchor ${anchorId}`);
-            }
-            const lastSignedHashLinkKeySSI = keySSISpace.parse(data[data.length - 1]);
-            const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, lastSignedHashLinkKeySSI);
-            if (!signer.verify(dataToVerify, signature)) {
-                return callback({statusCode: 428, message: "Versions out of sync"});
-            }
-            persistenceStrategy.appendAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
-        })
+        if (typeof persistenceStrategy.prepareAnchoring === "function") {
+            persistenceStrategy.prepareAnchoring(anchorId, err => {
+                if (err) {
+                    return callback(err);
+                }
+                __appendAnchor();
+            });
+        } else {
+            __appendAnchor();
+        }
     }
 
     self.getAllVersions = function (anchorId, callback) {
@@ -44587,6 +44868,8 @@ function MappingEngine(storageService, options) {
         try {
           await mappingFnc.call(instance, message);
         } catch (err) {
+          //we need to return the list of touched DSUs for partial rollback procedure
+          err.mappingInstance = {registeredDSUs: instance.registeredDSUs};
           return reject(err);
         }
         return resolve({registeredDSUs: instance.registeredDSUs});
@@ -44640,6 +44923,8 @@ function MappingEngine(storageService, options) {
         //commitPromisses will contain promises for each of message
         let commitPromisses = [];
         let mappingsInstances = [];
+        //we will use this array to keep all the failed mapping instance in order to cancel batch operations on touched DSUs
+        let failedMappingInstances = [];
 
         let failedMessages = [];
 
@@ -44650,24 +44935,35 @@ function MappingEngine(storageService, options) {
         for (let i = 0; i < messages.length; i++) {
           let message = messages[i];
           if (typeof message !== "object") {
-            throw errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}])
-          }
+            let err = errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}]);
+            failedMessages.push({
+              message: message,
+              reason: err.message,
+              error: err
+            });
 
+            //wrong message type... so we log, and then we continue the execution with the rest of the messages
+            continue;
+          }
 
           try {
             let mappingInstance = await executeMappingFor(message);
             mappingsInstances.push(mappingInstance);
           } catch (err) {
+            //this .mappingInstance prop is artificial injected from the executeMappingFor function in case of an error during mapping execution
+            //isn't too nice, but it does the job
+            if(err.mappingInstance){
+              failedMappingInstances.push(err.mappingInstance);
+            }
+
             errorHandler.reportUserRelevantError("Caught error during message digest", err);
             failedMessages.push({
               message: message,
               reason: err.message,
               error: err
-            })
+            });
           }
-
         }
-
 
         function digestConfirmation(results) {
 
@@ -44694,7 +44990,24 @@ function MappingEngine(storageService, options) {
             }
           }
 
-          finish().then(() => {
+          finish().then(async () => {
+            //in case that we have failed messages we need to reset touched DSUs of that mapping;
+            //the reason being that a DSU can be kept in a local cache and later on this fact that the DSU is in a "batch" state creates a strange situation
+            for (let j = 0; j < failedMappingInstances.length; j++) {
+              let mapInstance = failedMappingInstances[j];
+              if (mapInstance.registeredDSUs) {
+                for (let i = 0; i < mapInstance.registeredDSUs.length; i++) {
+                  let touchedDSU = mapInstance.registeredDSUs[i];
+                  try{
+                    await $$.promisify(touchedDSU.cancelBatch, touchedDSU)();
+                  }catch(err){
+                    //we ignore any cancel errors for the moment
+                  }
+                }
+              }
+            }
+
+            //not that we finished with the partial rollback we can return the failed messages
             resolve(failedMessages);
           }).catch(async (err) => {
             await rollback();
@@ -44705,6 +45018,7 @@ function MappingEngine(storageService, options) {
         for (let i = 0; i < mappingsInstances.length; i++) {
           commitPromisses.push(commitMapping(mappingsInstances[i]));
         }
+
         Promise.allSettled(commitPromisses)
           .then(digestConfirmation)
           .catch(handleErrorsDuringPromiseResolving);

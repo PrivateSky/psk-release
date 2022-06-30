@@ -2482,7 +2482,7 @@ function ArchiveConfigurator() {
             return callback(undefined, config.keySSI);
         }
 
-        config.keySSI.getRelatedType(keySSIType, callback);
+        config.keySSI.getDerivedType(keySSIType, callback);
     }
 
     this.getDLDomain = () => {
@@ -4167,14 +4167,20 @@ function BrickMapController(options) {
                                 // return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
                                 return anchoringx.createAnchor(keySSI.getAnchorId(), anchorValue,  updateAnchorCallback);
                             }
-
-                            // if (!version) {
-                            //     return anchoringx.createAnchor(keySSI.getAnchorId(), anchorValue, null, updateAnchorCallback);
-                            // }
                             return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
                         });
                     } else {
-                        anchoringx.appendAnchor(keySSI.getAnchorId(), anchorValue, updateAnchorCallback);
+                        anchoringx.getLastVersion(keySSI, (err, version) => {
+                            if (err) {
+                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve last anchor version`, err));
+                            }
+
+                            if (version.getIdentifier() !== currentAnchoredHashLink.getIdentifier()) {
+                                return updateAnchorCallback({statusCode: 428, message: "Versions out of sync"})
+                            }
+
+                            anchoringx.appendAnchor(keySSI.getAnchorId(), anchorValue, updateAnchorCallback);
+                        });
                     }
                 }
 
@@ -9740,9 +9746,9 @@ KeySSIFactory.prototype.createType = (typeName)=>{
     return registry[typeName].functionFactory();
 }
 
-KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
+KeySSIFactory.prototype.getDerivedType = (keySSI, otherType, callback) => {
     if (keySSI.getTypeName() === otherType) {
-        return keySSI;
+        return callback(undefined, keySSI);
     }
     let currentEntry = registry[otherType];
     if (typeof currentEntry === "undefined") {
@@ -9751,7 +9757,7 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
     while (typeof currentEntry.derivedType !== "undefined") {
         if (currentEntry.derivedType === keySSI.getTypeName()) {
-            return $$.securityContext.getRelatedSSI(keySSI, otherType, callback);
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`${otherType} is not derived from ${keySSI.getTypeName()}`, err));
         }
         currentEntry = registry[currentEntry.derivedType];
     }
@@ -9765,6 +9771,11 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
 
     callback(undefined, derivedKeySSI);
 };
+
+KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
+    console.log(".getRelatedType function is obsolete. Use .getDerivedType instead.");
+    KeySSIFactory.prototype.getDerivedType(keySSI, otherType, callback);
+}
 
 KeySSIFactory.prototype.getAnchorType = (keySSI) => {
     let localKeySSI = keySSI;
@@ -9943,9 +9954,14 @@ function keySSIMixin(target, enclave) {
      * @param ssiType - string
      * @param callback - function
      */
-    target.getRelatedType = function (ssiType, callback) {
+    target.getDerivedType = function (ssiType, callback) {
         const KeySSIFactory = require("./KeySSIFactory");
-        KeySSIFactory.getRelatedType(target, ssiType, callback);
+        KeySSIFactory.getDerivedType(target, ssiType, callback);
+    }
+
+    target.getRelatedType = function (ssiType, callback) {
+        console.log(".getRelatedType function is obsolete. Use .getDerivedType instead.");
+        target.getDerivedType(ssiType, callback);
     }
 
     target.getRootKeySSITypeName = function () {
@@ -10031,6 +10047,11 @@ function keySSIMixin(target, enclave) {
         return clone;
     }
 
+    /*
+    * This method is meant to be used in order to cast between similar types of SSIs
+    * e.g. WalletSSI to ArraySSI
+    *
+    * */
     target.cast = function (newType) {
         target.getTypeName = () => {
             return newType;
@@ -11499,43 +11520,56 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
     }
 
     self.appendAnchor = function (anchorId, anchorValueSSI, callback) {
-        if (typeof anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null) {
-            return callback(Error(`Invalid call for append anchor ${anchorId}:${anchorValueSSI}`));
-        }
-        //convert to keySSI
-        let anchorIdKeySSI = anchorId;
-        if (typeof anchorId === "string") {
-            anchorIdKeySSI = keySSISpace.parse(anchorId);
-        }
-        let anchorValueSSIKeySSI = anchorValueSSI;
-        if (typeof anchorValueSSI === "string") {
-            anchorValueSSIKeySSI = keySSISpace.parse(anchorValueSSI);
-        }
+        const __appendAnchor = () => {
+            if (typeof anchorId === 'undefined' || typeof anchorValueSSI === 'undefined' || anchorId === null || anchorValueSSI === null) {
+                return callback(Error(`Invalid call for append anchor ${anchorId}:${anchorValueSSI}`));
+            }
+            //convert to keySSI
+            let anchorIdKeySSI = anchorId;
+            if (typeof anchorId === "string") {
+                anchorIdKeySSI = keySSISpace.parse(anchorId);
+            }
+            let anchorValueSSIKeySSI = anchorValueSSI;
+            if (typeof anchorValueSSI === "string") {
+                anchorValueSSIKeySSI = keySSISpace.parse(anchorValueSSI);
+            }
 
-        if (!anchorIdKeySSI.canAppend()) {
-            return callback(Error(`Cannot append anchor for ${anchorId}`));
+            if (!anchorIdKeySSI.canAppend()) {
+                return callback(Error(`Cannot append anchor for ${anchorId} because of the keySSI type`));
+            }
+            persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+                // throw Error("Get all versions callback");
+                if (err) {
+                    return callback(err);
+                }
+                if (typeof data === 'undefined' || data === null) {
+                    data = [];
+                }
+                const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
+                const signer = determineSigner(anchorIdKeySSI, historyOfKeySSI);
+                const signature = anchorValueSSIKeySSI.getSignature();
+                if (typeof data[data.length - 1] === 'undefined') {
+                    return callback(`Cannot update non existing anchor ${anchorId}`);
+                }
+                const lastSignedHashLinkKeySSI = keySSISpace.parse(data[data.length - 1]);
+                const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, lastSignedHashLinkKeySSI);
+                if (!signer.verify(dataToVerify, signature)) {
+                    return callback({statusCode: 428, message: "Versions out of sync"});
+                }
+
+                persistenceStrategy.appendAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
+            })
         }
-        persistenceStrategy.getAllVersions(anchorId, (err, data) => {
-            // throw Error("Get all versions callback");
-            if (err) {
-                return callback(err);
-            }
-            if (typeof data === 'undefined' || data === null) {
-                data = [];
-            }
-            const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
-            const signer = determineSigner(anchorIdKeySSI, historyOfKeySSI);
-            const signature = anchorValueSSIKeySSI.getSignature();
-            if (typeof data[data.length - 1] === 'undefined') {
-                return callback(`Cannot update non existing anchor ${anchorId}`);
-            }
-            const lastSignedHashLinkKeySSI = keySSISpace.parse(data[data.length - 1]);
-            const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, lastSignedHashLinkKeySSI);
-            if (!signer.verify(dataToVerify, signature)) {
-                return callback({statusCode: 428, message: "Versions out of sync"});
-            }
-            persistenceStrategy.appendAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
-        })
+        if (typeof persistenceStrategy.prepareAnchoring === "function") {
+            persistenceStrategy.prepareAnchoring(anchorId, err => {
+                if (err) {
+                    return callback(err);
+                }
+                __appendAnchor();
+            });
+        } else {
+            __appendAnchor();
+        }
     }
 
     self.getAllVersions = function (anchorId, callback) {
@@ -22362,6 +22396,8 @@ function MappingEngine(storageService, options) {
         try {
           await mappingFnc.call(instance, message);
         } catch (err) {
+          //we need to return the list of touched DSUs for partial rollback procedure
+          err.mappingInstance = {registeredDSUs: instance.registeredDSUs};
           return reject(err);
         }
         return resolve({registeredDSUs: instance.registeredDSUs});
@@ -22415,6 +22451,8 @@ function MappingEngine(storageService, options) {
         //commitPromisses will contain promises for each of message
         let commitPromisses = [];
         let mappingsInstances = [];
+        //we will use this array to keep all the failed mapping instance in order to cancel batch operations on touched DSUs
+        let failedMappingInstances = [];
 
         let failedMessages = [];
 
@@ -22425,24 +22463,35 @@ function MappingEngine(storageService, options) {
         for (let i = 0; i < messages.length; i++) {
           let message = messages[i];
           if (typeof message !== "object") {
-            throw errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}])
-          }
+            let err = errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}]);
+            failedMessages.push({
+              message: message,
+              reason: err.message,
+              error: err
+            });
 
+            //wrong message type... so we log, and then we continue the execution with the rest of the messages
+            continue;
+          }
 
           try {
             let mappingInstance = await executeMappingFor(message);
             mappingsInstances.push(mappingInstance);
           } catch (err) {
+            //this .mappingInstance prop is artificial injected from the executeMappingFor function in case of an error during mapping execution
+            //isn't too nice, but it does the job
+            if(err.mappingInstance){
+              failedMappingInstances.push(err.mappingInstance);
+            }
+
             errorHandler.reportUserRelevantError("Caught error during message digest", err);
             failedMessages.push({
               message: message,
               reason: err.message,
               error: err
-            })
+            });
           }
-
         }
-
 
         function digestConfirmation(results) {
 
@@ -22469,7 +22518,24 @@ function MappingEngine(storageService, options) {
             }
           }
 
-          finish().then(() => {
+          finish().then(async () => {
+            //in case that we have failed messages we need to reset touched DSUs of that mapping;
+            //the reason being that a DSU can be kept in a local cache and later on this fact that the DSU is in a "batch" state creates a strange situation
+            for (let j = 0; j < failedMappingInstances.length; j++) {
+              let mapInstance = failedMappingInstances[j];
+              if (mapInstance.registeredDSUs) {
+                for (let i = 0; i < mapInstance.registeredDSUs.length; i++) {
+                  let touchedDSU = mapInstance.registeredDSUs[i];
+                  try{
+                    await $$.promisify(touchedDSU.cancelBatch, touchedDSU)();
+                  }catch(err){
+                    //we ignore any cancel errors for the moment
+                  }
+                }
+              }
+            }
+
+            //not that we finished with the partial rollback we can return the failed messages
             resolve(failedMessages);
           }).catch(async (err) => {
             await rollback();
@@ -22480,6 +22546,7 @@ function MappingEngine(storageService, options) {
         for (let i = 0; i < mappingsInstances.length; i++) {
           commitPromisses.push(commitMapping(mappingsInstances[i]));
         }
+
         Promise.allSettled(commitPromisses)
           .then(digestConfirmation)
           .catch(handleErrorsDuringPromiseResolving);
