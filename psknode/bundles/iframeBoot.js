@@ -1308,11 +1308,20 @@ function BDNS(server) {
     const {headersMiddleware} = require('../../utils/middlewares');
 
     let bdnsCache;
+    const config = require("../../config");
+    const bdnsConfig = config.getConfig("componentsConfig", "bdns");
+
+    async function getBDNSHostsFromURL(url) {
+        const http = require("opendsu").loadAPI("http");
+        const bdnsHosts = await http.fetch(url).then(res => res.json());
+        return bdnsHosts
+    }
 
     let init_process_runned = false;
-    async function initialize(){
-        if(init_process_runned){
-           return true;
+
+    async function initialize() {
+        if (init_process_runned) {
+            return true;
         }
         init_process_runned = true;
         const fs = require("fs");
@@ -1322,16 +1331,27 @@ function BDNS(server) {
 
         bdnsCache = fs.readFileSync(bdnsHostsPath).toString();
 
-        try{
+        if (bdnsConfig && bdnsConfig.url) {
+            try {
+                const bdnsExtensions = await getBDNSHostsFromURL(bdnsConfig.url);
+                let newRegistry = JSON.parse(bdnsCache);
+                Object.assign(newRegistry, bdnsExtensions);
+                bdnsCache = JSON.stringify(newRegistry);
+            } catch (e) {
+                console.log(`Failed to get bdns hosts from url`, e);
+            }
+        }
+
+        try {
             console.log("Testing to see if admin component is active and can be used to expand BDNS configuration.");
             let adminService = require("./../admin").getAdminService();
             let getDomains = $$.promisify(adminService.getDomains);
             let domains = await getDomains();
-            if(domains){
+            if (domains) {
                 let bdnsExtensions = {};
-                for(let i=0; i<domains.length; i++){
+                for (let i = 0; i < domains.length; i++) {
                     let domain = domains[i];
-                    if(domain.active){
+                    if (domain.active) {
                         bdnsExtensions[domain.name] = DOMAIN_TEMPLATE;
                     }
                 }
@@ -1340,7 +1360,7 @@ function BDNS(server) {
                 bdnsCache = JSON.stringify(newRegistry);
             }
             console.log("BDNS configuration was updated accordingly to information retrieved from admin service");
-        }catch(err){
+        } catch (err) {
             console.info("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
         }
     }
@@ -1357,7 +1377,7 @@ function BDNS(server) {
             response.setHeader('content-type', 'application/json');
             response.statusCode = 200;
             response.end(bdnsCache);
-        }else{
+        } else {
             console.log("Bdns config not available at this moment. A 404 response will be sent.");
             response.statusCode = 404;
             return response.end('BDNS hosts not found');
@@ -1372,7 +1392,7 @@ module.exports = BDNS;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","opendsu":"opendsu","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
 const { getBrickWithExternalProvidersFallbackAsync } = require("./utils");
 
 async function getBrick(request, response) {
@@ -31847,6 +31867,10 @@ function ArraySSI(enclave, identifier) {
         hashLinkSSI.initialize(self.getBricksDomain(), brickMapHash, self.getVn(), self.getHint());
         callback(undefined, hashLinkSSI);
     }
+
+    self.canAppend = function(){
+        return false;
+    }
 }
 
 function createArraySSI(enclave, identifier) {
@@ -31943,6 +31967,10 @@ function ConstSSI(enclave, identifier) {
         const hashLinkSSI = keySSIFactory.createType(SSITypes.HASH_LINK_SSI);
         hashLinkSSI.initialize(self.getBricksDomain(), brickMapHash, self.getVn(), self.getHint());
         callback(undefined, hashLinkSSI);
+    }
+
+    self.canAppend = function(){
+        return false;
     }
 }
 
@@ -42654,11 +42682,19 @@ function Enclave_Mixin(target, did) {
             }
         }
 
-        target.getReadForKeySSI(undefined, keySSI.getIdentifier(), (err, sReadSSI) => {
+        resolverAPI.loadDSU(keySSI, options, (err, dsu)=>{
             if (err) {
-                return callback(err);
+                target.getReadForKeySSI(undefined, keySSI.getIdentifier(), (err, sReadSSI) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    resolverAPI.loadDSU(sReadSSI, options, callback);
+                });
+
+                return;
             }
-            resolverAPI.loadDSU(sReadSSI, options, callback);
+
+            callback(undefined, dsu);
         })
     }
 }
@@ -44431,16 +44467,15 @@ const registry = require("../apisRegistry");
 * the this of the mapping will be populated with the data extracted from the DSU
 * */
 registry.defineApi("loadJSONS", async function (dsu, jsonIndications) {
-	for (let prop in jsonIndications) {
-		try {
-			let data;
-			data = await dsu.readFile(jsonIndications[prop]);
-			this[prop] = JSON.parse(data);
-		}
-		catch (e){
-			console.log("Failed to load JSON due to ",e.message);
-		}
-	}
+    for (let prop in jsonIndications) {
+        try {
+            let data;
+            data = await dsu.readFile(jsonIndications[prop]);
+            this[prop] = JSON.parse(data);
+        } catch (e) {
+            console.log("Failed to load JSON due to ", e.message);
+        }
+    }
 });
 
 /*
@@ -44448,158 +44483,180 @@ registry.defineApi("loadJSONS", async function (dsu, jsonIndications) {
 * the data from the this of the mapping will be saved into the DSU
 * */
 registry.defineApi("saveJSONS", async function (dsu, jsonIndications) {
-	for (let prop in jsonIndications) {
-		let data = JSON.stringify(this[prop]);
-		await dsu.writeFile(jsonIndications[prop], data);
-	}
+    for (let prop in jsonIndications) {
+        let data = JSON.stringify(this[prop]);
+        await dsu.writeFile(jsonIndications[prop], data);
+    }
 });
 
 function promisifyDSUAPIs(dsu) {
-	//this API method list will be promisify on the fly with the help of the registerDSU method and a Proxy over DSU instance
-	const promisifyAPIs = [
-		"addFile",
-		"addFiles",
-		"addFolder",
-		"appendToFile",
-		"batch",
-		"beginBatch",
-		"cancelBatch",
-		"cloneFolder",
-		"commitBatch",
-		"createFolder",
-		"delete",
-		"dsuLog",
-		"extractFile",
-		"extractFolder",
-		"getKeySSI",
-		"getKeySSIAsObject",
-		"getKeySSIAsString",
-		"getSSIForMount",
-		"init",
-		"listFiles",
-		"listFolders",
-		"listMountedDossiers",
-		"load",
-		"mount",
-		"readDir",
-		"readFile",
-		"rename",
-		"stat",
-		"unmount",
-		"writeFile",
-		"listMountedDSUs",
-		"refresh"
-	];
+    //this API method list will be promisify on the fly with the help of the registerDSU method and a Proxy over DSU instance
+    const promisifyAPIs = [
+        "addFile",
+        "addFiles",
+        "addFolder",
+        "appendToFile",
+        "batch",
+        "beginBatch",
+        "cancelBatch",
+        "cloneFolder",
+        "commitBatch",
+        "createFolder",
+        "delete",
+        "dsuLog",
+        "extractFile",
+        "extractFolder",
+        "getKeySSI",
+        "getKeySSIAsObject",
+        "getKeySSIAsString",
+        "getSSIForMount",
+        "init",
+        "listFiles",
+        "listFolders",
+        "listMountedDossiers",
+        "load",
+        "mount",
+        "readDir",
+        "readFile",
+        "rename",
+        "stat",
+        "unmount",
+        "writeFile",
+        "listMountedDSUs",
+        "refresh"
+    ];
 
-	const promisifyHandler = {
-		get: function (target, prop, receiver) {
-			if (promisifyAPIs.indexOf(prop) !== -1) {
-				return $$.promisify(target[prop]);
-			}
-			return target[prop];
-		}
-	};
+    const promisifyHandler = {
+        get: function (target, prop, receiver) {
+            if (promisifyAPIs.indexOf(prop) !== -1) {
+                return $$.promisify(target[prop]);
+            }
+            return target[prop];
+        }
+    };
 
-	//we create a proxy over the normal DSU / Archive instance
-	//in order to promisify on the fly the public API to be easier to work with in the mapping functions
-	return new Proxy(dsu, promisifyHandler);
+    //we create a proxy over the normal DSU / Archive instance
+    //in order to promisify on the fly the public API to be easier to work with in the mapping functions
+    return new Proxy(dsu, promisifyHandler);
 }
 
 //all DSUs that are created with different exposed APIs need to be registered
 // in order to control the batch operations and promisify the API on them
 registry.defineApi("registerDSU", function (dsu) {
-	if (typeof dsu === "undefined" || typeof dsu.beginBatch !== "function") {
-		throw Error("registerDSU needs a DSU instance");
-	}
-	if (typeof this.registeredDSUs === "undefined") {
-		this.registeredDSUs = [];
-	}
+    if (typeof dsu === "undefined" || typeof dsu.beginBatch !== "function") {
+        throw Error("registerDSU needs a DSU instance");
+    }
+    if (typeof this.registeredDSUs === "undefined") {
+        this.registeredDSUs = [];
+    }
 
-	//TODO: temporary fix, this apiRegistry is now instantiated for each mapping message
-	if(!dsu.batchInProgress()){
-		this.registeredDSUs.push(dsu);
-		dsu.beginBatch();
-	}
+    //TODO: temporary fix, this apiRegistry is now instantiated for each mapping message
+    if (!dsu.batchInProgress()) {
+        this.registeredDSUs.push(dsu);
+        dsu.beginBatch();
+    }
 
-	return promisifyDSUAPIs(dsu);
+    return promisifyDSUAPIs(dsu);
 });
 
-registry.defineApi("loadConstSSIDSU", async function (constSSI,options) {
-	const resolver = this.getResolver();
+registry.defineApi("loadConstSSIDSU", async function (constSSI, options) {
+    const resolver = await this.getResolver();
 
-	let dsu;
-	try {
-		dsu= await resolver.loadDSU(constSSI);
-	}
-	catch (e){
-		//TODO check error type
-		//on purpose if DSU does not exists an error gets throw
-	}
+    let dsu;
+    try {
+        dsu = await resolver.loadDSU(constSSI);
+    } catch (e) {
+        //TODO check error type
+        //on purpose if DSU does not exists an error gets throw
+    }
 
-	if (dsu) {
-		//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-		return {dsu: this.registerDSU(dsu), alreadyExists: true};
-	}
+    if (dsu) {
+        //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+        return {dsu: this.registerDSU(dsu), alreadyExists: true};
+    }
 
-	dsu = await resolver.createDSUForExistingSSI(constSSI, options);
+    dsu = await resolver.createDSUForExistingSSI(constSSI, options);
 
-	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-	return {dsu: this.registerDSU(dsu), alreadyExists: false};
+    //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+    return {dsu: this.registerDSU(dsu), alreadyExists: false};
 });
 
 registry.defineApi("loadArraySSIDSU", async function (domain, arr) {
-	const opendsu = require("opendsu");
-	const resolver = this.getResolver();
-	const keySSISpace = opendsu.loadApi("keyssi");
+    const opendsu = require("opendsu");
+    const resolver = await this.getResolver();
+    const keySSISpace = opendsu.loadApi("keyssi");
 
-	const keySSI = keySSISpace.createArraySSI(domain, arr);
-	let dsu = await resolver.loadDSU(keySSI);
-	if (dsu) {
-		//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-		return {dsu: this.registerDSU(dsu), alreadyExists: true};
-	}
+    const keySSI = keySSISpace.createArraySSI(domain, arr);
+    let dsu = await resolver.loadDSU(keySSI);
+    if (dsu) {
+        //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+        return {dsu: this.registerDSU(dsu), alreadyExists: true};
+    }
 
-	dsu = await resolver.createArrayDSU(domain, arr);
-	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-	return {dsu: this.registerDSU(dsu), alreadyExists: false};
+    dsu = await resolver.createArrayDSU(domain, arr);
+    //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+    return {dsu: this.registerDSU(dsu), alreadyExists: false};
 });
 
 registry.defineApi("createDSU", async function (domain, ssiType, options) {
-	let dsu = await this.getResolver().createDSUx(domain, ssiType, options);
-	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-	return this.registerDSU(dsu);
+    const template = require("opendsu").loadApi("keyssi").createTemplateKeySSI(ssiType, domain);
+    let resolver = await this.getResolver();
+    let dsu = await resolver.createDSU(template, options);
+    //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+    return this.registerDSU(dsu);
 });
 
 registry.defineApi("loadDSU", async function (keySSI, options) {
-	let dsu = await this.getResolver().loadDSU(keySSI, options);
-	if (!dsu) {
-		throw new Error("No DSU found for " + keySSI);
-	}
-	//take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
-	return this.registerDSU(dsu);
+    let resolver = await this.getResolver();
+    let dsu = await resolver.loadDSU(keySSI, options);
+    if (!dsu) {
+        throw new Error("No DSU found for " + keySSI);
+    }
+    //take note that this.registerDSU returns a Proxy Object over the DSU and this Proxy we need to return also
+    return this.registerDSU(dsu);
 });
 
 
 //an api that returns an OpenDSU Resolver instance that has promisified methods
 // to be used in mappings easier
 registry.defineApi("getResolver", function (domain, ssiType, options) {
-	const promisify = ["createDSU",
-		"createDSUx",
-		"createSeedDSU",
-		"createArrayDSU",
-		"createDSUForExistingSSI",
-		"loadDSU"];
+    return new Promise((resolve, reject) => {
 
-	const resolver = require("opendsu").loadApi("resolver");
+        const resolverInherited = ["createDSUx",
+            "createSeedDSU",
+            "createArrayDSU",
+            "createDSUForExistingSSI"];
 
-	const instance = {};
-	instance.__proto__ = resolver;
+        const promisify = ["createDSU", "loadDSU"];
 
-	for (let i = 0; i < promisify.length; i++) {
-		instance[promisify[i]] = $$.promisify(resolver[promisify[i]]);
-	}
+        const scApi = require("opendsu").loadApi("sc");
+        scApi.getSharedEnclave((err, sharedEnclave) => {
+            const defaultResolver = require("opendsu").loadApi("resolver");
+            let resolver = defaultResolver;
+            if (err) {
+                console.log("SharedEnclave not available. Fallback to standard resolver.");
+            } else {
+                resolver = sharedEnclave;
+            }
 
-	return instance;
+            const instance = {};
+            instance.__proto__ = resolver;
+
+            for (let i = 0; i < promisify.length; i++) {
+                let methodName = promisify[i];
+                instance[methodName] = $$.promisify(resolver[methodName]);
+            }
+
+            for (let i = 0; i < resolverInherited.length; i++) {
+                let methodName = resolverInherited[i];
+                instance[methodName] = $$.promisify(defaultResolver[methodName]);
+            }
+
+
+            resolve(instance);
+        });
+    });
+
 });
 
 
