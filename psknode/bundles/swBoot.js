@@ -14779,7 +14779,7 @@ const JWT_ERRORS = {
 	JWT_TOKEN_NOT_ACTIVE: 'JWT_TOKEN_NOT_ACTIVE',
 	ROOT_OF_TRUST_NOT_VALID: 'ROOT_OF_TRUST_NOT_VALID',
 	AUDIENCE_OF_PRESENTATION_NOT_DEFINED: 'AUDIENCE_OF_PRESENTATION_NOT_DEFINED',
-	HOLDER_AND_AUDIENCE_MUST_BE_DID: 'HOLDER_AND_AUDIENCE_MUST_BE_DID'
+	HOLDER_AND_VERIFIER_MUST_BE_DID: 'HOLDER_AND_VERIFIER_MUST_BE_DID'
 };
 
 
@@ -14802,13 +14802,6 @@ const LABELS = {
 	SUBJECT_SSI: 'subjectSSI'
 };
 
-const VALIDATION_STRATEGIES = {
-	SIGNATURE: 'SIGNATURE',
-	ROOTS_OF_TRUST: 'ROOTS_OF_TRUST',
-	ZERO_KNOWLEDGE_PROOF_CREDENTIAL: 'ZERO_KNOWLEDGE_PROOF_CREDENTIAL',
-	INVALID_VALIDATION_STRATEGY: 'INVALID_VALIDATION_STRATEGY'
-};
-
 function getDefaultJWTOptions() {
 	const now = Date.now();
 	return {
@@ -14817,6 +14810,12 @@ function getDefaultJWTOptions() {
 }
 
 const IMMUTABLE_PUBLIC_CLAIMS = ['vc', 'vp', 'iss', 'sub', 'iat', 'verifiableCredential', 'holder'];
+
+const VALIDATION_STRATEGIES = {
+	DEFAULT: "DEFAULT",
+	ROOTS_OF_TRUST: "ROOTS_OF_TRUST",
+	INVALID_VALIDATION_STRATEGY: "INVALID_VALIDATION_STRATEGY"
+};
 
 module.exports = {
 	JWT_DEFAULTS,
@@ -14827,92 +14826,93 @@ module.exports = {
 	VALIDATION_STRATEGIES
 };
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js":[function(require,module,exports){
-const { createJWTVc, loadJWTVc } = require('./vc/jwtVc');
-const { createJWTVp, loadJWTVp } = require('./vp/jwtVp');
+const {createJWTVc, loadJWTVc} = require('./vc/jwtVc');
+const {createJWTVp, loadJWTVp} = require('./vp/jwtVp');
+const validationStrategies = require("./validationStrategies");
 
 function createJWTVerifiableCredential(issuer, subject, options, callback) {
-	if (typeof options === 'function') {
-		callback = options;
-		options = {};
-	}
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
 
-	const jwtInstance = createJWTVc(issuer, subject, options);
-	jwtInstance.onInstanceReady((err) => {
-		if (err) {
-			return callback(err);
-		}
+    const jwtInstance = createJWTVc(issuer, subject, options);
+    jwtInstance.onInstanceReady((err) => {
+        if (err) {
+            return callback(err);
+        }
 
-		callback(undefined, jwtInstance);
-	});
+        callback(undefined, jwtInstance);
+    });
 }
 
 async function createJWTVerifiableCredentialAsync(issuer, subject, options) {
-	return $$.promisify(createJWTVerifiableCredential)(issuer, subject, options);
+    return $$.promisify(createJWTVerifiableCredential)(issuer, subject, options);
 }
 
 function loadJWTVerifiableCredential(encodedJWTVc, callback) {
-	const jwtInstance = loadJWTVc(encodedJWTVc);
-	jwtInstance.onInstanceReady((err) => {
-		if (err) {
-			return callback(err);
-		}
+    const jwtInstance = loadJWTVc(encodedJWTVc);
+    jwtInstance.onInstanceReady((err) => {
+        if (err) {
+            return callback(err);
+        }
 
-		callback(undefined, jwtInstance);
-	});
+        callback(undefined, jwtInstance);
+    });
 }
 
 async function loadJWTVerifiableCredentialAsync(encodedJWTVc) {
-	return $$.promisify(loadJWTVerifiableCredential)(encodedJWTVc);
+    return $$.promisify(loadJWTVerifiableCredential)(encodedJWTVc);
 }
 
 function createJWTVerifiablePresentation(issuer, options, callback) {
-	if (typeof options === 'function') {
-		callback = options;
-		options = {};
-	}
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
 
-	const jwtInstance = createJWTVp(issuer, options);
-	jwtInstance.onInstanceReady((err) => {
-		if (err) {
-			return callback(err);
-		}
+    const jwtInstance = createJWTVp(issuer, options);
+    jwtInstance.onInstanceReady((err) => {
+        if (err) {
+            return callback(err);
+        }
 
-		callback(undefined, jwtInstance);
-	});
+        callback(undefined, jwtInstance);
+    });
 }
 
 async function createJWTVerifiablePresentationAsync(issuer, options) {
-	return $$.promisify(createJWTVerifiablePresentation)(issuer, options);
+    return $$.promisify(createJWTVerifiablePresentation)(issuer, options);
 }
 
 function loadJWTVerifiablePresentation(encodedJWTVp, callback) {
-	const jwtInstance = loadJWTVp(encodedJWTVp);
-	jwtInstance.onInstanceReady((err) => {
-		if (err) {
-			return callback(err);
-		}
+    const jwtInstance = loadJWTVp(encodedJWTVp);
+    jwtInstance.onInstanceReady((err) => {
+        if (err) {
+            return callback(err);
+        }
 
-		callback(undefined, jwtInstance);
-	});
+        callback(undefined, jwtInstance);
+    });
 }
 
 async function loadJWTVerifiablePresentationAsync(encodedJWTVp) {
-	return $$.promisify(loadJWTVerifiablePresentation)(encodedJWTVp);
+    return $$.promisify(loadJWTVerifiablePresentation)(encodedJWTVp);
 }
 
 module.exports = {
-	createJWTVerifiableCredential,
-	createJWTVerifiableCredentialAsync,
-	createJWTVerifiablePresentation,
-	createJWTVerifiablePresentationAsync,
-	loadJWTVerifiableCredential,
-	loadJWTVerifiableCredentialAsync,
-	loadJWTVerifiablePresentation,
-	loadJWTVerifiablePresentationAsync,
-
-	JWT_ERRORS: require('./constants').JWT_ERRORS
+    createJWTVerifiableCredential,
+    createJWTVerifiableCredentialAsync,
+    createJWTVerifiablePresentation,
+    createJWTVerifiablePresentationAsync,
+    loadJWTVerifiableCredential,
+    loadJWTVerifiableCredentialAsync,
+    loadJWTVerifiablePresentation,
+    loadJWTVerifiablePresentationAsync,
+    validationStrategies,
+    JWT_ERRORS: require('./constants').JWT_ERRORS
 };
-},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./vc/jwtVc":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/jwtVc.js","./vp/jwtVp":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js":[function(require,module,exports){
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./validationStrategies":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js","./vc/jwtVc":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/jwtVc.js","./vp/jwtVp":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js":[function(require,module,exports){
 const { JWT_ERRORS, IMMUTABLE_PUBLIC_CLAIMS } = require('../constants');
 const { base64UrlEncode } = require('../utils');
 const { signJWT } = require('./sign');
@@ -15006,11 +15006,15 @@ const utils = require('../utils');
  * @returns {{typ: string, alg: string}}
  */
 function getRequiredJWTHeader(options) {
-	const { alg, typ } = options; // can be extended with other attributes
+	const { alg, typ, kid } = options; // can be extended with other attributes
 
 	return {
 		alg: alg || JWT_DEFAULTS.ALG,
-		typ: typ || JWT_DEFAULTS.TYP
+		typ: typ || JWT_DEFAULTS.TYP,
+		// Used in case of asymmetric encryption of the signature.
+		// Kid is actually the did of the verifier who can validate the signature.
+		// This is part of signatureValidationStrategy proposal
+		kid: kid
 	};
 }
 
@@ -15080,8 +15084,8 @@ const keySSISpace = openDSU.loadApi('keyssi');
 const keySSIResolver = require('key-ssi-resolver');
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 
-const { LABELS, JWT_ERRORS } = require('../constants');
-const { base64UrlEncode, getIssuerFormat } = require('../utils');
+const {LABELS, JWT_ERRORS} = require('../constants');
+const {base64UrlEncode, getIssuerFormat, asymmetricalEncryption} = require('../utils');
 
 /**
  * This method is signing the encoded header and payload of a JWT and returns the full signed JWT (header.payload.signature)
@@ -15091,23 +15095,31 @@ const { base64UrlEncode, getIssuerFormat } = require('../utils');
  * @param callback {Function}
  */
 function signJWT(jwtHeader, jwtPayload, callback) {
-	const issuer = jwtPayload.iss;
-	const issuerType = getIssuerFormat(issuer);
-	const dataToSign = [base64UrlEncode(JSON.stringify(jwtHeader)), base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
+    // TODO: If kid attribute is present inside jwtHeader and is a readable DID, the JWT will be asymmetrically signed using kid's value.
+    //  This type of signing can be validated only by a verifier that is using Signature Validation Strategy. Also, create verify method for signature validation
 
-	switch (issuerType) {
-		case LABELS.ISSUER_SSI: {
-			return signUsingSSI(issuer, dataToSign, callback);
-		}
+    const issuer = jwtPayload.iss;
+    const issuerType = getIssuerFormat(issuer);
+    let dataToSign = [base64UrlEncode(JSON.stringify(jwtHeader)), base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
+    const kidType = getIssuerFormat(jwtHeader.kid);
+    if (kidType === LABELS.ISSUER_DID) {
+        dataToSign = base64UrlEncode(JSON.stringify({iss: issuer, kid: jwtHeader.kid}));
+        return asymmetricalEncryption(issuer, jwtHeader.kid, dataToSign, callback);
+    }
 
-		case LABELS.ISSUER_DID: {
-			return signUsingDID(issuer, dataToSign, callback);
-		}
+    switch (issuerType) {
+        case LABELS.ISSUER_SSI: {
+            return signUsingSSI(issuer, dataToSign, callback);
+        }
 
-		default: {
-			return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
-		}
-	}
+        case LABELS.ISSUER_DID: {
+            return signUsingDID(issuer, dataToSign, callback);
+        }
+
+        default: {
+            return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+        }
+    }
 }
 
 /**
@@ -15117,21 +15129,21 @@ function signJWT(jwtHeader, jwtPayload, callback) {
  * @param callback {Function}
  */
 function signUsingSSI(issuer, dataToSign, callback) {
-	try {
-		const issuerKeySSI = keySSISpace.parse(issuer);
-		const sign = cryptoRegistry.getSignFunction(issuerKeySSI);
-		if (typeof sign !== 'function') {
-			return callback(new Error('Signing not available for ' + issuerKeySSI.getIdentifier(true)));
-		}
+    try {
+        const issuerKeySSI = keySSISpace.parse(issuer);
+        const sign = cryptoRegistry.getSignFunction(issuerKeySSI);
+        if (typeof sign !== 'function') {
+            return callback(new Error('Signing not available for ' + issuerKeySSI.getIdentifier(true)));
+        }
 
-		const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
-		const hashResult = hashFn(dataToSign);
-		const signResult = sign(hashResult, issuerKeySSI.getPrivateKey());
-		const encodedSignResult = base64UrlEncode(signResult);
-		callback(undefined, encodedSignResult);
-	} catch (e) {
-		return callback(e);
-	}
+        const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
+        const hashResult = hashFn(dataToSign);
+        const signResult = sign(hashResult, issuerKeySSI.getPrivateKey());
+        const encodedSignResult = base64UrlEncode(signResult);
+        callback(undefined, encodedSignResult);
+    } catch (e) {
+        return callback(e);
+    }
 }
 
 /**
@@ -15141,22 +15153,214 @@ function signUsingSSI(issuer, dataToSign, callback) {
  * @param callback {Function}
  */
 function signUsingDID(issuer, dataToSign, callback) {
-	w3cDID.resolveDID(issuer, (err, didDocument) => {
-		if (err) {
-			return callback(`Failed to resolve did ${issuer}`);
-		}
+    w3cDID.resolveDID(issuer, (err, didDocument) => {
+        if (err) {
+            return callback(`Failed to resolve did ${issuer}`);
+        }
 
-		const hashResult = crypto.sha256(dataToSign);
-		didDocument.sign(hashResult, (signError, signResult) => {
-			if (signError || !signResult) return callback(signError);
-			const encodedSignResult = base64UrlEncode(signResult);
-			callback(undefined, encodedSignResult);
-		});
-	});
+        const hashResult = crypto.sha256(dataToSign);
+        didDocument.sign(hashResult, (signError, signResult) => {
+            if (signError || !signResult) return callback(signError);
+            const encodedSignResult = base64UrlEncode(signResult);
+            callback(undefined, encodedSignResult);
+        });
+    });
 }
 
 module.exports = {
-	signJWT
+    signJWT
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/verify.js":[function(require,module,exports){
+const opendsu = require('opendsu');
+const w3cDID = opendsu.loadAPI('w3cdid');
+const crypto = opendsu.loadAPI('crypto');
+const keySSISpace = opendsu.loadApi('keyssi');
+const keySSIResolver = require('key-ssi-resolver');
+const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+
+const {JWT_ERRORS, LABELS} = require("../constants");
+const {parseJWTSegments, asymmetricalDecryption, getIssuerFormat} = require("../utils");
+
+/**
+ * This method verifies the encrypted credentials using the private key of the audience. <br />
+ * Only the intended audience can decrypt the encrypted credential to validate it.
+ * @param jwtPayload
+ * @param callback
+ */
+function verifyEncryptedCredential(jwtPayload, callback) {
+    const verifyResult = { verifyResult: true, verifiableCredential: [] };
+    const encryptedCredentials = jwtPayload.vp.verifiableCredential;
+    const audience = jwtPayload.aud;
+    if (!audience) {
+        verifyResult.verifyResult = false;
+        verifyResult.verifiableCredential.push({
+            errorMessage: JWT_ERRORS.AUDIENCE_OF_PRESENTATION_NOT_DEFINED
+        });
+
+        return callback(undefined, verifyResult);
+    }
+
+    const chain = (index) => {
+        if (index === encryptedCredentials.length) {
+            return callback(undefined, verifyResult);
+        }
+
+        const encryptedCredential = encryptedCredentials[index];
+        asymmetricalDecryption(audience, encryptedCredential, (err, decryptedJWTVc) => {
+            if (err) {
+                verifyResult.verifyResult = false;
+                verifyResult.verifiableCredential.push({
+                    jwtVc: encryptedCredential,
+                    errorMessage: err
+                });
+
+                return chain(++index);
+            }
+
+            parseJWTSegments(decryptedJWTVc, (err, result) => {
+                if (err) {
+                    verifyResult.verifyResult = false;
+                    verifyResult.verifiableCredential.push({
+                        jwtVc: encryptedCredential,
+                        errorMessage: err
+                    });
+
+                    return chain(++index);
+                }
+
+                verifyResult.verifiableCredential.push(result.jwtPayload);
+                chain(++index);
+            });
+        });
+    };
+
+    chain(0);
+}
+
+/**
+ * This method verifies if the roots of trust are the actual issuers of the verifiable credentials
+ * @param jwtPayload
+ * @param rootsOfTrust
+ * @param callback
+ */
+function verifyRootsOfTrust(jwtPayload, rootsOfTrust, callback) {
+    const jwtVcList = jwtPayload.vp.verifiableCredential;
+    let verifyResult = { verifyResult: true, verifiableCredential: [] };
+
+    const chain = (index) => {
+        if (index === jwtVcList.length) {
+            return callback(undefined, verifyResult);
+        }
+
+        const jwtVc = jwtVcList[index];
+        parseJWTSegments(jwtVc, (err, result) => {
+            if (err) {
+                verifyResult.verifyResult = false;
+                verifyResult.verifiableCredential.push({
+                    jwtVc: jwtVc,
+                    errorMessage: err
+                });
+                return chain(++index);
+            }
+
+            let jwtPayload = result.jwtPayload;
+            const rootOfTrust = rootsOfTrust.find(r => r === jwtPayload.iss);
+            if (!rootOfTrust) {
+                verifyResult.verifyResult = false;
+                verifyResult.verifiableCredential.push({
+                    jwtVc: jwtVc,
+                    errorMessage: JWT_ERRORS.ROOT_OF_TRUST_NOT_VALID
+                });
+                return chain(++index);
+            }
+
+            verifyResult.verifiableCredential.push(result.jwtPayload);
+            chain(++index);
+        });
+    };
+
+    chain(0);
+}
+
+/**
+ * This method is verifying the encoded JWT from the current instance according to the issuerType
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param options
+ * @param callback {Function}
+ */
+function verifyJWT(issuer, signature, signedData, options, callback) {
+    if (options.kid) {
+        return asymmetricalDecryption(options.kid, signature, callback);
+    }
+
+    const issuerType = getIssuerFormat(issuer);
+    switch (issuerType) {
+        case LABELS.ISSUER_SSI: {
+            return verifyUsingSSI(issuer, signature, signedData, callback);
+        }
+
+        case LABELS.ISSUER_DID: {
+            return verifyUsingDID(issuer, signature, signedData, callback);
+        }
+
+        default: {
+            callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
+        }
+    }
+}
+
+/**
+ * This method is verifying an SSI signed JWT
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param callback {Function}
+ */
+function verifyUsingSSI(issuer, signature, signedData, callback) {
+    try {
+        const issuerKeySSI = keySSISpace.parse(issuer);
+        const publicKey = issuerKeySSI.getPublicKey();
+        const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
+        const hashResult = hashFn(signedData);
+
+        const verify = cryptoRegistry.getVerifyFunction(issuerKeySSI);
+        const verifyResult = verify(hashResult, publicKey, signature);
+        callback(undefined, verifyResult);
+    } catch (e) {
+        return callback(e);
+    }
+}
+
+/**
+ * This method is verifying a DID signed JWT
+ * @param issuer
+ * @param signature
+ * @param signedData
+ * @param callback {Function}
+ */
+function verifyUsingDID(issuer, signature, signedData, callback) {
+    w3cDID.resolveDID(issuer, (err, didDocument) => {
+        if (err) {
+            return callback(`Failed to resolve did ${issuer}`);
+        }
+
+        const hashResult = crypto.sha256(signedData);
+        didDocument.verify(hashResult, signature, (verifyError, verifyResult) => {
+            if (verifyError) {
+                return callback(verifyError);
+            }
+
+            callback(null, verifyResult);
+        });
+    });
+}
+
+module.exports = {
+    verifyJWT,
+    verifyRootsOfTrust,
+    verifyEncryptedCredential
 };
 },{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js":[function(require,module,exports){
 const opendsu = require('opendsu');
@@ -15169,44 +15373,44 @@ const keySSIFactory = keySSIResolver.KeySSIFactory;
 const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 templateSeedSSI.load(SSITypes.SEED_SSI, 'default');
 
-const { LABELS, JWT_ERRORS } = require('./constants');
+const {LABELS, JWT_ERRORS} = require('./constants');
 
 function base58Decode(data, keepBuffer) {
-	const decodedValue = cryptoRegistry.getDecodingFunction(templateSeedSSI).call(this, data);
-	if (keepBuffer) {
-		return decodedValue;
-	}
-	return decodedValue ? decodedValue.toString() : null;
+    const decodedValue = cryptoRegistry.getDecodingFunction(templateSeedSSI).call(this, data);
+    if (keepBuffer) {
+        return decodedValue;
+    }
+    return decodedValue ? decodedValue.toString() : null;
 }
 
 function base64UrlEncode(source) {
-	const buffer = $$.Buffer.from(source, 'utf-8');
-	return buffer.toString('base64')
-		.replace(/=/g, '')
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_');
+    const buffer = $$.Buffer.from(source, 'utf-8');
+    return buffer.toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
 }
 
 function base64UrlDecode(source, keepAsBuffer = false) {
-	const buffer = $$.Buffer.from(source, 'base64');
-	if (keepAsBuffer) {
-		return buffer;
-	}
+    const buffer = $$.Buffer.from(source, 'base64');
+    if (keepAsBuffer) {
+        return buffer;
+    }
 
-	return buffer.toString('utf-8');
+    return buffer.toString('utf-8');
 }
 
 function dateTimeFormatter(timestamp) {
-	if (!timestamp) {
-		return null;
-	}
+    if (!timestamp) {
+        return null;
+    }
 
-	return new Date(timestamp).toISOString().split('.')[0] + 'Z';
+    return new Date(timestamp).toISOString().split('.')[0] + 'Z';
 }
 
 function isValidURL(str) {
-	const pattern = new RegExp('https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)', 'i');
-	return !!pattern.test(str);
+    const pattern = new RegExp('https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)', 'i');
+    return !!pattern.test(str);
 }
 
 /**
@@ -15214,29 +15418,29 @@ function isValidURL(str) {
  * @param identity {string | Object} - The KeySSI instance | readable SSI string | DIDInstance | readable DID string
  */
 function getReadableIdentity(identity) {
-	if (!identity) return null;
+    if (!identity) return null;
 
-	if (typeof identity === 'string' && (identity.indexOf('ssi') === 0 || identity.indexOf('did') === 0)) {
-		// ssi/did is actually the readable ssi/did
-		return identity;
-	}
+    if (typeof identity === 'string' && (identity.indexOf('ssi') === 0 || identity.indexOf('did') === 0)) {
+        // ssi/did is actually the readable ssi/did
+        return identity;
+    }
 
-	identity = identity.getIdentifier ? identity.getIdentifier() : identity;
-	if (identity.indexOf('did') === 0) {
-		return identity;
-	}
+    identity = identity.hasOwnProperty('getIdentifier') ? identity.getIdentifier() : identity;
+    if (identity.indexOf('did') === 0) {
+        return identity;
+    }
 
-	let readableSSI = base58Decode(identity);
-	if (!readableSSI) {
-		// invalid base58 string
-		return null;
-	}
-	if (readableSSI.indexOf('ssi') !== 0) {
-		// invalid ssi format
-		return null;
-	}
+    let readableSSI = base58Decode(identity);
+    if (!readableSSI) {
+        // invalid base58 string
+        return null;
+    }
+    if (readableSSI.indexOf('ssi') !== 0) {
+        // invalid ssi format
+        return null;
+    }
 
-	return readableSSI;
+    return readableSSI;
 }
 
 /**
@@ -15246,11 +15450,11 @@ function getReadableIdentity(identity) {
  * @returns {Object|Error}
  */
 function safeParseEncodedJson(data, keepBuffer = false) {
-	try {
-		return JSON.parse(base64UrlDecode(data, keepBuffer));
-	} catch (e) {
-		return e;
-	}
+    try {
+        return JSON.parse(base64UrlDecode(data, keepBuffer));
+    } catch (e) {
+        return e;
+    }
 }
 
 /**
@@ -15259,25 +15463,25 @@ function safeParseEncodedJson(data, keepBuffer = false) {
  * @param callback
  */
 function parseJWTSegments(jwt, callback) {
-	if (!jwt) return callback(JWT_ERRORS.EMPTY_JWT_PROVIDED);
-	if (typeof jwt !== 'string') return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+    if (!jwt) return callback(JWT_ERRORS.EMPTY_JWT_PROVIDED);
+    if (typeof jwt !== 'string') return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
 
-	const segments = jwt.split('.');
-	if (segments.length !== 3) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
+    const segments = jwt.split('.');
+    if (segments.length !== 3) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
 
-	const jwtHeader = safeParseEncodedJson(segments[0]);
-	if (jwtHeader instanceof Error || !jwtHeader) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
+    const jwtHeader = safeParseEncodedJson(segments[0]);
+    if (jwtHeader instanceof Error || !jwtHeader) return callback(JWT_ERRORS.INVALID_JWT_HEADER);
 
-	const jwtPayload = safeParseEncodedJson(segments[1]);
-	if (jwtPayload instanceof Error || !jwtPayload) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+    const jwtPayload = safeParseEncodedJson(segments[1]);
+    if (jwtPayload instanceof Error || !jwtPayload) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
 
-	const encodedJWTHeaderAndBody = `${segments[0]}.${segments[1]}`;
-	const jwtSignature = base64UrlDecode(segments[2], true);
-	if (!jwtSignature) {
-		return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
-	}
+    const encodedJWTHeaderAndBody = `${segments[0]}.${segments[1]}`;
+    const jwtSignature = base64UrlDecode(segments[2], true);
+    if (!jwtSignature) {
+        return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+    }
 
-	callback(undefined, { jwtHeader, jwtPayload, jwtSignature, encodedJWTHeaderAndBody });
+    callback(undefined, {jwtHeader, jwtPayload, jwtSignature, encodedJWTHeaderAndBody});
 }
 
 /**
@@ -15289,15 +15493,17 @@ function parseJWTSegments(jwt, callback) {
  * @returns {null | string}
  */
 function getIssuerFormat(issuer) {
-	if (issuer.indexOf('did') === 0) {
-		return LABELS.ISSUER_DID;
-	}
+    if (!issuer) return null;
 
-	if (issuer.indexOf('ssi') === 0) {
-		return LABELS.ISSUER_SSI;
-	}
+    if (issuer.indexOf('did') === 0) {
+        return LABELS.ISSUER_DID;
+    }
 
-	return null;
+    if (issuer.indexOf('ssi') === 0) {
+        return LABELS.ISSUER_SSI;
+    }
+
+    return null;
 }
 
 /**
@@ -15309,15 +15515,17 @@ function getIssuerFormat(issuer) {
  * @returns {null | string}
  */
 function getSubjectFormat(subject) {
-	if (subject.indexOf('did') === 0) {
-		return LABELS.SUBJECT_DID;
-	}
+    if (!subject) return null;
 
-	if (subject.indexOf('ssi') === 0) {
-		return LABELS.SUBJECT_SSI;
-	}
+    if (subject.indexOf('did') === 0) {
+        return LABELS.SUBJECT_DID;
+    }
 
-	return null;
+    if (subject.indexOf('ssi') === 0) {
+        return LABELS.SUBJECT_SSI;
+    }
+
+    return null;
 }
 
 /**
@@ -15327,7 +15535,15 @@ function getSubjectFormat(subject) {
  * @returns {boolean}
  */
 function isJWTExpired(payload, atDate) {
-	return new Date(payload.exp).getTime() < new Date(atDate).getTime();
+    const atDateTime = new Date(atDate).getTime(),
+        expTime = new Date(payload.exp).getTime();
+    let isExpired = expTime < atDateTime;
+    if (payload.vc) {
+        const expirationDateTime = new Date(payload.vc.expirationDate).getTime();
+        if (expTime !== expirationDateTime) return false;
+    }
+
+    return isExpired;
 }
 
 /**
@@ -15337,308 +15553,385 @@ function isJWTExpired(payload, atDate) {
  * @returns {boolean}
  */
 function isJWTNotActive(payload, atDate) {
-	return new Date(payload.nbf).getTime() >= new Date(atDate).getTime();
+    const atDateTime = new Date(atDate).getTime(),
+        nbfTime = new Date(payload.nbf).getTime();
+    let isNotActive = nbfTime >= atDateTime;
+    if (payload.vc) {
+        const issuanceDateTime = new Date(payload.vc.issuanceDate).getTime();
+        if (nbfTime !== issuanceDateTime) return false;
+    }
+
+    return isNotActive;
 }
 
-function createZeroKnowledgeProofCredential(holder, audience, encodedJwtVc, callback) {
-	const issuerFormat = getIssuerFormat(holder);
-	const audienceFormat = getSubjectFormat(audience);
-	if (issuerFormat !== LABELS.ISSUER_DID || audienceFormat !== LABELS.SUBJECT_DID) {
-		return callback(JWT_ERRORS.HOLDER_AND_AUDIENCE_MUST_BE_DID);
-	}
+/**
+ * This method is encrypting a string using asymmetric encryption, so only the pair of the DIDs can decrypt the message.
+ * @param holder
+ * @param verifier
+ * @param dataToSign
+ * @param callback
+ */
+function asymmetricalEncryption(holder, verifier, dataToSign, callback) {
+    const issuerFormat = getIssuerFormat(holder);
+    const audienceFormat = getSubjectFormat(verifier);
+    if (issuerFormat !== LABELS.ISSUER_DID || audienceFormat !== LABELS.SUBJECT_DID) {
+        return callback(JWT_ERRORS.HOLDER_AND_VERIFIER_MUST_BE_DID);
+    }
 
-	const securityContext = scAPI.getSecurityContext();
-	const resolveDids = async () => {
-		try {
-			const holderDidDocument = await $$.promisify(w3cDID.resolveDID)(holder);
-			const audienceDidDocument = await $$.promisify(w3cDID.resolveDID)(audience);
+    const securityContext = scAPI.getSecurityContext();
+    const resolveDids = async () => {
+        try {
+            const holderDidDocument = await $$.promisify(w3cDID.resolveDID)(holder);
+            const verifierDidDocument = await $$.promisify(w3cDID.resolveDID)(verifier);
 
-			holderDidDocument.encryptMessage(audienceDidDocument, encodedJwtVc, (err, encryptedJwtVc) => {
-				if (err) {
-					return callback(err);
-				}
+            holderDidDocument.encryptMessage(verifierDidDocument, dataToSign, (err, encryptedData) => {
+                if (err) {
+                    return callback(err);
+                }
 
-				callback(undefined, base64UrlEncode(JSON.stringify(encryptedJwtVc)));
-			});
-		} catch (e) {
-			return callback(e);
-		}
-	};
+                callback(undefined, base64UrlEncode(JSON.stringify(encryptedData)));
+            });
+        } catch (e) {
+            return callback(e);
+        }
+    };
 
-	if (securityContext.isInitialised()) {
-		resolveDids();
-	} else {
-		securityContext.on('initialised', resolveDids);
-	}
+    if (securityContext.isInitialised()) {
+        resolveDids();
+    } else {
+        securityContext.on('initialised', resolveDids);
+    }
 }
 
-function loadZeroKnowledgeProofCredential(audience, zkpCredential, callback) {
-	const audienceFormat = getSubjectFormat(audience);
-	if (audienceFormat !== LABELS.SUBJECT_DID) {
-		return callback(JWT_ERRORS.HOLDER_AND_AUDIENCE_MUST_BE_DID);
-	}
+/**
+ * Thi9s method is decrypting a JWT VC which was previously encrypted using asymmetric encryption.
+ * @param verifier
+ * @param encryptedData
+ * @param callback
+ */
+function asymmetricalDecryption(verifier, encryptedData, callback) {
+    const audienceFormat = getSubjectFormat(verifier);
+    if (audienceFormat !== LABELS.SUBJECT_DID) {
+        return callback(JWT_ERRORS.HOLDER_AND_VERIFIER_MUST_BE_DID);
+    }
 
-	const encryptedZKPCredential = JSON.parse(base64UrlDecode(zkpCredential));
-	const securityContext = scAPI.getSecurityContext();
-	const resolveDid = async () => {
-		try {
-			const audienceDidDocument = await $$.promisify(w3cDID.resolveDID)(audience);
-			audienceDidDocument.decryptMessage(encryptedZKPCredential, (err, decryptedJwtVc) => {
-				if (err) {
-					return callback(err);
-				}
+    const encryptedDataJSON = JSON.parse(base64UrlDecode(encryptedData));
+    const securityContext = scAPI.getSecurityContext();
+    const resolveDid = async () => {
+        try {
+            const verifierDidDocument = await $$.promisify(w3cDID.resolveDID)(verifier);
+            verifierDidDocument.decryptMessage(encryptedDataJSON, (err, decryptedData) => {
+                if (err) {
+                    return callback(err);
+                }
 
-				callback(undefined, decryptedJwtVc);
-			});
-		} catch (e) {
-			return callback(e);
-		}
-	};
+                callback(undefined, decryptedData);
+            });
+        } catch (e) {
+            return callback(e);
+        }
+    };
 
-	if (securityContext.isInitialised()) {
-		resolveDid();
-	} else {
-		securityContext.on('initialised', resolveDid);
-	}
+    if (securityContext.isInitialised()) {
+        resolveDid();
+    } else {
+        securityContext.on('initialised', resolveDid);
+    }
+}
+
+/**
+ * This method is validating recursively if the provided environmentDataClaims JSON object is part of jwtClaims JSON object
+ * @param environmentDataClaims {Object} The object that must be part of jwtClaims object
+ * @param jwtClaims {Object} The object that must contain all the properties from environmentDataClaims object
+ * @returns {boolean}
+ */
+function validateClaims(environmentDataClaims, jwtClaims) {
+    if(!environmentDataClaims) return true;
+
+    const envDataClaimsKeys = Object.keys(environmentDataClaims);
+    for (let index = 0; index < envDataClaimsKeys.length; ++index) {
+        const key = envDataClaimsKeys[index],
+            currentClaim = environmentDataClaims[key],
+            currentJwtClaim = jwtClaims[key];
+        if (typeof currentClaim === "object" && typeof currentJwtClaim === "object") {
+            const areCurrentValidClaims = validateClaims(currentClaim, currentJwtClaim);
+            if (!areCurrentValidClaims) {
+                return false;
+            }
+        } else if (typeof currentClaim === "object" || typeof currentJwtClaim === "object") {
+            return false;
+        } else if (currentClaim !== currentJwtClaim) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 module.exports = {
-	base64UrlEncode,
-	base58Decode,
+    base64UrlEncode,
+    dateTimeFormatter,
+    isValidURL,
 
-	dateTimeFormatter,
-	isValidURL,
+    getIssuerFormat,
+    getSubjectFormat,
+    isJWTExpired,
+    isJWTNotActive,
+    getReadableIdentity,
+    parseJWTSegments,
+    validateClaims,
 
-	getIssuerFormat,
-	getSubjectFormat,
-	isJWTExpired,
-	isJWTNotActive,
-	getReadableIdentity,
-	safeParseEncodedJson,
-	parseJWTSegments,
-
-	createZeroKnowledgeProofCredential,
-	loadZeroKnowledgeProofCredential
+    asymmetricalEncryption,
+    asymmetricalDecryption
 };
-},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js":[function(require,module,exports){
-const VALIDATION_STRATEGIES = require('../constants').VALIDATION_STRATEGIES;
+},{"./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/defaultValidationStrategy.js":[function(require,module,exports){
+const {JWT_ERRORS} = require("../constants");
+const utils = require("../utils");
 
-const signatureValidation = require('./signatureValidation');
-const rootsOfTrustValidation = require('./rootsOfTrustValidation');
-const zkpCredentialValidation = require('./zkpCredentialValidation');
+class DefaultValidationStrategy {
+
+    /**
+     * @param verifiableCredential {string|Object} - Either an encoded JWTVc, or decoded JWTVc as result of the verification
+     * @param environmentData {Object} object with arbitrary data required for validation
+     * @param callback {Function}
+     */
+    validateCredential(verifiableCredential, environmentData, callback) {
+        if (typeof verifiableCredential === "string") {
+            return utils.parseJWTSegments(verifiableCredential, (err, result) => {
+                if (err) return callback(err, false);
+                this.validateCredential(result.jwtPayload, environmentData, callback);
+            });
+        }
+
+        const {atDate, credentialPublicClaims, subjectClaims} = environmentData;
+        const arePublicClaimsValid = utils.validateClaims(credentialPublicClaims, verifiableCredential);
+        if (!arePublicClaimsValid) return callback(undefined, false);
+        const areSubjectClaimsValid = utils.validateClaims(subjectClaims, verifiableCredential.vc.credentialSubject);
+        if (!areSubjectClaimsValid) return callback(undefined, false);
+
+        if (utils.isJWTExpired(verifiableCredential, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED, false);
+        if (utils.isJWTNotActive(verifiableCredential, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE, false);
+
+        callback(undefined, true);
+    }
+
+    /**
+     * @param verifiablePresentation {string|Object} - Either an encoded JWTVp, or decoded JWTVp as result of the verification
+     * @param environmentData {Object} object with arbitrary data required for validation
+     * @param callback {Function}
+     */
+    validatePresentation(verifiablePresentation, environmentData, callback) {
+        if (typeof verifiablePresentation === "string") {
+            return utils.parseJWTSegments(verifiablePresentation, (err, result) => {
+                if (err) return callback(err, false);
+                this.validatePresentation(result.jwtPayload, environmentData, callback);
+            });
+        }
+
+        const {atDate, presentationPublicClaims} = environmentData;
+        const arePublicClaimsValid = utils.validateClaims(presentationPublicClaims, verifiablePresentation);
+        if (!arePublicClaimsValid) return callback(undefined, false);
+
+        if (utils.isJWTExpired(verifiablePresentation, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED, false);
+        if (utils.isJWTNotActive(verifiablePresentation, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE, false);
+
+        const credentialValidatorChain = (jwtVcList) => {
+            if (jwtVcList.length === 0) {
+                return callback(undefined, true);
+            }
+
+            const jwtVc = jwtVcList.shift();
+            this.validateCredential(jwtVc, environmentData, (err, isValidCredential) => {
+                if (err) return callback(err);
+                if (!isValidCredential) return callback(undefined, false);
+
+                credentialValidatorChain(jwtVcList);
+            });
+        };
+        credentialValidatorChain(verifiablePresentation.vp.verifiableCredential);
+    }
+}
+
+module.exports = DefaultValidationStrategy;
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js":[function(require,module,exports){
+const VALIDATION_STRATEGIES = require('../constants').VALIDATION_STRATEGIES;
+const DefaultValidationStrategy = require("./defaultValidationStrategy");
+const RootOfTrustValidationStrategy = require("./rootOfTrustValidationStrategy");
 
 const validationStrategies = {};
 
-function registerValidationStrategy(type, implementation) {
-	validationStrategies[type] = implementation;
-}
-
-registerValidationStrategy(VALIDATION_STRATEGIES.SIGNATURE, signatureValidation);
-registerValidationStrategy(VALIDATION_STRATEGIES.ROOTS_OF_TRUST, rootsOfTrustValidation);
-registerValidationStrategy(VALIDATION_STRATEGIES.ZERO_KNOWLEDGE_PROOF_CREDENTIAL, zkpCredentialValidation);
-
-function verifyJWTUsingStrategy(strategy, ...args) {
-	if (typeof validationStrategies[strategy] !== 'function') {
-		throw VALIDATION_STRATEGIES.INVALID_VALIDATION_STRATEGY;
-	}
-
-	validationStrategies[strategy](...args);
-}
-
-module.exports = verifyJWTUsingStrategy;
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./rootsOfTrustValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootsOfTrustValidation.js","./signatureValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/signatureValidation.js","./zkpCredentialValidation":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/zkpCredentialValidation.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootsOfTrustValidation.js":[function(require,module,exports){
-const { JWT_ERRORS } = require('../constants');
-const { parseJWTSegments } = require('../utils');
-
 /**
- * This method verifies if the roots of trust are the actual issuers of the verifiable credentials
- * @param jwtPayload
- * @param rootsOfTrust
- * @param callback
+ * @param validationStrategyName {string} The name of the validation strategy that will be registered
+ * @param implementation The implementation of the strategy. Check validationStrategy.interface.js for reference
  */
-function verifyRootsOfTrust(jwtPayload, rootsOfTrust, callback) {
-	const jwtVcList = jwtPayload.vp.verifiableCredential;
-	let verifyResult = { verifyResult: true, verifiableCredential: [] };
-
-	const chain = (index) => {
-		if (index === jwtVcList.length) {
-			return callback(undefined, verifyResult);
-		}
-
-		const jwtVc = jwtVcList[index];
-		parseJWTSegments(jwtVc, (err, result) => {
-			if (err) {
-				verifyResult.verifyResult = false;
-				verifyResult.verifiableCredential.push({
-					jwtVc: jwtVc,
-					errorMessage: err
-				});
-				return chain(++index);
-			}
-
-			let jwtPayload = result.jwtPayload;
-			const rootOfTrust = rootsOfTrust.find(r => r === jwtPayload.iss);
-			if (!rootOfTrust) {
-				verifyResult.verifyResult = false;
-				verifyResult.verifiableCredential.push({
-					jwtVc: jwtVc,
-					errorMessage: JWT_ERRORS.ROOT_OF_TRUST_NOT_VALID
-				});
-				return chain(++index);
-			}
-
-			verifyResult.verifiableCredential.push(result.jwtPayload);
-			chain(++index);
-		});
-	};
-
-	chain(0);
+function registerValidationStrategy(validationStrategyName, implementation) {
+    validationStrategies[validationStrategyName] = implementation;
 }
 
-module.exports = verifyRootsOfTrust;
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/signatureValidation.js":[function(require,module,exports){
-const openDSU = require('opendsu');
-const w3cDID = openDSU.loadAPI('w3cdid');
-const crypto = openDSU.loadAPI('crypto');
-const keySSISpace = openDSU.loadApi('keyssi');
-const keySSIResolver = require('key-ssi-resolver');
-const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
+/**
+ * @param validationStrategyName {string} The name of the validation strategy to be returned
+ * @returns {Object} The implementation of the validation strategy
+ */
+function getValidationStrategy(validationStrategyName) {
+    if (!validationStrategies[validationStrategyName]) {
+        return callback(VALIDATION_STRATEGIES.INVALID_VALIDATION_STRATEGY);
+    }
 
-const { LABELS, JWT_ERRORS } = require('../constants');
-const { getIssuerFormat } = require('../utils');
+    return validationStrategies[validationStrategyName];
+}
 
 /**
- * This method is verifying the encoded JWT from the current instance according to the issuerType
- * @param issuer
- * @param signature
- * @param signedData
+ * @param validationStrategyName {string} The name of the validation strategy that will be used to validate the credential
+ * @param environmentData {string} object with arbitrary data required for validation
+ * @param credentialSerialization {string} JWT Verifiable Credential
  * @param callback {Function}
  */
-function verifyJWT(issuer, signature, signedData, callback) {
-	const issuerType = getIssuerFormat(issuer);
-	switch (issuerType) {
-		case LABELS.ISSUER_SSI: {
-			return verifyUsingSSI(issuer, signature, signedData, callback);
-		}
+function validateCredential(validationStrategyName, environmentData, credentialSerialization, callback) {
+    if (!validationStrategies[validationStrategyName]) {
+        return callback(VALIDATION_STRATEGIES.INVALID_VALIDATION_STRATEGY);
+    }
 
-		case LABELS.ISSUER_DID: {
-			return verifyUsingDID(issuer, signature, signedData, callback);
-		}
-
-		default: {
-			callback(JWT_ERRORS.INVALID_ISSUER_FORMAT);
-		}
-	}
+    validationStrategies[validationStrategyName].validateCredential(credentialSerialization, environmentData, callback);
 }
 
 /**
- * This method is verifying an SSI signed JWT
- * @param issuer
- * @param signature
- * @param signedData
+ * Promisified version of validateCredential method
+ * @param validationStrategyName {string} The name of the validation strategy that will be used to validate the credential
+ * @param environmentData {string} object with arbitrary data required for validation
+ * @param credentialSerialization {string} JWT Verifiable Credential
+ * @returns {Promise<*>}
+ */
+async function validateCredentialAsync(validationStrategyName, environmentData, credentialSerialization) {
+    return await $$.promisify(validateCredential)(validationStrategyName, environmentData, credentialSerialization);
+}
+
+/**
+ * @param validationStrategyNamesArray {string|string[]} array of names of validationStrategies that are allowed to validate. If is a string then only that strategy can do it.
+ * @param environmentData {Object} object with arbitrary data required for validation
+ * @param presentationSerialization {string} JWT Verifiable Presentation
  * @param callback {Function}
  */
-function verifyUsingSSI(issuer, signature, signedData, callback) {
-	try {
-		const issuerKeySSI = keySSISpace.parse(issuer);
-		const publicKey = issuerKeySSI.getPublicKey();
-		const hashFn = cryptoRegistry.getCryptoFunction(issuerKeySSI, 'hash');
-		const hashResult = hashFn(signedData);
+function validatePresentation(validationStrategyNamesArray, environmentData, presentationSerialization, callback) {
+    if (typeof validationStrategyNamesArray === "string") {
+        validationStrategyNamesArray = [validationStrategyNamesArray];
+    }
 
-		const verify = cryptoRegistry.getVerifyFunction(issuerKeySSI);
-		const verifyResult = verify(hashResult, publicKey, signature);
-		callback(undefined, verifyResult);
-	} catch (e) {
-		return callback(e);
-	}
+    const validationStrategyChain = (validationStrategyNamesList) => {
+        if (validationStrategyNamesList.length === 0) {
+            return callback(undefined, true);
+        }
+
+        const validationStrategyName = validationStrategyNamesList.shift();
+        if (!validationStrategies[validationStrategyName]) {
+            return callback(VALIDATION_STRATEGIES.INVALID_VALIDATION_STRATEGY);
+        }
+
+        const jwtVp = JSON.parse(JSON.stringify(presentationSerialization));
+        validationStrategies[validationStrategyName].validatePresentation(jwtVp, environmentData, (err, isValidPresentation) => {
+            if (err) return callback(err);
+            if (!isValidPresentation) return callback(undefined, false);
+
+            validationStrategyChain(validationStrategyNamesList);
+        });
+    };
+    validationStrategyChain(validationStrategyNamesArray);
 }
 
 /**
- * This method is verifying a DID signed JWT
- * @param issuer
- * @param signature
- * @param signedData
- * @param callback {Function}
+ * Promisified version of validatePresentation method
+ * @param validationStrategyNamesArray {string|string[]} array of names of validationStrategies that are allowed to validate. If is a string then only that strategy can do it.
+ * @param environmentData {Object} object with arbitrary data required for validation
+ * @param presentationSerialization {string} JWT Verifiable Presentation
+ * @returns {Promise<*>}
  */
-function verifyUsingDID(issuer, signature, signedData, callback) {
-	w3cDID.resolveDID(issuer, (err, didDocument) => {
-		if (err) {
-			return callback(`Failed to resolve did ${issuer}`);
-		}
-
-		const hashResult = crypto.sha256(signedData);
-		didDocument.verify(hashResult, signature, (verifyError, verifyResult) => {
-			if (verifyError) {
-				return callback(verifyError);
-			}
-
-			callback(null, verifyResult);
-		});
-	});
+async function validatePresentationAsync(validationStrategyNamesArray, environmentData, presentationSerialization) {
+    return await $$.promisify(validatePresentation)(validationStrategyNamesArray, environmentData, presentationSerialization);
 }
 
-module.exports = verifyJWT;
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/zkpCredentialValidation.js":[function(require,module,exports){
-const { JWT_ERRORS } = require('../constants');
-const { loadZeroKnowledgeProofCredential, parseJWTSegments } = require('../utils');
+registerValidationStrategy(VALIDATION_STRATEGIES.DEFAULT, new DefaultValidationStrategy());
+registerValidationStrategy(VALIDATION_STRATEGIES.ROOTS_OF_TRUST, new RootOfTrustValidationStrategy());
 
-/**
- * This method verifies the encrypted credentials using the private key of the audience. <br />
- * Only the intended audience can decrypt the zkp credential to validate it.
- * @param jwtPayload
- * @param callback
- */
-function verifyZKPCredential(jwtPayload, callback) {
-	const verifyResult = { verifyResult: true, verifiableCredential: [] };
-	const zkpCredentials = jwtPayload.vp.verifiableCredential;
-	const audience = jwtPayload.aud;
-	if (!audience) {
-		verifyResult.verifyResult = false;
-		verifyResult.verifiableCredential.push({
-			errorMessage: JWT_ERRORS.AUDIENCE_OF_PRESENTATION_NOT_DEFINED
-		});
+module.exports = {
+    getValidationStrategy,
+    registerValidationStrategy,
 
-		return callback(undefined, verifyResult);
-	}
+    validateCredential,
+    validateCredentialAsync,
+    validatePresentation,
+    validatePresentationAsync,
 
-	const chain = (index) => {
-		if (index === zkpCredentials.length) {
-			return callback(undefined, verifyResult);
-		}
+    VALIDATION_STRATEGIES
+};
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","./defaultValidationStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/defaultValidationStrategy.js","./rootOfTrustValidationStrategy":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootOfTrustValidationStrategy.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/rootOfTrustValidationStrategy.js":[function(require,module,exports){
+const {JWT_ERRORS, LABELS} = require("../constants");
+const utils = require("../utils");
 
-		const zkpCredential = zkpCredentials[index];
-		loadZeroKnowledgeProofCredential(audience, zkpCredential, (err, decryptedJWTVc) => {
-			if (err) {
-				verifyResult.verifyResult = false;
-				verifyResult.verifiableCredential.push({
-					jwtVc: zkpCredential,
-					errorMessage: err
-				});
+class RootOfTrustValidationStrategy {
 
-				return chain(++index);
-			}
+    /**
+     * @param verifiableCredential {string|Object} - Either an encoded JWTVc, or decoded JWTVc as result of the verification
+     * @param environmentData {Object} object with arbitrary data required for validation
+     * @param callback {Function}
+     */
+    validateCredential(verifiableCredential, environmentData, callback) {
+        if (typeof verifiableCredential === "string") {
+            return utils.parseJWTSegments(verifiableCredential, (err, result) => {
+                if (err) return callback(err, false);
+                this.validateCredential(result.jwtPayload, environmentData, callback);
+            });
+        }
 
-			parseJWTSegments(decryptedJWTVc, (err, result) => {
-				if (err) {
-					verifyResult.verifyResult = false;
-					verifyResult.verifiableCredential.push({
-						jwtVc: zkpCredential,
-						errorMessage: err
-					});
+        const iss = verifiableCredential.iss;
+        const issuerFormat = utils.getIssuerFormat(iss);
+        const {rootsOfTrust, credentialPublicClaims, subjectClaims} = environmentData;
 
-					return chain(++index);
-				}
+        const arePublicClaimsValid = utils.validateClaims(credentialPublicClaims, verifiableCredential);
+        if (!arePublicClaimsValid) return callback(undefined, false);
+        const areSubjectClaimsValid = utils.validateClaims(subjectClaims, verifiableCredential.vc.credentialSubject);
+        if (!areSubjectClaimsValid) return callback(undefined, false);
 
-				verifyResult.verifiableCredential.push(result.jwtPayload);
-				chain(++index);
-			});
-		});
-	};
+        if (rootsOfTrust.length === 0) return callback(JWT_ERRORS.ROOT_OF_TRUST_NOT_VALID, false);
+        if (!iss || issuerFormat !== LABELS.ISSUER_DID) return callback(JWT_ERRORS.INVALID_ISSUER_FORMAT, false);
+        if (rootsOfTrust.findIndex(rootOfTrust => rootOfTrust === iss) === -1) return callback(JWT_ERRORS.ROOT_OF_TRUST_NOT_VALID, false);
 
-	chain(0);
+        callback(undefined, true);
+    }
+
+    /**
+     * @param verifiablePresentation {string|Object} - Either an encoded JWTVp, or decoded JWTVp as result of the verification
+     * @param environmentData {Object} object with arbitrary data required for validation
+     * @param callback {Function}
+     */
+    validatePresentation(verifiablePresentation, environmentData, callback) {
+        if (typeof verifiablePresentation === "string") {
+            return utils.parseJWTSegments(verifiablePresentation, (err, result) => {
+                if (err) return callback(err, false);
+                this.validatePresentation(result.jwtPayload, environmentData, callback);
+            });
+        }
+
+        const {presentationPublicClaims} = environmentData;
+        const arePublicClaimsValid = utils.validateClaims(presentationPublicClaims, verifiablePresentation);
+        if (!arePublicClaimsValid) return callback(undefined, false);
+
+        const credentialValidatorChain = (jwtVcList) => {
+            if (jwtVcList.length === 0) {
+                return callback(undefined, true);
+            }
+
+            const jwtVc = jwtVcList.shift();
+            this.validateCredential(jwtVc, environmentData, (err, isValidCredential) => {
+                if (err) return callback(err);
+                if (!isValidCredential) return callback(undefined, isValidCredential);
+
+                credentialValidatorChain(jwtVcList);
+            });
+        };
+        credentialValidatorChain(verifiablePresentation.vp.verifiableCredential);
+    }
 }
 
-module.exports = verifyZKPCredential;
+module.exports = RootOfTrustValidationStrategy;
 },{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/jwtVc.js":[function(require,module,exports){
 const JWT = require('../jwt');
 const JWT_ERRORS = require('../constants').JWT_ERRORS;
@@ -15763,14 +16056,14 @@ class JwtVC extends JWT {
 		});
 	};
 
-	verifyJWT(atDate, rootsOfTrust, callback) {
+	verifyJWT(rootsOfTrust, callback) {
 		if (typeof rootsOfTrust === 'function') {
 			callback = rootsOfTrust;
 			rootsOfTrust = [];
 		}
 
 		const decodedJWT = { jwtHeader: this.jwtHeader, jwtPayload: this.jwtPayload, jwtSignature: this.jwtSignature };
-		jwtVcVerifier(decodedJWT, atDate, rootsOfTrust, (err, result) => {
+		jwtVcVerifier(decodedJWT, rootsOfTrust, (err, result) => {
 			if (err) {
 				return callback(undefined, { verifyResult: false, errorMessage: err });
 			}
@@ -15779,7 +16072,7 @@ class JwtVC extends JWT {
 		});
 	}
 
-	verifyJWTAsync(adDate, rootsOfTrust) {
+	verifyJWTAsync(rootsOfTrust) {
 		return this.asyncMyFunction(this.verifyJWT, [...arguments]);
 	}
 }
@@ -15810,10 +16103,10 @@ module.exports = {
 	createJWTVc, loadJWTVc
 };
 },{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","./model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/model.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vc/model.js":[function(require,module,exports){
-const { JWT_DEFAULTS, JWT_ERRORS, VALIDATION_STRATEGIES } = require('../constants');
-const { defaultJWTParser, defaultJWTBuilder } = require('../jwt/model');
-const verifyJWTUsingStrategy = require('../validationStrategies');
+const {JWT_DEFAULTS, JWT_ERRORS} = require('../constants');
+const {defaultJWTParser, defaultJWTBuilder} = require('../jwt/model');
 const utils = require('../utils');
+const {verifyJWT} = require("../jwt/verify");
 
 /**
  * This method creates "vc" object from the payload of a JWT according to the W3c Standard
@@ -15822,80 +16115,78 @@ const utils = require('../utils');
  * @returns {{credentialSubject: {id}, issuanceDate: string, type: *[], "@context": *[], issuer, expirationDate: string}}
  */
 function getRequiredJWTVCModel(jwtPayload, options) {
-	options = Object.assign({}, options, jwtPayload);
-	let { vc, sub, iss, nbf, exp } = options; // can be extended with other attributes
-	if (!vc) {
-		vc = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
-	}
+    options = Object.assign({}, options, jwtPayload);
+    let {vc, sub, iss, nbf, exp} = options; // can be extended with other attributes
+    if (!vc) {
+        vc = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
+    }
 
-	return {
-		// id: jti reflected - not mandatory
-		'@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vc.context], // Mandatory and this must be the first URI from the list reference: https://www.w3.org/TR/vc-data-model/#contexts
-		type: [JWT_DEFAULTS.VC_TYPE, ...vc.type], // Any other custom VC Types must be reflected within @context (a URI with a schema must be added)
-		// Inside "credentialSubject" object are defined all the claims about the subject
-		credentialSubject: {
-			id: sub
-		}, // Either single object, or an array of objects - id is mandatory and is reflected from "sub" attribute,
-		issuer: iss, // reflected from "iss" attribute
-		issuanceDate: utils.dateTimeFormatter(nbf), // reflected from "nbf" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
-		expirationDate: utils.dateTimeFormatter(exp) // reflected from "exp" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
-	};
+    return {
+        // id: jti reflected - not mandatory
+        '@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vc.context], // Mandatory and this must be the first URI from the list reference: https://www.w3.org/TR/vc-data-model/#contexts
+        type: [JWT_DEFAULTS.VC_TYPE, ...vc.type], // Any other custom VC Types must be reflected within @context (a URI with a schema must be added)
+        // Inside "credentialSubject" object are defined all the claims about the subject
+        credentialSubject: {
+            id: sub
+        }, // Either single object, or an array of objects - id is mandatory and is reflected from "sub" attribute,
+        issuer: iss, // reflected from "iss" attribute
+        issuanceDate: utils.dateTimeFormatter(nbf), // reflected from "nbf" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
+        expirationDate: utils.dateTimeFormatter(exp) // reflected from "exp" attribute displayed using date-time format https://www.w3.org/TR/xmlschema11-2/#dateTime
+    };
 }
 
 function jwtVcBuilder(issuer, subject, options, callback) {
-	defaultJWTBuilder(issuer, options, (err, result) => {
-		if (err) {
-			return callback(err);
-		}
+    defaultJWTBuilder(issuer, options, (err, result) => {
+        if (err) {
+            return callback(err);
+        }
 
-		const { jwtHeader, jwtPayload } = result;
-		subject = utils.getReadableIdentity(subject);
-		if (!subject) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
+        const {jwtHeader, jwtPayload} = result;
+        subject = utils.getReadableIdentity(subject);
+        if (!subject) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
 
-		const subjectFormat = utils.getSubjectFormat(subject);
-		if (!subjectFormat) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
+        const subjectFormat = utils.getSubjectFormat(subject);
+        if (!subjectFormat) return callback(JWT_ERRORS.INVALID_SUBJECT_FORMAT);
 
-		jwtPayload.sub = subject;
-		options.sub = subject;
-		jwtPayload.vc = getRequiredJWTVCModel(jwtPayload, options);
+        jwtPayload.sub = subject;
+        options.sub = subject;
+        jwtPayload.vc = getRequiredJWTVCModel(jwtPayload, options);
 
-		callback(undefined, { jwtHeader, jwtPayload });
-	});
+        callback(undefined, {jwtHeader, jwtPayload});
+    });
 }
 
 function jwtVcParser(encodedJWTVc, callback) {
-	defaultJWTParser(encodedJWTVc, (err, decodedJWT) => {
-		if (err) {
-			return callback(err);
-		}
+    defaultJWTParser(encodedJWTVc, (err, decodedJWT) => {
+        if (err) {
+            return callback(err);
+        }
 
-		if (!decodedJWT.jwtPayload.vc) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
-		callback(undefined, decodedJWT);
-	});
+        if (!decodedJWT.jwtPayload.vc) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+        callback(undefined, decodedJWT);
+    });
 }
 
-function jwtVcVerifier(decodedJWT, atDate, rootsOfTrust, callback) {
-	const { jwtHeader, jwtPayload, jwtSignature } = decodedJWT;
-	const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
-	if (utils.isJWTExpired(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
-	if (utils.isJWTNotActive(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+function jwtVcVerifier(decodedJWT, rootsOfTrust, callback) {
+    const {jwtHeader, jwtPayload, jwtSignature} = decodedJWT;
+    const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
 
-	verifyJWTUsingStrategy(VALIDATION_STRATEGIES.SIGNATURE, jwtPayload.iss, jwtSignature, dataToSign, (err, verifyResult) => {
-		if (err) return callback(err);
-		if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+    verifyJWT(jwtPayload.iss, jwtSignature, dataToSign, {kid: jwtHeader.kid}, (err, verifyResult) => {
+        if (err) return callback(err);
+        if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
 
-		callback(undefined, true);
-	});
+        callback(undefined, true);
+    });
 }
 
 module.exports = {
-	jwtVcBuilder, jwtVcParser, jwtVcVerifier
+    jwtVcBuilder, jwtVcParser, jwtVcVerifier
 };
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","../validationStrategies":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js":[function(require,module,exports){
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../jwt/verify":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/verify.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/jwtVp.js":[function(require,module,exports){
 const JWT = require('../jwt');
 const JWT_ERRORS = require('../constants').JWT_ERRORS;
 const { jwtVpBuilder, jwtVpParser, jwtVpVerifier } = require('./model');
-const { createZeroKnowledgeProofCredential } = require('../utils');
+const { asymmetricalEncryption } = require('../utils');
 
 class JwtVP extends JWT {
 	constructor(issuer, options, isInitialisation = false) {
@@ -15927,23 +16218,23 @@ class JwtVP extends JWT {
 		return this.asyncMyFunction(this.addVerifiableCredential, [...arguments]);
 	}
 
-	addZeroKnowledgeProofCredential = (encodedJwtVc, callback) => {
+	addEncryptedCredential = (encodedJwtVc, callback) => {
 		if (!encodedJwtVc) return callback(JWT_ERRORS.INVALID_JWT_FORMAT);
 		if (!this.jwtPayload.aud) return callback(JWT_ERRORS.AUDIENCE_OF_PRESENTATION_NOT_DEFINED);
 
 		const { iss, aud } = this.jwtPayload;
-		createZeroKnowledgeProofCredential(iss, aud, encodedJwtVc, (err, zkpCredential) => {
+		asymmetricalEncryption(iss, aud, encodedJwtVc, (err, encryptedCredential) => {
 			if (err) {
 				return callback(err);
 			}
 
-			this.jwtPayload.vp.verifiableCredential.push(zkpCredential);
+			this.jwtPayload.vp.verifiableCredential.push(encryptedCredential);
 			callback(undefined, true);
 		});
 	};
 
-	async addZeroKnowledgeProofCredentialAsync(encodedJwtVc) {
-		return this.asyncMyFunction(this.addZeroKnowledgeProofCredential, [...arguments]);
+	async addEncryptedCredentialAsync(encodedJwtVc) {
+		return this.asyncMyFunction(this.addEncryptedCredential, [...arguments]);
 	}
 
 	loadEncodedJWTVp(encodedJWTVp) {
@@ -15959,14 +16250,14 @@ class JwtVP extends JWT {
 		});
 	}
 
-	verifyJWT(atDate, rootsOfTrust, callback) {
+	verifyJWT(rootsOfTrust, callback) {
 		if (typeof rootsOfTrust === 'function') {
 			callback = rootsOfTrust;
 			rootsOfTrust = [];
 		}
 
 		const decodedJWT = { jwtHeader: this.jwtHeader, jwtPayload: this.jwtPayload, jwtSignature: this.jwtSignature };
-		jwtVpVerifier(decodedJWT, atDate, rootsOfTrust, (err, result) => {
+		jwtVpVerifier(decodedJWT, rootsOfTrust, (err, result) => {
 			if (err) {
 				return callback(undefined, { verifyResult: false, errorMessage: err });
 			}
@@ -15986,7 +16277,7 @@ class JwtVP extends JWT {
 		});
 	}
 
-	async verifyJWTAsync(adDate, rootsOfTrust) {
+	async verifyJWTAsync(rootsOfTrust) {
 		return this.asyncMyFunction(this.verifyJWT, [...arguments]);
 	}
 }
@@ -16016,10 +16307,10 @@ module.exports = {
 	createJWTVp, loadJWTVp
 };
 },{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","./model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/model.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/vp/model.js":[function(require,module,exports){
-const { JWT_DEFAULTS, JWT_ERRORS, VALIDATION_STRATEGIES } = require('../constants');
-const { defaultJWTParser, defaultJWTBuilder } = require('../jwt/model');
-const verifyJWTUsingStrategy = require('../validationStrategies');
+const {JWT_DEFAULTS, JWT_ERRORS} = require('../constants');
+const {defaultJWTParser, defaultJWTBuilder} = require('../jwt/model');
 const utils = require('../utils');
+const {verifyEncryptedCredential, verifyRootsOfTrust, verifyJWT} = require("../jwt/verify");
 
 /**
  * This method creates "vp" object from the payload of a JWT according to the W3c Standard
@@ -16027,71 +16318,69 @@ const utils = require('../utils');
  * @param options {Object}
  */
 function getRequiredJWTVPModel(jwtPayload, options) {
-	options = Object.assign({}, options, jwtPayload);
-	let { vp, iss, id } = options; // can be extended with other attributes
-	if (!vp) {
-		vp = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
-	}
+    options = Object.assign({}, options, jwtPayload);
+    let {vp, iss, id} = options; // can be extended with other attributes
+    if (!vp) {
+        vp = Object.assign({}, JWT_DEFAULTS.EMPTY_VC_VP);
+    }
 
-	return {
-		'@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vp.context],
-		type: [JWT_DEFAULTS.VP_TYPE, ...vp.type],
-		id: id, // uuid of the presentation (optional)
-		verifiableCredential: options.credentialsToPresent || [],
-		holder: iss // reflected from "iss" attribute
-	};
+    return {
+        '@context': [JWT_DEFAULTS.VC_VP_CONTEXT_CREDENTIALS, ...vp.context],
+        type: [JWT_DEFAULTS.VP_TYPE, ...vp.type],
+        id: id, // uuid of the presentation (optional)
+        verifiableCredential: options.credentialsToPresent || [],
+        holder: iss // reflected from "iss" attribute
+    };
 }
 
 function jwtVpBuilder(issuer, options, callback) {
-	defaultJWTBuilder(issuer, options, (err, result) => {
-		if (err) {
-			return callback(err);
-		}
+    defaultJWTBuilder(issuer, options, (err, result) => {
+        if (err) {
+            return callback(err);
+        }
 
-		const { jwtHeader, jwtPayload } = result;
-		jwtPayload.vp = getRequiredJWTVPModel(jwtPayload, options);
+        const {jwtHeader, jwtPayload} = result;
+        jwtPayload.vp = getRequiredJWTVPModel(jwtPayload, options);
 
-		callback(undefined, { jwtHeader, jwtPayload });
-	});
+        callback(undefined, {jwtHeader, jwtPayload});
+    });
 }
 
 function jwtVpParser(encodedJWTVp, callback) {
-	defaultJWTParser(encodedJWTVp, (err, decodedJWT) => {
-		if (err) {
-			return callback(err);
-		}
+    defaultJWTParser(encodedJWTVp, (err, decodedJWT) => {
+        if (err) {
+            return callback(err);
+        }
 
-		if (!decodedJWT.jwtPayload.vp) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
-		callback(undefined, decodedJWT);
-	});
+        if (!decodedJWT.jwtPayload.vp) return callback(JWT_ERRORS.INVALID_JWT_PAYLOAD);
+        callback(undefined, decodedJWT);
+    });
 }
 
-function jwtVpVerifier(decodedJWT, atDate, rootsOfTrust, callback) {
-	const { jwtHeader, jwtPayload, jwtSignature } = decodedJWT;
-	const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
-	if (utils.isJWTExpired(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_EXPIRED);
-	if (utils.isJWTNotActive(jwtPayload, atDate)) return callback(JWT_ERRORS.JWT_TOKEN_NOT_ACTIVE);
+function jwtVpVerifier(decodedJWT, rootsOfTrust, callback) {
+    const {jwtHeader, jwtPayload, jwtSignature} = decodedJWT;
+    const dataToSign = [utils.base64UrlEncode(JSON.stringify(jwtHeader)), utils.base64UrlEncode(JSON.stringify(jwtPayload))].join('.');
 
-	if (jwtPayload.aud) {
-		return verifyJWTUsingStrategy(VALIDATION_STRATEGIES.ZERO_KNOWLEDGE_PROOF_CREDENTIAL, jwtPayload, callback);
-	}
+    if (jwtPayload.aud) {
+        return verifyEncryptedCredential(jwtPayload, callback);
+    }
 
-	if (rootsOfTrust.length > 0) {
-		return verifyJWTUsingStrategy(VALIDATION_STRATEGIES.ROOTS_OF_TRUST, jwtPayload, rootsOfTrust, callback);
-	}
+    if (rootsOfTrust.length > 0) {
+        return verifyRootsOfTrust(jwtPayload, rootsOfTrust, callback);
+    }
 
-	verifyJWTUsingStrategy(VALIDATION_STRATEGIES.SIGNATURE, jwtPayload.iss, jwtSignature, dataToSign, (err, verifyResult) => {
-		if (err) return callback(err);
-		if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
+    verifyJWT(jwtPayload.iss, jwtSignature, dataToSign, {kid: jwtHeader.kid}, (err, verifyResult) => {
+        if (err) return callback(err);
+        if (!verifyResult) return callback(JWT_ERRORS.INVALID_JWT_SIGNATURE);
 
-		callback(undefined, true);
-	});
+        callback(undefined, true);
+    });
 }
 
 module.exports = {
-	jwtVpBuilder, jwtVpParser, jwtVpVerifier
+    jwtVpBuilder, jwtVpParser, jwtVpVerifier
 };
-},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js","../validationStrategies":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/validationStrategies/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
+},{"../constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/constants.js","../jwt/model":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/model.js","../jwt/verify":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/jwt/verify.js","../utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/utils.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const crypto = require("pskcrypto");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
@@ -22114,21 +22403,18 @@ function registerMandatoryCallback(callback, timeout){
     if(timeout == undefined){
         timeout = 5000; //5 seconds
     }
-    let callbackCalled = false;
     let callStackErr = false;
     try{
         throw new Error("Callback should be called");
     } catch(err){
         callStackErr = err;
     }
-    setTimeout(function(){
-        if(!callbackCalled){
-            reportUserRelevantError("Expected callback not called after " + timeout + " seconds. The calling stack is here: ", callStackErr);
-        }
+    const timeoutId = setTimeout(function () {
+        reportUserRelevantError("Expected callback not called after " + timeout + " seconds. The calling stack is here: ", callStackErr);
     }, timeout);
 
     return function(...args){
-        callbackCalled = true;
+        clearTimeout(timeoutId);
         callback(...args);
     };
 }
@@ -22341,7 +22627,9 @@ require("./utils/interceptors").enable(module.exports);
 const PollRequestManager = require("./utils/PollRequestManager");
 const rm = new PollRequestManager(module.exports.fetch);
 
-module.exports.poll = function (url, options, delayStart) {
+module.exports.poll = function (url, options, connectionTimeout, delayStart) {
+	connectionTimeout = connectionTimeout || 10000;
+	rm.setConnectionTimeout(connectionTimeout);
 	const request = rm.createRequest(url, options, delayStart);
 	return request;
 };
@@ -22587,6 +22875,7 @@ function Response(httpRequest, httpResponse) {
 	this.ok = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 ? true : false;
 	this.statusCode = httpResponse.statusCode;
 	this.statusMessage = httpResponse.statusMessage;
+	this.headers = httpResponse.headers;
 
 	this.arrayBuffer = function () {
 		let promise = new Promise((resolve, reject) => {
@@ -22803,7 +23092,7 @@ module.exports = {
 }
 
 },{"./../browser":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/browser/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/http/utils/PollRequestManager.js":[function(require,module,exports){
-function PollRequestManager(fetchFunction, pollingTimeout = 1000){
+function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTimeout = 1000){
 
 	const requests = new Map();
 
@@ -22883,7 +23172,7 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 
 		const promise = new Promise((resolve, reject) => {
 			request.setExecutor(resolve, reject);
-			createPollThread(request);
+			createPollingTask(request);
 		});
 		promise.abort = () => {
 			this.cancelRequest(promise);
@@ -22906,31 +23195,63 @@ function PollRequestManager(fetchFunction, pollingTimeout = 1000){
 		}
 	}
 
+	this.setConnectionTimeout = (_connectionTimeout)=>{
+		connectionTimeout = _connectionTimeout;
+	}
 
 	/* *************************** polling zone ****************************/
-	function createPollThread(request) {
+	function createPollingTask(request) {
+		let pollingTimeoutHandler;
+		let safePeriodTimeoutHandler;
+
+		function beginSafePeriod() {
+			safePeriodTimeoutHandler = setTimeout(()=>{
+				beginSafePeriod()
+			}, connectionTimeout)
+
+			reArm();
+		}
+
+		function endSafePeriod() {
+			clearTimeout(safePeriodTimeoutHandler);
+		}
+
 		function reArm() {
 			request.execute().then( (response) => {
 				if (!response.ok) {
 					//todo check for http errors like 404
-					return setTimeout(reArm, pollingTimeout);
+					return beginSafePeriod();
 				}
+
+				if (response.statusCode === 100) {
+					endSafePeriod();
+					beginSafePeriod();
+					return;
+				}
+
+				if (safePeriodTimeoutHandler) {
+					clearTimeout(safePeriodTimeoutHandler);
+				}
+
 				request.resolve(response);
 			}).catch( (err) => {
 				switch(err.code){
 					case "ETIMEDOUT":
-						setTimeout(reArm, pollingTimeout);
+						endSafePeriod();
+						beginSafePeriod();
 						break;
 					case "ECONNREFUSED":
-						setTimeout(reArm, pollingTimeout*1.5);
+						endSafePeriod();
+						beginSafePeriod();
 						break;
 					default:
 						request.reject(err);
 				}
 			});
+
 		}
 
-		reArm();
+		beginSafePeriod();
 	}
 
 }
@@ -24223,6 +24544,7 @@ function unsubscribe(keySSI, observable) {
 }
 
 function MQHandler(didDocument, domain, pollingTimeout) {
+    let connectionTimeout;
     let timeout = pollingTimeout || 1000;
     let token;
     let expiryTime;
@@ -24296,7 +24618,10 @@ function MQHandler(didDocument, domain, pollingTimeout) {
             if (!token || (expiryTime && Date.now() + 2000 > expiryTime)) {
                 callback = $$.makeSaneCallback(callback);
                 return http.fetch(url)
-                    .then(response => response.json())
+                    .then(response => {
+                        connectionTimeout = parseInt(response.headers["connection-timeout"]);
+                        return response.json()
+                    })
                     .then(data => {
                         token = data.token;
                         expiryTime = data.expires;
@@ -24355,7 +24680,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                     let options = {headers: {Authorization: token}};
 
                     function makeRequest() {
-                        let request = http.poll(url, options, timeout);
+                        let request = http.poll(url, options, connectionTimeout, timeout);
                         originalCb.__requestInProgress = request;
 
                         request.then(response => response.json())
@@ -24380,6 +24705,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
             })
         })
     }
+
 
     this.previewMessage = (callback) => {
         consumeMessage("get", callback);
@@ -24477,7 +24803,7 @@ function publish(keySSI, message, timeout, callback){
 
         let options = {body: message, method: 'PUT'};
 
-		let request = http.poll(url, options, timeout);
+		let request = http.poll(url, options, undefined, timeout);
 
 		request.then((response)=>{
 			callback(undefined, response);
@@ -24506,7 +24832,7 @@ function getObservableHandler(keySSI, timeout){
 			let options = {
 				method: 'POST'
 			};
-			let request = http.poll(url, options, timeout);
+			let request = http.poll(url, options, undefined, timeout);
 
 			request.then((response) => {
 				obs.dispatchEvent("message", response);
