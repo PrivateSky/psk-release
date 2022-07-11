@@ -21496,7 +21496,7 @@ function Response(httpRequest, httpResponse) {
 	}
 
 	this.ok = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 ? true : false;
-	this.statusCode = httpResponse.statusCode;
+	this.status = httpResponse.statusCode;
 	this.statusMessage = httpResponse.statusMessage;
 	this.headers = httpResponse.headers;
 
@@ -21846,7 +21846,7 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 					return beginSafePeriod();
 				}
 
-				if (response.statusCode === 100) {
+				if (response.status === 204) {
 					endSafePeriod();
 					beginSafePeriod();
 					return;
