@@ -2508,9 +2508,9 @@ function handleCloudWalletRequest(request, response) {
         })
         .catch((error) => {
             console.log("[CloudWallet] worker resolver error", error);
-            res.setHeader("Content-Type", "text/html");
-            res.statusCode = 400;
-            res.end(INVALID_DSU_HTML_RESPONSE);
+            response.setHeader("Content-Type", "text/html");
+            response.statusCode = 400;
+            response.end(INVALID_DSU_HTML_RESPONSE);
         });
 }
 
@@ -4819,6 +4819,53 @@ function getNodeWorkerBootScript() {
     `;
 }
 
+async function handleCreateWallet(request, response) {
+    try {
+        const { domain, userId } = request.params;
+        const keySSISpace = require("opendsu").loadApi("keyssi");
+        const resolver = require("opendsu").loadApi("resolver");
+
+        const crypto = require("pskcrypto");
+        const credential = crypto.randomBytes(64).toString("hex");
+
+        const walletSSI = keySSISpace.createTemplateWalletSSI(domain, credential);
+        const seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
+
+        console.log(`[Stream] Creating wallet ${walletSSI.getIdentifier()} for user ${userId}...`);
+        const walletDSU = await $$.promisify(resolver.createDSUForExistingSSI)(walletSSI, { dsuTypeSSI: seedSSI });
+
+        const writableDSU = walletDSU.getWritableDSU();
+
+        const enclaveKeySSIObject = await $$.promisify(resolver.createSeedDSU)(domain);
+        const enclaveKeySSI = await $$.promisify(enclaveKeySSIObject.getKeySSIAsString)();
+
+        const sharedEnclaveKeySSIObject = await $$.promisify(resolver.createSeedDSU)(domain);
+        const sharedEnclaveKeySSI = await $$.promisify(sharedEnclaveKeySSIObject.getKeySSIAsString)();
+
+        const constants = require("opendsu").constants;
+        const environmentConfig = {
+            vaultDomain: domain,
+            didDomain: domain,
+            enclaveType: constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE,
+            enclaveKeySSI,
+            sharedEnclaveType: constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE,
+            sharedEnclaveKeySSI,
+        };
+
+        console.log(`[Stream] Settings config for wallet ${walletSSI.getIdentifier()}`, environmentConfig);
+        await $$.promisify(writableDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
+
+        await $$.promisify(writableDSU.writeFile)("/metadata.json", JSON.stringify({ userId }));
+
+        response.statusCode = 200;
+        return response.end(walletSSI.getIdentifier());
+    } catch (error) {
+        console.log("[Stream] Error", error);
+        response.statusCode = 500;
+        return response.end(error);
+    }
+}
+
 async function handleStreamRequest(request, response) {
     const { keySSI } = request.params;
     let requestedPath = request.url.substr(request.url.indexOf(keySSI) + keySSI.length);
@@ -4887,15 +4934,17 @@ async function handleStreamRequest(request, response) {
 }
 
 module.exports = {
+    handleCreateWallet,
     handleStreamRequest,
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./worker-script":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/apihub/components/stream/worker-script.js","syndicate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/apihub/components/stream/index.js":[function(require,module,exports){
+},{"./worker-script":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/apihub/components/stream/worker-script.js","opendsu":"opendsu","pskcrypto":"pskcrypto","syndicate":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/syndicate/index.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/apihub/components/stream/index.js":[function(require,module,exports){
 function Iframe(server) {
-    const { handleStreamRequest } = require("./controller");
-    server.use(`/stream/:keySSI/*`, handleStreamRequest);
+    const { handleCreateWallet, handleStreamRequest } = require("./controller");
+    server.put(`/stream/:domain/create-wallet/:userId`, handleCreateWallet);
+    server.get(`/stream/:keySSI/*`, handleStreamRequest);
 }
 
 module.exports = Iframe;
@@ -4922,11 +4971,32 @@ module.exports = async () => {
 
     parentPort.on("message", async (task) => {
         console.log("Handling task", task);
-        const { requestedPath, range } = task;
+        const { requestedPath } = task;
+        let { range } = task;
 
         try {
-            const start = Number(range.replace(/\D/g, ""));
-            const end = start + CHUNK_SIZE;
+            let start;
+            let end;
+
+            if (range.indexOf("=") !== -1) {
+                range = range.split("=")[1];
+            }
+            if (range.indexOf("-") !== -1) {
+                parts = range.split("-");
+                start = parseInt(parts[0], 10);
+                if (parts[1]) {
+                    end = parseInt(parts[1], 10);
+                } else {
+                    end = start + CHUNK_SIZE;
+                }
+            } else {
+                start = parseInt(range, 10);
+                end = start + CHUNK_SIZE;
+            }
+            console.log(`Handling range start ${start} end ${end}`);
+
+            console.log("Refreshing DSU...")
+            await $$.promisify(dsu.refresh)();
 
             const streamRange = { start, end };
             const { totalSize, stream } = await $$.promisify(dsu.createBigFileReadStreamWithRange)(requestedPath, streamRange);
@@ -5288,7 +5358,7 @@ const defaultConfig = {
         "mq":{
             "module": "./components/mqHub",
             "function": "MQHub",
-            "connectionTimeout": 3000
+            "connectionTimeout": 10000
         },
         "enclave":{
             "module": "./components/enclave",
@@ -9429,10 +9499,71 @@ function Archive(archiveConfigurator) {
     };
 
     /**
+     * @param {sizeSSI} sizeSSI
+     */
+    const _isAvailableSpaceInLastBrick = (sizeSSI) => {
+        if(typeof sizeSSI === "string") {
+            const keySSISpace = require("opendsu").loadAPI("keyssi");
+            sizeSSI = keySSISpace.parse(sizeSSI);
+        }
+        const totalSize = sizeSSI.getTotalSize();
+        const bufferSize = sizeSSI.getBufferSize();
+        return totalSize % bufferSize !== 0;
+    };
+
+    /**
+     * @param {string} barPath
+     * @param {object} newSizeSSI
+     * @param {object} brick
+     * @param {callback} callback
+     */
+    const _appendBigFileBrick = (barPath, newSizeSSI, brick, callback) => {
+        _getBigFileBricksMeta(barPath, (error, bricksMeta) => {
+            if(error) {
+                return callback(error);
+            }
+
+            if(!_isSizeSSIPresentInBricksMetaAndIsValid(bricksMeta)) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Provided path ${barPath} is not a BigFile`));
+            }
+
+            // check using the current sizeSSI if there is available space inside the last brick
+            if(_isAvailableSpaceInLastBrick(bricksMeta[0].size)) {
+                return brickMapController.updateBigFileLastBrick(barPath, newSizeSSI, brick, callback);
+            }
+            return brickMapController.appendBigFile(barPath, newSizeSSI, brick, callback);
+        });
+    };
+
+    /**
+     * @param {string} barPath
+     * @param {callback} callback
+     */
+    const _getBigFileBricksMeta = (barPath, callback) => {
+        barPath = pskPth.normalize(barPath);
+        try {
+            const bricksMeta = brickMapController.getBricksMeta(barPath);
+            callback(null, bricksMeta);
+        } catch (err) {
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Failed to find any info for path " + barPath, err));
+        }
+    };
+
+    /**
      * @param {object} bricksMeta
      */
     const _isSizeSSIPresentInBricksMeta = (bricksMeta) => {
         return !!bricksMeta && !!bricksMeta[0] && !!bricksMeta[0].size;
+    }
+
+    const _isSizeSSIValid = (sizeSSI) => {
+        try {
+            const keySSISpace = require("opendsu").loadAPI("keyssi");
+            keySSISpace.parse(sizeSSI);
+            return true;
+        } catch (error) {
+            return false;   
+        }
     }
 
     const _isSizeSSIPresentInBricksMetaAndIsValid = (bricksMeta) => {
@@ -9440,13 +9571,7 @@ function Archive(archiveConfigurator) {
             return false;
         }
 
-        try {
-            const keySSISpace = require("opendsu").loadAPI("keyssi");
-            sizeSSI = keySSISpace.parse(bricksMeta[0].size);
-            return true;
-        } catch (error) {
-            return false;   
-        }        
+        return _isSizeSSIValid(bricksMeta[0].size);
     }
 
     /**
@@ -10254,6 +10379,82 @@ function Archive(archiveConfigurator) {
         });
     }
 
+    this.appendBigFileBrick = (path, newSizeSSI, brick, options, callback) => {
+        waitIfDSUIsRefreshing(() => {
+            const defaultOpts = {ignoreMounts: false};
+            if (typeof options === "function") {
+                callback = options;
+                options = {};
+            }
+            if (typeof options === "undefined") {
+                options = {};
+            }
+
+            callback = $$.makeSaneCallback(callback);
+            if(typeof path !== "string") {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Provided path for appendBigFileBrick must be a string"));
+            }
+            if(!newSizeSSI || !_isSizeSSIValid(newSizeSSI)) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Provided newSizeSSI is not a valid sizeSSI"));
+            }
+
+            Object.assign(defaultOpts, options);
+            options = defaultOpts;
+
+            if (options.ignoreMounts === true) {
+                _appendBigFileBrick(path, newSizeSSI, brick, callback);
+            } else {
+                this.getArchiveForPath(path, (err, dossierContext) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                    }
+                    if (dossierContext.readonly === true) {
+                        return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                    }
+
+                    options.ignoreMounts = true;
+                    dossierContext.archive.appendBigFileBrick(dossierContext.relativePath, newSizeSSI, brick, options, callback);
+                });
+            }
+        });
+    }
+
+    this.getBigFileBricksMeta = (path, options, callback) => {
+        waitIfDSUIsRefreshing(() => {
+            const defaultOpts = {ignoreMounts: false};
+            if (typeof options === "function") {
+                callback = options;
+                options = {};
+            }
+            if (typeof options === "undefined") {
+                options = {};
+            }
+
+            callback = $$.makeSaneCallback(callback);
+            if(typeof path !== "string") {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper("Provided path for writeFileFromBricks must be a string"));
+            }
+
+            Object.assign(defaultOpts, options);
+            options = defaultOpts;
+
+            if (options.ignoreMounts === true) {
+                _getBigFileBricksMeta(path, callback);
+            } else {
+                this.getArchiveForPath(path, (err, dossierContext) => {
+                    if (err) {
+                        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU instance mounted at path ${path}`, err));
+                    }
+                    if (dossierContext.readonly === true) {
+                        return callback(Error("Tried to write in a readonly mounted RawDossier"));
+                    }
+
+                    options.ignoreMounts = true;
+                    dossierContext.archive.getBigFileBricksMeta(dossierContext.relativePath, options, callback);
+                });
+            }
+        });
+    }
 
     this.delete = (path, options, callback) => {
         waitIfDSUIsRefreshing(() => {
@@ -11816,6 +12017,14 @@ function BrickMap(header) {
                 this.createFile(path);
                 this.updateMetadata(path, 'createdAt', timestamp);
                 break;
+            case 'replaceFirstBrick':
+                this.replaceFirstBrick(path, data);
+                this.updateMetadata(path, 'updatedAt', timestamp);
+                break;
+            case 'replaceLastBrick':
+                this.replaceLastBrick(path, data);
+                this.updateMetadata(path, 'updatedAt', timestamp);
+                break;
             default:
                 throw new Error(`Unknown operation <${operation}>`);
         }
@@ -12537,6 +12746,58 @@ function BrickMapController(options) {
 
     /**
      * @param {string} path
+     * @param {Array<object>} bricksData
+     * @param {callback} callback
+     */
+    this.updateBigFileLastBrick = (path, sizeSSI, brick, callback) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'updateBigFile', path, {
+            sizeSSI,
+            brick
+        }, (err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate updateBigFile operation`, err));
+            }
+
+            getCurrentDiffBrickMap((err, _brickMap) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                }
+
+                this.replaceFirstBrick(path, { size: sizeSSI });
+                this.replaceLastBrick(path, brick);
+                this.attemptAnchoring(callback);
+            })
+        })
+    }
+
+    /**
+     * @param {string} path
+     * @param {Array<object>} bricksData
+     * @param {callback} callback
+     */
+    this.appendBigFile = (path, sizeSSI, brick, callback) => {
+        validator.validate('preWrite', state.getDirtyBrickMap(), 'appendBigFile', path, {
+            sizeSSI,
+            brick
+        }, (err) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to validate appendBigFile operation`, err));
+            }
+
+            getCurrentDiffBrickMap((err, _brickMap) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve current diffBrickMap`, err));
+                }
+
+                this.replaceFirstBrick(path, { size: sizeSSI });
+                this.appendBricksToFile(path, [brick]);
+                this.attemptAnchoring(callback);
+            })
+        })
+    }
+
+    /**
+     * @param {string} path
      * @param {callback} callback
      */
     this.deleteFile = (path, callback) => {
@@ -12642,6 +12903,32 @@ function BrickMapController(options) {
         const dirtyBrickMap = state.getDirtyBrickMap();
         dirtyBrickMap.appendBricksToFile(path, bricks);
         state.getCurrentDiff().appendBricksToFile(path, bricks);
+    }
+
+    /**
+     * Proxy for BrickMap.replaceFirstBrick()
+     *
+     * @param {string} path
+     * @param {Array<object>} bricks
+     * @throws {Error}
+     */
+     this.replaceFirstBrickProxyHandler = (path, brick) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
+        dirtyBrickMap.replaceFirstBrick(path, brick);
+        state.getCurrentDiff().replaceFirstBrick(path, brick);
+    }
+
+    /**
+     * Proxy for BrickMap.replaceLastBrick()
+     *
+     * @param {string} path
+     * @param {Array<object>} bricks
+     * @throws {Error}
+     */
+     this.replaceLastBrickProxyHandler = (path, brick) => {
+        const dirtyBrickMap = state.getDirtyBrickMap();
+        dirtyBrickMap.replaceLastBrick(path, brick);
+        state.getCurrentDiff().replaceLastBrick(path, brick);
     }
 
     /**
@@ -13130,6 +13417,22 @@ function BrickMapDiff(header) {
     this.createFile = function (path) {
         this.log('createFile', path);
     }
+
+    /**
+     * @param {string} filePath
+     * @param {object} brick
+     */
+    this.replaceFirstBrick = function (filePath, brick) {
+        this.log('replaceFirstBrick', filePath, brick);
+    }
+
+    /**
+     * @param {string} filePath
+     * @param {object} brick
+     */
+    this.replaceLastBrick = function (filePath, brick) {
+        this.log('replaceLastBrick', filePath, brick);
+    }
 }
 module.exports = BrickMapDiff;
 
@@ -13191,6 +13494,48 @@ const BrickMapMixin = {
     appendBrick: function (node, brick) {
         node.metadata.updatedAt = this.getTimestamp();
         node.hashLinks.push(brick);
+    },
+
+    /**
+     * @param {string} filePath
+     */
+    getNodeFromPath: function (filePath) {
+        filePath = pskPath.normalize(filePath);
+        if (filePath === "") {
+            throw new Error(`File path must not be empty.`);
+        }
+
+        const filePathNode = this.createNodesFromPath(filePath);
+        // If this node was previously deleted, remove the "deletedAt" timestamp
+        if (filePathNode.metadata.deletedAt) {
+            delete filePathNode.metadata.deletedAt;
+        }
+
+        return filePathNode;
+    },
+
+    /**
+     * @param {string} filePath
+     * @param {object} brick
+     */
+    replaceFirstBrick: function (filePath, brick) {
+        const node = this.getNodeFromPath(filePath);
+        node.metadata.updatedAt = this.getTimestamp();
+        if(node.hashLinks.length > 0) {
+            node.hashLinks[0] = brick;
+        }
+    },
+
+    /**
+     * @param {string} filePath
+     * @param {object} brick
+     */
+    replaceLastBrick: function (filePath, brick) {
+        const node = this.getNodeFromPath(filePath);
+        node.metadata.updatedAt = this.getTimestamp();
+        if(node.hashLinks.length > 0) {
+            node.hashLinks[node.hashLinks.length - 1] = brick;
+        }
     },
 
     /**
@@ -38259,6 +38604,8 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
     options = options || {events: false};
     ObservableMixin(this);
 
+    const errorAPI = require("opendsu").loadAPI("error");
+
     storageStrategy.on("initialised", () => {
         this.finishInitialisation();
         this.dispatchEvent("initialised");
@@ -38312,7 +38659,7 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
         self.getRecord(tableName, key, function (err, res) {
             if (!err || res) {
                 //newRecord = Object.assign(newRecord, {__version:-1});
-                return callback(createOpenDSUErrorWrapper("Failed to insert over an existing record", new Error("Trying to insert into existing record")));
+                return callback(createOpenDSUErrorWrapper("Failed to insert over an existing record", new Error(errorAPI.DB_INSERT_EXISTING_RECORD_ERROR)));
             }
             const sharedDSUMetadata = {}
             sharedDSUMetadata.__version = 0;
@@ -38466,7 +38813,7 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
 
 module.exports = BasicDB;
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
 module.exports = {
     ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
         let resolver = require("../../resolver");
@@ -42526,6 +42873,7 @@ function Enclave_Mixin(target, did) {
     const SREAD_SSIS_TABLE = "sreadssis";
     const SEED_SSIS_TABLE = "seedssis";
     const DIDS_PRIVATE_KEYS = "dids_private";
+    const errorAPI = openDSU.loadAPI("error");
 
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
@@ -42684,13 +43032,17 @@ function Enclave_Mixin(target, did) {
         const keySSIIdentifier = seedSSI.getIdentifier();
         const sReadSSIIdentifier = seedSSI.derive().getIdentifier();
 
+        const isExistingKeyError = (error)  => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
+
         function registerDerivedKeySSIs(derivedKeySSI) {
             target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
-                if (err) {
+                if (err && !isExistingKeyError(err)) {
+                    // ignore if KeySSI is already present
                     return callback(err);
                 }
                 target.storageDB.insertRecord(SREAD_SSIS_TABLE, derivedKeySSI.getIdentifier(), {sReadSSI: sReadSSIIdentifier}, (err) => {
-                    if (err) {
+                    if (err && !isExistingKeyError(err)) {
+                        // ignore if sReadSSI is already present
                         return callback(err);
                     }
 
@@ -42706,7 +43058,8 @@ function Enclave_Mixin(target, did) {
         }
 
         target.storageDB.insertRecord(SEED_SSIS_TABLE, alias, {seedSSI: keySSIIdentifier}, (err) => {
-            if (err) {
+            if (err && !isExistingKeyError(err)) {
+                // ignore if SeedSSI is already present
                 return callback(err);
             }
 
@@ -43659,6 +44012,8 @@ function printOpenDSUError(...args){
     }
 }
 
+const DB_INSERT_EXISTING_RECORD_ERROR = "Trying to insert into existing record";
+
 module.exports = {
     createOpenDSUErrorWrapper,
     reportUserRelevantError,
@@ -43669,7 +44024,8 @@ module.exports = {
     unobserveUserRelevantMessages,
     OpenDSUSafeCallback,
     registerMandatoryCallback,
-    printOpenDSUError
+    printOpenDSUError,
+    DB_INSERT_EXISTING_RECORD_ERROR
 }
 
 },{"./../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
@@ -43992,8 +44348,9 @@ function Response(httpRequest, httpResponse) {
 		//data collecting
 		let rawData;
 		const contentType = httpResponse.headers['content-type'];
+        const isPartialContent = httpResponse.statusCode === 206;
 
-		if (contentType === "application/octet-stream") {
+		if (contentType === "application/octet-stream" || isPartialContent) {
 			rawData = [];
 		} else {
 			rawData = '';
@@ -44369,7 +44726,7 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 					request.abort();
 				}
 				beginSafePeriod()
-			}, connectionTimeout);
+			}, connectionTimeout + 1000);
 
 			reArm();
 		}
