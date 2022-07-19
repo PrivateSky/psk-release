@@ -19779,6 +19779,8 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
     options = options || {events: false};
     ObservableMixin(this);
 
+    const errorAPI = require("opendsu").loadAPI("error");
+
     storageStrategy.on("initialised", () => {
         this.finishInitialisation();
         this.dispatchEvent("initialised");
@@ -19832,7 +19834,7 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
         self.getRecord(tableName, key, function (err, res) {
             if (!err || res) {
                 //newRecord = Object.assign(newRecord, {__version:-1});
-                return callback(createOpenDSUErrorWrapper("Failed to insert over an existing record", new Error("Trying to insert into existing record")));
+                return callback(createOpenDSUErrorWrapper("Failed to insert over an existing record", new Error(errorAPI.DB_INSERT_EXISTING_RECORD_ERROR)));
             }
             const sharedDSUMetadata = {}
             sharedDSUMetadata.__version = 0;
@@ -19986,7 +19988,7 @@ function BasicDB(storageStrategy, conflictSolvingStrategy, options) {
 
 module.exports = BasicDB;
 
-},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","../../utils/ObservableMixin":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/db/impl/DSUDBUtil.js":[function(require,module,exports){
 module.exports = {
     ensure_WalletDB_DSU_Initialisation: function (keySSI, dbName, callback) {
         let resolver = require("../../resolver");
@@ -20901,8 +20903,17 @@ function SingleDSUStorageStrategy() {
             }
 
             const TaskCounter = require("swarmutils").TaskCounter;
+            let batchInProgress = false;
+            if (storageDSU.batchInProgress()) {
+                batchInProgress = true
+            } else {
+                storageDSU.beginBatch();
+            }
             const taskCounter = new TaskCounter(() => {
-                return callback();
+                if (batchInProgress) {
+                    return callback();
+                }
+                storageDSU.commitBatch(callback);
             })
 
             if (primaryKeys.length === 0) {
@@ -20911,7 +20922,10 @@ function SingleDSUStorageStrategy() {
                         return callback(createOpenDSUErrorWrapper(`Failed to create empty index for field ${fieldName} in table ${tableName}`, err));
                     }
 
-                    callback();
+                    if (batchInProgress) {
+                        return callback();
+                    }
+                    storageDSU.commitBatch(callback);
                 });
             }
 
@@ -21110,6 +21124,12 @@ function SingleDSUStorageStrategy() {
         }
 
         const recordPath = getRecordPath(tableName, key);
+        let batchInProgress = false;
+        if (storageDSU.batchInProgress()) {
+            batchInProgress = true
+        } else {
+            storageDSU.beginBatch();
+        }
         storageDSU.writeFile(recordPath, JSON.stringify(record), function (err, res) {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`Failed to update record in ${recordPath}`, err));
@@ -21126,7 +21146,10 @@ function SingleDSUStorageStrategy() {
                             return callback(createOpenDSUErrorWrapper(`Failed to update indexes for record ${record}`, err));
                         }
 
-                        callback(undefined, record);
+                        if (batchInProgress) {
+                            return callback(undefined, record);
+                        }
+                        storageDSU.commitBatch(err => callback(err, record));
                     });
                 });
             }
@@ -21136,7 +21159,10 @@ function SingleDSUStorageStrategy() {
                     return callback(createOpenDSUErrorWrapper(`Failed to update indexes for record ${record}`, err));
                 }
 
-                callback(undefined, record);
+                if (batchInProgress) {
+                    return callback(undefined, record);
+                }
+                storageDSU.commitBatch(err => callback(err, record));
             });
         });
     };
@@ -21183,6 +21209,12 @@ function SingleDSUStorageStrategy() {
 
     const READ_WRITE_KEY_TABLE = "KeyValueTable";
     this.writeKey = function (key, value, callback) {
+        let batchInProgress = false;
+        if (storageDSU.batchInProgress()) {
+            batchInProgress = true
+        } else {
+            storageDSU.beginBatch();
+        }
         let valueObject = {
             type: typeof value,
             value: value
@@ -21203,7 +21235,15 @@ function SingleDSUStorageStrategy() {
         }
 
         const recordPath = getRecordPath(READ_WRITE_KEY_TABLE, key);
-        storageDSU.writeFile(recordPath, JSON.stringify(valueObject), callback);
+        storageDSU.writeFile(recordPath, JSON.stringify(valueObject), err => {
+            if (err) {
+                return callback(err);
+            }
+            if (batchInProgress) {
+                return callback(undefined);
+            }
+            storageDSU.commitBatch(callback);
+        });
     };
 
     this.readKey = function (key, callback) {
@@ -24040,6 +24080,7 @@ function Enclave_Mixin(target, did) {
     const SREAD_SSIS_TABLE = "sreadssis";
     const SEED_SSIS_TABLE = "seedssis";
     const DIDS_PRIVATE_KEYS = "dids_private";
+    const errorAPI = openDSU.loadAPI("error");
 
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
@@ -24198,13 +24239,17 @@ function Enclave_Mixin(target, did) {
         const keySSIIdentifier = seedSSI.getIdentifier();
         const sReadSSIIdentifier = seedSSI.derive().getIdentifier();
 
+        const isExistingKeyError = (error)  => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
+
         function registerDerivedKeySSIs(derivedKeySSI) {
             target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
-                if (err) {
+                if (err && !isExistingKeyError(err)) {
+                    // ignore if KeySSI is already present
                     return callback(err);
                 }
                 target.storageDB.insertRecord(SREAD_SSIS_TABLE, derivedKeySSI.getIdentifier(), {sReadSSI: sReadSSIIdentifier}, (err) => {
-                    if (err) {
+                    if (err && !isExistingKeyError(err)) {
+                        // ignore if sReadSSI is already present
                         return callback(err);
                     }
 
@@ -24220,7 +24265,8 @@ function Enclave_Mixin(target, did) {
         }
 
         target.storageDB.insertRecord(SEED_SSIS_TABLE, alias, {seedSSI: keySSIIdentifier}, (err) => {
-            if (err) {
+            if (err && !isExistingKeyError(err)) {
+                // ignore if SeedSSI is already present
                 return callback(err);
             }
 
@@ -24872,6 +24918,7 @@ function WalletDBEnclave(keySSI, did) {
             }
         }
 
+        resolver.invalidateDSUCache(keySSI);
         this.storageDB = db.getSimpleWalletDB(DB_NAME, {keySSI});
         this.storageDB.on("initialised", () => {
             initialised = true;
@@ -25173,6 +25220,8 @@ function printOpenDSUError(...args){
     }
 }
 
+const DB_INSERT_EXISTING_RECORD_ERROR = "Trying to insert into existing record";
+
 module.exports = {
     createOpenDSUErrorWrapper,
     reportUserRelevantError,
@@ -25183,7 +25232,8 @@ module.exports = {
     unobserveUserRelevantMessages,
     OpenDSUSafeCallback,
     registerMandatoryCallback,
-    printOpenDSUError
+    printOpenDSUError,
+    DB_INSERT_EXISTING_RECORD_ERROR
 }
 
 },{"./../utils/observable":"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/utils/observable.js"}],"/home/skutner/WebstormProjects/work/epi-workspace/privatesky/modules/opendsu/http/browser/index.js":[function(require,module,exports){
@@ -25503,8 +25553,9 @@ function Response(httpRequest, httpResponse) {
 		//data collecting
 		let rawData;
 		const contentType = httpResponse.headers['content-type'];
+        const isPartialContent = httpResponse.statusCode === 206;
 
-		if (contentType === "application/octet-stream") {
+		if (contentType === "application/octet-stream" || isPartialContent) {
 			rawData = [];
 		} else {
 			rawData = '';
@@ -25534,9 +25585,18 @@ function Response(httpRequest, httpResponse) {
 	}
 
 	this.ok = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 ? true : false;
-	this.statusCode = httpResponse.statusCode;
+	this.status = httpResponse.statusCode;
 	this.statusMessage = httpResponse.statusMessage;
-	this.headers = httpResponse.headers;
+
+	function Headers(headers) {
+		headers = headers || {};
+
+		this.get = (headerKey)=>{
+			return headers[headerKey];
+		}
+	}
+
+	this.headers = new Headers(httpResponse.headers);
 
 	this.arrayBuffer = function () {
 		let promise = new Promise((resolve, reject) => {
@@ -25762,8 +25822,15 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 		let currentState = undefined;
 		let timeout;
 		this.url = url;
+		let abortController;
+		let previousAbortController;
 
 		this.execute = function() {
+			if (typeof AbortController !== "undefined") {
+				previousAbortController = abortController;
+				abortController = new AbortController();
+				options.signal = abortController.signal;
+			}
 			if (!currentState && delay) {
 				currentState = new Promise((resolve, reject) => {
 					timeout = setTimeout(() => {
@@ -25826,6 +25893,12 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 				requests.delete(identifier);
 			}
 		}
+
+		this.abort = () => {
+            if (typeof previousAbortController !== "undefined") {
+				previousAbortController.abort();
+            }
+		}
 	}
 
 	this.createRequest = function (url, options, delayedStart = 0) {
@@ -25863,11 +25936,17 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 	/* *************************** polling zone ****************************/
 	function createPollingTask(request) {
 		let safePeriodTimeoutHandler;
-
+		let serverResponded = false;
+		let receivedError = false;
 		function beginSafePeriod() {
-			safePeriodTimeoutHandler = setTimeout(()=>{
+			safePeriodTimeoutHandler = setTimeout(() => {
+				if (!serverResponded && !receivedError) {
+					request.abort();
+				}
+				serverResponded = false;
+				receivedError = false;
 				beginSafePeriod()
-			}, connectionTimeout)
+			}, connectionTimeout + 1000);
 
 			reArm();
 		}
@@ -25883,7 +25962,9 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 					return beginSafePeriod();
 				}
 
-				if (response.statusCode === 100) {
+				if (response.status === 204) {
+					serverResponded = true;
+					receivedError = false;
 					endSafePeriod();
 					beginSafePeriod();
 					return;
@@ -25897,12 +25978,12 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 			}).catch( (err) => {
 				switch(err.code){
 					case "ETIMEDOUT":
+					case "ECONNREFUSED":
+						receivedError = true;
 						endSafePeriod();
 						beginSafePeriod();
 						break;
-					case "ECONNREFUSED":
-						endSafePeriod();
-						beginSafePeriod();
+					case 20:
 						break;
 					default:
 						request.reject(err);
@@ -27279,7 +27360,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                 callback = $$.makeSaneCallback(callback);
                 return http.fetch(url)
                     .then(response => {
-                        connectionTimeout = parseInt(response.headers["connection-timeout"]);
+                        connectionTimeout = parseInt(response.headers.get("connection-timeout"));
                         return response.json()
                     })
                     .then(data => {
