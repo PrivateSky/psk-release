@@ -20256,7 +20256,6 @@ module.exports = {
 }
 
 },{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./BuildWallet":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
-const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
 const {createCommandObject} = require("./lib/createCommandObject");
 
 function APIHUBProxy(domain, did) {
@@ -20270,19 +20269,22 @@ function APIHUBProxy(domain, did) {
     const ProxyMixin = require("./ProxyMixin");
     ProxyMixin(this);
     let url;
+    let didDocument;
     const init = async () => {
-        if (typeof domain === "undefined") {
-            domain = await $$.promisify(scAPI.getVaultDomain)();
-        }
-
         if (typeof did === "undefined") {
-            did = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT).getIdentifier();
+            didDocument = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT);
+            didDocument.on("initialised", () => {
+                did = didDocument.getIdentifier();
+                url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+                this.finishInitialisation();
+                this.dispatchEvent("initialised");
+            })
+        } else {
+            didDocument = await $$.promisify(w3cDID.resolveDID)(did);
+            url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+            this.finishInitialisation();
+            this.dispatchEvent("initialised");
         }
-
-        url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
-        initialised = true;
-        this.finishInitialisation();
-        this.dispatchEvent("initialised");
     }
 
     this.isInitialised = ()=>{
@@ -20300,7 +20302,7 @@ function APIHUBProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject", "isInitialised");
+    bindAutoPendingFunctions(this, ["__putCommandObject", "isInitialised", "on", "off"]);
     init();
 }
 
@@ -20844,11 +20846,13 @@ function HighSecurityProxy(domain, did) {
                 did = didDocument.getIdentifier();
                 this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
                 this.finishInitialisation();
+                this.dispatchEvent("initialised");
             })
         } else {
             didDocument = await $$.promisify(w3cDID.resolveDID)(did);
             this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
             this.finishInitialisation();
+            this.dispatchEvent("initialised");
         }
     }
 
@@ -20871,7 +20875,7 @@ function HighSecurityProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject");
+    bindAutoPendingFunctions(this, ["__putCommandObject", "on", "off"]);
     init();
 }
 
@@ -20913,24 +20917,35 @@ function ProxyMixin(target) {
     const commandNames = require("./lib/commandsNames");
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(target);
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    ObservableMixin(target);
+
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        if (typeof encryptedRecord === "function") {
+            callback = encryptedRecord;
+            encryptedRecord = undefined;
+        }
         target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, callback);
     };
 
     target.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        if (typeof encryptedRecord === "function") {
+            callback = encryptedRecord;
+            encryptedRecord = undefined;
+        }
         target.__putCommandObject(commandNames.UPDATE_RECORD, forDID, table, pk, plainRecord, callback);
     }
 
     target.getRecord = (forDID, table, pk, callback) => {
         target.__putCommandObject(commandNames.GET_RECORD, forDID, table, pk, (err, record) => {
             if (err) {
-                return createOpenDSUErrorWrapper(`Failed to get record with pk ${pk}`, err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get record with pk ${pk}`, err));
             }
 
             try {
                 record = JSON.parse(record);
             } catch (e) {
-                return createOpenDSUErrorWrapper(`Failed to parse record with pk ${pk}`, e);
+                return callback(createOpenDSUErrorWrapper(`Failed to parse record with pk ${pk}`, e));
             }
 
             callback(undefined, record);
@@ -20957,13 +20972,13 @@ function ProxyMixin(target) {
         }
         target.__putCommandObject(commandNames.FILTER_RECORDS, forDID, table, filter, sort, limit, (err, records) => {
             if (err) {
-                return createOpenDSUErrorWrapper(`Failed to filter records in table ${table}`, err);
+                return callback(createOpenDSUErrorWrapper(`Failed to filter records in table ${table}`, err));
             }
 
             try {
                 records = JSON.parse(records);
             } catch (e) {
-                return createOpenDSUErrorWrapper(`Failed to parse record `, e);
+                return callback(createOpenDSUErrorWrapper(`Failed to parse record `, e));
             }
 
             callback(undefined, records);
@@ -21106,7 +21121,7 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":"/home/runner/work/privatesky/privatesky/node_modules/buffer/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -22175,22 +22190,23 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 		let safePeriodTimeoutHandler;
 		let serverResponded = false;
 		let receivedError = false;
-        /**
-         * default connection timeout in api-hub is @connectionTimeout
-         * we wait double the time before aborting the request
-         */
-        function beginSafePeriod() {
-            safePeriodTimeoutHandler = setTimeout(() => {
-                if (!serverResponded && !receivedError) {
-                    request.abort();
-                }
-                serverResponded = false;
-                receivedError = false;
-                beginSafePeriod()
-            }, connectionTimeout * 2);
 
-            reArm();
-        }
+		/**
+		 * default connection timeout in api-hub is @connectionTimeout
+		 * we wait double the time before aborting the request
+		 */
+		function beginSafePeriod() {
+			safePeriodTimeoutHandler = setTimeout(() => {
+				if (!serverResponded && !receivedError) {
+					request.abort();
+				}
+				serverResponded = false;
+				receivedError = false;
+				beginSafePeriod()
+			}, connectionTimeout * 2);
+
+			reArm();
+		}
 
 		function endSafePeriod() {
 			clearTimeout(safePeriodTimeoutHandler);
@@ -22276,7 +22292,7 @@ function callInterceptors(target, callback){
 }
 
 function setupInterceptors(handler){
-    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}];
+    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}, {name:"doGet", position: 1}];
     interceptMethods.forEach(function(target){
         let method = handler[target.name];
         handler[target.name] = function(...args){

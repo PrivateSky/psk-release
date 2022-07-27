@@ -2403,7 +2403,7 @@ const INVALID_DSU_HTML_RESPONSE = `
     </html>
 `;
 
-function addDsuWorker(seed) {
+function addDsuWorker(seed, cookie) {
     const workerStartTime = process.hrtime();
     const dsuWorker = {
         port: null,
@@ -2417,12 +2417,12 @@ function addDsuWorker(seed) {
 
                 const authorizationKey = randomBuffer.toString("hex");
                 dsuWorker.authorizationKey = authorizationKey;
-
                 console.log(`[CloudWallet] Starting worker for handling seed ${seed}`);
                 const worker = new Worker(dsuBootPath, {
                     workerData: {
                         seed,
                         authorizationKey,
+                        cookie
                     },
                 });
 
@@ -2479,9 +2479,13 @@ function forwardRequestToWorker(dsuWorker, req, res) {
         path: requestedPath,
         method,
         headers: {
-            authorization: dsuWorker.authorizationKey,
+            authorization: dsuWorker.authorizationKey
         },
     };
+
+    if(req.headers.cookie){
+        options.headers.cookie = req.headers.cookie
+    }
 
     if (req.headers["content-type"]) {
         options.headers["content-type"] = req.headers["content-type"];
@@ -2573,7 +2577,7 @@ function handleCloudWalletRequest(request, response) {
 
     let dsuWorker = dsuWorkers[keySSI];
     if (!dsuWorker) {
-        dsuWorker = addDsuWorker(keySSI);
+        dsuWorker = addDsuWorker(keySSI, request.headers.cookie);
     }
 
     dsuWorker.resolver
@@ -3227,8 +3231,6 @@ module.exports = {
 },{"./DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const config = require("../../config");
-const {headersMiddleware, responseModifierMiddleware, requestBodyJSONMiddleware} = require("../../utils/middlewares");
-const path = require("path");
 
 function DefaultEnclave(server) {
     const {
@@ -3244,7 +3246,7 @@ function DefaultEnclave(server) {
     const w3cDID = openDSU.loadAPI("w3cdid");
     const crypto = openDSU.loadAPI("crypto");
 
-    const storageFolder = path.join(server.rootFolder, "enclave");
+    const storageFolder = path.join(server.rootFolder, "external-volume", "enclave");
     try {
         fs.mkdirSync(storageFolder, {recursive: true})
     } catch (e) {
@@ -4464,11 +4466,9 @@ const fs = require("fs");
 const path = require("path");
 
 function secrets(server) {
-    const fs = require("fs");
-    const path = require("path");
     const secretsFolderPath = path.join(server.rootFolder, "external-volume", "secrets");
-    server.get("/getSecret/:appName/:userId", function (request, response) {
-        let userId = request.params.userId;
+    server.get("/getSSOSecret/:appName", function (request, response) {
+        let userId = request.headers["user-id"];
         let appName = request.params.appName;
         const fileDir = path.join(secretsFolderPath, appName);
         const filePath = path.join(fileDir, `${userId}.json`);
@@ -4528,8 +4528,8 @@ function secrets(server) {
         })
     }
 
-    server.put('/putSecret/:appName/:userId', function (request, response) {
-        let userId = request.params.userId;
+    server.put('/putSSOSecret/:appName', function (request, response) {
+        let userId = request.headers["user-id"];
         let appName = request.params.appName;
         let data = []
 
@@ -4567,6 +4567,34 @@ function secrets(server) {
             })
         })
     });
+
+    function deleteSSOSecret(request, response) {
+        let userId = request.params.userId;
+        let appName = request.params.appName;
+        const fileDir = path.join(secretsFolderPath, appName);
+        const filePath = path.join(fileDir, `${userId}.json`);
+        fs.access(filePath, (err) => {
+            if (err) {
+                response.statusCode = 204;
+                response.end(JSON.stringify({error: `${userId} not found`}));
+                return;
+            }
+
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    response.statusCode = 404;
+                    response.end(JSON.stringify({error: `Couldn't find a secret for ${userId}`}));
+                    return
+                }
+
+                response.statusCode = 200;
+                response.end();
+            })
+        })
+    }
+
+    server.delete("/deactivateSSOSecret/:appName/:userId", deleteSSOSecret);
+    server.delete("/removeSSOSecret/:appName/:userId", deleteSSOSecret);
 }
 
 module.exports = secrets;
@@ -7116,6 +7144,7 @@ module.exports = AccessTokenValidator;
 const {sendUnauthorizedResponse} = require("../../../utils/middlewares");
 const util = require("./util");
 const urlModule = require("url");
+const errorMessages = require("./errorMessages");
 
 function OAuthMiddleware(server) {
   console.log(`Registering OAuthMiddleware`);
@@ -7167,7 +7196,7 @@ function OAuthMiddleware(server) {
     }
     util.decryptLoginInfo(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, loginContextCookie, (err, loginContext) => {
       if (err) {
-        return sendUnauthorizedResponse(req, res, "Unable to decrypt login info");
+        return sendUnauthorizedResponse(req, res, "Unable to decrypt login info", err);
       }
 
       if (Date.now() - loginContext.date > oauthConfig.sessionTimeout) {
@@ -7188,12 +7217,12 @@ function OAuthMiddleware(server) {
         origin: req.headers.host,
       }, (err, tokenSet) => {
         if (err) {
-          return sendUnauthorizedResponse(req, res, "Unable to get token set");
+          return sendUnauthorizedResponse(req, res, "Unable to get token set", err);
         }
 
         util.encryptTokenSet(CURRENT_ENCRYPTION_KEY_PATH, tokenSet, (err, encryptedTokenSet) => {
           if (err) {
-            return sendUnauthorizedResponse(req, res, "Unable to encrypt access token");
+            return sendUnauthorizedResponse(req, res, "Unable to encrypt access token", err);
           }
           const {payload} = util.parseAccessToken(tokenSet.access_token);
           const SSODetectedId = payload.email || payload.preferred_username || payload.upn || payload.sub;
@@ -7312,7 +7341,15 @@ function OAuthMiddleware(server) {
         })
       }
 
-      next();
+      util.getDecryptedAccessToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, accessTokenCookie, (err, token)=>{
+        if (err) {
+            debugMessage("Logout because accessTokenCookie decryption failed or session has expired.")
+            return startLogoutPhase(res);
+        }
+
+        req.headers["user-id"] = token.payload.sub;
+        next();
+      })
     })
   });
 }
@@ -7713,6 +7750,16 @@ function decryptAccessTokenCookie(currentEncryptionKeyPath, previousEncryptionKe
     })
 }
 
+function getDecryptedAccessToken(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, callback) {
+    decryptAccessTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, (err, decryptedAccessTokenCookie)=>{
+        if (err) {
+            return callback(err);
+        }
+
+        callback(undefined, parseAccessToken(decryptedAccessTokenCookie.token));
+    })
+}
+
 function decryptRefreshTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, encryptedRefreshToken, callback) {
     if (!encryptedRefreshToken) {
         return callback(Error(errorMessages.REFRESH_TOKEN_UNDEFINED));
@@ -7842,7 +7889,8 @@ module.exports = {
     validateAccessToken,
     validateEncryptedAccessToken,
     getUrlsToSkip,
-    rotateKey
+    rotateKey,
+    getDecryptedAccessToken
 }
 
 },{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js":[function(require,module,exports){
@@ -42316,7 +42364,6 @@ module.exports = {
 }
 
 },{"./AppBuilderService":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/AppBuilderService.js","./BuildWallet":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/BuildWallet.js","./DossierBuilder":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/DossierBuilder.js","./commands":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/commands/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js":[function(require,module,exports){
-const {bindAutoPendingFunctions} = require(".././../utils/BindAutoPendingFunctions");
 const {createCommandObject} = require("./lib/createCommandObject");
 
 function APIHUBProxy(domain, did) {
@@ -42330,19 +42377,22 @@ function APIHUBProxy(domain, did) {
     const ProxyMixin = require("./ProxyMixin");
     ProxyMixin(this);
     let url;
+    let didDocument;
     const init = async () => {
-        if (typeof domain === "undefined") {
-            domain = await $$.promisify(scAPI.getVaultDomain)();
-        }
-
         if (typeof did === "undefined") {
-            did = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT).getIdentifier();
+            didDocument = CryptoSkills.applySkill("key", CryptoSkills.NAMES.CREATE_DID_DOCUMENT);
+            didDocument.on("initialised", () => {
+                did = didDocument.getIdentifier();
+                url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+                this.finishInitialisation();
+                this.dispatchEvent("initialised");
+            })
+        } else {
+            didDocument = await $$.promisify(w3cDID.resolveDID)(did);
+            url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
+            this.finishInitialisation();
+            this.dispatchEvent("initialised");
         }
-
-        url = `${system.getBaseURL()}/runEnclaveCommand/${domain}/${did}`;
-        initialised = true;
-        this.finishInitialisation();
-        this.dispatchEvent("initialised");
     }
 
     this.isInitialised = ()=>{
@@ -42360,7 +42410,7 @@ function APIHUBProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject", "isInitialised");
+    bindAutoPendingFunctions(this, ["__putCommandObject", "isInitialised", "on", "off"]);
     init();
 }
 
@@ -42904,11 +42954,13 @@ function HighSecurityProxy(domain, did) {
                 did = didDocument.getIdentifier();
                 this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
                 this.finishInitialisation();
+                this.dispatchEvent("initialised");
             })
         } else {
             didDocument = await $$.promisify(w3cDID.resolveDID)(did);
             this.url = `${system.getBaseURL()}/runEnclaveEncryptedCommand/${domain}/${did}`;
             this.finishInitialisation();
+            this.dispatchEvent("initialised");
         }
     }
 
@@ -42931,7 +42983,7 @@ function HighSecurityProxy(domain, did) {
     }
 
     const bindAutoPendingFunctions = require(".././../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(this, "__putCommandObject");
+    bindAutoPendingFunctions(this, ["__putCommandObject", "on", "off"]);
     init();
 }
 
@@ -42973,24 +43025,35 @@ function ProxyMixin(target) {
     const commandNames = require("./lib/commandsNames");
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(target);
+    const ObservableMixin = require("../../utils/ObservableMixin");
+    ObservableMixin(target);
+
     target.insertRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        if (typeof encryptedRecord === "function") {
+            callback = encryptedRecord;
+            encryptedRecord = undefined;
+        }
         target.__putCommandObject(commandNames.INSERT_RECORD, forDID, table, pk, plainRecord, callback);
     };
 
     target.updateRecord = (forDID, table, pk, plainRecord, encryptedRecord, callback) => {
+        if (typeof encryptedRecord === "function") {
+            callback = encryptedRecord;
+            encryptedRecord = undefined;
+        }
         target.__putCommandObject(commandNames.UPDATE_RECORD, forDID, table, pk, plainRecord, callback);
     }
 
     target.getRecord = (forDID, table, pk, callback) => {
         target.__putCommandObject(commandNames.GET_RECORD, forDID, table, pk, (err, record) => {
             if (err) {
-                return createOpenDSUErrorWrapper(`Failed to get record with pk ${pk}`, err);
+                return callback(createOpenDSUErrorWrapper(`Failed to get record with pk ${pk}`, err));
             }
 
             try {
                 record = JSON.parse(record);
             } catch (e) {
-                return createOpenDSUErrorWrapper(`Failed to parse record with pk ${pk}`, e);
+                return callback(createOpenDSUErrorWrapper(`Failed to parse record with pk ${pk}`, e));
             }
 
             callback(undefined, record);
@@ -43017,13 +43080,13 @@ function ProxyMixin(target) {
         }
         target.__putCommandObject(commandNames.FILTER_RECORDS, forDID, table, filter, sort, limit, (err, records) => {
             if (err) {
-                return createOpenDSUErrorWrapper(`Failed to filter records in table ${table}`, err);
+                return callback(createOpenDSUErrorWrapper(`Failed to filter records in table ${table}`, err));
             }
 
             try {
                 records = JSON.parse(records);
             } catch (e) {
-                return createOpenDSUErrorWrapper(`Failed to parse record `, e);
+                return callback(createOpenDSUErrorWrapper(`Failed to parse record `, e));
             }
 
             callback(undefined, records);
@@ -43166,7 +43229,7 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -44232,22 +44295,23 @@ function PollRequestManager(fetchFunction,  connectionTimeout = 10000, pollingTi
 		let safePeriodTimeoutHandler;
 		let serverResponded = false;
 		let receivedError = false;
-        /**
-         * default connection timeout in api-hub is @connectionTimeout
-         * we wait double the time before aborting the request
-         */
-        function beginSafePeriod() {
-            safePeriodTimeoutHandler = setTimeout(() => {
-                if (!serverResponded && !receivedError) {
-                    request.abort();
-                }
-                serverResponded = false;
-                receivedError = false;
-                beginSafePeriod()
-            }, connectionTimeout * 2);
 
-            reArm();
-        }
+		/**
+		 * default connection timeout in api-hub is @connectionTimeout
+		 * we wait double the time before aborting the request
+		 */
+		function beginSafePeriod() {
+			safePeriodTimeoutHandler = setTimeout(() => {
+				if (!serverResponded && !receivedError) {
+					request.abort();
+				}
+				serverResponded = false;
+				receivedError = false;
+				beginSafePeriod()
+			}, connectionTimeout * 2);
+
+			reArm();
+		}
 
 		function endSafePeriod() {
 			clearTimeout(safePeriodTimeoutHandler);
@@ -44333,7 +44397,7 @@ function callInterceptors(target, callback){
 }
 
 function setupInterceptors(handler){
-    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}];
+    const interceptMethods = [{name: "doPost", position: 2}, {name:"doPut", position: 2}, {name:"doGet", position: 1}];
     interceptMethods.forEach(function(target){
         let method = handler[target.name];
         handler[target.name] = function(...args){
@@ -62637,6 +62701,7 @@ const loki = require("./lib/lokijs/src/lokijs.js");
 const lfsa = require("./lib/lokijs/src/loki-fs-sync-adapter.js");
 // const lfssa = require("./lib/lokijs/src/loki-fs-structured-adapter");
 
+const TABLE_NOT_FOUND_ERROR_CODE = 100;
 const adapter = new lfsa();
 let bindAutoPendingFunctions = require("../opendsu/utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
 
@@ -62734,7 +62799,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
     this.deleteRecord = function (forDID, tableName, pk, callback) {
         let table = db.getCollection(tableName);
         if (!table) {
-            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+            return callback();
         }
         const record = table.findOne({'pk': pk});
         if (!record) {
@@ -62752,7 +62817,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
     this.getRecord = function (forDID, tableName, pk, callback) {
         let table = db.getCollection(tableName);
         if (!table) {
-            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+            return callback();
         }
         let result;
         try {
@@ -62822,7 +62887,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
 
         let table = db.getCollection(tableName);
         if (!table) {
-            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+            return callback();
         }
         let direction = false;
         if (sort === "desc") {
@@ -62843,7 +62908,7 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
     this.getAllRecords = (forDID, tableName, callback) => {
         let table = db.getCollection(tableName);
         if (!table) {
-            return callback(createOpenDSUErrorWrapper(`Table ${tableName} not found`))
+            return callback();
         }
 
         let results;
@@ -62852,7 +62917,6 @@ function DefaultEnclave(rootFolder, autosaveInterval) {
         } catch (err) {
             return callback(createOpenDSUErrorWrapper(`Filter operation failed on ${tableName}`, err));
         }
-
 
         callback(null, results);
     };
