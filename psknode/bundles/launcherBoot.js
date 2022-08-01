@@ -23482,6 +23482,8 @@ function MQHandler(didDocument, domain, pollingTimeout) {
             messageID = undefined;
         }
 
+        domain = didDocument.getDomain();
+
         if (!domain) {
             const sc = require("opendsu").loadAPI("sc");
             sc.getDIDDomain((err, didDomain) => {

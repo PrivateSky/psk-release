@@ -7772,7 +7772,7 @@ function getDecryptedAccessToken(currentEncryptionKeyPath, previousEncryptionKey
             return callback(err);
         }
 
-        callback(undefined, parseAccessToken(decryptedAccessTokenCookie.token));
+        callback(undefined, decryptedAccessTokenCookie.token);
     })
 }
 
@@ -7793,7 +7793,7 @@ function getSSODetectedIdFromEncryptedToken(currentEncryptionKeyPath, previousEn
             return callback(err);
         }
 
-        return getSSODetectedIdFromDecryptedToken(token);
+        return callback(undefined, getSSODetectedIdFromDecryptedToken(token));
     })
 }
 
@@ -45709,6 +45709,8 @@ function MQHandler(didDocument, domain, pollingTimeout) {
             messageID = undefined;
         }
 
+        domain = didDocument.getDomain();
+
         if (!domain) {
             const sc = require("opendsu").loadAPI("sc");
             sc.getDIDDomain((err, didDomain) => {
@@ -62029,11 +62031,15 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             }
         }
 
+		function isDefaultComponent(componentName) {
+			return conf.defaultComponents.indexOf(componentName) !== -1 || conf.componentsConfig[componentName];
+		}
+
         function addComponent(componentName, componentConfig, callback) {
             const path = require("swarmutils").path;
 
             let componentPath = componentConfig.module;
-            if (componentPath.startsWith('.') && conf.defaultComponents.indexOf(componentName) === -1) {
+            if (componentPath.startsWith('.') && !isDefaultComponent(componentName)) {
                 componentPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, componentPath));
             }
             console.log(`${LOG_IDENTIFIER} Preparing to register middleware from path ${componentPath}`);
