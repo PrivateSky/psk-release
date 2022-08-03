@@ -5649,6 +5649,12 @@ function ApihubConfig(conf) {
 
     conf = createConfig(conf, defaultConf);
     conf.defaultComponents = defaultConf.activeComponents;
+    if(conf.isDefaultComponent){
+        console.log("\n\nBe aware that there is a method on the config called isDefaultComponent. You need to check and change your config name.\n\n");
+    }
+    conf.isDefaultComponent = function(componentName) {
+        return defaultConf.activeComponents.indexOf(componentName) !== -1 || defaultConf.componentsConfig[componentName];
+    }
     return conf;
 }
 
@@ -5998,15 +6004,11 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             }
         }
 
-		function isDefaultComponent(componentName) {
-			return conf.defaultComponents.indexOf(componentName) !== -1 || conf.componentsConfig[componentName];
-		}
-
         function addComponent(componentName, componentConfig, callback) {
             const path = require("swarmutils").path;
 
             let componentPath = componentConfig.module;
-            if (componentPath.startsWith('.') && !isDefaultComponent(componentName)) {
+            if (componentPath.startsWith('.') && !conf.isDefaultComponent(componentName)) {
                 componentPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, componentPath));
             }
             console.log(`${LOG_IDENTIFIER} Preparing to register middleware from path ${componentPath}`);
