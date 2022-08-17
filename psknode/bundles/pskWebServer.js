@@ -4465,7 +4465,56 @@ function mqManager(server) {
 
 module.exports = mqManager;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js":[function(require,module,exports){
+const registeredUrl = "/forwardRequestForAuthenticatedClient";
+
+module.exports = function(server){
+    server.post(registeredUrl, require("./../../utils/middlewares/index").requestBodyJSONMiddleware);
+
+    server.post(registeredUrl, function(req, res, next){
+        let url = req.body.url;
+
+        if(!url){
+            res.statusCode = 400;
+            return res.end();
+        }
+
+        let body = req.body.body || "";
+        let options = req.body.options || {method: "POST"};
+
+        let http = require("http");
+        if(url.startsWith("https://")){
+            http = require("https");
+        }
+
+        console.log(`Forwarding request ${options.method} to url ${url}`);
+        try {
+
+          let request = http.request(url, options, (response) => {
+            res.statusCode = response.statusCode;
+            if (res.statusCode > 300) {
+              res.end();
+            }
+            response.on("data", res.write);
+            response.on('end', res.end);
+          });
+
+          request.on("error", (err) => {
+            res.statusCode = 500;
+            res.end();
+          });
+
+          request.write(body);
+          request.end();
+        } catch (e) {
+          console.log("Error on request: ", e);
+          res.statusCode = 500;
+          res.end();
+        }
+    });
+}
+
+},{"./../../utils/middlewares/index":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","http":false,"https":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const fs = require("fs");
 const path = require("path");
@@ -5545,6 +5594,9 @@ const defaultConfig = {
         },
         "stream": {
             "module": "./components/stream"
+        },
+        "requestForwarder":{
+            "module": "./components/requestForwarder"
         }
     },
     "tokenBucket": {
@@ -8021,7 +8073,8 @@ function requestBodyJSONMiddleware(request, response, next) {
         try {
             body = JSON.parse(data);
         } catch (e) {
-            return response.send(500, 'Unable to decode JSON request body')
+            response.statusCode = 500;
+            return response.end("Unable to decode JSON request body");
         }
         request.body = body;
         next();
@@ -61830,6 +61883,10 @@ function isSlowBuffer (obj) {
 }
 
 },{}],"apihub":[function(require,module,exports){
+process.on('uncaughtException', err => {
+	console.error('There was an uncaught error', err);
+});
+
 const {LOG_IDENTIFIER} = require("./moduleConstants");
 
 const httpWrapper = require('./libs/http-wrapper');
@@ -61860,6 +61917,7 @@ const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 	require('./components/secrets');
 	require('./components/cloudWallet');
 	require('./components/stream');
+	require('./components/requestForwarder');
 	//end
 })();
 
@@ -62188,7 +62246,7 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 
-},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/requestForwarder":"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
