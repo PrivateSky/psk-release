@@ -7213,7 +7213,6 @@ module.exports = AccessTokenValidator;
 const {sendUnauthorizedResponse} = require("../../../utils/middlewares");
 const util = require("./util");
 const urlModule = require("url");
-const errorMessages = require("./errorMessages");
 
 function OAuthMiddleware(server) {
   console.log(`Registering OAuthMiddleware`);
@@ -7315,9 +7314,13 @@ function OAuthMiddleware(server) {
       post_logout_redirect_uri: oauthConfig.client.postLogoutRedirectUrl,
       client_id: oauthConfig.client.clientId,
     };
-    res.writeHead(301, {Location: urlModule.format(logoutUrl)});
+    res.writeHead(301, {
+      Location: urlModule.format(logoutUrl),
+      "Set-Cookie": `sessionExpiryTime=; Path=/`
+    });
     res.end();
   }
+
 
   function debugMessage(...args) {
     if (oauthConfig.debugLogEnabled) {
@@ -7418,7 +7421,21 @@ function OAuthMiddleware(server) {
         }
 
         req.headers["user-id"] = SSODetectedId;
-        next();
+        if (url.includes("/mq/")) {
+          return next();
+        }
+        res.setHeader("Set-Cookie", `sessionExpiryTime=${sessionExpiryTime}; Path=/`)
+        util.updateAccessTokenExpiration(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, accessTokenCookie, (err, encryptedAccessToken)=>{
+          if (err) {
+            debugMessage("Logout because accessTokenCookie decryption failed.")
+            return startLogoutPhase(res);
+          }
+
+          const sessionExpiryTime = util.removeTimezoneOffsetFromTimestamp(Date.now()) + oauthConfig.sessionTimeout;
+          const cookies = [`sessionExpiryTime=${sessionExpiryTime}; Path=/`, `accessTokenCookie=${encryptedAccessToken}; Path=/`]
+          res.setHeader("Set-Cookie", cookies);
+          next();
+        })
       })
     })
   });
@@ -7961,6 +7978,21 @@ function getUrlsToSkip() {
     return urlsToSkip;
 }
 
+function removeTimezoneOffsetFromTimestamp(timestamp) {
+    let currentDate = new Date(timestamp);
+    return timestamp + currentDate.getTimezoneOffset() * 60 * 1000;
+}
+
+function updateAccessTokenExpiration(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, callback) {
+    decryptAccessTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, (err, decryptedTokenCookie)=>{
+        if (err) {
+            return callback(err);
+        }
+
+        encryptAccessToken(currentEncryptionKeyPath, decryptedTokenCookie.token, callback);
+    })
+}
+
 module.exports = {
     pkce,
     pkceChallenge,
@@ -7983,7 +8015,9 @@ module.exports = {
     rotateKey,
     getSSODetectedIdFromDecryptedToken,
     getSSODetectedIdFromEncryptedToken,
-    getSSOUserIdFromDecryptedToken
+    getSSOUserIdFromDecryptedToken,
+    removeTimezoneOffsetFromTimestamp,
+    updateAccessTokenExpiration
 }
 
 },{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js":[function(require,module,exports){
@@ -60462,10 +60496,12 @@ module.exports = {
     CryptoAlgorithmsRegistry: require('./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry'),
     CryptoFunctionTypes: require('./lib/CryptoAlgorithms/CryptoFunctionTypes'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
-    DSUFactory: require("./lib/DSUFactoryRegistry")
+    DSUFactory: require("./lib/DSUFactoryRegistry"),
+    KeySSIMixin: require('./lib/KeySSIs/KeySSIMixin'),
+    CryptoAlgorithmsMixin: require('./lib/CryptoAlgorithms/CryptoAlgorithmsMixin')
 };
 
-},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+},{"./lib/CryptoAlgorithms/CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
 (function (global){(function (){
 /*
 html API space

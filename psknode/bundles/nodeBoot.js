@@ -39046,10 +39046,12 @@ module.exports = {
     CryptoAlgorithmsRegistry: require('./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry'),
     CryptoFunctionTypes: require('./lib/CryptoAlgorithms/CryptoFunctionTypes'),
     SSITypes: require("./lib/KeySSIs/SSITypes"),
-    DSUFactory: require("./lib/DSUFactoryRegistry")
+    DSUFactory: require("./lib/DSUFactoryRegistry"),
+    KeySSIMixin: require('./lib/KeySSIs/KeySSIMixin'),
+    CryptoAlgorithmsMixin: require('./lib/CryptoAlgorithms/CryptoAlgorithmsMixin')
 };
 
-},{"./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
+},{"./lib/CryptoAlgorithms/CryptoAlgorithmsMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsMixin.js","./lib/CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","./lib/CryptoAlgorithms/CryptoFunctionTypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoFunctionTypes.js","./lib/DSUFactoryRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/DSUFactoryRegistry/index.js","./lib/KeySSIResolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIResolver.js","./lib/KeySSIs/KeySSIFactory":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIFactory.js","./lib/KeySSIs/KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./lib/KeySSIs/SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","bar":"bar"}],"opendsu":[function(require,module,exports){
 /*
 html API space
 */
