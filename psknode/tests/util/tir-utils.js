@@ -197,7 +197,7 @@ function storeFile(rootFolder, filename, content, callback) {
 }
 
 async function storeFileAsync(rootFolder, filename, content) {
-    logger.info(`Storing file '${filename}' at ${rootFolder}...`, content);
+    logger.info(`Storing file '${filename}' at ${rootFolder}`, content);
 
     try {
         await mkdirAsync(rootFolder, {recursive: true});
