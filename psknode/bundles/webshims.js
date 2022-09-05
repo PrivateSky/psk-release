@@ -3084,7 +3084,7 @@ function ECKeyGenerator() {
             case "der":
                 return convertPrivateKeyToDer(privateKey, options);
             case "raw":
-                return convertPrivateKeyToRaw;
+                return convertPrivateKeyToRaw(privateKey, options);
             default:
                 throw Error("Invalid private key output format");
         }

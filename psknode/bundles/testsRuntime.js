@@ -33466,6 +33466,12 @@ const convertPrivateKey = (rawPrivateKey, outputFormat) => {
     return ecGenerator.getPemKeys(rawPrivateKey, rawPublicKey, {outputFormat}).privateKey;
 }
 
+const getPublicKeyFromPrivateKey = (rawPrivateKey, outputFormat = "raw") => {
+    const ecGenerator = crypto.createKeyPairGenerator();
+    const rawPublicKey = ecGenerator.getPublicKey(rawPrivateKey);
+    return convertPublicKey(rawPublicKey, outputFormat);
+};
+
 const createJWT = (seedSSI, scope, credentials, options, callback) => {
     jwtUtils.createJWT(
         {
@@ -33647,6 +33653,7 @@ module.exports = {
     generateKeyPair,
     convertPrivateKey,
     convertPublicKey,
+    getPublicKeyFromPrivateKey,
     ecies_encrypt_ds,
     ecies_decrypt_ds,
     createJWTForDID,
@@ -45878,34 +45885,49 @@ module.exports = {
 }
 
 },{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+(function (Buffer){(function (){
 const methodsNames = require("../didMethodsNames");
 
-function KeyDID_Document(enclave, isInitialisation, publicKey) {
+function KeyDID_Document(enclave, isInitialisation, publicKey, privateKey) {
     const DID_mixin = require("../W3CDID_Mixin");
     const ObservableMixin = require("../../utils/ObservableMixin");
     DID_mixin(this, enclave);
     ObservableMixin(this);
-    let privateKey;
     let domain;
     const openDSU = require("opendsu");
     const crypto = openDSU.loadAPI("crypto");
 
-    const init = async () => {
-        if (isInitialisation) {
-            const keyPair = crypto.generateKeyPair();
-            privateKey = keyPair.privateKey;
-            publicKey = crypto.encodeBase58(keyPair.publicKey);
-            setTimeout(() => {
-                this.dispatchEvent("initialised");
-            })
-        } else {
-            if (!publicKey) {
-                throw Error("Public key is missing from argument list.")
+    const create = () => {
+        if (typeof privateKey === "undefined") {
+            if (typeof publicKey === "undefined") {
+                const keyPair = crypto.generateKeyPair();
+                privateKey = keyPair.privateKey;
+                publicKey = crypto.encodeBase58(keyPair.publicKey);
             }
-            publicKey = publicKey.slice(4);
-            setTimeout(() => {
-                this.dispatchEvent("initialised");
-            });}
+        } else {
+            if (typeof privateKey === "string") {
+                privateKey = Buffer.from(privateKey);
+            }
+            publicKey = crypto.encodeBase58(crypto.getPublicKeyFromPrivateKey(privateKey));
+        }
+    }
+
+    const load = () => {
+        if (!publicKey) {
+            throw Error("Public key is missing from argument list.")
+        }
+        publicKey = publicKey.slice(4);
+    }
+
+    const init = () => {
+        if (isInitialisation) {
+            create();
+        } else {
+            load();
+        }
+        setTimeout(() => {
+            this.dispatchEvent("initialised");
+        })
     };
 
     const getRawPublicKey = () => {
@@ -45946,23 +45968,30 @@ function KeyDID_Document(enclave, isInitialisation, publicKey) {
 }
 
 module.exports = {
-    initiateDIDDocument: function (enclave, seedSSI) {
-        return new KeyDID_Document(enclave, true, seedSSI)
-    },
-    createDIDDocument: function (enclave, tokens) {
+    initiateDIDDocument: function (enclave, publicKey, privateKey) {
+        return new KeyDID_Document(enclave, true, publicKey, privateKey);
+    }, createDIDDocument: function (enclave, tokens) {
         return new KeyDID_Document(enclave, false, tokens[2]);
     }
 };
 
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","../W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js":[function(require,module,exports){
 function KeyDID_Method() {
     let KeyDIDDocument = require("./KeyDID_Document");
-    this.create = function (enclave, seedSSI, callback) {
-        if (typeof seedSSI === "function") {
-            callback = seedSSI;
-            seedSSI = undefined;
+    this.create = function (enclave, publicKey, privateKey, callback) {
+        if (typeof privateKey === "function") {
+            callback = privateKey;
+            privateKey = undefined;
         }
-        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(enclave, seedSSI);
+
+        if (typeof publicKey === "function") {
+            callback = publicKey;
+            publicKey = undefined;
+        }
+
+        const keyDIDDocument = KeyDIDDocument.initiateDIDDocument(enclave,  publicKey, privateKey);
         keyDIDDocument.on("initialised", () => {
             callback(undefined, keyDIDDocument);
         });
@@ -50166,7 +50195,7 @@ function ECKeyGenerator() {
             case "der":
                 return convertPrivateKeyToDer(privateKey, options);
             case "raw":
-                return convertPrivateKeyToRaw;
+                return convertPrivateKeyToRaw(privateKey, options);
             default:
                 throw Error("Invalid private key output format");
         }
