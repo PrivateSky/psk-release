@@ -20263,7 +20263,7 @@ function Enclave_Mixin(target, did) {
         }
     }
 
-    target.refresh = (forDID, callback)=>{
+    target.refresh = (forDID, callback) => {
         if (typeof forDID === "function") {
             callback = forDID;
             forDID = undefined;
@@ -20272,7 +20272,7 @@ function Enclave_Mixin(target, did) {
         target.storageDB.refresh(callback);
     }
 
-    target.addIndex = (forDID, table, field, forceReindex, callback)=>{
+    target.addIndex = (forDID, table, field, forceReindex, callback) => {
         if (typeof forceReindex === "function") {
             callback = forceReindex;
             forceReindex = false;
@@ -20280,7 +20280,7 @@ function Enclave_Mixin(target, did) {
         target.storageDB.addIndex(table, field, forceReindex, callback);
     }
 
-    target.getIndexedFields = (forDID, table, callback)=>{
+    target.getIndexedFields = (forDID, table, callback) => {
         target.storageDB.getIndexedFields(table, callback);
     }
 
@@ -20358,7 +20358,7 @@ function Enclave_Mixin(target, did) {
         const keySSIIdentifier = seedSSI.getIdentifier();
         const sReadSSIIdentifier = seedSSI.derive().getIdentifier();
 
-        const isExistingKeyError = (error)  => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
+        const isExistingKeyError = (error) => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
 
         function registerDerivedKeySSIs(derivedKeySSI) {
             target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
@@ -20516,14 +20516,21 @@ function Enclave_Mixin(target, did) {
             hash = didThatIsSigning;
             didThatIsSigning = forDID;
         }
-        getPrivateInfoForDID(didThatIsSigning.getIdentifier(), async (err, privateKeys) => {
-            if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
-            }
 
-            const signature = CryptoSkills.applySkill(didThatIsSigning.getMethodName(), CryptoSkills.NAMES.SIGN, hash, privateKeys[privateKeys.length - 1]);
-            callback(undefined, signature);
-        });
+        const privateKeys = didThatIsSigning.getPrivateKeys();
+        if (typeof privateKeys[privateKeys.length - 1] === "undefined") {
+            return getPrivateInfoForDID(didThatIsSigning.getIdentifier(), async (err, privateKeys) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to get private info for did ${didThatIsSigning.getIdentifier()}`, err));
+                }
+
+                const signature = CryptoSkills.applySkill(didThatIsSigning.getMethodName(), CryptoSkills.NAMES.SIGN, hash, privateKeys[privateKeys.length - 1]);
+                callback(undefined, signature);
+            });
+        }
+
+        const signature = CryptoSkills.applySkill(didThatIsSigning.getMethodName(), CryptoSkills.NAMES.SIGN, hash, privateKeys[privateKeys.length - 1]);
+        callback(undefined, signature);
     }
 
     target.verifyForDID = (forDID, didThatIsVerifying, hash, signature, callback) => {
@@ -20685,7 +20692,7 @@ function Enclave_Mixin(target, did) {
             }
         }
 
-        resolverAPI.loadDSU(keySSI, options, (err, dsu)=>{
+        resolverAPI.loadDSU(keySSI, options, (err, dsu) => {
             if (err) {
                 target.getReadForKeySSI(undefined, keySSI.getIdentifier(), (err, sReadSSI) => {
                     if (err) {
