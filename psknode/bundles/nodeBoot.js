@@ -21005,7 +21005,56 @@ function ProxyMixin(target) {
 }
 
 module.exports = ProxyMixin;
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js":[function(require,module,exports){
+const { createCommandObject } = require("./lib/createCommandObject");
+
+function RemoteEnclave(clientDID, remoteDID) {
+    let initialised = false;
+    const ProxyMixin = require("./ProxyMixin");
+    const openDSU = require('../../index');
+    const w3cDID = openDSU.loadAPI("w3cdid");
+
+    ProxyMixin(this);
+
+    const init = async () => {
+        try {
+            this.clientDIDDocument = await $$.promisify(w3cDID.resolveDID)(clientDID);
+            this.remoteDIDDocument = await $$.promisify(w3cDID.resolveDID)(remoteDID);
+        }
+        catch (err) {
+            console.log(err);
+        }
+        this.initialised = true;
+        this.dispatchEvent("initialised");
+
+    }
+
+    this.isInitialised = () => {
+        return initialised;
+    }
+
+    this.getDID = (callback) => {
+        callback(undefined, did);
+    }
+
+    this.__putCommandObject = (commandName, ...args) => {
+        const callback = args.pop();
+        args.push(clientDID);
+        const command = JSON.stringify(createCommandObject(commandName, ...args));
+        this.clientDIDDocument.sendMessage(command, this.remoteDIDDocument, (err, res)=>{
+            this.clientDIDDocument.readMessage((err, res)=>{
+                callback(err, res);
+            })
+        });
+        
+    }
+
+    init();
+
+}
+
+module.exports = RemoteEnclave;
+},{"../../index":"/home/runner/work/privatesky/privatesky/modules/opendsu/index.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -21146,6 +21195,10 @@ function initialiseHighSecurityProxy(domain, did) {
     return new HighSecurityProxy(domain, did)
 }
 
+function initialiseRemoteEnclave(clientDID, remoteDID) {
+    const RemoteEnclave = require("./impl/RemoteEnclave");
+    return new RemoteEnclave(clientDID, remoteDID);}
+
 function connectEnclave(forDID, enclaveDID, ...args) {
     throw Error("Not implemented");
 }
@@ -21170,18 +21223,22 @@ registerEnclave(constants.ENCLAVE_TYPES.MEMORY_ENCLAVE, initialiseMemoryEnclave)
 registerEnclave(constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE, initialiseWalletDBEnclave);
 registerEnclave(constants.ENCLAVE_TYPES.APIHUB_ENCLAVE, initialiseAPIHUBProxy);
 registerEnclave(constants.ENCLAVE_TYPES.HIGH_SECURITY_ENCLAVE, initialiseHighSecurityProxy);
+registerEnclave(constants.ENCLAVE_TYPES.MQ_PROXY_ENCLAVE, initialiseRemoteEnclave)
 
 module.exports = {
     initialiseWalletDBEnclave,
     initialiseMemoryEnclave,
     initialiseAPIHUBProxy,
     initialiseHighSecurityProxy,
+    initialiseRemoteEnclave,
     connectEnclave,
     createEnclave,
-    registerEnclave
+    registerEnclave,
+    EnclaveMixin: require("./impl/Enclave_Mixin"),
+    ProxyMixin: require("./impl/ProxyMixin")
 }
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./impl/RemoteEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -23348,7 +23405,7 @@ module.exports = {
 
 
 
-},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/mqClient.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -23357,7 +23414,7 @@ let http = require("../http");
 let bdns = require("../bdns")
 
 function send(keySSI, message, callback) {
-    console.log("Send method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("Send method from OpenDSU.loadApi('mq') is absolute. Adapt your code to use the new getMQHandlerForDID");
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
@@ -23378,7 +23435,7 @@ function send(keySSI, message, callback) {
 let requests = {};
 
 function getHandler(keySSI, timeout) {
-    console.log("getHandler method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("getHandler method from OpenDSU.loadApi('mq') is absolute. Adapt your code to use the new getMQHandlerForDID");
     let obs = require("../utils/observable").createObservable();
     bdns.getMQEndpoints(keySSI, (err, endpoints) => {
         if (err || endpoints.length === 0) {
@@ -23422,7 +23479,7 @@ function getHandler(keySSI, timeout) {
 }
 
 function unsubscribe(keySSI, observable) {
-    console.log("unsubscribe method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("unsubscribe method from OpenDSU.loadApi('mq') is obsolete. Adapt your code to use the new getMQHandlerForDID");
     http.unpoll(requests[observable]);
 }
 
@@ -23560,7 +23617,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                         return callback(err);
                     }
                     let originalCb = callback;
-                    callback = $$.makeSaneCallback(callback);
+                    //callback = $$.makeSaneCallback(callback);
 
                     let options = {headers: {Authorization: token}};
 
@@ -23603,6 +23660,8 @@ function MQHandler(didDocument, domain, pollingTimeout) {
     this.readAndWaitForMessages = (callback) => {
         consumeMessage("take", true, callback);
     };
+
+    this.subscribe = this.readAndWaitForMessages;
 
     this.abort = (callback) => {
         let request = callback.__requestInProgress;
@@ -26160,9 +26219,11 @@ module.exports = {
 
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
 module.exports = {
-    bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions
+    bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions,
+    ObservableMixin: require("./ObservableMixin"),
+    PendingCallMixin: require('./PendingCallMixin')
 }
-},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -26355,9 +26416,10 @@ registerSkills(methodsNames.KEY_SUBTYPE, new KeyDID_CryptographicSkills());
 module.exports = {
     registerSkills,
     applySkill,
-    NAMES: require("./cryptographicSkillsNames")
+    NAMES: require("./cryptographicSkillsNames"),
+    CryptographicSkillsMixin: require("./CryptographicSkillsMixin")
 };
-},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
+},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
 function CryptographicSkillsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -26763,6 +26825,26 @@ function W3CDID_Mixin(target, enclave) {
         });
     };
 
+
+    target.subscribe = function (callback) {
+        const mqHandler = require("opendsu")
+            .loadAPI("mq")
+            .getMQHandlerForDID(target);
+        mqHandler.subscribe((err, encryptedMessage) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
+            }
+            let message;
+            try {
+                message = JSON.parse(encryptedMessage.message);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse received message`, err));
+            }
+
+            target.decryptMessage(message, callback);
+        });
+    };
+
     target.getEnclave = () => {
         return enclave;
     }
@@ -26788,7 +26870,34 @@ function W3CDID_Mixin(target, enclave) {
 
 module.exports = W3CDID_Mixin;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CVC_Mixin.js":[function(require,module,exports){
+
+/*
+    W3CVC Mixin is abstracting a JWT based credential
+    The same approach/interface can be used with credentials represented in other formats
+ */
+
+function W3CVC_Mixin(){
+    let serialisation;
+    /*
+        Verify that the signature of the issuer is correct
+     */
+    this.load = function(vcSerialisationDocument, callback){
+        serialisation = vcSerialisationDocument;
+    };
+
+    /*
+        Verify that the signature of the issuer is correct
+     */
+    this.verify = function(callback){
+
+    };
+
+}
+
+module.exports = W3CVC_Mixin;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
 const methodsNames = require("./didMethodsNames");
 const createNameDIDDocument = require("./didssi/NameDID_Document").initiateDIDDocument;
 const createGroupDID_Document = require("./didssi/GroupDID_Document").initiateDIDDocument;
@@ -27708,10 +27817,12 @@ module.exports = {
     resolveDID,
     we_resolveDID,
     registerDIDMethod,
-    CryptographicSkills: require("./CryptographicSkills/CryptographicSkills")
+    CryptographicSkills: require("./CryptographicSkills/CryptographicSkills"),
+    W3CDIDMixin: require('./W3CDID_Mixin'),
+    W3CCVCMixin: require('./W3CVC_Mixin')
 }
 
-},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","./W3CVC_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CVC_Mixin.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
 const methodsNames = require("../didMethodsNames");
 
 function KeyDID_Document(enclave, isInitialisation, publicKey, privateKey) {
@@ -39131,7 +39242,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "dt":return require("./dt"); break;
             case "enclave":return require("./enclave"); break;
             case "keyssi":return require("./keyssi"); break;
-            case "mq":return require("./mq"); break;
+            case "mq":return require("./mq/mqClient"); break;
             case "notifications":return require("./notifications"); break;
             case "oauth":return require("./oauth"); break;
             case "resolver":return require("./resolver"); break;
@@ -39218,7 +39329,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
 module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./credentials":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./credentials":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq/mqClient":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/mqClient.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
  The privatesky code for domains should work in node and browsers.

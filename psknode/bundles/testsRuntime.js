@@ -1097,30 +1097,143 @@ module.exports = {
     OBA: require("./oba")
 };
 
-},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js","./oba":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js":[function(require,module,exports){
+},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js","./oba":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ehereumSyncService.js":[function(require,module,exports){
+const {ALIAS_SYNC_ERR_CODE} = require("../../utils");
+const {getLokiEnclaveFacade} = require("./lokiEnclaveFacadeSingleton");
+
+function EthereumSyncService(server) {
+    const path = require("path");
+    const DB_STORAGE_FOLDER = path.join(server.rootFolder, "external-volume", "oba");
+    let lokiEnclaveFacade = getLokiEnclaveFacade(DB_STORAGE_FOLDER);
+    const ANCHORS_TABLE_NAME = "anchors_table";
+    const ERROR_LOGS_TABLE = "errors_table";
+    let syncInProgress = false;
+    const {ETH} = require("../index");
+
+    function sendAnchorToBlockchain(anchorHash, anchorObj, taskCounter) {
+        const ethHandler = new ETH(server, anchorObj.domainConfig, anchorObj.anchorId, anchorObj.anchorValue);
+        ethHandler[anchorObj.anchorUpdateOperation]((err) => {
+            if (err) {
+                if (err.code === ALIAS_SYNC_ERR_CODE) {
+                    lokiEnclaveFacade.deleteObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, () => {
+                        logError(err, anchorObj, () => {
+                            taskCounter.decrement();
+                        });
+                    });
+
+                    return;
+                }
+
+                logError(err, anchorObj, () => {
+                    taskCounter.decrement();
+                })
+                return;
+            }
+
+            lokiEnclaveFacade.deleteObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, () => {
+                taskCounter.decrement();
+            });
+        });
+
+    }
+
+    function processPendingAnchors(callback) {
+        const TaskCounter = require("swarmutils").TaskCounter;
+        const taskCounter = new TaskCounter(() => {
+            return callback(undefined);
+        })
+
+        lokiEnclaveFacade.listQueue(undefined, ANCHORS_TABLE_NAME, "asc", (err, anchorHashes) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (typeof anchorHashes === "undefined" || anchorHashes.length === 0) {
+                callback();
+                return;
+            }
+
+            console.log("Pending anchors", Date.now(), anchorHashes);
+            taskCounter.increment(anchorHashes.length);
+            anchorHashes.forEach(anchorHash => {
+                lokiEnclaveFacade.getObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, (err, anchorObj) => {
+                    if (err) {
+                        taskCounter.decrement();
+                        return;
+                    }
+
+                    sendAnchorToBlockchain(anchorHash, anchorObj, taskCounter, callback);
+                })
+            });
+        })
+    }
+
+    function logError(err, anchorData, callback) {
+        const timestamp = Date.now();
+        lokiEnclaveFacade.insertRecord(undefined, ERROR_LOGS_TABLE, timestamp, {anchorData, err, timestamp}, callback)
+    }
+
+    this.storeAnchor = (anchorUpdateOperation, anchorId, anchorValue, domainConfig, callback) => {
+        lokiEnclaveFacade.addInQueue(undefined, ANCHORS_TABLE_NAME, {
+            anchorId,
+            anchorValue,
+            anchorUpdateOperation,
+            domainConfig
+        }, callback);
+    }
+
+    function resendAnchorsToBlockchain() {
+        processPendingAnchors( () => {
+            setTimeout(resendAnchorsToBlockchain, 3000);
+        });
+    }
+
+    this.synchronize = () => {
+        if (!syncInProgress) {
+            resendAnchorsToBlockchain();
+            syncInProgress = true;
+        }
+    };
+}
+
+const getEthereumSyncServiceSingleton = (server) => {
+    if (typeof $$.ethereumSyncService === "undefined") {
+        $$.ethereumSyncService = new EthereumSyncService(server);
+    }
+
+    return $$.ethereumSyncService;
+}
+module.exports = {
+    getEthereumSyncServiceSingleton
+}
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./lokiEnclaveFacadeSingleton":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js","path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js":[function(require,module,exports){
+const {getEthereumSyncServiceSingleton} = require("./ehereumSyncService");
 const LOG_IDENTIFIER = "[OBA]";
 
 function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
-
     let {FS, ETH} = require("../index");
     const fsHandler = new FS(server, domainConfig, anchorId, anchorValue, ...args);
     const ethHandler = new ETH(server, domainConfig, anchorId, anchorValue, ...args);
+    const ethSyncService = getEthereumSyncServiceSingleton(server);
 
+    ethSyncService.synchronize();
     this.createAnchor = function (callback) {
+        console.log("Create anchor", anchorId, anchorValue);
         fsHandler.createAnchor((err, res) => {
             if (err) {
                 return callback(err);
             }
             console.log(`${LOG_IDENTIFIER} optimistic create anchor ended with success.`);
-            ethHandler.createAnchor((err, res) => {
-                //TODO: handler err and res
-                if (err && !res) {
-                    console.log(`${LOG_IDENTIFIER} create for anchorId ${fsHandler.commandData.anchorId} will be synced later.`);
+
+            ethSyncService.storeAnchor("createAnchor", anchorId, anchorValue, domainConfig,(err) => {
+                if (err) {
+                    console.log(`${LOG_IDENTIFIER} failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
                     return;
                 }
-                console.log(`${LOG_IDENTIFIER} create for anchorId ${fsHandler.commandData.anchorId} synced with success.`);
-            });
-            return callback(undefined, res);
+
+                console.log(`${LOG_IDENTIFIER} anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                return callback(undefined, res);
+            })
         });
     }
 
@@ -1130,15 +1243,16 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
                 return callback(err);
             }
             console.log(`${LOG_IDENTIFIER} optimistic append anchor ended with success.`);
-            ethHandler.appendAnchor((err, res) => {
-                //TODO: handler err and res
-                if (err && !res) {
-                    console.log(`${LOG_IDENTIFIER} update of anchorId ${fsHandler.commandData.anchorId} will be synced later.`);
+            ethSyncService.storeAnchor("appendAnchor", anchorId, anchorValue, domainConfig, (err) => {
+                if (err) {
+                    console.log(`${LOG_IDENTIFIER} failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
                     return;
                 }
-                console.log(`${LOG_IDENTIFIER} update of anchorId ${fsHandler.commandData.anchorId} synced with success.`);
-            });
-            return callback(undefined, res);
+
+                console.log(`${LOG_IDENTIFIER} anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                return callback(undefined, res);
+
+            })
         });
     }
 
@@ -1158,7 +1272,7 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
                 }
             }
 
-            if(history === ""){
+            if (history === "") {
                 console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
                 //if we don't retrieve info from blockchain we exit
                 return callback(undefined, anchorVersions);
@@ -1212,7 +1326,28 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
 
 module.exports = OBA;
 
-},{"../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js":[function(require,module,exports){
+},{"../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./ehereumSyncService":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ehereumSyncService.js","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js":[function(require,module,exports){
+const fs = require("fs");
+
+const getLokiEnclaveFacade = (storageFolder) => {
+    if(typeof $$.lokiEnclaveFacade === "undefined") {
+        try {
+            fs.accessSync(storageFolder);
+        } catch (e) {
+            fs.mkdirSync(storageFolder, {recursive: true});
+        }
+        const LokiEnclaveFacade = require("default-enclave");
+        $$.lokiEnclaveFacade = new LokiEnclaveFacade(storageFolder);
+    }
+
+    return $$.lokiEnclaveFacade;
+}
+
+module.exports = {
+    getLokiEnclaveFacade
+}
+
+},{"default-enclave":false,"fs":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js":[function(require,module,exports){
 function AnchorPathResolver(rootFolder, configPath) {
     const path = require("path");
     const anchoringFolder = path.resolve(path.join(rootFolder, configPath));
@@ -3211,156 +3346,69 @@ const getDefaultEnclave = (storageFolder) => {
 module.exports = {
     getDefaultEnclave
 }
-},{"default-enclave":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/index.js":[function(require,module,exports){
-const createCommand = (commandName, ...args) => {
-    const storageFolder = args.pop();
-    const defaultEnclave = require("./DefaultEnclave").getDefaultEnclave(storageFolder);
+},{"default-enclave":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
 
-    return {
-        execute(callback) {
-            args.push(callback)
-            defaultEnclave[commandName](...args);
-        }
-    }
-}
-
-module.exports = {
-    createCommand
-};
-
-
-},{"./DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
-(function (Buffer){(function (){
-const config = require("../../config");
+const openDSU = require("opendsu");
+const { getDefaultEnclave } = require("./commands/DefaultEnclave");
+const w3cDID = openDSU.loadAPI("w3cdid");
+const path = require("path")
 
 function DefaultEnclave(server) {
-    const {
-        headersMiddleware,
-        responseModifierMiddleware,
-        requestBodyJSONMiddleware,
-        bodyReaderMiddleware
-    } = require('../../utils/middlewares');
-    const domains = [];
-    const path = require("path");
-    const fs = require("fs");
-    const openDSU = require("opendsu");
-    const w3cDID = openDSU.loadAPI("w3cdid");
-    const crypto = openDSU.loadAPI("crypto");
 
-    const storageFolder = path.join(server.rootFolder, "external-volume", "enclave");
-    try {
-        fs.mkdirSync(storageFolder, {recursive: true})
-    } catch (e) {
-        console.log(`Failed to create folder ${storageFolder}`, e);
-    }
-
-    function requestServerMiddleware(request, response, next) {
-        request.server = server;
-        next();
-    }
-
-    function domainIsConfigured(request, response) {
-        const domainName = request.params.domain;
-        if (domains.indexOf(domainName) === -1) {
-            console.log(`Caught an request to the enclave for domain ${domainName}. Looks like the domain doesn't have enclave component enabled.`);
-            response.statusCode = 405;
-            response.end();
-            return false;
-        }
-        return true;
-    }
-
-    function runEnclaveEncryptedCommand(request, response) {
-        if (!domainIsConfigured(request, response)) {
-            return;
-        }
-
-        const enclaveDID = request.params.enclaveDID;
-
-        w3cDID.resolveDID(enclaveDID, (err, didDocument) => {
-            if (err) {
-                response.statusCode = 500;
-                response.end();
-                return;
-            }
-
-            didDocument.getPublicKey("raw", (err, publicKey) => {
-                if (err) {
-                    response.statusCode = 500;
-                    response.end();
-                    return;
-                }
-
-                const encryptionKey = crypto.deriveEncryptionKey(publicKey);
-                let decryptedCommand;
-                try {
-                    decryptedCommand = crypto.decrypt(request.body, encryptionKey);
-                    decryptedCommand = JSON.parse(decryptedCommand.toString());
-                } catch (e) {
-                    response.statusCode = 500;
-                    response.end();
-                    return;
-                }
-
-                request.body = decryptedCommand;
-                runEnclaveCommand(request, response);
-            })
-        })
-    }
-
-    function runEnclaveCommand(request, response) {
-        if (!domainIsConfigured(request, response)) {
-            return;
-        }
-        response.setHeader("Content-Type", "application/json");
-
-        request.body.params.push(path.join(storageFolder, crypto.encodeBase58(Buffer.from(request.params.enclaveDID))));
-        const command = require("./commands").createCommand(request.body.commandName, ...request.body.params);
-        command.execute((err, data) => {
+    w3cDID.createIdentity("key", undefined, process.env.REMOTE_ENCLAVE_SECRET, (err, didDocument) => {
+        didDocument.subscribe(async (err, res) => {
             if (err) {
                 console.log(err);
-                return response.send(500, `Failed to execute command ${request.body.commandName}`);
+                return
             }
 
-            return response.send(200, data);
-        })
-    }
+            try {
+                const resObj = JSON.parse(res);
+                const clientDID = resObj.params.pop();
+                const lokiAdaptor = getDefaultEnclave(getStorageFolder());
 
-    function getConfiguredDomains() {
-        let confDomains = typeof config.getConfiguredDomains !== "undefined" ? config.getConfiguredDomains() : ["default"];
-
-        for (let i = 0; i < confDomains.length; i++) {
-            let domain = confDomains[i];
-            let domainConfig = config.getDomainConfig(domain);
-
-            if (domainConfig && domainConfig.enable && domainConfig.enable.indexOf("enclave") !== -1) {
-                console.log(`Successfully register enclave endpoints for domain < ${domain} >.`);
-                domains.push(domain);
+                const result = await executeCommand(resObj, lokiAdaptor);
+                sendResult(didDocument, result, clientDID);
             }
+            catch (err) {
+                console.log(err);
+            }
+        });
+    });
+
+    async function executeCommand(resObj, lokiAdaptor) {
+        try {
+            const command = resObj.commandName;
+            const params = resObj.params;
+            const result = await $$.promisify(lokiAdaptor[command]).apply(lokiAdaptor, params) ?? {};
+            return JSON.stringify(result);
+        }
+        catch (err) {
+            console.log(err);
+            return err;
         }
     }
 
-    getConfiguredDomains();
-    server.use(`/runEnclaveCommand/:domain/*`, headersMiddleware);
-    server.use(`/runEnclaveCommand/:domain/*`, responseModifierMiddleware);
-    server.use(`/runEnclaveCommand/:domain/*`, requestBodyJSONMiddleware);
-    server.use(`/runEnclaveCommand/:domain/*`, requestServerMiddleware);
-    server.put("/runEnclaveCommand/:domain/:enclaveDID", runEnclaveCommand);
+    function sendResult(didDocument, result, clientDID) {
+        didDocument.sendMessage(result, clientDID, (err, res) => {
+            if (err) {
+                console.log(err);
+            }
+        })
+    }
 
-    server.use(`/runEnclaveEncryptedCommand/:domain/*`, headersMiddleware);
-    server.use(`/runEnclaveEncryptedCommand/:domain/*`, responseModifierMiddleware);
-    server.use(`/runEnclaveEncryptedCommand/:domain/*`, bodyReaderMiddleware);
-    server.use(`/runEnclaveEncryptedCommand/:domain/*`, requestServerMiddleware);
-    server.put("/runEnclaveEncryptedCommand/:domain/:enclaveDID", runEnclaveEncryptedCommand);
+    function getStorageFolder() {
+        const enclavePath = server.config.componentsConfig.enclave.storageFolder ?? path.join("external-volume", "enclave");
+        return path.join(server.rootFolder, enclavePath);
+    }
+
 }
 
 module.exports = {
     DefaultEnclave
 };
 
-}).call(this)}).call(this,require("buffer").Buffer)
-
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./commands":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/index.js","buffer":false,"fs":false,"opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
+},{"./commands/DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
 function sendResult(resHandler, resultStream) {
     resHandler.statusCode = 200;
     resultStream.pipe(resHandler);
@@ -5516,6 +5564,7 @@ const defaultConfig = {
         "enclave":{
             "module": "./components/enclave",
             "function": "DefaultEnclave",
+            "storageFolder": './external-volume/config/enclave'
         },
         "secrets":{
             "module": "./components/secrets"
@@ -39173,7 +39222,56 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js":[function(require,module,exports){
+const { createCommandObject } = require("./lib/createCommandObject");
+
+function RemoteEnclave(clientDID, remoteDID) {
+    let initialised = false;
+    const ProxyMixin = require("./ProxyMixin");
+    const openDSU = require('../../index');
+    const w3cDID = openDSU.loadAPI("w3cdid");
+
+    ProxyMixin(this);
+
+    const init = async () => {
+        try {
+            this.clientDIDDocument = await $$.promisify(w3cDID.resolveDID)(clientDID);
+            this.remoteDIDDocument = await $$.promisify(w3cDID.resolveDID)(remoteDID);
+        }
+        catch (err) {
+            console.log(err);
+        }
+        this.initialised = true;
+        this.dispatchEvent("initialised");
+
+    }
+
+    this.isInitialised = () => {
+        return initialised;
+    }
+
+    this.getDID = (callback) => {
+        callback(undefined, did);
+    }
+
+    this.__putCommandObject = (commandName, ...args) => {
+        const callback = args.pop();
+        args.push(clientDID);
+        const command = JSON.stringify(createCommandObject(commandName, ...args));
+        this.clientDIDDocument.sendMessage(command, this.remoteDIDDocument, (err, res)=>{
+            this.clientDIDDocument.readMessage((err, res)=>{
+                callback(err, res);
+            })
+        });
+        
+    }
+
+    init();
+
+}
+
+module.exports = RemoteEnclave;
+},{"../../index":"/home/runner/work/privatesky/privatesky/modules/opendsu/index.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
     const db = openDSU.loadAPI("db")
@@ -39314,6 +39412,10 @@ function initialiseHighSecurityProxy(domain, did) {
     return new HighSecurityProxy(domain, did)
 }
 
+function initialiseRemoteEnclave(clientDID, remoteDID) {
+    const RemoteEnclave = require("./impl/RemoteEnclave");
+    return new RemoteEnclave(clientDID, remoteDID);}
+
 function connectEnclave(forDID, enclaveDID, ...args) {
     throw Error("Not implemented");
 }
@@ -39338,18 +39440,22 @@ registerEnclave(constants.ENCLAVE_TYPES.MEMORY_ENCLAVE, initialiseMemoryEnclave)
 registerEnclave(constants.ENCLAVE_TYPES.WALLET_DB_ENCLAVE, initialiseWalletDBEnclave);
 registerEnclave(constants.ENCLAVE_TYPES.APIHUB_ENCLAVE, initialiseAPIHUBProxy);
 registerEnclave(constants.ENCLAVE_TYPES.HIGH_SECURITY_ENCLAVE, initialiseHighSecurityProxy);
+registerEnclave(constants.ENCLAVE_TYPES.MQ_PROXY_ENCLAVE, initialiseRemoteEnclave)
 
 module.exports = {
     initialiseWalletDBEnclave,
     initialiseMemoryEnclave,
     initialiseAPIHUBProxy,
     initialiseHighSecurityProxy,
+    initialiseRemoteEnclave,
     connectEnclave,
     createEnclave,
-    registerEnclave
+    registerEnclave,
+    EnclaveMixin: require("./impl/Enclave_Mixin"),
+    ProxyMixin: require("./impl/ProxyMixin")
 }
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./impl/APIHUBProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/APIHUBProxy.js","./impl/Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./impl/HighSecurityProxy":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js","./impl/MemoryEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/MemoryEnclave.js","./impl/ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./impl/RemoteEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js","./impl/WalletDBEnclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js":[function(require,module,exports){
 function ErrorWrapper(message, err, otherErrors){
     let newErr = {};
 
@@ -41516,7 +41622,7 @@ module.exports = {
 
 
 
-},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js":[function(require,module,exports){
+},{"../overwrite-require/moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","key-ssi-resolver":"key-ssi-resolver"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/mqClient.js":[function(require,module,exports){
 /*
 Message Queues API space
 */
@@ -41525,7 +41631,7 @@ let http = require("../http");
 let bdns = require("../bdns")
 
 function send(keySSI, message, callback) {
-    console.log("Send method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("Send method from OpenDSU.loadApi('mq') is absolute. Adapt your code to use the new getMQHandlerForDID");
     bdns.getAnchoringServices(keySSI, (err, endpoints) => {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
@@ -41546,7 +41652,7 @@ function send(keySSI, message, callback) {
 let requests = {};
 
 function getHandler(keySSI, timeout) {
-    console.log("getHandler method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("getHandler method from OpenDSU.loadApi('mq') is absolute. Adapt your code to use the new getMQHandlerForDID");
     let obs = require("../utils/observable").createObservable();
     bdns.getMQEndpoints(keySSI, (err, endpoints) => {
         if (err || endpoints.length === 0) {
@@ -41590,7 +41696,7 @@ function getHandler(keySSI, timeout) {
 }
 
 function unsubscribe(keySSI, observable) {
-    console.log("unsubscribe method from OpenDSU.loadApi('mq') is absolute. Adapt you code to use the new getMQHandlerForDID");
+    console.log("unsubscribe method from OpenDSU.loadApi('mq') is obsolete. Adapt your code to use the new getMQHandlerForDID");
     http.unpoll(requests[observable]);
 }
 
@@ -41728,7 +41834,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                         return callback(err);
                     }
                     let originalCb = callback;
-                    callback = $$.makeSaneCallback(callback);
+                    //callback = $$.makeSaneCallback(callback);
 
                     let options = {headers: {Authorization: token}};
 
@@ -41771,6 +41877,8 @@ function MQHandler(didDocument, domain, pollingTimeout) {
     this.readAndWaitForMessages = (callback) => {
         consumeMessage("take", true, callback);
     };
+
+    this.subscribe = this.readAndWaitForMessages;
 
     this.abort = (callback) => {
         let request = callback.__requestInProgress;
@@ -44337,9 +44445,11 @@ module.exports = {
 
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js":[function(require,module,exports){
 module.exports = {
-    bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions
+    bindAutoPendingFunctions: require("./BindAutoPendingFunctions").bindAutoPendingFunctions,
+    ObservableMixin: require("./ObservableMixin"),
+    PendingCallMixin: require('./PendingCallMixin')
 }
-},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
+},{"./BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./PendingCallMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/PendingCallMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js":[function(require,module,exports){
 module.exports.createObservable = function(){
 	let observableMixin = require("./ObservableMixin");
 	let obs = {};
@@ -44532,9 +44642,10 @@ registerSkills(methodsNames.KEY_SUBTYPE, new KeyDID_CryptographicSkills());
 module.exports = {
     registerSkills,
     applySkill,
-    NAMES: require("./cryptographicSkillsNames")
+    NAMES: require("./cryptographicSkillsNames"),
+    CryptographicSkillsMixin: require("./CryptographicSkillsMixin")
 };
-},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
+},{"../didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./CryptographicSkillsMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js","./GroupDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/GroupDID_CryptographicSkills.js","./KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/KeyDID_CryptographicSkills.js","./NameDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/NameDID_CryptographicSkills.js","./SReadDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SReadDID_CryptographicSkills.js","./SSI_KeyDID_CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/SSI_KeyDID_CryptographicSkills.js","./cryptographicSkillsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/cryptographicSkillsNames.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkillsMixin.js":[function(require,module,exports){
 function CryptographicSkillsMixin(target) {
     target = target || {};
     const crypto = require("pskcrypto");
@@ -44940,6 +45051,26 @@ function W3CDID_Mixin(target, enclave) {
         });
     };
 
+
+    target.subscribe = function (callback) {
+        const mqHandler = require("opendsu")
+            .loadAPI("mq")
+            .getMQHandlerForDID(target);
+        mqHandler.subscribe((err, encryptedMessage) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
+            }
+            let message;
+            try {
+                message = JSON.parse(encryptedMessage.message);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse received message`, err));
+            }
+
+            target.decryptMessage(message, callback);
+        });
+    };
+
     target.getEnclave = () => {
         return enclave;
     }
@@ -44965,7 +45096,34 @@ function W3CDID_Mixin(target, enclave) {
 
 module.exports = W3CDID_Mixin;
 
-},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
+},{"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CVC_Mixin.js":[function(require,module,exports){
+
+/*
+    W3CVC Mixin is abstracting a JWT based credential
+    The same approach/interface can be used with credentials represented in other formats
+ */
+
+function W3CVC_Mixin(){
+    let serialisation;
+    /*
+        Verify that the signature of the issuer is correct
+     */
+    this.load = function(vcSerialisationDocument, callback){
+        serialisation = vcSerialisationDocument;
+    };
+
+    /*
+        Verify that the signature of the issuer is correct
+     */
+    this.verify = function(callback){
+
+    };
+
+}
+
+module.exports = W3CVC_Mixin;
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didDocumentsFactory.js":[function(require,module,exports){
 const methodsNames = require("./didMethodsNames");
 const createNameDIDDocument = require("./didssi/NameDID_Document").initiateDIDDocument;
 const createGroupDID_Document = require("./didssi/GroupDID_Document").initiateDIDDocument;
@@ -45888,10 +46046,12 @@ module.exports = {
     resolveDID,
     we_resolveDID,
     registerDIDMethod,
-    CryptographicSkills: require("./CryptographicSkills/CryptographicSkills")
+    CryptographicSkills: require("./CryptographicSkills/CryptographicSkills"),
+    W3CDIDMixin: require('./W3CDID_Mixin'),
+    W3CCVCMixin: require('./W3CVC_Mixin')
 }
 
-},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
+},{"./CryptographicSkills/CryptographicSkills":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/CryptographicSkills/CryptographicSkills.js","./W3CDID_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CDID_Mixin.js","./W3CVC_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/W3CVC_Mixin.js","./didMethodsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didMethodsNames.js","./didssi/ssiMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/didssi/ssiMethods.js","./w3cdids/didMethods":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/didMethods.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/w3cdids/KeyDID_Document.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const methodsNames = require("../didMethodsNames");
 
@@ -60585,7 +60745,7 @@ if(!PREVENT_DOUBLE_LOADING_OF_OPENDSU.INITIALISED){
             case "dt":return require("./dt"); break;
             case "enclave":return require("./enclave"); break;
             case "keyssi":return require("./keyssi"); break;
-            case "mq":return require("./mq"); break;
+            case "mq":return require("./mq/mqClient"); break;
             case "notifications":return require("./notifications"); break;
             case "oauth":return require("./oauth"); break;
             case "resolver":return require("./resolver"); break;
@@ -60674,7 +60834,7 @@ module.exports = PREVENT_DOUBLE_LOADING_OF_OPENDSU;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./credentials":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/index.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
+},{"./anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","./bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","./boot":"/home/runner/work/privatesky/privatesky/modules/opendsu/boot/index.js","./bricking":"/home/runner/work/privatesky/privatesky/modules/opendsu/bricking/index.js","./cache":"/home/runner/work/privatesky/privatesky/modules/opendsu/cache/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/index.js","./config/autoConfig":"/home/runner/work/privatesky/privatesky/modules/opendsu/config/autoConfig.js","./contracts":"/home/runner/work/privatesky/privatesky/modules/opendsu/contracts/index.js","./credentials":"/home/runner/work/privatesky/privatesky/modules/opendsu/credentials/index.js","./crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./db":"/home/runner/work/privatesky/privatesky/modules/opendsu/db/index.js","./dc":"/home/runner/work/privatesky/privatesky/modules/opendsu/dc/index.js","./dt":"/home/runner/work/privatesky/privatesky/modules/opendsu/dt/index.js","./enclave":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js","./error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","./http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","./keyssi":"/home/runner/work/privatesky/privatesky/modules/opendsu/keyssi/index.js","./m2dsu":"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/index.js","./moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./mq/mqClient":"/home/runner/work/privatesky/privatesky/modules/opendsu/mq/mqClient.js","./notifications":"/home/runner/work/privatesky/privatesky/modules/opendsu/notifications/index.js","./oauth":"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js","./resolver":"/home/runner/work/privatesky/privatesky/modules/opendsu/resolver/index.js","./sc":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/index.js","./storage":"/home/runner/work/privatesky/privatesky/modules/opendsu/storage/index.js","./system":"/home/runner/work/privatesky/privatesky/modules/opendsu/system/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/index.js","./w3cdid":"/home/runner/work/privatesky/privatesky/modules/opendsu/w3cdid/index.js","./workers":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/index.js"}],"overwrite-require":[function(require,module,exports){
 (function (global){(function (){
 /*
  require and $$.require are overwriting the node.js defaults in loading modules for increasing security, speed and making it work to the privatesky runtime build with browserify.
