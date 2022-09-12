@@ -1835,6 +1835,7 @@ function createHandler(flow, server) {
 
 module.exports = createHandler;
 },{}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js":[function(require,module,exports){
+(function (global){(function (){
 
 
 function AutoSavePendingTransactions (flow, timeout, server) {
@@ -1861,7 +1862,7 @@ function BricksFabric(server) {
     const strategyType = bricksFabricStrategy.name;
 
     //init strategy
-    let flow = $$.flow.start(strategyType);
+    let flow = new global[strategyType];
     flow.init(rootFolder,noOfTran);
 
     //resume if necessary
@@ -1891,15 +1892,17 @@ function BricksFabric(server) {
 
 module.exports = BricksFabric;
 
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./constants.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/constants.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/controllers.js","./strategies/BrickStorage.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/strategies/BrickStorage.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/strategies/BrickStorage.js":[function(require,module,exports){
+(function (global){(function (){
 const fs = require('fs');
 const path = require('swarmutils').path;
 const BRICKSFABRIC_ERROR_CODE = 'bricks fabric error';
 
 
-$$.flow.describe('BrickStorage', {
-
-    init : function (brickFabricRootFolder,noOfTransactionsPerBlock) {
+function BrickStorage() {
+    this.init = function (brickFabricRootFolder,noOfTransactionsPerBlock) {
         this.rootFolder = brickFabricRootFolder;
         this.transactionsPerBlock = noOfTransactionsPerBlock;
         this.hashlinkfile = 'lasthashlink';
@@ -1907,21 +1910,23 @@ $$.flow.describe('BrickStorage', {
         this.pendingTransactions = [];
         this.pendingBuffer = [];
         this.isCommitingBlock = false;
-    },
-    bootUp : function(){
+    }
+
+    this.bootUp = function(){
       //get latest hashlink
         const hashlinkpath = path.join(this.rootFolder,this.hashlinkfile);
         if (fs.existsSync(hashlinkpath))
         {
             this.lastBlockHashLink = fs.readFileSync(hashlinkpath).toString();
         }
-    },
-    __storeLastHashLink : function () {
+    }
+
+    function __storeLastHashLink() {
         const hashlinkpath = path.join(this.rootFolder,this.hashlinkfile);
         fs.writeFileSync(hashlinkpath,this.lastBlockHashLink);
-    },
-    completeBlock : function (server, callback) {
+    }
 
+    this.completeBlock = function (server, callback) {
         if (callback === undefined)
         {
             callback = (err, result) => {
@@ -1948,9 +1953,9 @@ $$.flow.describe('BrickStorage', {
             block.transactions.push(this.pendingTransactions[i])
         }
 
-        this.__SaveBlockToBrickStorage(JSON.stringify(block), server, callback);
-    },
-    __SaveBlockToBrickStorage : function (data, server, callback){
+        __SaveBlockToBrickStorage(JSON.stringify(block), server, callback);
+    }
+    function __SaveBlockToBrickStorage(data, server, callback){
 
         const blockHeaders = {
             'Content-Type': 'application/json',
@@ -1964,16 +1969,16 @@ $$.flow.describe('BrickStorage', {
             server.makeLocalRequest(blockMethod, blockPath, data, blockHeaders, (err, result) => {
                 if (err) {
                     console.log(err);
-                    this.__pushBuffer();
+                    __pushBuffer();
                     this.isCommitingBlock = false;
                     callback(err, undefined);
                 }
 
                 if (result) {
                     this.lastBlockHashLink = JSON.parse(result).message;
-                    this.__storeLastHashLink();
+                    __storeLastHashLink();
                     this.pendingTransactions.splice(0, this.pendingTransactions.length);
-                    this.__pushBuffer();
+                    __pushBuffer();
                     this.isCommitingBlock = false;
                     //console.log(result);
                     console.log('block finished');
@@ -1987,8 +1992,8 @@ $$.flow.describe('BrickStorage', {
         {
             console.log("bricks fabric", err);
         }
-    },
-    __pushBuffer : function (){
+    }
+    function __pushBuffer(){
         if (this.pendingBuffer.length > 0)
         {
             console.log("push buffer to pending block", this.pendingBuffer);
@@ -1997,8 +2002,8 @@ $$.flow.describe('BrickStorage', {
             }
             this.pendingBuffer.splice(0, this.pendingBuffer.length);
         }
-    },
-    storeData : function (anchorData, server, callback) {
+    }
+    this.storeData = function(anchorData, server, callback) {
         if (this.isCommitingBlock === true)
         {
             console.log("transaction cached");
@@ -2017,18 +2022,11 @@ $$.flow.describe('BrickStorage', {
             callback(undefined,"Transaction was added to the block.");
         }
     }
-
-
-
-
-
-
-
-
-
-});
-
+}
+global["BrickStorage"] = BrickStorage;
 module.exports = { BRICKSFABRIC_ERROR_CODE};
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"fs":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/utils/index.js":[function(require,module,exports){
 const { clone } = require("../../../utils");
 
@@ -59319,10 +59317,6 @@ const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 })();
 
 function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restartIntervalCheck, retryTimeout }, callback) {
-	if (typeof $$.flows === "undefined") {
-		require('callflow').initialise();
-	}
-
 	if(typeof restartIntervalCheck === "undefined"){
 		restartIntervalCheck = CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL;
 	}
@@ -59643,7 +59637,7 @@ module.exports.getDomainConfig = function (domain, ...configKeys) {
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 
-},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/requestForwarder":"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","callflow":"callflow","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/requestForwarder":"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
