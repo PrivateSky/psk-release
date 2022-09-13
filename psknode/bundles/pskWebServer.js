@@ -45245,7 +45245,7 @@ errorTypes = {
         errorType: this.errorCode,
         errorMessage: this.message,
         errorDetails: data,
-        errorField: "unknown"
+        errorField: data.errorField || "unknown"
       }]
     }
   },
@@ -45285,8 +45285,8 @@ errorTypes = {
         return {
           errorType: this.errorCode,
           errorMessage: this.message,
-          errorDetails: item.detailsMessage,
-          errorField: "unknown"
+          errorDetails: item.errorDetails,
+          errorField: data.errorField || "unknown"
         }
       })
     }
@@ -45298,8 +45298,8 @@ errorTypes = {
       return [{
         errorType: this.errorCode,
         errorMessage: this.message,
-        errorDetails: "",
-        errorField: "unknown"
+        errorDetails: data.errorDetails || "",
+        errorField: data.errorField || "unknown"
       }]
     }
   },
@@ -45307,12 +45307,14 @@ errorTypes = {
     errorCode: 5,
     message: "Not able to digest message due to missing mapping",
     getDetails: function (data) {
-      return [{
-        errorType: this.errorCode,
-        errorMessage: this.message,
-        errorDetails: "",
-        errorField: "unknown"
-      }]
+      return data.map(item => {
+        return {
+          errorType: this.errorCode,
+          errorMessage: this.message,
+          errorDetails: item.errorDetails,
+          errorField: data.errorField || "messageType"
+        }
+      })
     }
   },
   "MAPPING_ERROR": {
@@ -45322,8 +45324,8 @@ errorTypes = {
       return [{
         errorType: this.errorCode,
         errorMessage: this.message,
-        errorDetails: "",
-        errorField: "unknown"
+        errorDetails: data.errorDetails || "",
+        errorField: data.errorField || "unknown"
       }]
     }
   }
@@ -45498,8 +45500,8 @@ function MappingEngine(storageService, options) {
         const maxDisplayLength = 1024;
         console.log(`Unable to find a suitable mapping to handle the following message: ${messageString.length < maxDisplayLength ? messageString : messageString.slice(0, maxDisplayLength) + "..."}`);
         return reject(errMap.newCustomError(errMap.errorTypes.MISSING_MAPPING, [{
-          field: "messageType",
-          message: `Couldn't find any mapping for ${message.messageType}`
+          errorField: "messageType",
+          errorDetails: `Couldn't find any mapping for ${message.messageType}`
         }]));
       }
     });
@@ -45555,7 +45557,7 @@ function MappingEngine(storageService, options) {
         for (let i = 0; i < messages.length; i++) {
           let message = messages[i];
           if (typeof message !== "object") {
-            let err = errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{detailsMessage: `Found type: ${typeof message} expected type object`}]);
+            let err = errMap.newCustomError(errMap.errorTypes.MESSAGE_IS_NOT_AN_OBJECT, [{errorDetails: `Found type: ${typeof message} expected type object`}]);
             failedMessages.push({
               message: message,
               reason: err.message,
@@ -45572,7 +45574,7 @@ function MappingEngine(storageService, options) {
           } catch (err) {
             //this .mappingInstance prop is artificial injected from the executeMappingFor function in case of an error during mapping execution
             //isn't too nice, but it does the job
-            if(err.mappingInstance){
+            if (err.mappingInstance) {
               failedMappingInstances.push(err.mappingInstance);
             }
 
@@ -45618,16 +45620,16 @@ function MappingEngine(storageService, options) {
               if (mapInstance.registeredDSUs) {
                 for (let i = 0; i < mapInstance.registeredDSUs.length; i++) {
                   let touchedDSU = mapInstance.registeredDSUs[i];
-                  try{
+                  try {
                     await $$.promisify(touchedDSU.cancelBatch, touchedDSU)();
-                  }catch(err){
+                  } catch (err) {
                     //we ignore any cancel errors for the moment
                   }
                 }
               }
             }
 
-            //not that we finished with the partial rollback we can return the failed messages
+            //now that we finished with the partial rollback we can return the failed messages
             resolve(failedMessages);
           }).catch(async (err) => {
             await rollback();
@@ -45642,7 +45644,6 @@ function MappingEngine(storageService, options) {
         Promise.allSettled(commitPromisses)
           .then(digestConfirmation)
           .catch(handleErrorsDuringPromiseResolving);
-
       }
     );
   }
