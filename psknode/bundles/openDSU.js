@@ -24903,12 +24903,16 @@ module.exports = ProxyMixin;
 
 },{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js":[function(require,module,exports){
 const { createCommandObject } = require("./lib/createCommandObject");
+const ProxyMixin = require("./ProxyMixin");
+const openDSU = require('../../index');
+const w3cDID = openDSU.loadAPI("w3cdid");
 
-function RemoteEnclave(clientDID, remoteDID) {
+function RemoteEnclave(clientDID, remoteDID, requestTimeout) {
     let initialised = false;
-    const ProxyMixin = require("./ProxyMixin");
-    const openDSU = require('../../index');
-    const w3cDID = openDSU.loadAPI("w3cdid");
+    const DEFAULT_TIMEOUT = 5000;
+
+    this.commandsMap = new Map();
+    this.requestTimeout = requestTimeout ?? DEFAULT_TIMEOUT;
 
     ProxyMixin(this);
 
@@ -24937,12 +24941,28 @@ function RemoteEnclave(clientDID, remoteDID) {
         const callback = args.pop();
         args.push(clientDID);
         const command = JSON.stringify(createCommandObject(commandName, ...args));
-        this.clientDIDDocument.sendMessage(command, this.remoteDIDDocument, (err, res)=>{
-            this.clientDIDDocument.readMessage((err, res)=>{
-                callback(err, res);
-            })
+        this.clientDIDDocument.sendMessage(command, this.remoteDIDDocument, (err, res) => {
+            this.commandsMap.set(command.commandID, { "callback": callback, "time": Date.now() });
+            if (this.commandsMap.size == 1) {
+                this.subscribe();
+            }
         });
-        
+    }
+
+    this.subscribe = () => {
+        this.clientDIDDocument.waitForMessages((err, res) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            const callback = this.commandsMap.get(res.commandID).callback;
+            callback(err, res);
+            this.commandsMap.delete(res.commandID);
+            if(this.commandsMap.size == 0) { 
+                this.clientDIDDocument.stopWaitingForMessages();
+            }
+        })
     }
 
     init();
@@ -25058,8 +25078,10 @@ module.exports = {
 }
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
 const createCommandObject = (commandName, ...args) => {
+    const commandID = require('crypto').randomBytes(32).toString("base64")
     return {
         commandName,
+        commandID,
         params: [
             ...args
         ]
@@ -25069,7 +25091,7 @@ const createCommandObject = (commandName, ...args) => {
 module.exports = {
     createCommandObject
 }
-},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
+},{"crypto":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/index.js":[function(require,module,exports){
 const constants = require("../moduleConstants");
 
 function initialiseWalletDBEnclave(keySSI, did) {
@@ -27317,7 +27339,7 @@ function send(keySSI, message, callback) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
         }
         let url = endpoints[0] + `/mq/send-message/${keySSI}`;
-        let options = {body: message};
+        let options = { body: message };
 
         let request = http.poll(url, options, timeout);
 
@@ -27484,7 +27506,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                     return callback(err);
                 }
 
-                http.doPut(url, message, {headers: {"Authorization": token}}, callback);
+                http.doPut(url, message, { headers: { "Authorization": token } }, callback);
             });
         })
 
@@ -27516,7 +27538,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                     let originalCb = callback;
                     //callback = $$.makeSaneCallback(callback);
 
-                    let options = {headers: {Authorization: token}};
+                    let options = { headers: { Authorization: token } };
 
                     function makeRequest() {
                         let request = http.poll(url, options, connectionTimeout, timeout);
@@ -27530,9 +27552,10 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                                 if (waitForMore && !stop) {
                                     makeRequest();
                                 }
-                            }).catch((err) => {
-                            callback(err);
-                        });
+                            })
+                            .catch((err) => {
+                                callback(err);
+                            });
                     }
 
                     //somebody called abort before we arrived here
@@ -27545,6 +27568,49 @@ function MQHandler(didDocument, domain, pollingTimeout) {
         })
     }
 
+    this.waitForMessages = (callback) => {
+        callback.__requestInProgress = true;
+
+        ensureAuth((err, token) => {
+            if (err) {
+                return callback(err);
+            }
+            //somebody called abort before the ensureAuth resolved
+            if (!callback.__requestInProgress) {
+                return;
+            }
+            didDocument.sign(token, (err, signature) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper(`Failed to sign token`, err));
+                }
+
+                getURL(queueName, "take", signature.toString("hex"), async (err, url) => {
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    let options = { headers: { Authorization: token } };
+
+                    if (!callback.__requestInProgress) {
+                        return;
+                    }
+                    while (callback.on) {
+                        try {
+                            const request = http.poll(url, options, connectionTimeout, timeout);
+                            callback.__requestInProgress = request;
+                            const response = await request;
+                            const jsonResponse = await response.json();
+                            callback(undefined, jsonResponse);
+                        }
+                        catch (err) {
+                            callback(err);
+                        }
+                    }
+                })
+            })
+        })
+
+    }
 
     this.previewMessage = (callback) => {
         consumeMessage("get", callback);
@@ -27594,7 +27660,7 @@ function MQHandler(didDocument, domain, pollingTimeout) {
 
                     http.fetch(url, {
                         method: "DELETE",
-                        headers: {"Authorization": token}
+                        headers: { "Authorization": token }
                     })
                         .then(response => callback())
                         .catch(e => callback(e));
@@ -30731,7 +30797,6 @@ function W3CDID_Mixin(target, enclave) {
         });
     };
 
-
     target.subscribe = function (callback) {
         const mqHandler = require("opendsu")
             .loadAPI("mq")
@@ -30750,6 +30815,32 @@ function W3CDID_Mixin(target, enclave) {
             target.decryptMessage(message, callback);
         });
     };
+
+    target.waitForMessages = function (callback) {
+        const mqHandler = require("opendsu")
+            .loadAPI("mq")
+            .getMQHandlerForDID(target);
+
+        target.onCallback = (err, encryptedMessage) => {
+            if (err) {
+                return callback(createOpenDSUErrorWrapper(`Failed to read message`, err));
+            }
+            let message;
+            try {
+                message = JSON.parse(encryptedMessage.message);
+            } catch (e) {
+                return callback(createOpenDSUErrorWrapper(`Failed to parse received message`, err));
+            }
+
+            target.decryptMessage(message, callback);
+        }
+        target.onCallback.on = true;
+        mqHandler.waitForMessages(target.onCallback);
+    };
+
+    target.stopWaitingForMessages = function () {
+        target.onCallback.on = false;
+    }
 
     target.getEnclave = () => {
         return enclave;
