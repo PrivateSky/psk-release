@@ -130,7 +130,7 @@ function getMainDomainStorageFile() {
 
 function getEnclave() {
     const storageFolder = require("path").join(getStorageFolder(), DATABASE_NAME);
-    const Enclave = require("default-enclave");
+    const Enclave = require("loki-enclave-facade");
     return new Enclave(storageFolder);
 }
 
@@ -440,11 +440,11 @@ module.exports = {
     AdminComponentHandler,
     getAdminService
 };
-},{"./../../utils/middlewares/index":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","default-enclave":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
+},{"./../../utils/middlewares/index":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","loki-enclave-facade":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js":[function(require,module,exports){
 const {ALIAS_SYNC_ERR_CODE} = require("../utils");
 const utils = require("../utils");
 const anchoringStrategies = require("../strategies");
-
+const logger = $$.getLogger("controllers", "apihub/anchoring");
 const getStrategy = async (request) => {
     let receivedDomain;
     let domainConfig;
@@ -463,6 +463,8 @@ const getStrategy = async (request) => {
         if (!domainConfig) {
             throw Error(`[Anchoring] Domain '${receivedDomain}' not found`);
         }
+    } else {
+        throw Error(`[Anchoring] AnchorId or domain is missing from request.params`);
     }
 
     const StrategyClass = anchoringStrategies[domainConfig.type];
@@ -492,7 +494,7 @@ function getWritingHandler(response) {
             } else if (err.code === 403) {
                 return response.send(403, errorMessage);
             }
-            console.log(err);
+            logger.error(err);
             return response.send(500, errorMessage);
         }
 
@@ -505,7 +507,7 @@ async function updateAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
-        console.log(e);
+        logger.error(e);
         return response.send(500, e);
     }
     strategy[action](getWritingHandler(response));
@@ -535,7 +537,7 @@ async function readDataForAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
-        console.log(e);
+        logger.error(e);
         return response.send(500, e);
     }
     strategy[action](getReadingHandler(response));
@@ -582,6 +584,7 @@ module.exports = {
 };
 
 },{"../strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js":[function(require,module,exports){
+
 function Anchoring(server) {
     function requestServerMiddleware(request, response, next) {
         request.server = server;
@@ -599,6 +602,10 @@ function Anchoring(server) {
     } = require("./controllers");
 
     const {responseModifierMiddleware, requestBodyJSONMiddleware} = require("../../utils/middlewares");
+    const {getEthereumSyncServiceSingleton} = require("./strategies/oba/ethereumSyncService");
+
+    const ethSyncService = getEthereumSyncServiceSingleton(server);
+    ethSyncService.synchronize();
 
     server.use(`/anchor/:domain/*`, requestServerMiddleware);
     server.use(`/anchor/:domain/*`, responseModifierMiddleware);
@@ -619,7 +626,7 @@ function Anchoring(server) {
 
 module.exports = Anchoring;
 
-},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js":[function(require,module,exports){
+},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/controllers/index.js","./strategies/oba/ethereumSyncService":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ethereumSyncService.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js":[function(require,module,exports){
 const { getDomainFromKeySSI } = require("../../utils");
 
 class Contract {
@@ -714,13 +721,13 @@ class Contract {
 
 module.exports = Contract;
 
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js":[function(require,module,exports){
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/eth/index.js":[function(require,module,exports){
 const {ALIAS_SYNC_ERR_CODE} = require("../../utils");
 
-function Ethx(server, domainConfig, anchorId, newAnchorValue, jsonData) {
+function ETH(server, domainConfig, anchorId, newAnchorValue, jsonData) {
     const openDSU = require("opendsu");
     const http = openDSU.loadAPI("http");
-
+    const logger = $$.getLogger("Eth", "apihub/anchoring");
     const createEndpoint = (action) => {
         let endpoint = domainConfig.option.endpoint;
 
@@ -763,7 +770,7 @@ function Ethx(server, domainConfig, anchorId, newAnchorValue, jsonData) {
                     error.code = ALIAS_SYNC_ERR_CODE;
                     return callback(error);
                 }
-                console.log(err);
+                logger.error(err);
                 callback(err);
                 return;
             }
@@ -833,8 +840,8 @@ function Ethx(server, domainConfig, anchorId, newAnchorValue, jsonData) {
     }
 }
 
-module.exports = Ethx;
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/filePersistence.js":[function(require,module,exports){
+module.exports = ETH;
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/filePersistence.js":[function(require,module,exports){
 function FilePersistenceStrategy(rootFolder, configuredPath) {
     const self = this;
     const fileOperations = new FileOperations();
@@ -953,7 +960,7 @@ function FileOperations() {
     const path = require('path');
     let anchoringFolder;
     const endOfLine = require("os").EOL;
-
+    const logger = $$.getLogger("FileOperations", "apihub/anchoring");
     self.InitializeFolderStructure = function (rootFolder, configuredPath) {
         let storageFolder = path.join(rootFolder, configuredPath);
         anchoringFolder = path.resolve(storageFolder);
@@ -962,7 +969,7 @@ function FileOperations() {
                 fs.mkdirSync(anchoringFolder, {recursive: true});
             }
         } catch (e) {
-            console.log("error creating anchoring folder", e);
+            logger.error("error creating anchoring folder", e);
             throw new Error(`Failed to create folder ${anchoringFolder}`);
         }
     }
@@ -974,7 +981,7 @@ function FileOperations() {
 
         let forbiddenCharacters = new RegExp(/[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g);
         if (forbiddenCharacters.test(anchorId)) {
-            console.log(`Found forbidden characters in anchorId ${anchorId}`);
+            logger.error(`Found forbidden characters in anchorId ${anchorId}`);
             return callback(new Error(`anchorId ${anchorId} contains forbidden characters`));
         }
         return callback(undefined);
@@ -1035,11 +1042,11 @@ module.exports = {
     FilePersistenceStrategy
 }
 
-},{"../utils/AnchorPathResolver":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js","../utils/FSLock":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/FSLock.js","fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js":[function(require,module,exports){
+},{"../utils/AnchorPathResolver":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js","../utils/FSLock":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/FSLock.js","fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/index.js":[function(require,module,exports){
 
 const openDSU = require("opendsu");
 
-class FSX{
+class FS{
     constructor(server, domainConfig, anchorId, anchorValue, jsonData) {
         this.commandData = {};
         this.commandData.option = domainConfig.option;
@@ -1087,89 +1094,108 @@ class FSX{
     }
 }
 
-module.exports = FSX;
+module.exports = FS;
 
-},{"./filePersistence":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/filePersistence.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js":[function(require,module,exports){
+},{"./filePersistence":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/filePersistence.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js":[function(require,module,exports){
 module.exports = {
-    FS: require("./fsx"),
-    ETH: require("./ethx"),
+    FS: require("./fs"),
+    ETH: require("./eth"),
     Contract: require("./contract"),
     OBA: require("./oba")
 };
 
-},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./ethx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/ethx/index.js","./fsx":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fsx/index.js","./oba":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ethereumSyncService.js":[function(require,module,exports){
-const {ALIAS_SYNC_ERR_CODE} = require("../../utils");
+},{"./contract":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/contract/index.js","./eth":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/eth/index.js","./fs":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/fs/index.js","./oba":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ethereumSyncService.js":[function(require,module,exports){
+const {ALIAS_SYNC_ERR_CODE, ANCHOR_ALREADY_EXISTS_ERR_CODE} = require("../../utils");
 const {getLokiEnclaveFacade} = require("./lokiEnclaveFacadeSingleton");
+const {getLogFilePath} = require("./getLogFilePath");
+const {getDBFilePath} = require("./getDBFilePath");
 
-function EthereumSyncService(server) {
-    const path = require("path");
-    const DB_STORAGE_FOLDER = path.join(server.rootFolder, "external-volume", "oba");
-    let lokiEnclaveFacade = getLokiEnclaveFacade(DB_STORAGE_FOLDER);
+function EthereumSyncService(server, config) {
+    const defaultConfig = {
+        scheduleInterval: 10000,
+        sendInterval: 17000,
+        burstSize: 100,
+        maxNumberOfRetries: 100
+    }
+    Object.assign(defaultConfig, config);
+    config = defaultConfig;
+
+    const DB_STORAGE_FILE = getDBFilePath(server);
+    const logger = $$.getLogger("OBA", "EthereumSyncService", getLogFilePath(server));
+
+    const openDSU = require("opendsu");
+    const utils = openDSU.loadAPI("utils");
+    const TaskCounter = require("swarmutils").TaskCounter;
+    let lokiEnclaveFacade = getLokiEnclaveFacade(DB_STORAGE_FILE);
     const ANCHORS_TABLE_NAME = "anchors_table";
-    const ERROR_LOGS_TABLE = "errors_table";
     let syncInProgress = false;
     const {ETH} = require("../index");
 
-    function sendAnchorToBlockchain(anchorHash, anchorObj, taskCounter) {
-        const ethHandler = new ETH(server, anchorObj.domainConfig, anchorObj.anchorId, anchorObj.anchorValue);
-        ethHandler[anchorObj.anchorUpdateOperation]((err) => {
-            if (err) {
-                if (err.code === ALIAS_SYNC_ERR_CODE) {
-                    lokiEnclaveFacade.deleteObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, () => {
-                        logError(err, anchorObj, () => {
-                            taskCounter.decrement();
-                        });
-                    });
-
-                    return;
-                }
-
-                logError(err, anchorObj, () => {
-                    taskCounter.decrement();
-                })
-                return;
-            }
-
-            lokiEnclaveFacade.deleteObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, () => {
-                taskCounter.decrement();
-            });
-        });
-
-    }
-
-    function processPendingAnchors(callback) {
-        const TaskCounter = require("swarmutils").TaskCounter;
+    const init = () => {
+        syncInProgress = false;
         const taskCounter = new TaskCounter(() => {
-            return callback(undefined);
+            this.finishInitialisation();
         })
 
-        lokiEnclaveFacade.listQueue(undefined, ANCHORS_TABLE_NAME, "asc", 100, (err, anchorHashes) => {
+        lokiEnclaveFacade.filter(undefined, ANCHORS_TABLE_NAME, (err, anchors) => {
             if (err) {
-                return callback(err);
-            }
-
-            if (typeof anchorHashes === "undefined" || anchorHashes.length === 0) {
-                callback();
+                this.finishInitialisation();
                 return;
             }
 
-            taskCounter.increment(anchorHashes.length);
-            anchorHashes.forEach(anchorHash => {
-                lokiEnclaveFacade.getObjectFromQueue(undefined, ANCHORS_TABLE_NAME, anchorHash, (err, anchorObj) => {
+            if (typeof anchors === "undefined" || anchors.length === 0) {
+                return this.finishInitialisation();
+            }
+
+            taskCounter.increment(anchors.length);
+            anchors.forEach(anchor => {
+                anchor.scheduled = null;
+                anchor.tc = 1;
+                lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
                     if (err) {
-                        taskCounter.decrement();
-                        return;
+                        logger.error(`Failed to update anchor ${anchor.pk} in db: ${err}`);
                     }
 
-                    sendAnchorToBlockchain(anchorHash, anchorObj, taskCounter, callback);
+                    taskCounter.decrement();
                 })
-            });
+            })
         })
     }
 
-    function logError(err, anchorData, callback) {
-        const timestamp = Date.now();
-        lokiEnclaveFacade.insertRecord(undefined, ERROR_LOGS_TABLE, timestamp, {anchorData, err, timestamp}, callback)
+    function sendAnchorToBlockchain(anchor) {
+        const ethHandler = new ETH(server, anchor.domainConfig, anchor.anchorId, anchor.anchorValue);
+        ethHandler[anchor.anchorUpdateOperation]((err, transactionHash) => {
+            if (err) {
+                if (err.code === ANCHOR_ALREADY_EXISTS_ERR_CODE || err.code === ALIAS_SYNC_ERR_CODE) {
+                    logger.critical(1, `Anchoring for ${anchor.anchorId} failed to sync with blockchain`)
+
+                    lokiEnclaveFacade.deleteRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, err => {
+                        if (err) {
+                            logger.error(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
+                        }
+                    });
+                    return;
+                }
+                anchor.scheduled = null;
+                anchor.tc++;
+                if (anchor.tc === config.maxNumberOfRetries) {
+                    logger.warn(1, `Anchoring Synchronization for ${anchor.anchorId} retried ${config.maxNumberOfRetries} without success`);
+                }
+                lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
+                    if (err) {
+                        logger.log(`Failed to update anchor ${anchor.pk}: ${err}`);
+                    }
+                });
+                return;
+            }
+
+            logger.info(2, `Anchoring for anchor ${anchor.anchorId} committed in blockchain: ${transactionHash}`);
+            lokiEnclaveFacade.deleteRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, err => {
+                if (err) {
+                    logger.log(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
+                }
+            })
+        })
     }
 
     this.storeAnchor = (anchorUpdateOperation, anchorId, anchorValue, domainConfig, callback) => {
@@ -1177,22 +1203,64 @@ function EthereumSyncService(server) {
             anchorId,
             anchorValue,
             anchorUpdateOperation,
-            domainConfig
+            domainConfig,
+            scheduled: null,
+            tc: 1
         }, callback);
     }
 
-    function resendAnchorsToBlockchain() {
-        processPendingAnchors( () => {
-            setTimeout(resendAnchorsToBlockchain, 10000);
-        });
+    const scheduleAnchors = () => {
+        lokiEnclaveFacade.filter(undefined, ANCHORS_TABLE_NAME, ["scheduled == null"], "asc", (err, anchors) => {
+            if (err) {
+                if (err.code !== 404) {
+                    logger.error(`Failed to get anchors from db: ${err}`);
+                }
+                return;
+            }
+            anchors.forEach(anchor => {
+                anchor.scheduled = Date.now() + (anchor.tc > 100 ? 100 : anchor.tc) * config.scheduleInterval;
+                lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
+                    if (err) {
+                        logger.error(`Failed to update anchor ${anchor.pk} in db: ${err}`);
+                    }
+                })
+            })
+        })
+    }
+
+    const sendAnchorsToBlockchain = () => {
+        lokiEnclaveFacade.filter(undefined, ANCHORS_TABLE_NAME, ["scheduled != null", "scheduled != sent", `scheduled < ${Date.now()}`], "asc", config.burstSize, (err, anchors) => {
+            if (err) {
+                if (err.code !== 404) {
+                    logger.error(`Failed to get anchors from db: ${err}`);
+                }
+                return;
+            }
+
+            anchors.forEach(anchor => {
+                anchor.scheduled = "sent";
+                lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
+                    if (err) {
+                        logger.error(`Failed to update anchor ${anchor.pk} in db: ${err}`);
+                        return;
+                    }
+
+                    sendAnchorToBlockchain(anchor);
+                })
+            })
+        })
     }
 
     this.synchronize = () => {
         if (!syncInProgress) {
-            resendAnchorsToBlockchain();
+            setInterval(scheduleAnchors, config.scheduleInterval);
+            setInterval(sendAnchorsToBlockchain, config.sendInterval);
             syncInProgress = true;
         }
     };
+
+    utils.bindAutoPendingFunctions(this);
+    init();
 }
 
 const getEthereumSyncServiceSingleton = (server) => {
@@ -1205,50 +1273,77 @@ const getEthereumSyncServiceSingleton = (server) => {
 module.exports = {
     getEthereumSyncServiceSingleton
 }
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./lokiEnclaveFacadeSingleton":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js","path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js":[function(require,module,exports){
+},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/utils/index.js","../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./getDBFilePath":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/getDBFilePath.js","./getLogFilePath":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/getLogFilePath.js","./lokiEnclaveFacadeSingleton":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/getDBFilePath.js":[function(require,module,exports){
+const path = require("path");
+
+const getDBFilePath = (server) => {
+    const BASE_FOLDER = path.join(server.rootFolder, "external-volume", "oba");
+    const storageFilePath = path.join(BASE_FOLDER, "pendingAnchors");
+
+    return storageFilePath;
+}
+
+module.exports = {
+    getDBFilePath
+}
+},{"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/getLogFilePath.js":[function(require,module,exports){
+const path = require("path");
+
+const getLogFilePath = (server) => {
+    const BASE_FOLDER = path.join(server.rootFolder, "external-volume", "oba");
+    const LOG_FILE = path.join(BASE_FOLDER, "oba.log");
+
+    return LOG_FILE;
+}
+
+module.exports = {
+    getLogFilePath
+}
+},{"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/index.js":[function(require,module,exports){
 const {getEthereumSyncServiceSingleton} = require("./ethereumSyncService");
-const LOG_IDENTIFIER = "[OBA]";
+const {getLogFilePath} = require("./getLogFilePath");
 
 function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
     let {FS, ETH} = require("../index");
     const fsHandler = new FS(server, domainConfig, anchorId, anchorValue, ...args);
     const ethHandler = new ETH(server, domainConfig, anchorId, anchorValue, ...args);
     const ethSyncService = getEthereumSyncServiceSingleton(server);
+    const logger = $$.getLogger("OBA", "apihub/anchoring", getLogFilePath(server));
 
-    ethSyncService.synchronize();
     this.createAnchor = function (callback) {
-        console.log("Create anchor", anchorId, anchorValue);
+        logger.info(1, `Anchoring for ${anchorId} started`);
         fsHandler.createAnchor((err, res) => {
             if (err) {
                 return callback(err);
             }
-            console.log(`${LOG_IDENTIFIER} optimistic create anchor ended with success.`);
+            logger.info(`Optimistic create anchor ended with success.`);
 
             ethSyncService.storeAnchor("createAnchor", anchorId, anchorValue, domainConfig,(err) => {
                 if (err) {
-                    console.log(`${LOG_IDENTIFIER} failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
+                    logger.error(`Failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
                     return;
                 }
 
-                console.log(`${LOG_IDENTIFIER} anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                logger.info(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
                 return callback(undefined, res);
             })
         });
     }
 
     this.appendAnchor = function (callback) {
+        logger.info(1, `Anchoring for ${anchorId} started`);
         fsHandler.appendAnchor((err, res) => {
             if (err) {
                 return callback(err);
             }
-            console.log(`${LOG_IDENTIFIER} optimistic append anchor ended with success.`);
+            logger.info(`Optimistic append anchor ended with success.`);
             ethSyncService.storeAnchor("appendAnchor", anchorId, anchorValue, domainConfig, (err) => {
                 if (err) {
-                    console.log(`${LOG_IDENTIFIER} failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
+                    logger.error(`failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
                     return;
                 }
 
-                console.log(`${LOG_IDENTIFIER} anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                logger.info(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
                 return callback(undefined, res);
 
             })
@@ -1256,10 +1351,10 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
     }
 
     function readAllVersionsFromBlockchain(callback) {
-        console.log(`${LOG_IDENTIFIER} preparing to read info about anchorId ${fsHandler.commandData.anchorId} from the blockchain...`);
+        logger.info(`Preparing to read info about anchorId ${fsHandler.commandData.anchorId} from the blockchain...`);
         ethHandler.getAllVersions((err, anchorVersions) => {
             if (err) {
-                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} syncing blockchain failed. ${err}`);
+                logger.error(`AnchorId ${fsHandler.commandData.anchorId} syncing blockchain failed. ${err}`);
                 return callback(err);
             }
 
@@ -1272,20 +1367,20 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
             }
 
             if (history === "") {
-                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
+                logger.info(`AnchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
                 //if we don't retrieve info from blockchain we exit
                 return callback(undefined, anchorVersions);
             }
 
-            console.log(`${LOG_IDENTIFIER} found info about anchorId ${fsHandler.commandData.anchorId} in blockchain.`);
+            logger.info(`Found info about anchorId ${fsHandler.commandData.anchorId} in blockchain.`);
 
             //storing locally the history of the anchorId read from the blockchain
             fsHandler.fps.createAnchor(anchorId, history, (err) => {
                 if (err) {
-                    console.log(`${LOG_IDENTIFIER} failed to store info about anchorId ${fsHandler.commandData.anchorId} on local because of ${err}`);
+                    logger.error(`Failed to store info about anchorId ${fsHandler.commandData.anchorId} on local because of ${err}`);
                     return callback(err);
                 }
-                console.log(`${LOG_IDENTIFIER} anchorId ${fsHandler.commandData.anchorId} fully synced.`);
+                logger.info(`AnchorId ${fsHandler.commandData.anchorId} fully synced.`);
                 //even if we read all the versions of anchorId we return only the last one
                 return callback(undefined, anchorVersions);
             });
@@ -1325,18 +1420,19 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
 
 module.exports = OBA;
 
-},{"../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./ethereumSyncService":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ethereumSyncService.js","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js":[function(require,module,exports){
+},{"../index":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./ethereumSyncService":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/ethereumSyncService.js","./getLogFilePath":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/getLogFilePath.js","os":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/oba/lokiEnclaveFacadeSingleton.js":[function(require,module,exports){
 const fs = require("fs");
+const path = require("path");
 
-const getLokiEnclaveFacade = (storageFolder) => {
+const getLokiEnclaveFacade = (storageFile) => {
     if(typeof $$.lokiEnclaveFacade === "undefined") {
         try {
-            fs.accessSync(storageFolder);
+            fs.accessSync(path.dirname(storageFile));
         } catch (e) {
-            fs.mkdirSync(storageFolder, {recursive: true});
+            fs.mkdirSync(path.dirname(storageFile), {recursive: true});
         }
-        const LokiEnclaveFacade = require("default-enclave");
-        $$.lokiEnclaveFacade = new LokiEnclaveFacade(storageFolder);
+        const LokiEnclaveFacade = require("loki-enclave-facade");
+        $$.lokiEnclaveFacade = new LokiEnclaveFacade(storageFile);
     }
 
     return $$.lokiEnclaveFacade;
@@ -1346,7 +1442,7 @@ module.exports = {
     getLokiEnclaveFacade
 }
 
-},{"default-enclave":false,"fs":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js":[function(require,module,exports){
+},{"fs":false,"loki-enclave-facade":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/utils/AnchorPathResolver.js":[function(require,module,exports){
 function AnchorPathResolver(rootFolder, configPath) {
     const path = require("path");
     const anchoringFolder = path.resolve(path.join(rootFolder, configPath));
@@ -1499,6 +1595,8 @@ module.exports = { getAnchoringDomainConfig, getDomainFromKeySSI, ALIAS_SYNC_ERR
 
 },{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js":[function(require,module,exports){
 function BDNS(server) {
+    const logger = $$.getLogger("BDNS", "apihub/bdns");
+
     const DOMAIN_TEMPLATE = {
         "replicas": [],
         "brickStorages": [
@@ -1545,12 +1643,12 @@ function BDNS(server) {
                 Object.assign(newRegistry, bdnsExtensions);
                 bdnsCache = JSON.stringify(newRegistry);
             } catch (e) {
-                console.log(`Failed to get bdns hosts from url`, e);
+                logger.error(`Failed to get bdns hosts from url`, e);
             }
         }
 
         try {
-            console.log("Testing to see if admin component is active and can be used to expand BDNS configuration.");
+            logger.info("Testing to see if admin component is active and can be used to expand BDNS configuration.");
             let adminService = require("./../admin").getAdminService();
             let getDomains = $$.promisify(adminService.getDomains);
             let domains = await getDomains();
@@ -1566,9 +1664,9 @@ function BDNS(server) {
                 Object.assign(newRegistry, bdnsExtensions);
                 bdnsCache = JSON.stringify(newRegistry);
             }
-            console.log("BDNS configuration was updated accordingly to information retrieved from admin service");
+            logger.info("BDNS configuration was updated accordingly to information retrieved from admin service");
         } catch (err) {
-            console.info("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
+            logger.info("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
         }
     }
 
@@ -1577,6 +1675,7 @@ function BDNS(server) {
             await initialize();
         } catch (e) {
             response.statusCode = 500;
+            logger.error('Failed to initialize BDNS', e);
             return response.end('Failed to initialize BDNS');
         }
 
@@ -1585,8 +1684,9 @@ function BDNS(server) {
             response.statusCode = 200;
             response.end(bdnsCache);
         } else {
-            console.log("Bdns config not available at this moment. A 404 response will be sent.");
+            logger.info("Bdns config not available at this moment. A 404 response will be sent.");
             response.statusCode = 404;
+            logger.error('BDNS hosts not found');
             return response.end('BDNS hosts not found');
         }
     }
@@ -1599,6 +1699,7 @@ module.exports = BDNS;
 
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":false,"opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js":[function(require,module,exports){
 const { getBrickWithExternalProvidersFallbackAsync } = require("./utils");
+const logger = $$.getLogger("bricking", "apihub/bricking");
 
 async function getBrick(request, response) {
     response.setHeader("content-type", "application/octet-stream");
@@ -1618,13 +1719,13 @@ function putBrick(request, response) {
     const utils = require("./utils");
     utils.convertReadableStreamToBuffer(request, (error, brickData) => {
         if (error) {
-            console.error("[Bricking] Fail to convert Stream to Buffer!", error.message);
+            logger.error("[Bricking] Fail to convert Stream to Buffer!", error.message);
             return response.send(500);
         }
 
         request.fsBrickStorage.addBrick(brickData, (error, brickHash) => {
             if (error) {
-                console.error("[Bricking] Fail to manage current brick!", error.message);
+                logger.error("[Bricking] Fail to manage current brick!", error.message);
                 return response.send(error.code === "EACCES" ? 409 : 500);
             }
 
@@ -1653,7 +1754,7 @@ function downloadMultipleBricks(request, response) {
             return response.send(200, data);
         })
         .catch((error) => {
-            console.error("[Bricking] Fail to get multiple bricks!", error.message);
+            logger.error("[Bricking] Fail to get multiple bricks!", error.message);
             return response.send(500);
         });
 }
@@ -1694,11 +1795,12 @@ module.exports = Bricks;
 },{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/controllers.js","./middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/middlewares.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/middlewares.js":[function(require,module,exports){
 async function requestFSBrickStorageMiddleware(request, response, next) {
     const { domain: domainName } = request.params;
+    const logger = $$.getLogger("requestFSBrickStorageMiddleware", "apihub/bricking");
 
     const domainConfig = await require("./utils").getBricksDomainConfig(domainName);
     if (!domainConfig || !domainConfig.path) {
         const message = `[Bricking] Domain '${domainName}' not found!`;
-        console.error(message);
+        logger.error(message);
         return response.send(404, message);
     }
 
@@ -1718,8 +1820,7 @@ module.exports = {
 },{"./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js","bricksledger":"bricksledger"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/utils.js":[function(require,module,exports){
 const { clone } = require("../../utils");
 const { getLocalBdnsEntryListExcludingSelfAsync, getHeadersWithExcludedProvidersIncludingSelf } = require("../../utils/request-utils");
-const config = require("../../config");
-
+const logger = $$.getLogger("bricking", "apihub/bricking")
 function convertReadableStreamToBuffer(readStream, callback) {
     let buffers = [];
 
@@ -1731,7 +1832,7 @@ function convertReadableStreamToBuffer(readStream, callback) {
 }
 
 async function getBricksDomainConfig(domain) {
-    console.log("Looking for domain", domain);
+    logger.info("Looking for domain", domain);
     const config = require("../../config");
     let domainConfiguration = await config.getSafeDomainConfig(domain);
 
@@ -1765,7 +1866,7 @@ async function getBrickFromExternalProvidersAsync(request, domain, hashLink) {
             providerResponse = await providerResponse.text();
             return providerResponse;
         } catch (error) {
-            // console.warn(`[Bricking] Failed to get brick ${hashLink} from ${providerUrl}!`, error);
+            // logger.warn(`[Bricking] Failed to get brick ${hashLink} from ${providerUrl}!`, error);
         }
     }
 
@@ -1779,7 +1880,7 @@ async function getBrickWithExternalProvidersFallbackAsync(request, domain, hashL
             return brick;
         }
     } catch (error) {
-        console.warn(`[Bricking] Brick ${hashLink} not found. Trying to fallback to other providers...`);
+        logger.warn(`[Bricking] Brick ${hashLink} not found. Trying to fallback to other providers...`);
     }
 
     try {
@@ -1792,13 +1893,13 @@ async function getBrickWithExternalProvidersFallbackAsync(request, domain, hashL
                 await fsBrickStorage.addBrickAsync(externalBrick);
                 console.info(`[Bricking] Saved external brick ${hashLink} to own storage`);
             } catch (error) {
-                console.warn("[Bricking] Fail to manage external brick saving!", error);
+                logger.warn("[Bricking] Fail to manage external brick saving!", error);
             }
         });
 
         return externalBrick;
     } catch (error) {
-        console.warn(`[Bricking] Error while trying to get missing brick from fallback providers!`, error);
+        logger.warn(`[Bricking] Error while trying to get missing brick from fallback providers!`, error);
         throw error;
     }
 }
@@ -1819,7 +1920,6 @@ function createHandler(flow, server) {
 
     return function storeTransaction (request, response, next) {
 
-        console.log('store anchored called');
         //strategy is already booted up
         flow.storeData(request.body, server, (err, result) => {
             if (err) {
@@ -1847,12 +1947,13 @@ function AutoSavePendingTransactions (flow, timeout, server) {
 
 
 function BricksFabric(server) {
+    const logger = $$.getLogger("BricksFabric", "apihub/bricksFabric");
 
     require('./strategies/BrickStorage.js');
 
     const bricksFabricStrategy = require('./utils').getBricksFabricStrategy();
     if (!bricksFabricStrategy) {
-        console.log("Unable to initialized 'bricksFabrick' component. Strategy not found!");
+        logger.error("Unable to initialized 'bricksFabrick' component. Strategy not found!");
         return;
     }
     const rootFolder = require('./utils').getRootFolder();
@@ -1901,6 +2002,8 @@ const BRICKSFABRIC_ERROR_CODE = 'bricks fabric error';
 
 
 function BrickStorage() {
+    const logger = $$.getLogger("BrickStorage", "apihub/bricksFabric");
+
     this.init = function (brickFabricRootFolder,noOfTransactionsPerBlock) {
         this.rootFolder = brickFabricRootFolder;
         this.transactionsPerBlock = noOfTransactionsPerBlock;
@@ -1967,7 +2070,7 @@ function BrickStorage() {
         try {
             server.makeLocalRequest(blockMethod, blockPath, data, blockHeaders, (err, result) => {
                 if (err) {
-                    console.log(err);
+                    logger.error(err);
                     __pushBuffer();
                     this.isCommitingBlock = false;
                     callback(err, undefined);
@@ -1979,8 +2082,6 @@ function BrickStorage() {
                     this.pendingTransactions.splice(0, this.pendingTransactions.length);
                     __pushBuffer();
                     this.isCommitingBlock = false;
-                    //console.log(result);
-                    console.log('block finished');
 
                     callback(undefined, result);
                 }
@@ -1989,13 +2090,12 @@ function BrickStorage() {
             });
         } catch (err)
         {
-            console.log("bricks fabric", err);
+            logger.error("bricks fabric", err);
         }
     }
     function __pushBuffer(){
         if (this.pendingBuffer.length > 0)
         {
-            console.log("push buffer to pending block", this.pendingBuffer);
             for (let i = 0; i < this.pendingBuffer.length; i++) {
                 this.pendingTransactions.push(this.pendingBuffer[i]);
             }
@@ -2005,19 +2105,19 @@ function BrickStorage() {
     this.storeData = function(anchorData, server, callback) {
         if (this.isCommitingBlock === true)
         {
-            console.log("transaction cached");
+            logger.info("transaction cached");
             this.pendingBuffer.push(anchorData);
             callback(undefined,"Transaction was added to the block.");
             return;
         }
-        console.log("transaction pushed to pending block");
+        logger.info("transaction pushed to pending block");
         this.pendingTransactions.push(anchorData);
         if (this.pendingTransactions.length >= this.transactionsPerBlock)
         {
-           // console.log("commit block callback");
+           // logger.info("commit block callback");
            this.completeBlock(server, callback);
         }else {
-            //console.log("pending callback");
+            //logger.info("pending callback");
             callback(undefined,"Transaction was added to the block.");
         }
     }
@@ -2064,448 +2164,14 @@ const getRootFolder = () => {
 module.exports.getBricksFabricStrategy = getBricksFabricStrategy;
 module.exports.getRootFolder = getRootFolder;
 
-},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js":[function(require,module,exports){
-(function (__dirname){(function (){
-function ChannelsManager(server) {
-    const path = require("swarmutils").path;
-    const fs = require("fs");
-    const crypto = require('crypto');
-    const integration = require("zmq_adapter");
-
-    const Queue = require("swarmutils").Queue;
-    const SwarmPacker = require("swarmutils").SwarmPacker;
-
-    const utils = require("../../utils");
-    const readBody = utils.streams.readStringFromStream;
-    const config = require("../../config").getConfig();
-    const channelKeyFileName = "channel_key";
-
-    const rootFolder = path.join(path.resolve(config.storage), config.componentsConfig.virtualMQ.channelsFolderName);
-
-    if (!fs.existsSync(rootFolder)) {
-        // A possible race condition exists between the call to
-        // `exists` and `mkdir`. Catch the exception if that happens
-        try {
-            fs.mkdirSync(rootFolder, { recursive: true });
-        } catch (_) {}
-    }
-
-    const channelKeys = {};
-    const queues = {};
-    const subscribers = {};
-
-    let baseDir = __dirname;
-
-    //if __dirname appears in process.cwd path it means that the code isn't run from browserified version
-    //TODO: check for better implementation
-    if (process.cwd().indexOf(__dirname) === -1) {
-        baseDir = path.join(process.cwd(), __dirname);
-    }
-
-
-    let forwarder;
-    if (integration.testIfAvailable()) {
-        forwarder = integration.getForwarderInstance(config.zeromqForwardAddress);
-    }
-
-    function generateToken() {
-        let buffer = crypto.randomBytes(config.componentsConfig.virtualMQ.tokenSize);
-        return buffer.toString('hex');
-    }
-
-    function createChannel(name, publicKey, callback) {
-        let channelFolder = path.join(rootFolder, name);
-        let keyFile = path.join(channelFolder, channelKeyFileName);
-        let token = generateToken();
-
-        if (typeof channelKeys[name] !== "undefined" || fs.existsSync(channelFolder)) {
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        try {
-            fs.mkdirSync(channelFolder);
-        } catch (e) {
-            return callback(e);
-        }
-
-        if (fs.existsSync(keyFile)) {
-            let e = new Error("channel exists!");
-            e.code = 409;
-            return callback(e);
-        }
-
-        const config = JSON.stringify({ publicKey, token });
-        fs.writeFile(keyFile, config, (err, res) => {
-            if (!err) {
-                channelKeys[name] = config;
-            }
-            return callback(err, !err ? token : undefined);
-        });
-    }
-
-    function retrieveChannelDetails(channelName, callback) {
-        if (typeof channelKeys[channelName] !== "undefined") {
-            return callback(null, channelKeys[channelName]);
-        } else {
-            fs.readFile(path.join(rootFolder, channelName, channelKeyFileName), (err, res) => {
-                if (res) {
-                    try {
-                        channelKeys[channelName] = JSON.parse(res);
-                    } catch (e) {
-                        console.log(e);
-                        return callback(e);
-                    }
-                }
-                callback(err, channelKeys[channelName]);
-            });
-        }
-    }
-
-    function forwardChannel(channelName, forward, callback) {
-        let channelKeyFile = path.join(rootFolder, channelName, channelKeyFileName);
-        fs.readFile(channelKeyFile, (err, content) => {
-            let config;
-            try {
-                config = JSON.parse(content);
-            } catch (e) {
-                return callback(e);
-            }
-
-            if (typeof config !== "undefined") {
-                config.forward = forward;
-                fs.writeFile(channelKeyFile, JSON.stringify(config), (err, ...args) => {
-                    if (!err) {
-                        channelKeys[channelName] = config;
-                    }
-                    callback(err, ...args);
-                });
-            }
-        });
-    }
-
-    function createChannelHandler(req, res) {
-        const channelName = req.params.channelName;
-
-        readBody(req, (err, message) => {
-            if (err) {
-                return sendStatus(res, 400);
-            }
-
-            const publicKey = message;
-            if (typeof channelName !== "string" || channelName.length === 0 ||
-                typeof publicKey !== "string" || publicKey.length === 0) {
-                return sendStatus(res, 400);
-            }
-
-            let handler = getBasicReturnHandler(res);
-
-            createChannel(channelName, publicKey, (err, token) => {
-                if (!err) {
-                    res.setHeader('Cookie', [`${config.componentsConfig.virtualMQ.tokenSize}=${token}`]);
-                }
-                handler(err, res);
-            });
-        });
-    }
-
-    function sendStatus(res, reasonCode) {
-        res.statusCode = reasonCode;
-        res.end();
-    }
-
-    function getBasicReturnHandler(res) {
-        return function (err, result) {
-            if (err) {
-                return sendStatus(res, err.code || 500);
-            }
-
-            return sendStatus(res, 200);
-        }
-    }
-
-    function enableForwarderHandler(req, res) {
-        if (integration.testIfAvailable() === false) {
-            return sendStatus(res, 417);
-        }
-        readBody(req, (err, message) => {
-            const { enable } = message;
-            const channelName = req.params.channelName;
-            const signature = req.headers[config.componentsConfig.virtualMQ.signatureHeaderName];
-
-            if (typeof channelName !== "string" || typeof signature !== "string") {
-                return sendStatus(res, 400);
-            }
-
-            retrieveChannelDetails(channelName, (err, details) => {
-                if (err) {
-                    return sendStatus(res, 500);
-                } else {
-                    //todo: check signature against key [details.publickey]
-
-                    if (typeof enable === "undefined" || enable) {
-                        forwardChannel(channelName, true, getBasicReturnHandler(res));
-                    } else {
-                        forwardChannel(channelName, null, getBasicReturnHandler(res));
-                    }
-                }
-            });
-        });
-    }
-
-    function getQueue(name) {
-        if (typeof queues[name] === "undefined") {
-            queues[name] = new Queue();
-        }
-
-        return queues[name];
-    }
-
-    function checkIfChannelExist(channelName, callback) {
-        retrieveChannelDetails(channelName, (err, details) => {
-            callback(null, err ? false : true);
-        });
-    }
-
-    function writeMessage(subscribers, message) {
-        let dispatched = false;
-        try {
-            while (subscribers.length > 0) {
-                let subscriber = subscribers.pop();
-                if (!dispatched) {
-                    deliverMessage(subscriber, message);
-                    dispatched = true;
-                } else {
-                    sendStatus(subscriber, 403);
-                }
-            }
-        } catch (err) {
-            //... some subscribers could have a timeout connection
-            if (subscribers.length > 0) {
-                deliverMessage(subscribers, message);
-            }
-        }
-
-        return dispatched;
-    }
-
-    function readSendMessageBody(req, callback) {
-        const contentType = req.headers['content-type'];
-
-        if (contentType === 'application/octet-stream') {
-            const contentLength = Number.parseInt(req.headers['content-length'], 10);
-
-            if (Number.isNaN(contentLength)) {
-                let error = new Error("Wrong content length header received!");
-                error.code = 411;
-                return callback(error);
-            }
-
-            streamToBuffer(req, contentLength, (err, bodyAsBuffer) => {
-                if (err) {
-                    return callback(err);
-                }
-                callback(undefined, bodyAsBuffer);
-            });
-        } else {
-            callback(new Error("Wrong message format received!"));
-        }
-
-        function streamToBuffer(stream, bufferSize, callback) {
-            const buffer = $$.Buffer.alloc(bufferSize);
-            let currentOffset = 0;
-
-            stream.on('data', function (chunk) {
-                const chunkSize = chunk.length;
-                const nextOffset = chunkSize + currentOffset;
-
-                if (currentOffset > bufferSize - 1) {
-                    stream.close();
-                    return callback(new Error('Stream is bigger than reported size'));
-                }
-
-                write2Buffer(buffer, chunk, currentOffset);
-                currentOffset = nextOffset;
-
-            });
-            stream.on('end', function () {
-                callback(undefined, buffer);
-            });
-            stream.on('error', callback);
-        }
-
-        function write2Buffer(buffer, dataToAppend, offset) {
-            const dataSize = dataToAppend.length;
-
-            for (let i = 0; i < dataSize; i++) {
-                buffer[offset++] = dataToAppend[i];
-            }
-        }
-    }
-
-    function sendMessageHandler(req, res) {
-        let channelName = req.params.channelName;
-
-        checkIfChannelExist(channelName, (err, exists) => {
-            if (!exists) {
-                return sendStatus(res, 403);
-            } else {
-                retrieveChannelDetails(channelName, (err, details) => {
-                    //we choose to read the body of request only after we know that we recognize the destination channel
-                    readSendMessageBody(req, (err, message) => {
-                        if (err) {
-                            //console.log(err);
-                            return sendStatus(res, 403);
-                        }
-
-                        let header;
-                        try {
-                            header = SwarmPacker.unpack(message.buffer);
-                        } catch (error) {
-                            //console.log(error);
-                            return sendStatus(res, 400);
-                        }
-
-                        //TODO: to all checks based on message header
-
-                        if (integration.testIfAvailable() && details.forward) {
-                            //console.log("Forwarding message <", message, "> on channel", channelName);
-                            forwarder.send(channelName, message);
-                        } else {
-                            let queue = getQueue(channelName);
-                            let subscribers = getSubscribersList(channelName);
-                            let dispatched = false;
-                            if (queue.isEmpty()) {
-                                dispatched = writeMessage(subscribers, message);
-                            }
-                            if (!dispatched) {
-                                if (queue.length < config.componentsConfig.virtualMQ.maxSize) {
-                                    queue.push(message);
-                                } else {
-                                    //queue is full
-                                    return sendStatus(res, 429);
-                                }
-
-                                /*
-                                if(subscribers.length>0){
-                                    //... if we have somebody waiting for a message and the queue is not empty means that something bad
-                                    //happened and maybe we should try to dispatch first message from queue
-                                }
-                                */
-
-                            }
-                        }
-                        return sendStatus(res, 200);
-                    });
-                })
-            }
-        });
-    }
-
-    function getSubscribersList(channelName) {
-        if (typeof subscribers[channelName] === "undefined") {
-            subscribers[channelName] = [];
-        }
-
-        return subscribers[channelName];
-    }
-
-    function deliverMessage(res, message) {
-        if ($$.Buffer.isBuffer(message)) {
-            res.setHeader('content-type', 'application/octet-stream');
-        }
-
-        if (typeof message.length !== "undefined") {
-            res.setHeader('content-length', message.length);
-        }
-
-        res.write(message);
-        sendStatus(res, 200);
-    }
-
-    function getCookie(res, cookieName) {
-        let cookies = res.headers['cookie'];
-        if (typeof cookies === "undefined") {
-            return undefined;
-        }
-        if (Array.isArray(cookies)) {
-            for (let i = 0; i < cookies.length; i++) {
-                let cookie = cookies[i];
-                if (cookie.indexOf(cookieName) !== -1) {
-                    return cookie.substr(cookieName.length + 1);
-                }
-            }
-        } else {
-            cookieName = cookieName.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
-
-            let regex = new RegExp('(?:^|;)\\s?' + cookieName + '=(.*?)(?:;|$)', 'i');
-            let match = cookies.match(regex);
-
-            return match && unescape(match[1]);
-        }
-    }
-
-    function receiveMessageHandler(req, res) {
-        let channelName = req.params.channelName;
-        checkIfChannelExist(channelName, (err, exists) => {
-            if (!exists) {
-                return sendStatus(res, 403);
-            } else {
-                retrieveChannelDetails(channelName, (err, details) => {
-                    if (err) {
-                        return sendStatus(res, 500);
-                    }
-                    //TODO: check signature agains details.publickey
-
-
-                    if (details.forward) {
-                        //if channel is forward it does not make sense
-                        return sendStatus(res, 409);
-                    }
-
-                    /*let signature = req.headers["signature"];
-                    if(typeof signature === "undefined"){
-                        return sendStatus(res, 403);
-                    }*/
-
-                    // let cookie = getCookie(req, tokenHeaderName);
-
-                    // if(typeof cookie === "undefined" || cookie === null){
-                    //     return sendStatus(res, 412);
-                    // }
-
-                    let queue = getQueue(channelName);
-                    let message = queue.pop();
-
-                    if (!message) {
-                        getSubscribersList(channelName).push(res);
-                    } else {
-                        deliverMessage(res, message);
-                    }
-                });
-            }
-        });
-    }
-
-    server.put("/create-channel/:channelName", createChannelHandler);
-    server.post("/forward-zeromq/:channelName", enableForwarderHandler);
-    server.post("/send-message/:channelName", sendMessageHandler);
-    server.get("/receive-message/:channelName", receiveMessageHandler);
-}
-
-module.exports = ChannelsManager;
-
-}).call(this)}).call(this,"/modules/apihub/components/channelManager")
-
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","crypto":false,"fs":false,"swarmutils":"swarmutils","zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/controller.js":[function(require,module,exports){
+},{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/controller.js":[function(require,module,exports){
 const http = require("http");
 const crypto = require("crypto");
 const worker_threads = "worker_threads";
 const { Worker } = require(worker_threads);
 const config = require("../../config");
 const path = require("swarmutils").path;
-
+const logger = $$.getLogger("CloudWallet", "apihub/cloudWallet");
 let dsuBootPath;
 const dsuWorkers = {};
 
@@ -2541,13 +2207,13 @@ function addDsuWorker(seed, cookie) {
         resolver: new Promise((resolve, reject) => {
             crypto.randomBytes(64, (err, randomBuffer) => {
                 if (err) {
-                    console.log("[CloudWallet] Error while generating worker authorizationKey", err);
+                    logger.error("Error while generating worker authorizationKey", err);
                     return reject(err);
                 }
 
                 const authorizationKey = randomBuffer.toString("hex");
                 dsuWorker.authorizationKey = authorizationKey;
-                console.log(`[CloudWallet] Starting worker for handling seed ${seed}`);
+                logger.info(`Starting worker for handling seed ${seed}`);
                 const worker = new Worker(dsuBootPath, {
                     workerData: {
                         seed,
@@ -2563,8 +2229,8 @@ function addDsuWorker(seed, cookie) {
                         return reject(message.error);
                     }
                     if (message.port) {
-                        console.log(
-                            `[CloudWallet] Running worker on PORT ${message.port} for seed ${seed}. Startup took ${getElapsedTime(
+                        logger.info(
+                            `Running worker on PORT ${message.port} for seed ${seed}. Startup took ${getElapsedTime(
                                 workerStartTime
                             )}`
                         );
@@ -2573,11 +2239,11 @@ function addDsuWorker(seed, cookie) {
                     }
                 });
                 worker.on("error", (error) => {
-                    console.log("[CloudWallet] worker error", error);
+                    logger.error("worker error", error);
                 });
                 worker.on("exit", (code) => {
                     if (code !== 0) {
-                        console.log(`[CloudWallet] Worker stopped with exit code ${code}`);
+                        logger.info(`Worker stopped with exit code ${code}`);
                         // remove the worker from list in order to be recreated when needed
                         delete dsuWorkers[seed];
                     }
@@ -2643,14 +2309,14 @@ function forwardRequestToWorker(dsuWorker, req, res) {
                 res.statusCode = statusCode;
                 res.end(bodyContent);
             } catch (err) {
-                console.log("[CloudWallet] worker response error", err);
+                logger.error("worker response error", err);
                 res.statusCode = 500;
                 res.end();
             }
         });
     });
     workerRequest.on("error", (err) => {
-        console.log("[CloudWallet] worker request error", err);
+        logger.error("worker request error", err);
         res.statusCode = 500;
         res.end();
     });
@@ -2658,7 +2324,7 @@ function forwardRequestToWorker(dsuWorker, req, res) {
     if (method === "POST" || method === "PUT") {
         let data = [];
         req.on("data", (chunk) => {
-            console.log("[CloudWallet] data.push(chunk);", chunk);
+            logger.info("data.push(chunk);", chunk);
             data.push(chunk);
         });
 
@@ -2668,7 +2334,7 @@ function forwardRequestToWorker(dsuWorker, req, res) {
                 workerRequest.write(bodyContent);
                 workerRequest.end();
             } catch (err) {
-                console.log("[CloudWallet] worker response error", err);
+                logger.error("worker response error", err);
                 res.statusCode = 500;
                 res.end();
             }
@@ -2679,7 +2345,7 @@ function forwardRequestToWorker(dsuWorker, req, res) {
 }
 
 function init(server) {
-    console.log(`Registering CloudWallet component`);
+    logger.info(`Registering CloudWallet component`);
 
     dsuBootPath = config.getConfig("componentsConfig", "cloudWallet", "dsuBootPath");
 
@@ -2687,15 +2353,15 @@ function init(server) {
         dsuBootPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, dsuBootPath));
     }
 
-    console.log(`[CloudWallet] Using boot script for worker: ${dsuBootPath}`);
+    logger.info(`Using boot script for worker: ${dsuBootPath}`);
 
     cacheContainerPath = require("path").join(server.rootFolder, config.getConfig("externalStorage"), `cache`);
 
     //if a listening event is fired from this point on...
     //it means that a restart was triggered
     server.on("listening", () => {
-        console.log(`[CloudWallet] Restarting process in progress...`);
-        console.log(`[CloudWallet] Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
+        logger.info(`Restarting process in progress...`);
+        logger.info(`Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
         for (let seed in dsuWorkers) {
             let worker = dsuWorkers[seed];
             if (worker && worker.terminate) {
@@ -2718,7 +2384,7 @@ function handleCloudWalletRequest(request, response) {
             forwardRequestToWorker(dsuWorker, request, response);
         })
         .catch((error) => {
-            console.log("[CloudWallet] worker resolver error", error);
+            logger.error("worker resolver error", error);
             response.setHeader("Content-Type", "text/html");
             response.statusCode = 400;
             response.end(INVALID_DSU_HTML_RESPONSE);
@@ -2800,8 +2466,9 @@ module.exports = Config;
 
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/boot.js":[function(require,module,exports){
 async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, storageFolder) {
+    const logger = $$.getLogger("boot", "apihub/contracts");
     const logPrefix = `[contract-worker][${validatorDID}][domain]`;
-    console.log(
+    logger.info(
         `${logPrefix} Booting contracts for domain ${domain} and domainConfig ${JSON.stringify(domainConfig)} booting...`,
         domainConfig
     );
@@ -2879,7 +2546,7 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
             });
         });
 
-        console.log(`${logPrefix} ready`);
+        logger.info(`${logPrefix} ready`);
         parentPort.postMessage("ready");
     } catch (error) {
         parentPort.postMessage({ error });
@@ -2887,7 +2554,7 @@ async function boot(validatorDID, serverUrl, domain, domainConfig, rootFolder, s
     }
 
     process.on("uncaughtException", (err) => {
-        console.error(`${logPrefix} unchaughtException inside worker`, err);
+        logger.error(`${logPrefix} unchaughtException inside worker`, err);
         setTimeout(() => {
             process.exit(1);
         }, 100);
@@ -2906,6 +2573,7 @@ const {
 } = require("./utils");
 
 function Contract(server) {
+    const logger = $$.getLogger("Contract", "apihub/contracts");
     const config = require("../../config");
 
     const serverUrl = `${server.protocol}://${config.getConfig("host")}:${config.getConfig("port")}`;
@@ -2938,7 +2606,7 @@ function Contract(server) {
             return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing validatorDID`);
         }
 
-        console.log(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
+        logger.info(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
 
         const { rootFolder } = server;
         const externalStorageFolder = require("path").join(rootFolder, config.getConfig("externalStorage"));
@@ -3094,6 +2762,8 @@ module.exports = Contract;
 
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./utils":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js","buffer":false,"path":false,"syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/utils.js":[function(require,module,exports){
 (function (global,__dirname){(function (){
+const logger = $$.getLogger("utils", "contracts");
+
 function escapePath(path) {
     return path ? path.replace(/\\/g, "\\\\").replace(".js", "") : "";
 }
@@ -3108,7 +2778,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
         // ensure we have the SSI for the contracts DSU speficied inside domainConfig.contracts.constitution
         if (process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI) {
             contractsConfig.constitution = process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI;
-            console.log(
+            logger.info(
                 `[Contracts] no constitution found for domain ${domain}. Found process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI: ${contractsConfig.constitution}`
             );
         } else {
@@ -3120,7 +2790,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
             const pskFolder = process.env.PSK_ROOT_INSTALATION_FOLDER || path.resolve("." + __dirname + "/../../../..");
             const defaultDomainSeedPath = path.join(pskFolder, "modules/apihub-contracts/domain-seed");
 
-            console.log(
+            logger.info(
                 `[Contracts] no constitution found for domain ${domain}. Trying to load constitution at ${defaultDomainSeedPath}...`
             );
 
@@ -3129,7 +2799,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
                 const defaultDomainSeedData = fs.readFileSync(defaultDomainSeedPath);
                 contractsConfig.constitution = defaultDomainSeedData.toString();
             } catch (error) {
-                console.log(`Cannot access default domain-seed at: ${defaultDomainSeedPath}`);
+                logger.error(`Cannot access default domain-seed at: ${defaultDomainSeedPath}`);
             }
         }
     }
@@ -3197,6 +2867,8 @@ const levels = {
   debug: 'debug',
 };
 
+const logger = $$.getLogger("debugLogger", "apihub/debugLogger");
+
 function createHandlerAppendToLog(server) {
   return function appendToLog(request, response) {
     if (!request.body || !request.body.message) {
@@ -3229,7 +2901,8 @@ function createHandlerAppendToLog(server) {
         fs.writeFile(fileName, JSON.stringify(json), (err) => {
           if (err) {
             response.send(500);
-            console.log(err);
+            logger.error(err);
+            logger.error(err);
             return;
           } else {
             response.send(200, data);
@@ -3240,7 +2913,7 @@ function createHandlerAppendToLog(server) {
         fs.writeFile(fileName, JSON.stringify([data]), (err) => {
           if (err) {
             response.send(500);
-            console.log(err);
+            logger.error(err);
             return;
           } else {
             response.send(200, data);
@@ -3249,15 +2922,15 @@ function createHandlerAppendToLog(server) {
         });
       }
     } catch (err) {
-      console.log(err);
-      console.log('Error writing file to disk');
+      logger.error(err);
+      logger.error('Error writing file to disk');
     }
   };
 }
 
 function createHandlerReadFromLog(server) {
   return function readFromLog(request, response) {
-    console.log('running');
+    logger.log('running');
     const today = new Date().toISOString().split('T')[0];
     const anchorID = request.params.anchorID;
     const queryObject = url.parse(request.url, true).query;
@@ -3330,59 +3003,65 @@ function DebugLogger(server) {
 
 module.exports = DebugLogger;
 
-},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js":[function(require,module,exports){
-const getDefaultEnclave = (storageFolder) => {
-    if (!$$.defaultEnclave) {
-        const DefaultEnclave = require("default-enclave");
-        $$.defaultEnclave = new DefaultEnclave(storageFolder)
+},{"../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./controllers":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/controllers.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/LokiEnclaveFacade.js":[function(require,module,exports){
+const getLokiEnclaveFacade = (storageFolder) => {
+    if (!$$.LokiEnclaveFacade) {
+        const LokiEnclaveFacade = require("loki-enclave-facade");
+        $$.LokiEnclaveFacade = new LokiEnclaveFacade(storageFolder)
     }
 
-    return $$.defaultEnclave;
+    return $$.LokiEnclaveFacade;
 }
 
 module.exports = {
-    getDefaultEnclave
+    getLokiEnclaveFacade
 }
-},{"default-enclave":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
+},{"loki-enclave-facade":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js":[function(require,module,exports){
 
 const openDSU = require("opendsu");
-const { getDefaultEnclave } = require("./commands/DefaultEnclave");
+const { getLokiEnclaveFacade } = require("./commands/LokiEnclaveFacade");
 const w3cDID = openDSU.loadAPI("w3cdid");
-const path = require("path")
+const path = require("path");
 
-function DefaultEnclave(server) {
+function LokiEnclaveFacade(server) {
+    const logger = $$.getLogger("LokiEnclaveFacade", "apihub/enclave");
+    let didDocument;
 
-    w3cDID.createIdentity("key", undefined, process.env.REMOTE_ENCLAVE_SECRET, (err, didDocument) => {
+    w3cDID.createIdentity("key", undefined, process.env.REMOTE_ENCLAVE_SECRET, (err, didDoc) => {
+        didDocument = didDoc;
+        
         didDocument.waitForMessages(async (err, res) => {
             if (err) {
-                console.log(err);
+                logger.error(err);
                 return
             }
 
             try {
-                const resObj = JSON.parse(res);
-                const clientDID = resObj.params.pop();
-                const lokiAdaptor = getDefaultEnclave(getStorageFolder());
-
-                const result = await executeCommand(resObj, lokiAdaptor);
-                sendResult(didDocument, result, clientDID);
+                processCommand(JSON.parse(res));
             }
             catch (err) {
-                console.log(err);
+                logger.error(err);
             }
         });
     });
+
+    async function processCommand(resObj) {
+        const clientDID = resObj.params.pop();
+        const lokiAdaptor = getLokiEnclaveFacade(getStorageFolder());
+
+        const result = await executeCommand(resObj, lokiAdaptor);
+        sendResult(didDocument, result, clientDID);
+    }
 
     async function executeCommand(resObj, lokiAdaptor) {
         try {
             const command = resObj.commandName;
             const params = resObj.params;
-            let result = await $$.promisify(lokiAdaptor[command]).apply(lokiAdaptor, params) ?? {};
-            result.commandID = resObj.commandID;
-            return JSON.stringify(result);
+            let dbResult = await $$.promisify(lokiAdaptor[command]).apply(lokiAdaptor, params) ?? {};
+            return JSON.stringify({ "commandResult": dbResult, "commandID": resObj.commandID })
         }
         catch (err) {
-            console.log(err);
+            logger.error(err);
             return err;
         }
     }
@@ -3390,7 +3069,7 @@ function DefaultEnclave(server) {
     function sendResult(didDocument, result, clientDID) {
         didDocument.sendMessage(result, clientDID, (err, res) => {
             if (err) {
-                console.log(err);
+                logger.error(err);
             }
         })
     }
@@ -3403,10 +3082,10 @@ function DefaultEnclave(server) {
 }
 
 module.exports = {
-    DefaultEnclave
+    LokiEnclaveFacade
 };
 
-},{"./commands/DefaultEnclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/DefaultEnclave.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
+},{"./commands/LokiEnclaveFacade":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/commands/LokiEnclaveFacade.js","opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/controllers/downloadFile.js":[function(require,module,exports){
 function sendResult(resHandler, resultStream) {
     resHandler.statusCode = 200;
     resultStream.pipe(resHandler);
@@ -3606,6 +3285,7 @@ const URL_PREFIX = '/notifications';
 module.exports = { URL_PREFIX };
 },{}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js":[function(require,module,exports){
 function KeySSINotifications(server) {
+	const logger = $$.getLogger("KeySSINotifications", "apihub/keySsiNotifications");
 	let notificationManager;
 	const utils = require('../../utils');
 	const readBody = utils.streams.readStringFromStream;
@@ -3677,7 +3357,7 @@ function KeySSINotifications(server) {
 					response.send(200, message);
 				} catch (err) {
 					//here we expect to get errors when a connection has reached timeout
-					console.log(err);
+					logger.error(err);
 					response.send(400, 'opps');
 				}
 			});
@@ -3691,7 +3371,7 @@ function KeySSINotifications(server) {
 
 	require('./../../libs/Notifications').getManagerInstance(workingDirPath, (err, instance) => {
 		if (err) {
-			return console.log(err);
+			return logger.error(err);
 		}
 
 		notificationManager = instance;
@@ -3705,15 +3385,100 @@ function KeySSINotifications(server) {
 
 module.exports = KeySSINotifications;
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mainDSU/controller.js":[function(require,module,exports){
+const config = require("../../config");
+const logger = $$.getLogger("controller", "apihub/mainDSU");
+
+let mainDSUSeedSSI = null;
+let rootFolderPath;
+let mainDSUSeedSSIFilePath;
+
+function init(server) {
+    logger.info(`Registering MainDSU component`);
+    rootFolderPath = server.rootFolder;
+    mainDSUSeedSSIFilePath = require("path").join(server.rootFolder, config.getConfig("externalStorage"), "maindsu");
+}
+
+function sendMainDSUSeedSSI(response) {
+    response.statusCode = 200;
+    response.write(mainDSUSeedSSI.getIdentifier());
+    response.end();
+}
+
+async function handleDefaultMainDSURequest(request, response) {
+    if (mainDSUSeedSSI) {
+        return sendMainDSUSeedSSI(response);
+    }
+
+    const fs = require("fs");
+    const keySSISpace = require("opendsu").loadApi("keyssi");
+    const resolver = require("opendsu").loadApi("resolver");
+
+    try {
+        const fileContent = await $$.promisify(fs.readFile)(mainDSUSeedSSIFilePath, { encoding: "utf-8" });
+        mainDSUSeedSSI = keySSISpace.parse(fileContent);
+        logger.info(`[MainDSU] Read existing mainDSU from ${mainDSUSeedSSIFilePath}: ${mainDSUSeedSSI.getAnchorId()}`);
+        return sendMainDSUSeedSSI(response);
+    } catch (error) {
+        logger.error(`[MainDSU] Failed to read/parse keySSI from ${mainDSUSeedSSIFilePath}. Generating new keySSI...`, error);
+    }
+
+    try {
+        const environmentJsPath = require("path").join(rootFolderPath, "environment.js");
+        logger.info(`[MainDSU] Loading environment.js config file from: ${environmentJsPath}`);
+
+        const environmentConfig = require(environmentJsPath);
+
+        const seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(environmentConfig.vaultDomain);
+        const mainDSU = await $$.promisify(resolver.createDSUForExistingSSI)(seedSSI);
+
+        logger.info(`[MainDSU] Settings config for seed ${seedSSI.getAnchorId()}`, environmentConfig);
+        await $$.promisify(mainDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
+
+        mainDSUSeedSSI = seedSSI;
+        logger.info("[MainDSU] Generated mainDSUSeedSSI: ", mainDSUSeedSSI.getAnchorId(), mainDSUSeedSSI);
+
+        logger.info(`[MainDSU] Writing generated mainDSU to ${mainDSUSeedSSIFilePath}: ${mainDSUSeedSSI.getAnchorId()}`);
+        await $$.promisify(fs.writeFile)(mainDSUSeedSSIFilePath, mainDSUSeedSSI.getIdentifier(), "utf-8");
+
+        sendMainDSUSeedSSI(response);
+    } catch (error) {
+        logger.error("[MainDSU] Failed to create seedSSI", error);
+        response.statusCode = 500;
+        response.setHeader("Content-Type", "text/html");
+        response.end("Failed to create seedSSI");
+    }
+}
+
+module.exports = {
+    init,
+    handleDefaultMainDSURequest,
+};
+
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","fs":false,"opendsu":"opendsu","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mainDSU/index.js":[function(require,module,exports){
+function MainDSU(server) {
+    const { init, handleDefaultMainDSURequest } = require("./controller");
+    init(server);
+
+    // for mobile app, when it includes the expanded DSU content instead of the actual DSU;
+    // this will return a static DSU in order to set it as a main context
+    server.use('/getSSIForMainDSU', handleDefaultMainDSURequest);
+}
+
+module.exports = MainDSU;
+
+},{"./controller":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mainDSU/controller.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function LocalMQAdapter(server, prefix, domain, configuration) {
+	const logger = $$.getLogger("LocalMQAdapter", "apihub/mqHub");
 	const subscribers = {};
 	const config = require("../../../config");
 	const utils = require('./../../../utils');
 	const swarmUtils = require('swarmutils');
 	let path = swarmUtils.path;
 	const readBody = utils.streams.readStringFromStream;
+	const FILENAME_DELIMITER = "_special_mqs_delimiter_";
+
 	let storage = config.getConfig('componentsConfig', 'mqs', 'storage');
 	if (typeof storage === "undefined") {
 		storage = path.join(server.rootFolder, "external-volume", "mqs", domain);
@@ -3729,7 +3494,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 
 	Object.assign(settings, configuration);
 
-    let openedConnections = {};
+	let openedConnections = {};
 	function getQueueStoragePath(queueName) {
 		const opendsu = require("opendsu");
 		const crypto = opendsu.loadAPI('crypto');
@@ -3748,6 +3513,14 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
+	function sanitizeFileName(filename){
+		if(filename.indexOf(FILENAME_DELIMITER)!==-1){
+			//if we find filename_delimiter in filename then we need to remove the delimiter in order to be able to sort the queue
+			filename = filename.split(FILENAME_DELIMITER)[0];
+		}
+		return filename;
+	}
+
 	function loadQueue(queueName, callback) {
 		require('fs').readdir(getQueueStoragePath(queueName), (err, files) => {
 			if (err) {
@@ -3758,19 +3531,47 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 				return callback(undefined, []);
 			}
 			let messages = files.filter(fileNamesAsTimestamp => {
+				fileNamesAsTimestamp = sanitizeFileName(fileNamesAsTimestamp);
 				let valid = (new Date(Number(fileNamesAsTimestamp))).getTime() > 0;
 				if (!valid) {
-					console.log(`Found garbage in queue ${queueName} (file: ${fileNamesAsTimestamp}). Ignoring it!`);
+					logger.log(`Found garbage in queue ${queueName} (file: ${fileNamesAsTimestamp}). Ignoring it!`);
 				}
 				return valid;
 			});
 
 			messages.sort(function (a, b) {
+				a = sanitizeFileName(a);
+				b = sanitizeFileName(b);
 				return (new Date(Number(a))).getTime() - (new Date(Number(b))).getTime();
 			});
-
 			return callback(undefined, messages);
 		});
+	}
+
+	function constructFileName(proposedFileName, callback) {
+		let finalName = proposedFileName;
+		let filename = sanitizeFileName(finalName);
+		let counter = -1;
+
+		let FS = require('fs');
+
+		if(filename!==finalName){
+			counter = Number(finalName.replace(filename+FILENAME_DELIMITER, ""));
+		}
+
+		let exists = FS.statSync(finalName, {throwIfNoEntry: false});
+		if(!exists){
+			try{
+				FS.writeFileSync(finalName, "");
+			}catch (e){
+				//we ignore this e on purpose
+			}
+            callback(undefined, finalName);
+        }else{
+			counter++;
+			finalName = filename+FILENAME_DELIMITER+counter;
+			constructFileName(finalName, callback);
+		}
 	}
 
 	function storeMessage(queueName, message, callback) {
@@ -3781,11 +3582,14 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 			}
 
 			let fileName = path.join(getQueueStoragePath(queueName), new Date().getTime());
-			require('fs').writeFile(fileName, message, (err) => {
-				if (err) {
-					return callback(err);
-				}
-				return callback(undefined, fileName);
+			let FS = require('fs');
+			constructFileName(fileName, (err, finalName)=>{
+				FS.writeFile(finalName, message, (err) => {
+					if (err) {
+						return callback(err);
+					}
+					return callback(undefined, finalName);
+				});
 			});
 		});
 	}
@@ -3899,10 +3703,10 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 				return _readMessage(queueName, (err, message) => {
 					deliverMessage(subs, message, (err, successCount) => {
 						if (err) {
-							console.log(err);
+							logger.error(err);
 						}
 
-						console.log(`Successfully sent message to a number of ${successCount} subs.`);
+						logger.info(`Successfully sent message to a number of ${successCount} subs.`);
 					});
 				});
 			} else {
@@ -3911,30 +3715,30 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-    function send(queueName, to, statusCode, message, headers) {
-        if (openedConnections[queueName]) {
-            clearTimeout(openedConnections[queueName]);
-            delete openedConnections[queueName];
-        }
-        to.statusCode = statusCode;
+	function send(queueName, to, statusCode, message, headers) {
+		if (openedConnections[queueName]) {
+			clearTimeout(openedConnections[queueName]);
+			delete openedConnections[queueName];
+		}
+		to.statusCode = statusCode;
 
-        if (headers) {
-            for (let prop in headers) {
-                to.setHeader(prop, headers[prop]);
-            }
-        }
+		if (headers) {
+			for (let prop in headers) {
+				to.setHeader(prop, headers[prop]);
+			}
+		}
 
-        if (message) {
-            to.write(message);
-        }
-        to.end();
-    }
+		if (message) {
+			to.write(message);
+		}
+		to.end();
+	}
 
 	function putMessageHandler(request, response) {
 		let queueName = request.params.queueName;
 		readBody(request, (err, message) => {
 			if (err) {
-				console.log(`Caught an error during body reading from put message request`, err);
+				logger.error(`Caught an error during body reading from put message request`, err);
 				return send(queueName, response, 500);
 			}
 
@@ -3947,13 +3751,13 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 						return;
 					}
 				}catch(err){
-					console.log("Not able to confirm message size. Going on with the flow...");
+					logger.error("Not able to confirm message size. Going on with the flow...");
 				}
 			}
 
 			putMessage(queueName, message, (err) => {
 				if (err) {
-					console.log(`Caught an error during adding message to queue`, err);
+					logger.error(`Caught an error during adding message to queue`, err);
 					return send(queueName, response, 500, err.sendToUser ? err.message : undefined);
 				}
 				send(queueName, response, 200);
@@ -3962,8 +3766,8 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 	}
 
 	function getMessageHandler(request, response) {
-        let queueName = request.params.queueName;
-        readMessage(queueName, (err, message) => {
+		let queueName = request.params.queueName;
+		readMessage(queueName, (err, message) => {
 			if (err) {
 				send(queueName, response, 500);
 				return;
@@ -3977,7 +3781,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		let {queueName, messageId} = request.params;
 		deleteMessage(queueName, messageId, (err) => {
 			if (err) {
-				console.log(`Caught an error during deleting message ${messageId} from queue ${queueName}`, err);
+				logger.error(`Caught an error during deleting message ${messageId} from queue ${queueName}`, err);
 			}
 			send(queueName, response, err ? 500 : 200);
 		});
@@ -3987,13 +3791,13 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		const queueName = request.params.queueName;
 		readMessage(queueName, (err, message) => {
 			if (err) {
-				console.log(`Caught an error during message reading from ${queueName}`, err);
+				logger.error(`Caught an error during message reading from ${queueName}`, err);
 				send(queueName, response, 500);
 				return;
 			}
 			deleteMessage(queueName, message.messageId, (err) => {
 				if (err) {
-					console.log(`Caught an error during message deletion from ${queueName} on the take handler`, err);
+					logger.error(`Caught an error during message deletion from ${queueName} on the take handler`, err);
 					return send(queueName, response, 500);
 				}
 
@@ -4002,12 +3806,12 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-	console.log(`Loading Local MQ Adapter for domain: ${domain}`);
-	console.log(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-	console.log(`Warning: Local MQ Adapter should be used only during development!`);
-	console.log(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+	logger.warn(`Loading Local MQ Adapter for domain: ${domain}`);
+	logger.warn(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+	logger.warn(`Warning: Local MQ Adapter should be used only during development!`);
+	logger.warn(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
 
-    const mqConfig = config.getConfig("componentsConfig", "mq");
+	const mqConfig = config.getConfig("componentsConfig", "mq");
 	if (mqConfig && mqConfig.connectionTimeout) {
 		function signalServerAlive(req, res, next) {
 			openedConnections[req.params.queueName] = setTimeout(() => {
@@ -4021,7 +3825,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		server.get(`${prefix}/${domain}/get/:queueName/:signature_of_did`, signalServerAlive); //  > {message}
 		server.get(`${prefix}/${domain}/take/:queueName/:signature_of_did`, signalServerAlive); //  > message
 	}
-    
+
 	server.put(`${prefix}/${domain}/put/:queueName`, putMessageHandler); //< message
 
 	server.get(`${prefix}/${domain}/get/:queueName/:signature_of_did`, getMessageHandler); //  > {message}
@@ -4053,7 +3857,7 @@ const defaultSettings = {
 }
 
 function JWTIssuer(workingDir) {
-
+	const logger = $$.getLogger("JWTIssuer", "apihub/mqHub");
 	let seeder;
 	const config = require("./../../../config");
 
@@ -4076,17 +3880,17 @@ function JWTIssuer(workingDir) {
 			seeder = await $$.promisify(fs.readFile)(getSeederFilePath());
 		} catch (err) {
 			if (err.code !== "ENOENT") {
-				console.log("Not able to read the Issuer persistence file needed by JWT Auth Support layer!", err);
+				logger.error("Not able to read the Issuer persistence file needed by JWT Auth Support layer!", err);
 			}
 		}
 
 		if (seeder) {
 			try {
 				seeder = keyssiApi.parse(seeder.toString());
-				console.log("MQ JWT AUTH Issuer loaded.");
+				logger.info("MQ JWT AUTH Issuer loaded.");
 				return;
 			} catch (err) {
-				console.log("Failed to load MQ JWT AUTH Issuer info. Creating a new Issuer!",
+				logger.error("Failed to load MQ JWT AUTH Issuer info. Creating a new Issuer!",
 					"\nPrevious tokens will not be valid anymore!!!");
 			}
 		}
@@ -4095,7 +3899,7 @@ function JWTIssuer(workingDir) {
 
 		seeder = await $$.promisify(keyssiApi.createSeedSSI)(DOMAIN_NAME);
 		await $$.promisify(fs.writeFile)(getSeederFilePath(), seeder.getIdentifier());
-		console.log("New MQ JWT AUTH Issuer created and saved for later use.");
+		logger.info("New MQ JWT AUTH Issuer created and saved for later use.");
 	}
 
 	this.createToken = function (domain, options, callback) {
@@ -4201,6 +4005,7 @@ const defaultSettings = {
 }
 
 async function MQHub(server, signalAsyncLoading, doneLoading) {
+	const logger = $$.getLogger("MQHub", "apihub/mqHub");
 
 	signalAsyncLoading();
 
@@ -4215,7 +4020,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 		const domain = request.params.domain;
 		issuer.createToken(domain, {credentials: request.params.hashDID}, (err, tokenObj) => {
 			if (err) {
-				console.log("Not able to create a new token.", err);
+				logger.error("Not able to create a new token.", err);
 				response.statusCode = 500;
 				return response.end();
 			}
@@ -4246,7 +4051,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 	async function putMessageHandler(request, response, next) {
 		const domainName = request.params.domain;
 		if (domains.indexOf(domainName) === -1) {
-			console.log(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
+			logger.error(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
 			response.statusCode = 405;
 			response.end();
 			return;
@@ -4255,7 +4060,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 		let token = request.headers['authorization'];
 
 		if(! await allowUnregisteredDID(domainName) && !token){
-			console.log(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
+			logger.error(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
 			response.statusCode = 403;
 			response.end();
 			return;
@@ -4267,7 +4072,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 				errorMsg = "Token not valid: ";
 			}
 			if (err || !valid) {
-				console.log(`${errorMsg} < ${token} >`, err ? err : "");
+				logger.error(`${errorMsg} < ${token} >`, err ? err : "");
 				response.statusCode = 403;
 				response.end();
 				return;
@@ -4281,7 +4086,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 	async function getMessageHandler(request, response, next) {
 		const domainName = request.params.domain;
 		if (domains.indexOf(domainName) === -1) {
-			console.log(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
+			logger.error(`Caught an request to the MQs for domain ${domainName}. Looks like the domain doesn't have mq component enabled.`);
 			response.statusCode = 405;
 			response.end();
 			return;
@@ -4290,7 +4095,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 		let token = request.headers['authorization'];
 
 		if(! await allowUnregisteredDID(domainName) && !token){
-			console.log(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
+			logger.error(`No token was available on the request and the domain ${domainName} configuration prohibits unregisteredDIDs to use the MQ api.`);
 			response.statusCode = 403;
 			response.end();
 			return;
@@ -4302,7 +4107,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 				errorMsg = "Ownership not confirmed based on token: ";
 			}
 			if (err || !isOwner) {
-				console.log(`${errorMsg} < ${token} >`, err ? err : "");
+				logger.error(`${errorMsg} < ${token} >`, err ? err : "");
 				response.statusCode = 403;
 				response.end();
 				return;
@@ -4337,15 +4142,15 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 			const adapterTypeName = domainConfig["mq_type"] || "local";
 			const adapter = adapterImpls[adapterTypeName];
 			if (!adapter) {
-				console.log(`Not able to recognize the mq_type < ${adapterTypeName} > from the domain < ${domain} > config.`);
+				logger.error(`Not able to recognize the mq_type < ${adapterTypeName} > from the domain < ${domain} > config.`);
 				return;
 			}
 
 			try {
-				console.log(`Preparing to register mq endpoints for domain < ${domain} > ... `);
+				logger.info(`Preparing to register mq endpoints for domain < ${domain} > ... `);
 				adapter(server, URL_PREFIX, domainToBeUsedByAdapter || domain, domainConfig);
 			} catch (err) {
-				console.log(`Caught an error during initialization process of the mq for domain < ${domain} >`, err);
+				logger.error(`Caught an error during initialization process of the mq for domain < ${domain} >`, err);
 				return;
 			}
 
@@ -4359,13 +4164,11 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 			let adminService = require("./../../components/admin").getAdminService();
 			let getDomains = $$.promisify(adminService.getDomains);
 			let virtualDomains = await getDomains();
-			//console.log("virtualDomains", virtualDomains);
 			for(let i=0; i<virtualDomains.length; i++){
 				let domainInfo = virtualDomains[i];
-				//console.log("domain info", domainInfo);
 				if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
 					if(testIfMQEnabled(domainInfo.cloneFromDomain, domainInfo.pk)){
-						console.log(`Successfully register mq endpoints for virtual domain < ${domainInfo.pk} >.`);
+						logger.info(`Successfully register mq endpoints for virtual domain < ${domainInfo.pk} >.`);
 						domains.push(domainInfo.pk);
 					}
 				}
@@ -4377,7 +4180,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 		for (let i = 0; i < confDomains.length; i++) {
 			let domain = confDomains[i];
 			if(testIfMQEnabled(domain)){
-				console.log(`Successfully register mq endpoints for domain < ${domain} >.`);
+				logger.info(`Successfully register mq endpoints for domain < ${domain} >.`);
 				domains.push(domain);
 			}
 		}
@@ -4391,125 +4194,9 @@ module.exports = {
 	MQHub
 };
 
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./../../config/index":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./adapters/localMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js","./adapters/solaceMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js","./auth/JWTIssuer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/auth/JWTIssuer.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js":[function(require,module,exports){
-const URL_PREFIX = '/mq';
-
-module.exports = { URL_PREFIX };
-},{}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js":[function(require,module,exports){
-function mqManager(server) {
-	let notificationManager;
-	const utils = require('./../../utils');
-	const { URL_PREFIX } = require('./constants');
-	const readBody = utils.streams.readStringFromStream;
-	const config = require('../../config');
-	const path = require("path");
-	const workingDirPath = path.join(server.rootFolder, config.getConfig('componentsConfig', 'messaging', 'workingDirPath'));
-	const storageDirPath = path.join(server.rootFolder, config.getConfig('componentsConfig', 'messaging', 'storageDirPath'));
-
-	function sendStatus(res, reasonCode) {
-		res.statusCode = reasonCode;
-		res.end();
-	}
-
-	function createChannel(req, res) {
-		let anchorId = req.params.anchorId;
-		let SSI = req.headers['ssi'];
-		if (/*typeof SSI === 'undefined' ||*/ typeof anchorId === 'undefined') {
-			return sendStatus(res, 400);
-		}
-
-		notificationManager.createQueue(anchorId, function (err) {
-			if (err) {
-				if (err.statusCode) {
-					res.write(err.message);
-					return sendStatus(res, err.statusCode);
-				} else {
-					return sendStatus(res, 500);
-				}
-			}
-
-			//store SSI to check ownership
-
-			sendStatus(res, 200);
-		});
-	}
-
-	function sendMessage(req, res) {
-		let anchorId = req.params.anchorId;
-		if (typeof anchorId === 'undefined') {
-			return sendStatus(res, 400);
-		}
-		readBody(req, (err, message) => {
-			if (err) {
-				return sendStatus(res, 400);
-			}
-			notificationManager.sendMessage(anchorId, message, function (err, counter) {
-				if (err) {
-					return sendStatus(res, 500);
-				}
-
-				if (counter > 0) {
-					res.write(`Message delivered to ${counter} subscribers.`);
-				} else {
-					res.write(`Message was added to queue and will be delivered later.`);
-				}
-
-				return sendStatus(res, 200);
-			});
-		});
-	}
-
-	function receiveMessage(req, res) {
-		let anchorId = req.params.anchorId;
-		if (typeof anchorId === 'undefined') {
-			return sendStatus(res, 400);
-		}
-
-		//check tokens before delivering a message
-
-		let connectionActive = true;
-		req.connection.on('close', function(err) {
-			//console.log("Connection closed (timeout or client closed conection)");
-			connectionActive = false;
-		});
-
-		notificationManager.readMessage(anchorId, function (err, message) {
-			if (err) {
-				if (err.statusCode) {
-					return sendStatus(res, err.statusCode);
-				} else {
-					return sendStatus(res, 500);
-				}
-			}
-			if(!connectionActive){
-				throw new Error("Connection not active with this subscriber.");
-			}
-			res.write(message);
-			sendStatus(res, 200);
-		});
-	}
-
-	require('./../../libs/Notifications').getManagerInstance(workingDirPath, storageDirPath, (err, instance) => {
-		if (err) {
-			return console.log(err);
-		}
-
-		notificationManager = instance;
-
-		// Proposed
-		// server.get(`${URL_PREFIX}/channel/:anchorId/message`, createChannel);
-
-		server.post(`${URL_PREFIX}/create-channel/:anchorId`, createChannel);
-		server.post(`${URL_PREFIX}/send-message/:anchorId`, sendMessage);
-		server.get(`${URL_PREFIX}/receive-message/:anchorId`, receiveMessage);
-	});
-}
-
-module.exports = mqManager;
-
-},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../libs/Notifications":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/Notifications.js","./../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./constants":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/constants.js","path":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js":[function(require,module,exports){
+},{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./../../components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./../../config/index":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./adapters/localMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/localMQAdapter.js","./adapters/solaceMQAdapter.js":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/adapters/solaceMQAdapter.js","./auth/JWTIssuer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/auth/JWTIssuer.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js":[function(require,module,exports){
 const registeredUrl = "/forwardRequestForAuthenticatedClient";
-
+const logger = $$.getLogger("requestForwarder", "apihub/requestForwarder");
 module.exports = function(server){
     server.post(registeredUrl, require("./../../utils/middlewares/index").requestBodyJSONMiddleware);
 
@@ -4529,7 +4216,7 @@ module.exports = function(server){
             http = require("https");
         }
 
-        console.log(`Forwarding request ${options.method} to url ${url}`);
+        logger.info(`Forwarding request ${options.method} to url ${url}`);
         try {
 
           let request = http.request(url, options, (response) => {
@@ -4549,7 +4236,7 @@ module.exports = function(server){
           request.write(body);
           request.end();
         } catch (e) {
-          console.log("Error on request: ", e);
+          logger.error("Error on request: ", e);
           res.statusCode = 500;
           res.end();
         }
@@ -4562,12 +4249,13 @@ const fs = require("fs");
 const path = require("path");
 
 function secrets(server) {
+    const logger = $$.getLogger("secrets", "apihub/secrets");
     const secretsFolderPath = path.join(server.rootFolder, "external-volume", "secrets");
     server.get("/getSSOSecret/:appName", function (request, response) {
         let userId = request.headers["user-id"];
         let appName = request.params.appName;
         const fileDir = path.join(secretsFolderPath, appName);
-        const filePath = path.join(fileDir, `${userId}.json`);
+        const filePath = path.join(fileDir, `${userId}.secret`);
         fs.access(filePath, (err) => {
             if (err) {
                 response.statusCode = 204;
@@ -4602,22 +4290,20 @@ function secrets(server) {
     function writeSecret(filePath, secret, request, response) {
         fs.access(filePath, (err)=>{
             if (!err) {
-                console.log("File Already exists");
+                logger.error("File Already exists");
                 response.statusCode = 403;
                 response.end(Error(`File ${filePath} already exists`));
                 return;
             }
 
-            console.log("Writing file to ", filePath);
             fs.writeFile(filePath, secret, (err)=>{
                 if (err) {
-                    console.log("Error at writing file", err);
+                    logger.error("Error at writing file", err);
                     response.statusCode = 500;
                     response.end(err);
                     return;
                 }
 
-                console.log("file written success")
                 response.statusCode = 200;
                 response.end();
             });
@@ -4640,14 +4326,14 @@ function secrets(server) {
 
         request.on('end', async () => {
             const fileDir = path.join(secretsFolderPath, appName);
-            const filePath = path.join(fileDir, `${userId}.json`);
+            const filePath = path.join(fileDir, `${userId}.secret`);
             let body;
             let msgToPersist;
             try {
                 body = Buffer.concat(data).toString();
                 msgToPersist = JSON.parse(body).secret;
             } catch (e) {
-                console.log("Failed to parse body", data);
+                logger.error("Failed to parse body", data);
                 response.statusCode = 500;
                 response.end(e);
             }
@@ -4678,7 +4364,7 @@ function secrets(server) {
         let appName = request.params.appName;
         const fileDir = path.join(secretsFolderPath, appName);
         let userId = getUserIdFromDID(did, appName);
-        const filePath = path.join(fileDir, `${userId}.json`);
+        const filePath = path.join(fileDir, `${userId}.secret`);
         fs.access(filePath, (err) => {
             if (err) {
                 response.statusCode = 204;
@@ -4714,7 +4400,7 @@ function StaticServer(server) {
     const utils = require("../../utils");
     const config = require("../../config");
     let componentsConfig = config.getConfig("componentsConfig");
-
+    const logger = $$.getLogger("StaticServer", "apihub/staticServer");
     let excludedFilesRegex;
     if (componentsConfig && componentsConfig.staticServer && componentsConfig.staticServer.excludedFiles) {
         excludedFilesRegex = componentsConfig.staticServer.excludedFiles.map(str => new RegExp(str));
@@ -4730,7 +4416,7 @@ function StaticServer(server) {
         });
 
         function serverTarget(targetPath) {
-            console.log("Serving summary for dir:", targetPath);
+            logger.info("Serving summary for dir:", targetPath);
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
                     res.statusCode = 404;
@@ -4826,13 +4512,13 @@ function StaticServer(server) {
         try{
             adminService = require("./../admin").getAdminService();
         }catch(err){
-            //console.log("Caught an error durring admin service initialization", err);
+            //logger.error("Caught an error durring admin service initialization", err);
             return callback(err);
         }
 
         adminService.checkForTemplate(req.url, (err, template)=>{
             if(err){
-                //console.log("Not able to find template for", req.url);
+                //logger.error("Not able to find template for", req.url);
                 //console.trace(err);
                 return callback(err);
             }
@@ -4840,15 +4526,11 @@ function StaticServer(server) {
                 let fileContent = template.content;
                 const urlObject = new URL(req.url, `http://${req.headers.host}`);
                 let hostname = urlObject.hostname;
-                console.log("Preparing to read vars for ", hostname);
                 return adminService.getDomainSpecificVariables(hostname, (err, variables)=>{
                     if(err || !variables){
-                        console.log("Not able to get any variable for ", hostname);
-                        //console.log(err);
                         return callback(err);
                     }
                     let domainVariables = Object.keys(variables);
-                    console.log("Domain variables found:", JSON.stringify(domainVariables));
                     for(let i=0; i<domainVariables.length; i++){
                         let variableName = domainVariables[i];
                         let variableValue = variables[variableName];
@@ -4872,7 +4554,7 @@ function StaticServer(server) {
                 //if any error... we fallback to normal sendFile method
                 return sendFile(res, file);
             }
-            console.log("Responding with template instead of file.");
+            logger.info("Responding with template instead of file.");
             res.statusCode = 200;
 
             setMimeTypeOnResponse(req.url, res);
@@ -5011,6 +4693,7 @@ module.exports = StaticServer;
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","./../admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","fs":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/controller.js":[function(require,module,exports){
 (function (global){(function (){
 const syndicate = require("syndicate");
+const logger = $$.getLogger("stream", "apihub/stream");
 
 const dsuWorkers = {};
 
@@ -5034,7 +4717,7 @@ async function handleCreateWallet(request, response) {
         const walletSSI = keySSISpace.createTemplateWalletSSI(domain, credential);
         const seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
 
-        console.log(`[Stream] Creating wallet ${walletSSI.getIdentifier()} for user ${userId}...`);
+        logger.info(`[Stream] Creating wallet ${walletSSI.getIdentifier()} for user ${userId}...`);
         const walletDSU = await $$.promisify(resolver.createDSUForExistingSSI)(walletSSI, { dsuTypeSSI: seedSSI });
 
         const writableDSU = walletDSU.getWritableDSU();
@@ -5055,7 +4738,7 @@ async function handleCreateWallet(request, response) {
             sharedEnclaveKeySSI,
         };
 
-        console.log(`[Stream] Settings config for wallet ${walletSSI.getIdentifier()}`, environmentConfig);
+        logger.info(`[Stream] Settings config for wallet ${walletSSI.getAnchorId()}`, environmentConfig);
         await $$.promisify(writableDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
 
         await $$.promisify(writableDSU.writeFile)("/metadata.json", JSON.stringify({ userId }));
@@ -5063,7 +4746,7 @@ async function handleCreateWallet(request, response) {
         response.statusCode = 200;
         return response.end(walletSSI.getIdentifier());
     } catch (error) {
-        console.log("[Stream] Error", error);
+        logger.error("[Stream] Error", error);
         response.statusCode = 500;
         return response.end(error);
     }
@@ -5130,7 +4813,7 @@ async function handleStreamRequest(request, response) {
         response.writeHead(206, taskResult.headers);
         response.end(taskResult.buffer);
     } catch (error) {
-        console.log("[Stream] error", error);
+        logger.error("[Stream] error", error);
         response.statusCode = 500;
         return response.end(error);
     }
@@ -5155,15 +4838,12 @@ module.exports = Iframe;
 },{"./controller":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/controller.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/worker-script.js":[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = async () => {
+    const logger = $$.getLogger("worker-script", "apihub/stream");
     //we inject a supplementary tag in order make it more clear the source of the log
-    let originalLog = console.log;
-    console.log = function (...args) {
-        originalLog("\t[StreamHandler]", ...args);
-    };
 
     const worker_threads = "worker_threads";
     const { parentPort, workerData } = require(worker_threads);
-    console.log(`Node worker started for: `, workerData);
+    logger.info(`Node worker started for: `, workerData);
 
     const resolver = require("opendsu").loadApi("resolver");
     const dsu = await $$.promisify(resolver.loadDSU)(workerData.keySSI);
@@ -5173,7 +4853,7 @@ module.exports = async () => {
     const CHUNK_SIZE = 1024 * 1024;
 
     parentPort.on("message", async (task) => {
-        console.log("Handling task", task);
+        logger.info("Handling task", task);
         const { requestedPath } = task;
         let { range } = task;
 
@@ -5196,9 +4876,6 @@ module.exports = async () => {
                 start = parseInt(range, 10);
                 end = start + CHUNK_SIZE;
             }
-            console.log(`Handling range start ${start} end ${end}`);
-
-            console.log("Refreshing DSU...")
             await $$.promisify(dsu.refresh)();
 
             const streamRange = { start, end };
@@ -5229,7 +4906,7 @@ module.exports = async () => {
     });
 
     process.on("uncaughtException", (error) => {
-        console.error("[StreamHandler] uncaughtException inside node worker", error);
+        logger.error("[StreamHandler] uncaughtException inside node worker", error);
 
         setTimeout(() => process.exit(1), 100);
     });
@@ -5237,141 +4914,9 @@ module.exports = async () => {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js":[function(require,module,exports){
-const http = require('http');
-const { URL } = require('url');
-const swarmUtils = require('swarmutils');
-const SwarmPacker = swarmUtils.SwarmPacker;
-const signatureHeaderName = process.env.vmq_signature_header_name || "x-signature";
+},{"buffer":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js":[function(require,module,exports){
+const logger = $$.getLogger("config-migrator", "apihub/config");
 
-function requestFactory(virtualMQAddress, zeroMQAddress) {
-    function createChannel(channelName, publicKey, callback) {
-        const options = {
-            path: `/create-channel/${channelName}`,
-            method: "PUT"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.write(publicKey);
-        req.end();
-    }
-
-    function createForwardChannel(channelName, publicKey, callback) {
-        const options = {
-            path: `/create-channel/${channelName}`,
-            method: "PUT"
-        };
-
-        const req = http.request(virtualMQAddress, options, (res) => {
-            this.enableForward(channelName, "justASignature", callback);
-        });
-        req.write(publicKey);
-        req.end();
-    }
-
-    function enableForward(channelName, signature, callback) {
-        const options = {
-            path: `/forward-zeromq/${channelName}`,
-            method: "POST"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.setHeader(signatureHeaderName, signature);
-        req.end();
-    }
-
-    function sendMessage(channelName, message, signature, callback) {
-        const options = {
-            path: `/send-message/${channelName}`,
-            method: "POST"
-        };
-
-        const req = http.request(virtualMQAddress, options, callback);
-        req.setHeader(signatureHeaderName, signature);
-
-        let pack = SwarmPacker.pack(message);
-
-        req.setHeader("content-length", pack.byteLength);
-        req.setHeader("content-type", 'application/octet-stream');
-        req.write($$.Buffer.from(pack));
-        req.end();
-    }
-
-    function receiveMessage(channelName, signature, callback) {
-        const options = {
-            path: `/receive-message/${channelName}`,
-            method: "GET"
-        };
-
-        const req = http.request(virtualMQAddress, options, function (res) {
-            const utils = require("../../utils").streams;
-            utils.readMessageBufferFromStream(res, function (err, message) {
-
-                callback(err, res, (message && $$.Buffer.isBuffer(message)) ? SwarmPacker.unpack(message.buffer) : message);
-            });
-        });
-
-        req.setHeader(signatureHeaderName, signature);
-        req.end();
-    }
-
-    function receiveMessageFromZMQ(channelName, signature, readyCallback, receivedCallback) {
-        const zmqIntegration = require("zmq_adapter");
-
-        let catchEvents = (eventType, ...args) => {
-            // console.log("Event type caught", eventType, ...args);
-            if (eventType === "connect") {
-                //connected so all good
-                readyCallback();
-            }
-        };
-
-        let consumer = zmqIntegration.createZeromqConsumer(zeroMQAddress, catchEvents);
-        consumer.subscribe(channelName, signature, (channel, receivedMessage) => {
-            receivedCallback(JSON.parse(channel.toString()).channelName, receivedMessage.buffer);
-        });
-    }
-
-    function generateMessage(swarmName, swarmPhase, args, targetAgent, returnAddress) {
-        return {
-            meta: {
-                swarmId: swarmUtils.generateUid(32).toString("hex"),
-                requestId: swarmUtils.generateUid(32).toString("hex"),
-                swarmTypeName: swarmName || "testSwarmType",
-                phaseName: swarmPhase || "swarmPhaseName",
-                args: args || [],
-                command: "executeSwarmPhase",
-                target: targetAgent || "agentURL",
-                homeSecurityContext: returnAddress || "no_home_no_return"
-            }
-        };
-    }
-
-    function getPort() {
-        try {
-            return new URL(virtualMQAddress).port;
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    // targeted virtualmq apis
-    this.createChannel = createChannel;
-    this.createForwardChannel = createForwardChannel;
-    this.enableForward = enableForward;
-    this.sendMessage = sendMessage;
-    this.receiveMessage = receiveMessage;
-    this.receiveMessageFromZMQ = receiveMessageFromZMQ;
-
-    // utils for testing
-    if (!process.env.NODE_ENV || (process.env.NODE_ENV && !process.env.NODE_ENV.startsWith('prod'))) { // if NODE_ENV does not exist or if it exists and is not set to production
-        this.getPort = getPort;
-        this.generateMessage = generateMessage;
-    }
-}
-
-module.exports = requestFactory;
-},{"../../utils":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/index.js","http":false,"swarmutils":"swarmutils","url":false,"zmq_adapter":"zmq_adapter"}],"/home/runner/work/privatesky/privatesky/modules/apihub/config/config-migrator.js":[function(require,module,exports){
 function removeConfigComponent(config) {
     if (config.componentsConfig && config.componentsConfig.config) {
         delete config.componentsConfig.config;
@@ -5398,7 +4943,6 @@ function traverseObjectProvidedPrimitiveValues(item, onItemTraversal) {
 function replaceInternalVolumePathsWithExternalVolume(config) {
     traverseObjectProvidedPrimitiveValues(config, (item, key) => {
         let value = item[key];
-        console.log("Traversed", key, value);
         if (key === "path" && typeof value === "string" && value.indexOf("internal-volume") !== -1) {
             item[key] = value.replace("internal-volume", "external-volume");
         }
@@ -5509,7 +5053,7 @@ function migrate(oldConfig, configFolderPath) {
     const path = require("path");
     const fs = require("fs");
     const apihubJsonConfigPath = path.join(configFolderPath, "apihub.json");
-    console.log(`Generating apihub.json config file at ${apihubJsonConfigPath}...`);
+    logger.info(`Generating apihub.json config file at ${apihubJsonConfigPath}...`);
 
     if (!fs.existsSync(configFolderPath)) {
         fs.mkdirSync(configFolderPath, { recursive: true });
@@ -5524,7 +5068,7 @@ function migrate(oldConfig, configFolderPath) {
     Object.keys(domainConfigs).forEach((domain) => {
         const domainConfig = domainConfigs[domain];
         const domainConfigPath = path.join(domainConfigsFolderPath, `${domain}.json`);
-        console.log(`Generating config file for domain '${domain}' at ${domainConfigPath}...`);
+        logger.info(`Generating config file for domain '${domain}' at ${domainConfigPath}...`);
         fs.writeFileSync(domainConfigPath, JSON.stringify(domainConfig, null, 2));
     });
 
@@ -5552,7 +5096,7 @@ const defaultConfig = {
     "zeromqForwardAddress": "tcp://127.0.0.1:5001",
     "preventRateLimit": false,
     // staticServer needs to load last
-    "activeComponents": ["config", "mq", "enclave","secrets", "virtualMQ", "messaging", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "cloudWallet", "stream", "staticServer"],
+    "activeComponents": ["config", "mq", "enclave","secrets", "notifications", "filesManager", "bdns", "bricking", "anchoring", "bricksFabric", "contracts", "dsu-wizard", 'debugLogger', "mainDSU", "cloudWallet", "stream", "staticServer"],
     "componentsConfig": {
         "mq":{
             "module": "./components/mqHub",
@@ -5561,29 +5105,15 @@ const defaultConfig = {
         },
         "enclave":{
             "module": "./components/enclave",
-            "function": "DefaultEnclave",
+            "function": "LokiEnclaveFacade",
             "storageFolder": './external-volume/config/enclave'
         },
         "secrets":{
             "module": "./components/secrets"
         },
-        "messaging": {
-            "module": "./components/mqManager",
-            "workingDirPath": "./external-volume/messaging",
-            "storageDirPath": "./external-volume/messaging/storage"
-        },
         "notifications": {
             "module": "./components/keySsiNotifications",
             "workingDirPath": "./external-volume/notifications"
-        },
-        "virtualMQ": {
-            "module": "./components/channelManager",
-            "channelsFolderName": "external-volume/channels",
-            "maxSize": 100,
-            "tokenSize": 48,
-            "tokenHeaderName": "x-tokenHeader",
-            "signatureHeaderName": "x-signature",
-            "enableSignatureCheck": true
         },
         "dsu-wizard": {
             "module": "dsu-wizard",
@@ -5631,6 +5161,9 @@ const defaultConfig = {
             "function": "AdminComponentHandler",
             "storageFolder": './external-volume/config/admin'
         },
+        "mainDSU": {
+            "module": "./components/mainDSU"
+        },
         "cloudWallet": {
             "module": "./components/cloudWallet",
             "dsuBootPath": "./psknode/bundles/nodeBoot.js"
@@ -5667,7 +5200,6 @@ const defaultConfig = {
         "/bricking",
         "/bricksFabric",
         "/create-channel",
-        "/forward-zeromq",
         "/send-message",
         "/receive-message",
         "/files",
@@ -5685,6 +5217,7 @@ module.exports = Object.freeze(defaultConfig);
 let apihubConfig;
 let tokenIssuers;
 let domainConfigs = {};
+const logger = $$.getLogger("index", "apihub/config");
 
 function checkIfFileExists(filePath) {
     try {
@@ -5692,7 +5225,7 @@ function checkIfFileExists(filePath) {
         fs.accessSync(filePath);
         return true;
     } catch (error) {
-        console.log(`File ${filePath} doesn't exists or no access is possible!`);
+        logger.error(`File ${filePath} doesn't exists or no access is possible!`);
     }
     return false;
 }
@@ -5707,20 +5240,20 @@ function loadAllDomainConfigs(configFolderPath) {
                 .filter((domainFile) => domainFile.endsWith(".json"))
                 .forEach((domainFile) => {
                     const domain = domainFile.substring(0, domainFile.lastIndexOf("."));
-                    console.log(`Loading config for domain '${domain}'`);
+                    logger.info(`Loading config for domain '${domain}'`);
 
                     try {
                         const domainConfig = fs.readFileSync(path.join(domainsFolderPath, domainFile));
                         domainConfigs[domain] = JSON.parse(domainConfig);
                     } catch (error) {
-                        console.log(`Could not read config for domain '${domain}'`, error);
+                        logger.error(`Could not read config for domain '${domain}'`, error);
                     }
                 });
         } catch (error) {
-            console.log(`Could not read domain configs at ${domainsFolderPath}`, error);
+            logger.error(`Could not read domain configs at ${domainsFolderPath}`, error);
         }
     } else {
-        console.log(`Domain configs folder not found at ${domainsFolderPath}`);
+        logger.error(`Domain configs folder not found at ${domainsFolderPath}`);
     }
 }
 
@@ -5730,16 +5263,16 @@ function ensureConfigsAreLoaded() {
     if(!apihubConfig) {
         let apihubJson;
         if (typeof process.env.PSK_CONFIG_LOCATION === "undefined") {
-            console.log("PSK_CONFIG_LOCATION env variable not set. Not able to load any external config. Using default configuration.")
+            logger.info("PSK_CONFIG_LOCATION env variable not set. Not able to load any external config. Using default configuration.")
             apihubJson = {};
         } else {
             const fs = require("fs");
             const configFolderPath = path.resolve(process.env.PSK_CONFIG_LOCATION);
-            console.log("Trying to read the apihub.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
+            logger.info("Trying to read the apihub.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
             const apihubConfigPath = path.join(configFolderPath, 'apihub.json');
 
             if(!checkIfFileExists(apihubConfigPath)) {
-                console.log("Trying to read the server.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
+                logger.info("Trying to read the server.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
                 const serverJsonConfigPath = path.join(configFolderPath, 'server.json');
 
                 let serverJson;
@@ -5807,7 +5340,7 @@ function ApihubConfig(conf) {
     conf = createConfig(conf, defaultConf);
     conf.defaultComponents = defaultConf.activeComponents;
     if(conf.isDefaultComponent){
-        console.log("\n\nBe aware that there is a method on the config called isDefaultComponent. You need to check and change your config name.\n\n");
+        logger.info("\n\nBe aware that there is a method on the config called isDefaultComponent. You need to check and change your config name.\n\n");
     }
     conf.isDefaultComponent = function(componentName) {
         return defaultConf.activeComponents.indexOf(componentName) !== -1 || defaultConf.componentsConfig[componentName];
@@ -5837,20 +5370,20 @@ function getTokenIssuers(callback) {
     }
 
     const filePath = path.join(path.resolve(process.env.PSK_CONFIG_LOCATION), "issuers-public-identities");
-    console.log(
+    logger.info(
         `Trying to read the token-issuers.txt file from the location pointed by PSK_CONFIG_LOCATION env variable: ${filePath}`
     );
 
     fs.access(filePath, fs.F_OK, (err) => {
         if (err) {
-            console.log(`${filePath} doesn't exist so skipping it`);
+            logger.info(`${filePath} doesn't exist so skipping it`);
             tokenIssuers = [];
             callback(null, tokenIssuers);
         }
 
         fs.readFile(filePath, "utf8", function (err, data) {
             if (err) {
-                console.log(`Cannot load ${filePath}`, err);
+                logger.error(`Cannot load ${filePath}`, err);
                 return;
             }
 
@@ -5883,7 +5416,7 @@ async function getSafeDomainConfig(domain, ...configKeys){
             const getDomainInfo = $$.promisify(adminService.getDomainInfo);
             let domainInfo = await getDomainInfo(domain);
             if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
-                console.log(`Config for domain '${domain}' was loaded from admin service.`);
+                logger.info(`Config for domain '${domain}' was loaded from admin service.`);
                 return getDomainConfig(domainInfo.cloneFromDomain);
             }
         }catch(err){
@@ -5913,12 +5446,12 @@ function getDomainConfig(domain, ...configKeys) {
     }
 
     if (typeof process.env.PSK_CONFIG_LOCATION === "undefined") {
-        console.log('PSK_CONFIG_LOCATION env variable not set. Not able to load domain config. Using default configuration.')
+        logger.info('PSK_CONFIG_LOCATION env variable not set. Not able to load domain config. Using default configuration.')
         return getConfigResult({});
     }
 
     const domainConfigPath = getDomainConfigFilePath(domain);
-    console.log(`Trying to read the config for domain '${domain}' at location: ${domainConfigPath}`);
+    logger.info(`Trying to read the config for domain '${domain}' at location: ${domainConfigPath}`);
 
     try {
         const fsName = "fs";
@@ -5927,7 +5460,7 @@ function getDomainConfig(domain, ...configKeys) {
         domainConfigs[domain] = domainConfig;
         return getConfigResult(domainConfig);
     } catch (error) {
-        console.log(`Config for domain '${domain}' cannot be loaded from location: ${domainConfigPath}.`);
+        logger.error(`Config for domain '${domain}' cannot be loaded from location: ${domainConfigPath}.`);
         domainConfigs[domain] = null;
         return domainConfigs[domain];
     }
@@ -5957,6 +5490,7 @@ function NotificationsManager(workingFolderPath, storageFolderPath) {
 	const queues = {};
 	const subscribers = {};
 	const swarmUtils = require('swarmutils');
+	const logger = $$.getLogger("NotificationsManager", "apihub/libs");
 
 	this.createQueue = function (queueName, callback) {
 		if (typeof queues[queueName] !== "undefined") {
@@ -6096,7 +5630,7 @@ function NotificationsManager(workingFolderPath, storageFolderPath) {
 						try {
 							require('fs').unlinkSync(notificationObject.filename);
 						} catch (err) {
-							console.log(err);
+							logger.error(err);
 						}
 					}
 				}
@@ -6580,10 +6114,12 @@ function parametersPreProcessing(params) {
     return res;
 }
 
+const logger = $$.getLogger("Client", "apihub/http-wrapper");
+
 const handler = {
     get(target, propName) {
         if (!target[propName]) {
-            console.log(propName, "Not implemented!");
+            logger.error(propName, "Not implemented!");
         } else {
             return function () {
                 const args = parametersPreProcessing(arguments);
@@ -6598,6 +6134,7 @@ module.exports = function () {
 };
 },{"http":false,"stream":false,"url":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/classes/MiddlewareRegistry.js":[function(require,module,exports){
 const querystring = require('querystring');
+const logger = $$.getLogger("http-wrapper", "apihub/libs");
 
 function matchUrl(pattern, url) {
 	const result = {
@@ -6712,7 +6249,7 @@ function MiddlewareRegistry() {
         try {
             execute(0, req.method.toLowerCase(), req.url, req, res);
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             res.statusCode = 500;
             res.end("Internal server error");
         }
@@ -6728,7 +6265,7 @@ function MiddlewareRegistry() {
     function execute(index, method, url, ...params) {
         if (!registeredMiddlewareFunctions[index]) {
             if(index===0){
-                console.error("No handlers registered yet!");
+                logger.error("No handlers registered yet!");
             }
             return;
         }
@@ -6761,12 +6298,12 @@ function MiddlewareRegistry() {
         fn(...params, (err) => {
             counter++;
             if (counter > 1) {
-                console.warn('You called next multiple times, only the first one will be executed');
+                logger.warn('You called next multiple times, only the first one will be executed');
                 return;
             }
 
             if (err) {
-                console.error(err);
+                logger.error(err);
                 return;
             }
 
@@ -6901,7 +6438,6 @@ function Server(sslOptions) {
         });
 
         req.on('error', err => {
-            console.log("reject will be called. err :", err);
             return callback(err);
         });
 
@@ -6965,6 +6501,8 @@ function Server(sslOptions) {
 
 module.exports = Server;
 },{"./MiddlewareRegistry":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/classes/MiddlewareRegistry.js","http":false,"https":false}],"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/httpUtils.js":[function(require,module,exports){
+const logger = $$.getLogger("http-wrapper", "apihub/libs");
+
 function setDataHandler(request, callback) {
     let bodyContent = '';
 
@@ -6991,7 +6529,7 @@ function setDataHandlerMiddleware(request, response, next) {
 }
 
 function sendErrorResponse(error, response, statusCode) {
-    console.error(error);
+    logger.error(error);
     response.statusCode = statusCode;
     response.end();
 }
@@ -7060,7 +6598,9 @@ const crypto = openDSU.loadApi("crypto");
 const {sendUnauthorizedResponse} = require("../../utils/middlewares");
 
 function Authorisation(server) {
-  console.log(`Registering Authorisation middleware`);
+  const logger = $$.getLogger("Authorisation", "apihub/authorisation");
+
+  logger.info(`Registering Authorisation middleware`);
 
   const config = require("../../config");
   const skipJWTAuthorisation = config.getConfig("skipJWTAuthorisation");
@@ -7108,6 +6648,7 @@ module.exports = Authorisation;
 },{"../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","../../utils/middlewares":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js":[function(require,module,exports){
 function setupGenericErrorMiddleware(server) {
     const constants = require("./../../moduleConstants");
+    const logger = $$.getLogger("setupGenericErrorMiddleware", "apihub/genericErrorMiddleware");
 
 	server.use(function (req, res, next) {
         const capturedWrites = [];
@@ -7117,7 +6658,7 @@ function setupGenericErrorMiddleware(server) {
 
         res.write = function(chunk, encoding, callback){
             if(typeof callback === "function" || typeof encoding === "function"){
-                console.log(`${constants.LOG_IDENTIFIER}`,
+                logger.error(`${constants.LOG_IDENTIFIER}`,
                     "Generic Error Middleware is running and has detected that a callback was used for response.write method call.",
                     "Be aware that this middleware can generate undesired behaviour in this case.", new Error());
             }
@@ -7147,14 +6688,15 @@ function setupGenericErrorMiddleware(server) {
 		next();
 	});
 
-    console.log(`${constants.LOG_IDENTIFIER}`, "generic error middleware was loaded. This middleware will prevent any error to leak when sending a >=400 response to the client.");
+    logger.error(`${constants.LOG_IDENTIFIER}`, "generic error middleware was loaded. This middleware will prevent any error to leak when sending a >=400 response to the client.");
 }
 
 module.exports = setupGenericErrorMiddleware;
 
 },{"./../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js":[function(require,module,exports){
 function Logger(server) {
-    console.log(`Registering Logger middleware`);
+    const logger = $$.getLogger("Logger", "apihub/logger");
+    logger.info(`Registering Logger middleware`);
     
     const getRequestDuration = (start) => {
         const diff = process.hrtime(start);
@@ -7179,20 +6721,20 @@ function Logger(server) {
       const { statusCode } = res;
       durationInMilliseconds = getRequestDuration(start);
       let log = `${remoteAddress}:${port} - [${datetime}] ${method}:${url} ${statusCode} ${durationInMilliseconds.toLocaleString()}ms`;
-      console.log(log);
+      logger.info(log);
       if(req.getLogs){
           const visualIndex = "\t";
           const requestLogs = req.getLogs();
           if(requestLogs.length > 0){
-              console.log("Request logs:");
+              logger.info("Request logs:");
               for(let i=0; i<requestLogs.length; i++){
                   if(Array.isArray(requestLogs)){
-                      console.log(visualIndex, ...requestLogs[i]);
+                      logger.info(visualIndex, ...requestLogs[i]);
                   }else{
-                      console.log(visualIndex, requestLogs[i]);
+                      logger.info(visualIndex, requestLogs[i]);
                   }
               }
-              console.log("\n");
+              logger.info("\n");
           }
       }
     });
@@ -7220,7 +6762,9 @@ const util = require("./util");
 const config = require("../../../config");
 
 function AccessTokenValidator(server) {
-    console.log(`Registering AccessTokenValidator middleware`);
+    const logger = $$.getLogger("AccessTokenValidator", "apihub/oauth");
+
+    logger.info(`Registering AccessTokenValidator middleware`);
     const urlsToSkip = util.getUrlsToSkip();
 
     server.use(function (req, res, next) {
@@ -7262,7 +6806,9 @@ const util = require("./util");
 const urlModule = require("url");
 
 function OAuthMiddleware(server) {
-  console.log(`Registering OAuthMiddleware`);
+  const logger = $$.getLogger("OAuthMiddleware", "apihub/oauth");
+
+  logger.info(`Registering OAuthMiddleware`);
   const fs = require("fs");
   const config = require("../../../config");
   const oauthConfig = config.getConfig("oauthConfig");
@@ -7335,13 +6881,16 @@ function OAuthMiddleware(server) {
           return sendUnauthorizedResponse(req, res, "Unable to get token set", err);
         }
 
+        debugMessage("Access token", tokenSet.access_token);
         util.encryptTokenSet(CURRENT_ENCRYPTION_KEY_PATH, tokenSet, (err, encryptedTokenSet) => {
           if (err) {
             return sendUnauthorizedResponse(req, res, "Unable to encrypt access token", err);
           }
 
           const {payload} = util.parseAccessToken(tokenSet.access_token);
+          debugMessage("Access token payload", payload);
           const SSODetectedId = util.getSSODetectedIdFromDecryptedToken(tokenSet.access_token);
+          debugMessage("SSODetectedId", SSODetectedId);
           res.writeHead(301, {
             Location: "/",
             "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSODetectedId = ${SSODetectedId}`, `loginContextCookie=; Max-Age=0`],
@@ -7371,7 +6920,7 @@ function OAuthMiddleware(server) {
 
   function debugMessage(...args) {
     if (oauthConfig.debugLogEnabled) {
-      console.log(...args);
+      logger.debug(...args);
     }
   }
 
@@ -7405,6 +6954,7 @@ function OAuthMiddleware(server) {
 
     const canSkipOAuth = urlsToSkip.some((urlToSkip) => url.indexOf(urlToSkip) === 0);
     if (canSkipOAuth) {
+      debugMessage("Skipping OAuth authentication for url", url);
       next();
       return;
     }
@@ -7467,11 +7017,11 @@ function OAuthMiddleware(server) {
             return startLogoutPhase(res);
         }
 
+        debugMessage("SSODetectedId", SSODetectedId);
         req.headers["user-id"] = SSODetectedId;
         if (url.includes("/mq/")) {
           return next();
         }
-        res.setHeader("Set-Cookie", `sessionExpiryTime=${sessionExpiryTime}; Path=/`)
         util.updateAccessTokenExpiration(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, accessTokenCookie, (err, encryptedAccessToken)=>{
           if (err) {
             debugMessage("Logout because accessTokenCookie decryption failed.")
@@ -8069,6 +7619,8 @@ module.exports = {
 
 },{"../../../config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./errorMessages":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/lib/errorMessages.js","fs":false,"opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js":[function(require,module,exports){
 function setupRequestEnhancements(server) {
+    const logger = $$.getLogger("setupRequestEnhancements", "apihub/requestEnhancements");
+
     const constants = require("./../../moduleConstants");
 
 	server.use(function (req, res, next) {
@@ -8084,14 +7636,16 @@ function setupRequestEnhancements(server) {
 		next();
 	});
 
-    console.log(`${constants.LOG_IDENTIFIER}`, "Request API enhancements were set up.");
+    logger.info(`${constants.LOG_IDENTIFIER}`, "Request API enhancements were set up.");
 }
 
 module.exports = setupRequestEnhancements;
 
 },{"./../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js":[function(require,module,exports){
 function ResponseHeaders(server) {
-    console.log(`Registering Response Headers middleware`);
+    const logger = $$.getLogger("ResponseHeaders", "apihub/responseHeaders");
+
+    logger.info(`Registering Response Headers middleware`);
 
     const config = require("../../config");
     const responseHeaders = config.getConfig("responseHeaders");
@@ -8126,6 +7680,7 @@ module.exports.getMimeTypeFromExtension = require("./mimeType");
 },{"./mimeType":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/mimeType.js","./requests":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/requests.js","./responseWrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/responseWrapper.js","./streams":"/home/runner/work/privatesky/privatesky/modules/apihub/utils/streams.js"}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/middlewares/index.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const responseWrapper = require('../responseWrapper');
+const logger = $$.getLogger("middlewares", "apihub/utils");
 
 function requestBodyJSONMiddleware(request, response, next) {
     /**
@@ -8200,7 +7755,7 @@ function bodyReaderMiddleware(req, res, next) {
 }
 
 function sendUnauthorizedResponse(req, res, reason, error) {
-    console.error(`[Auth] [${req.method}] ${req.url} blocked: ${reason}`, error);
+    logger.error(`[Auth] [${req.method}] ${req.url} blocked: ${reason}`, error);
     res.statusCode = 403;
     res.end();
 }
@@ -8481,6 +8036,8 @@ module.exports = function (extension) {
     return defaultMimeType;
 };
 },{}],"/home/runner/work/privatesky/privatesky/modules/apihub/utils/request-utils.js":[function(require,module,exports){
+const logger = $$.getLogger("request-utils", "apihub/utils");
+
 function getCurrentApiHubUrl(server) {
     const config = require("../config");
     const currentApiHubUrl = `${server.protocol}://${config.getConfig("host")}:${config.getConfig("port")}`;
@@ -8522,7 +8079,7 @@ async function getLocalBdnsEntryListExcludingSelfAsync(request, domain, entryNam
         const entriesUrl = `/contracts/${domain}/bdns-entries/anchoringServices`;
         entries = await server.makeLocalRequestAsync("GET", entriesUrl);
     } catch (error) {
-        console.log(`[${entryName}] Failed to call contract to get ${entryName}. Falling back to local bdns check`);
+        logger.error(`[${entryName}] Failed to call contract to get ${entryName}. Falling back to local bdns check`);
 
         try {
             const bdnsUrl = `/bdns`;
@@ -8531,7 +8088,7 @@ async function getLocalBdnsEntryListExcludingSelfAsync(request, domain, entryNam
                 entries = bdns[domain][entryName];
             }
         } catch (error) {
-            console.log(`[${entryName}] Failed to call BDNS to get ${entryName}`);
+            logger.error(`[${entryName}] Failed to call BDNS to get ${entryName}`);
         }
     }
 
@@ -28244,7 +27801,6 @@ const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
-const keySSIFactory = require("./KeySSIFactory");
 
 const MAX_KEYSSI_LENGTH = 2048
 
@@ -33379,6 +32935,7 @@ const CryptoFunctionTypes = keySSIResolver.CryptoFunctionTypes;
 const jwtUtils = require("./jwt");
 const constants = require("../moduleConstants");
 const config = require("./index");
+const { Mnemonic } = require("./mnemonic");
 
 const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 templateSeedSSI.load(SSITypes.SEED_SSI, "default");
@@ -33669,6 +33226,20 @@ const base64UrlEncodeJOSE = (data) => {
     return data.toString("base64").replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
+const convertKeySSIObjectToMnemonic = (keySSIObject) => {
+
+    const mnemonic = new Mnemonic("english");
+    const randomBase64 = keySSIObject.getSpecificString();
+    const randomBytes = $$.Buffer.from(randomBase64, "base64");
+    return mnemonic.toMnemonic(randomBytes, sha256JOSE);
+}
+
+const convertMnemonicToKeySSIIdentifier = (phrase, typeName, domain, vn) => {
+    const mnemonic = new Mnemonic("english");
+    const specificStringHex = mnemonic.toRawEntropyHex(phrase);
+    const specificStringBase64 = $$.Buffer.from(specificStringHex, "hex").toString("base64");
+    return `ssi:${typeName}:${domain}:${specificStringBase64}::${vn}`
+}
 
 module.exports = {
     getCryptoFunctionForKeySSI,
@@ -33710,10 +33281,12 @@ module.exports = {
     createCredentialForDID,
     base64UrlEncodeJOSE,
     sha256JOSE,
-    joseAPI: require("pskcrypto").joseAPI
+    joseAPI: require("pskcrypto").joseAPI,
+    convertKeySSIObjectToMnemonic,
+    convertMnemonicToKeySSIIdentifier
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","./mnemonic":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/mnemonic.js","key-ssi-resolver":"key-ssi-resolver","psk-dbf":false,"pskcrypto":"pskcrypto"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -34062,7 +33635,387 @@ module.exports = {
     verifyDID_JWT
 };
 
-},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
+},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/mnemonic.js":[function(require,module,exports){
+let WORDLISTS = {};
+WORDLISTS["english"] = [
+    "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse",
+    "access", "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act",
+    "action", "actor", "actress", "actual", "adapt", "add", "addict", "address", "adjust", "admit",
+    "adult", "advance", "advice", "aerobic", "affair", "afford", "afraid", "again", "age", "agent",
+    "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album", "alcohol", "alert",
+    "alien", "all", "alley", "allow", "almost", "alone", "alpha", "already", "also", "alter",
+    "always", "amateur", "amazing", "among", "amount", "amused", "analyst", "anchor", "ancient", "anger",
+    "angle", "angry", "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique",
+    "anxiety", "any", "apart", "apology", "appear", "apple", "approve", "april", "arch", "arctic",
+    "area", "arena", "argue", "arm", "armed", "armor", "army", "around", "arrange", "arrest",
+    "arrive", "arrow", "art", "artefact", "artist", "artwork", "ask", "aspect", "assault", "asset",
+    "assist", "assume", "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction",
+    "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado", "avoid", "awake",
+    "aware", "away", "awesome", "awful", "awkward", "axis", "baby", "bachelor", "bacon", "badge",
+    "bag", "balance", "balcony", "ball", "bamboo", "banana", "banner", "bar", "barely", "bargain",
+    "barrel", "base", "basic", "basket", "battle", "beach", "bean", "beauty", "because", "become",
+    "beef", "before", "begin", "behave", "behind", "believe", "below", "belt", "bench", "benefit",
+    "best", "betray", "better", "between", "beyond", "bicycle", "bid", "bike", "bind", "biology",
+    "bird", "birth", "bitter", "black", "blade", "blame", "blanket", "blast", "bleak", "bless",
+    "blind", "blood", "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body",
+    "boil", "bomb", "bone", "bonus", "book", "boost", "border", "boring", "borrow", "boss",
+    "bottom", "bounce", "box", "boy", "bracket", "brain", "brand", "brass", "brave", "bread",
+    "breeze", "brick", "bridge", "brief", "bright", "bring", "brisk", "broccoli", "broken", "bronze",
+    "broom", "brother", "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb",
+    "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus", "business", "busy",
+    "butter", "buyer", "buzz", "cabbage", "cabin", "cable", "cactus", "cage", "cake", "call",
+    "calm", "camera", "camp", "can", "canal", "cancel", "candy", "cannon", "canoe", "canvas",
+    "canyon", "capable", "capital", "captain", "car", "carbon", "card", "cargo", "carpet", "carry",
+    "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog", "catch", "category",
+    "cattle", "caught", "cause", "caution", "cave", "ceiling", "celery", "cement", "census", "century",
+    "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase",
+    "chat", "cheap", "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child",
+    "chimney", "choice", "choose", "chronic", "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle",
+    "citizen", "city", "civil", "claim", "clap", "clarify", "claw", "clay", "clean", "clerk",
+    "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock", "clog", "close",
+    "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
+    "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort",
+    "comic", "common", "company", "concert", "conduct", "confirm", "congress", "connect", "consider", "control",
+    "convince", "cook", "cool", "copper", "copy", "coral", "core", "corn", "correct", "cost",
+    "cotton", "couch", "country", "couple", "course", "cousin", "cover", "coyote", "crack", "cradle",
+    "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream", "credit", "creek",
+    "crew", "cricket", "crime", "crisp", "critic", "crop", "cross", "crouch", "crowd", "crucial",
+    "cruel", "cruise", "crumble", "crunch", "crush", "cry", "crystal", "cube", "culture", "cup",
+    "cupboard", "curious", "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad",
+    "damage", "damp", "dance", "danger", "daring", "dash", "daughter", "dawn", "day", "deal",
+    "debate", "debris", "decade", "december", "decide", "decline", "decorate", "decrease", "deer", "defense",
+    "define", "defy", "degree", "delay", "deliver", "demand", "demise", "denial", "dentist", "deny",
+    "depart", "depend", "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk",
+    "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram", "dial", "diamond",
+    "diary", "dice", "diesel", "diet", "differ", "digital", "dignity", "dilemma", "dinner", "dinosaur",
+    "direct", "dirt", "disagree", "discover", "disease", "dish", "dismiss", "disorder", "display", "distance",
+    "divert", "divide", "divorce", "dizzy", "doctor", "document", "dog", "doll", "dolphin", "domain",
+    "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft", "dragon", "drama",
+    "drastic", "draw", "dream", "dress", "drift", "drill", "drink", "drip", "drive", "drop",
+    "drum", "dry", "duck", "dumb", "dune", "during", "dust", "dutch", "duty", "dwarf",
+    "dynamic", "eager", "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo",
+    "ecology", "economy", "edge", "edit", "educate", "effort", "egg", "eight", "either", "elbow",
+    "elder", "electric", "elegant", "element", "elephant", "elevator", "elite", "else", "embark", "embody",
+    "embrace", "emerge", "emotion", "employ", "empower", "empty", "enable", "enact", "end", "endless",
+    "endorse", "enemy", "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough",
+    "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode", "equal", "equip",
+    "era", "erase", "erode", "erosion", "error", "erupt", "escape", "essay", "essence", "estate",
+    "eternal", "ethics", "evidence", "evil", "evoke", "evolve", "exact", "example", "excess", "exchange",
+    "excite", "exclude", "excuse", "execute", "exercise", "exhaust", "exhibit", "exile", "exist", "exit",
+    "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend", "extra", "eye",
+    "eyebrow", "fabric", "face", "faculty", "fade", "faint", "faith", "fall", "false", "fame",
+    "family", "famous", "fan", "fancy", "fantasy", "farm", "fashion", "fat", "fatal", "father",
+    "fatigue", "fault", "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female",
+    "fence", "festival", "fetch", "fever", "few", "fiber", "fiction", "field", "figure", "file",
+    "film", "filter", "final", "find", "fine", "finger", "finish", "fire", "firm", "first",
+    "fiscal", "fish", "fit", "fitness", "fix", "flag", "flame", "flash", "flat", "flavor",
+    "flee", "flight", "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly",
+    "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot", "force", "forest",
+    "forget", "fork", "fortune", "forum", "forward", "fossil", "foster", "found", "fox", "fragile",
+    "frame", "frequent", "fresh", "friend", "fringe", "frog", "front", "frost", "frown", "frozen",
+    "fruit", "fuel", "fun", "funny", "furnace", "fury", "future", "gadget", "gain", "galaxy",
+    "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment", "gas", "gasp",
+    "gate", "gather", "gauge", "gaze", "general", "genius", "genre", "gentle", "genuine", "gesture",
+    "ghost", "giant", "gift", "giggle", "ginger", "giraffe", "girl", "give", "glad", "glance",
+    "glare", "glass", "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue",
+    "goat", "goddess", "gold", "good", "goose", "gorilla", "gospel", "gossip", "govern", "gown",
+    "grab", "grace", "grain", "grant", "grape", "grass", "gravity", "great", "green", "grid",
+    "grief", "grit", "grocery", "group", "grow", "grunt", "guard", "guess", "guide", "guilt",
+    "guitar", "gun", "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy",
+    "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard", "head", "health",
+    "heart", "heavy", "hedgehog", "height", "hello", "helmet", "help", "hen", "hero", "hidden",
+    "high", "hill", "hint", "hip", "hire", "history", "hobby", "hockey", "hold", "hole",
+    "holiday", "hollow", "home", "honey", "hood", "hope", "horn", "horror", "horse", "hospital",
+    "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble", "humor", "hundred",
+    "hungry", "hunt", "hurdle", "hurry", "hurt", "husband", "hybrid", "ice", "icon", "idea",
+    "identify", "idle", "ignore", "ill", "illegal", "illness", "image", "imitate", "immense", "immune",
+    "impact", "impose", "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate",
+    "indoor", "industry", "infant", "inflict", "inform", "inhale", "inherit", "initial", "inject", "injury",
+    "inmate", "inner", "innocent", "input", "inquiry", "insane", "insect", "inside", "inspire", "install",
+    "intact", "interest", "into", "invest", "invite", "involve", "iron", "island", "isolate", "issue",
+    "item", "ivory", "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel",
+    "job", "join", "joke", "journey", "joy", "judge", "juice", "jump", "jungle", "junior",
+    "junk", "just", "kangaroo", "keen", "keep", "ketchup", "key", "kick", "kid", "kidney",
+    "kind", "kingdom", "kiss", "kit", "kitchen", "kite", "kitten", "kiwi", "knee", "knife",
+    "knock", "know", "lab", "label", "labor", "ladder", "lady", "lake", "lamp", "language",
+    "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law", "lawn", "lawsuit",
+    "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left", "leg", "legal",
+    "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson", "letter", "level",
+    "liar", "liberty", "library", "license", "life", "lift", "light", "like", "limb", "limit",
+    "link", "lion", "liquid", "list", "little", "live", "lizard", "load", "loan", "lobster",
+    "local", "lock", "logic", "lonely", "long", "loop", "lottery", "loud", "lounge", "love",
+    "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics", "machine", "mad",
+    "magic", "magnet", "maid", "mail", "main", "major", "make", "mammal", "man", "manage",
+    "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin", "marine", "market",
+    "marriage", "mask", "mass", "master", "match", "material", "math", "matrix", "matter", "maximum",
+    "maze", "meadow", "mean", "measure", "meat", "mechanic", "medal", "media", "melody", "melt",
+    "member", "memory", "mention", "menu", "mercy", "merge", "merit", "merry", "mesh", "message",
+    "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind", "minimum", "minor",
+    "minute", "miracle", "mirror", "misery", "miss", "mistake", "mix", "mixed", "mixture", "mobile",
+    "model", "modify", "mom", "moment", "monitor", "monkey", "monster", "month", "moon", "moral",
+    "more", "morning", "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie",
+    "much", "muffin", "mule", "multiply", "muscle", "museum", "mushroom", "music", "must", "mutual",
+    "myself", "mystery", "myth", "naive", "name", "napkin", "narrow", "nasty", "nation", "nature",
+    "near", "neck", "need", "negative", "neglect", "neither", "nephew", "nerve", "nest", "net",
+    "network", "neutral", "never", "news", "next", "nice", "night", "noble", "noise", "nominee",
+    "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice", "novel", "now",
+    "nuclear", "number", "nurse", "nut", "oak", "obey", "object", "oblige", "obscure", "observe",
+    "obtain", "obvious", "occur", "ocean", "october", "odor", "off", "offer", "office", "often",
+    "oil", "okay", "old", "olive", "olympic", "omit", "once", "one", "onion", "online",
+    "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit", "orchard", "order",
+    "ordinary", "organ", "orient", "original", "orphan", "ostrich", "other", "outdoor", "outer", "output",
+    "outside", "oval", "oven", "over", "own", "owner", "oxygen", "oyster", "ozone", "pact",
+    "paddle", "page", "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper",
+    "parade", "parent", "park", "parrot", "party", "pass", "patch", "path", "patient", "patrol",
+    "pattern", "pause", "pave", "payment", "peace", "peanut", "pear", "peasant", "pelican", "pen",
+    "penalty", "pencil", "people", "pepper", "perfect", "permit", "person", "pet", "phone", "photo",
+    "phrase", "physical", "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot",
+    "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet", "plastic", "plate",
+    "play", "please", "pledge", "pluck", "plug", "plunge", "poem", "poet", "point", "polar",
+    "pole", "police", "pond", "pony", "pool", "popular", "portion", "position", "possible", "post",
+    "potato", "pottery", "poverty", "powder", "power", "practice", "praise", "predict", "prefer", "prepare",
+    "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority", "prison", "private",
+    "prize", "problem", "process", "produce", "profit", "program", "project", "promote", "proof", "property",
+    "prosper", "protect", "proud", "provide", "public", "pudding", "pull", "pulp", "pulse", "pumpkin",
+    "punch", "pupil", "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle",
+    "pyramid", "quality", "quantum", "quarter", "question", "quick", "quit", "quiz", "quote", "rabbit",
+    "raccoon", "race", "rack", "radar", "radio", "rail", "rain", "raise", "rally", "ramp",
+    "ranch", "random", "range", "rapid", "rare", "rate", "rather", "raven", "raw", "razor",
+    "ready", "real", "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle",
+    "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject", "relax", "release",
+    "relief", "rely", "remain", "remember", "remind", "remove", "render", "renew", "rent", "reopen",
+    "repair", "repeat", "replace", "report", "require", "rescue", "resemble", "resist", "resource", "response",
+    "result", "retire", "retreat", "return", "reunion", "reveal", "review", "reward", "rhythm", "rib",
+    "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid", "ring", "riot",
+    "ripple", "risk", "ritual", "rival", "river", "road", "roast", "robot", "robust", "rocket",
+    "romance", "roof", "rookie", "room", "rose", "rotate", "rough", "round", "route", "royal",
+    "rubber", "rude", "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness",
+    "safe", "sail", "salad", "salmon", "salon", "salt", "salute", "same", "sample", "sand",
+    "satisfy", "satoshi", "sauce", "sausage", "save", "say", "scale", "scan", "scare", "scatter",
+    "scene", "scheme", "school", "science", "scissors", "scorpion", "scout", "scrap", "screen", "script",
+    "scrub", "sea", "search", "season", "seat", "second", "secret", "section", "security", "seed",
+    "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence", "series", "service",
+    "session", "settle", "setup", "seven", "shadow", "shaft", "shallow", "share", "shed", "shell",
+    "sheriff", "shield", "shift", "shine", "ship", "shiver", "shock", "shoe", "shoot", "shop",
+    "short", "shoulder", "shove", "shrimp", "shrug", "shuffle", "shy", "sibling", "sick", "side",
+    "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar", "simple", "since",
+    "sing", "siren", "sister", "situate", "six", "size", "skate", "sketch", "ski", "skill",
+    "skin", "skirt", "skull", "slab", "slam", "sleep", "slender", "slice", "slide", "slight",
+    "slim", "slogan", "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth",
+    "snack", "snake", "snap", "sniff", "snow", "soap", "soccer", "social", "sock", "soda",
+    "soft", "solar", "soldier", "solid", "solution", "solve", "someone", "song", "soon", "sorry",
+    "sort", "soul", "sound", "soup", "source", "south", "space", "spare", "spatial", "spawn",
+    "speak", "special", "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin",
+    "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray", "spread", "spring",
+    "spy", "square", "squeeze", "squirrel", "stable", "stadium", "staff", "stage", "stairs", "stamp",
+    "stand", "start", "state", "stay", "steak", "steel", "stem", "step", "stereo", "stick",
+    "still", "sting", "stock", "stomach", "stone", "stool", "story", "stove", "strategy", "street",
+    "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject", "submit", "subway",
+    "success", "such", "sudden", "suffer", "sugar", "suggest", "suit", "summer", "sun", "sunny",
+    "sunset", "super", "supply", "supreme", "sure", "surface", "surge", "surprise", "surround", "survey",
+    "suspect", "sustain", "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim",
+    "swing", "switch", "sword", "symbol", "symptom", "syrup", "system", "table", "tackle", "tag",
+    "tail", "talent", "talk", "tank", "tape", "target", "task", "taste", "tattoo", "taxi",
+    "teach", "team", "tell", "ten", "tenant", "tennis", "tent", "term", "test", "text",
+    "thank", "that", "theme", "then", "theory", "there", "they", "thing", "this", "thought",
+    "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger", "tilt", "timber",
+    "time", "tiny", "tip", "tired", "tissue", "title", "toast", "tobacco", "today", "toddler",
+    "toe", "together", "toilet", "token", "tomato", "tomorrow", "tone", "tongue", "tonight", "tool",
+    "tooth", "top", "topic", "topple", "torch", "tornado", "tortoise", "toss", "total", "tourist",
+    "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic", "train", "transfer",
+    "trap", "trash", "travel", "tray", "treat", "tree", "trend", "trial", "tribe", "trick",
+    "trigger", "trim", "trip", "trophy", "trouble", "truck", "true", "truly", "trumpet", "trust",
+    "truth", "try", "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle",
+    "twelve", "twenty", "twice", "twin", "twist", "two", "type", "typical", "ugly", "umbrella",
+    "unable", "unaware", "uncle", "uncover", "under", "undo", "unfair", "unfold", "unhappy", "uniform",
+    "unique", "unit", "universe", "unknown", "unlock", "until", "unusual", "unveil", "update", "upgrade",
+    "uphold", "upon", "upper", "upset", "urban", "urge", "usage", "use", "used", "useful",
+    "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley", "valve", "van",
+    "vanish", "vapor", "various", "vast", "vault", "vehicle", "velvet", "vendor", "venture", "venue",
+    "verb", "verify", "version", "very", "vessel", "veteran", "viable", "vibrant", "vicious", "victory",
+    "video", "view", "village", "vintage", "violin", "virtual", "virus", "visa", "visit", "visual",
+    "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote", "voyage", "wage",
+    "wagon", "wait", "walk", "wall", "walnut", "want", "warfare", "warm", "warrior", "wash",
+    "wasp", "waste", "water", "wave", "way", "wealth", "weapon", "wear", "weasel", "weather",
+    "web", "wedding", "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat",
+    "wheel", "when", "where", "whip", "whisper", "wide", "width", "wife", "wild", "will",
+    "win", "window", "wine", "wing", "wink", "winner", "winter", "wire", "wisdom", "wise",
+    "wish", "witness", "wolf", "woman", "wonder", "wood", "wool", "word", "work", "world",
+    "worry", "worth", "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year",
+    "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"];
+
+const Mnemonic = function (language) {
+
+    const RADIX = 2048;
+
+    const self = this;
+    let wordlist = [];
+
+    function init() {
+        wordlist = WORDLISTS[language];
+        if (wordlist.length != RADIX) {
+            err = 'Wordlist should contain ' + RADIX + ' words, but it contains ' + wordlist.length + ' words.';
+            throw err;
+        }
+    }
+
+    self.toMnemonic = function (byteArray, hashFunction) {
+        if (byteArray.length % 4 > 0) {
+            throw 'Data length in bits should be divisible by 32, but it is not (' + byteArray.length + ' bytes = ' + byteArray.length * 8 + ' bits).'
+        }
+
+        const data = byteArrayToWordArray(byteArray);
+        const hash = byteArrayToWordArray(hashFunction(data));
+
+        const h = fromBits(hash);
+        const a = byteArrayToBinaryString(byteArray);
+        const c = zfill(hexStringToBinaryString(h), 256);
+        const d = c.substring(0, byteArray.length * 8 / 32);
+
+        const b = a + d;
+
+        let result = [];
+        const blen = b.length / 11;
+        for (let i = 0; i < blen; i++) {
+            const idx = parseInt(b.substring(i * 11, (i + 1) * 11), 2);
+            result.push(wordlist[idx]);
+        }
+        return self.joinWords(result);
+    }
+
+
+    self.toRawEntropyHex = function (mnemonic) {
+        const b = mnemonicToBinaryString(mnemonic);
+        if (b === null)
+            return null;
+        const d = b.substring(0, b.length / 33 * 32);
+        const nd = binaryStringToWordArray(d);
+
+        let h = "";
+        for (let i = 0; i < nd.length; i++) {
+            h += ('0000000' + nd[i].toString(16)).slice(-8);
+        }
+        return h;
+    }
+
+    self.splitWords = function (mnemonic) {
+        return mnemonic.split(/\s/g).filter(function (x) { return x.length; });
+    }
+
+    self.joinWords = function (words) {
+        // Set space correctly depending on the language
+        // see https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md#japanese
+        let space = " ";
+        if (language == "japanese") {
+            space = "\u3000"; // ideographic space
+        }
+        return words.join(space);
+    }
+
+    self.normalizeString = function (str) {
+        return str.normalize("NFKD");
+    }
+
+    function byteArrayToWordArray(data) {
+        let a = [];
+        for (let i = 0; i < data.length / 4; i++) {
+            let v = 0;
+            v += data[i * 4 + 0] << 8 * 3;
+            v += data[i * 4 + 1] << 8 * 2;
+            v += data[i * 4 + 2] << 8 * 1;
+            v += data[i * 4 + 3] << 8 * 0;
+            a.push(v);
+        }
+        return a;
+    }
+
+    function byteArrayToBinaryString(data) {
+        let bin = "";
+        for (let i = 0; i < data.length; i++) {
+            bin += zfill(data[i].toString(2), 8);
+        }
+        return bin;
+    }
+
+    function hexStringToBinaryString(hexString) {
+        let binaryString = "";
+        for (let i = 0; i < hexString.length; i++) {
+            binaryString += zfill(parseInt(hexString[i], 16).toString(2), 4);
+        }
+        return binaryString;
+    }
+
+    function binaryStringToWordArray(binary) {
+        const aLen = binary.length / 32;
+        let a = [];
+        for (let i = 0; i < aLen; i++) {
+            const valueStr = binary.substring(0, 32);
+            const value = parseInt(valueStr, 2);
+            a.push(value);
+            binary = binary.slice(32);
+        }
+        return a;
+    }
+
+    function mnemonicToBinaryString(mnemonicString) {
+        const mnemonic = self.splitWords(mnemonicString);
+        if (mnemonic.length == 0 || mnemonic.length % 3 > 0) {
+            return null;
+        }
+       
+        let idx = [];
+        for (let i = 0; i < mnemonic.length; i++) {
+            const word = mnemonic[i];
+            const wordIndex = wordlist.indexOf(word);
+            if (wordIndex == -1) {
+                return null;
+            }
+            const binaryIndex = zfill(wordIndex.toString(2), 11);
+            idx.push(binaryIndex);
+        }
+        return idx.join('');
+    }
+
+    // Pad a numeric string on the left with zero digits until the given width
+    // is reached.
+    // Note this differs to the python implementation because it does not
+    // handle numbers starting with a sign.
+    function zfill(source, length) {
+        source = source.toString();
+        while (source.length < length) {
+            source = '0' + source;
+        }
+        return source;
+    }
+
+    function bitLength(a){
+        let l = a.length, x;
+        if (l === 0) { return 0; }
+        x = a[l - 1];
+        return (l - 1) * 32 + getPartial(x);
+    }
+
+    function getPartial(x) {
+        return Math.round(x / 0x10000000000) || 32;
+    }
+
+    /** Convert from a bitArray to a UTF-8 string. */
+    function fromBits(arr) {
+        let out = "", i;
+        for (i = 0; i < arr.length; i++) {
+            out += ((arr[i] | 0) + 0xF00000000000).toString(16).substr(4);
+        }
+        return out.substr(0, bitLength(arr) / 4);
+    }
+
+    init();
+}
+
+module.exports = {
+    Mnemonic
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
 module.exports.TimestampMergingStrategy = function(){
 
 }
@@ -46508,7 +46461,142 @@ module.exports = {
 }
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"syndicate"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/Logger.js":[function(require,module,exports){
+function Logger(className, moduleName, logFile) {
+    if (typeof className === "undefined" || typeof moduleName === "undefined") {
+        throw Error(`Arguments className and moduleName are mandatory.`);
+    }
+
+    const MAX_STRING_LENGTH = 11;
+    const getPaddingForArg = (arg, maxLen = MAX_STRING_LENGTH) => {
+        let noSpaces = Math.abs(maxLen - arg.length);
+        let spaces = String(" ").repeat(noSpaces);
+        return spaces;
+    };
+
+    const normalizeArg = (arg) => {
+        if (arg.length >= MAX_STRING_LENGTH) {
+            return arg.substring(0, MAX_STRING_LENGTH);
+        } else {
+            return `${arg}${getPaddingForArg(arg)}`;
+        }
+    }
+
+    const convertIntToHexString = (number) => {
+        let hexString = number.toString("16");
+        let paddingLength = (2 - hexString.length) >= 0 ? (2 - hexString.length) : 0;
+        for (let i = 0; i < paddingLength; i++) {
+            hexString = "0" + hexString;
+        }
+        return "0x" + hexString;
+    }
+
+    const getPreamble = (functionName, code = 0) => {
+        const type = functionName.toUpperCase();
+        const timestamp = Date.now().toString();
+        const preamble = `${type}${getPaddingForArg(type, 9)}${convertIntToHexString(code)} ${timestamp} ${normalizeArg(className)} ${normalizeArg(moduleName)}`;
+        return preamble;
+    }
+
+
+    const stripCodeFromArgs = (...args) => {
+        let code = args[0];
+        if (typeof code !== "number") {
+            code = 0;
+        } else {
+            args.shift();
+        }
+
+        return {
+            code,
+            args
+        }
+    }
+
+    const executeFunctionFromConsole = (functionName, ...args) => {
+        for (let i = 0; i < args.length; i++) {
+            if (typeof args[i] === "string") {
+                args[i] = args[i].replaceAll("\n", "\n\t");
+            }
+        }
+
+        const res = stripCodeFromArgs(...args);
+        const preamble = getPreamble(functionName, res.code);
+        if (functionName === "critical") {
+            functionName = "error";
+        }
+        console[functionName](preamble, ...res.args);
+    }
+
+    const writeToFile = (functionName, ...args) => {
+        const fs = require("fs");
+        const path = require("path");
+        if (typeof logFile === "undefined") {
+            return;
+        }
+        const res = stripCodeFromArgs(...args);
+        let stringToBeWritten = getPreamble(functionName, res.code);
+        for (let i = 0; i < res.args.length; i++) {
+            stringToBeWritten += res.args[i]
+        }
+
+        stringToBeWritten += require("os").EOL;
+
+        try {
+            fs.accessSync(path.dirname(logFile));
+        } catch (e) {
+            fs.mkdirSync(path.dirname(logFile), {recursive: true});
+        }
+
+        fs.appendFileSync(logFile, stringToBeWritten);
+    }
+
+    const printToConsoleAndFile = (functionName, ...args) => {
+        executeFunctionFromConsole(functionName, ...args);
+        const envTypes = require("./moduleConstants");
+        if ($$.environmentType === envTypes.NODEJS_ENVIRONMENT_TYPE) {
+            writeToFile(functionName, ...args);
+        }
+    }
+
+    this.log = (...args) => {
+        printToConsoleAndFile("log", ...args);
+    }
+
+    this.info = (...args) => {
+        printToConsoleAndFile("info", ...args);
+    }
+
+    this.warn = (...args) => {
+        printToConsoleAndFile("warn", ...args);
+    }
+
+    this.trace = (...args) => {
+        printToConsoleAndFile("trace", ...args);
+    }
+
+    this.debug = (...args) => {
+        printToConsoleAndFile("debug", ...args);
+    }
+
+    this.error = (...args) => {
+        printToConsoleAndFile("error", ...args);
+    }
+
+    this.critical = (...args) => {
+        printToConsoleAndFile("critical", ...args);
+    }
+}
+
+const getLogger = (className, moduleName, criticalLogFile) => {
+    return new Logger(className, moduleName, criticalLogFile);
+}
+
+module.exports = {
+    getLogger
+}
+
+},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","fs":false,"os":false,"path":false}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
@@ -59370,11 +59458,11 @@ function isSlowBuffer (obj) {
 }
 
 },{}],"apihub":[function(require,module,exports){
-process.on('uncaughtException', err => {
-	console.error('There was an uncaught error', err);
-});
+const logger = $$.getLogger("HttpServer", "apihub");
 
-const {LOG_IDENTIFIER} = require("./moduleConstants");
+process.on('uncaughtException', err => {
+	logger.error('There was an uncaught error', err);
+});
 
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
@@ -59391,17 +59479,16 @@ const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 	require('./components/contracts');
 	require('./components/bricking');
 	require('./components/anchoring');
-	require('./components/channelManager');
 	require('./components/bdns');
 	require('./components/fileManager');
 	require('./components/bricksFabric');
 	require('./components/staticServer');
-	require('./components/mqManager');
 	require('./components/keySsiNotifications');
 	require('./components/debugLogger');
 	require('./components/mqHub');
 	require('./components/enclave');
 	require('./components/secrets');
+	require('./components/mainDSU');
 	require('./components/cloudWallet');
 	require('./components/stream');
 	require('./components/requestForwarder');
@@ -59420,10 +59507,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 	const server = new Server(sslConfig);
 	server.config = conf;
 	server.rootFolder = rootFolder;
-
 	let listenCallback = (err) => {
 		if (err) {
-			console.log(LOG_IDENTIFIER, err);
+			logger.error(err);
 			if (!dynamicPort && callback) {
 				return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to listen on port <${port}>`, err));
 			}
@@ -59438,14 +59524,13 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 					dynamicPort -= 1;
 				}
 				let timeValue = retryTimeout || CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL;
-				console.log(LOG_IDENTIFIER, `setting a timeout value of before retrying ${timeValue}`);
-				setTimeout(bootup, );
+				setTimeout(bootup, timeValue);
 			}
 		}
 	};
 
 	function bootup(){
-		console.log(LOG_IDENTIFIER, `Trying to listen on port ${port}`);
+		logger.info(`Trying to listen on port ${port}`);
 		server.listen(port, conf.host, listenCallback);
 	};
 
@@ -59458,12 +59543,12 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			const fs = require(fsname);
 			fs.readFile(restartServerFile, function(error, content) {
 				if (!error && content.toString() !== "") {
-					console.log(`${LOG_IDENTIFIER} ### Preparing to restart because of the request done by file: <${restartServerFile}> File content: ${content}`);
+					logger.log(`### Preparing to restart because of the request done by file: <${restartServerFile}> File content: ${content}`);
 					server.close();
 					server.listen(port, conf.host, () => {
 						fs.writeFile(restartServerFile, "", function(){
 							//we don't care about this file.. we just clear it's content the prevent recursive restarts
-							console.log(`${LOG_IDENTIFIER} ### Restart operation finished.`);
+							logger.log(`### Restart operation finished.`);
 						});
 					});
 				}
@@ -59476,7 +59561,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 
 	function bindFinished(err) {
 		if (err) {
-			console.log(err);
+			logger.error(err);
 			if (callback) {
 				return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to bind on port <${port}>`, err));
 			}
@@ -59497,7 +59582,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 		server.use(function (req, res, next) {
 			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, ${conf.componentsConfig.virtualMQ.signatureHeaderName}, token`);
+			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, token`);
 			res.setHeader('Access-Control-Allow-Credentials', true);
 			next();
 		});
@@ -59524,7 +59609,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 				});
 			});
 		} else {
-			console.log(`${LOG_IDENTIFIER} Rate limit mechanism disabled!`);
+			logger.info(`Rate limit mechanism disabled!`);
 		}
 
 		server.options('/*', function (req, res) {
@@ -59535,15 +59620,15 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS';
 			headers['Access-Control-Allow-Credentials'] = true;
 			headers['Access-Control-Max-Age'] = '3600'; //one hour
-			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, ${conf.componentsConfig.virtualMQ.signatureHeaderName}, token`;
-			
+			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, token`;
+
 			if(conf.CORS){
-				console.log("Applying custom CORS headers");
+				logger.info("Applying custom CORS headers");
 				for(let prop in conf.CORS){
 					headers[prop] = conf.CORS[prop];
 				}
 			}
-			
+
 			res.writeHead(200, headers);
 			res.end();
         });
@@ -59585,7 +59670,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             if (componentPath.startsWith('.') && !conf.isDefaultComponent(componentName)) {
                 componentPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, componentPath));
             }
-            console.log(`${LOG_IDENTIFIER} Preparing to register middleware from path ${componentPath}`);
+            logger.info(`Preparing to register middleware from path ${componentPath}`);
 
             let middlewareImplementation;
             try{
@@ -59626,32 +59711,35 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
                 .filter(activeComponentName => {
                 	let include = conf.componentsConfig[activeComponentName];
                 	if(!include){
-                		console.log(`${LOG_IDENTIFIER} Not able to find config for component called < ${activeComponentName} >. Excluding it from the active components list!`);
+                		logger.info(`Not able to find config for component called < ${activeComponentName} >. Excluding it from the active components list!`);
 					}
                 	return include;
 				})
                 .filter(activeComponentName => !requiredComponentNames.includes(activeComponentName));
 
-			if(!middlewareList.includes("cloudWallet")) {
-				console.warn("WARNING: cloudWallet component is not configured inside activeComponents!")
-				console.warn("WARNING: temporary adding cloudWallet component to activeComponents! Please make sure to include cloudWallet component inside activeComponents!")
+            const addRequiredComponent = (componentName) => {
+                if(!middlewareList.includes(`${componentName}`)) {
+                    logger.warn(`WARNING: ${componentName} component is not configured inside activeComponents!`)
+                    logger.warn(`WARNING: temporary adding ${componentName} component to activeComponents! Please make sure to include ${componentName} component inside activeComponents!`)
 
-				const addCloudWalletToComponentList = (list) => {
-					const indexOfStaticServer = list.indexOf("staticServer");
-					if(indexOfStaticServer !== -1) {
-						// staticServer needs to load last
-						list.splice(indexOfStaticServer, 0, "cloudWallet");
-					} else {
-						list.push("cloudWallet");
-					}
-				}
+                    const addComponentToComponentList = (list) => {
+                        const indexOfStaticServer = list.indexOf("staticServer");
+                        if(indexOfStaticServer !== -1) {
+                            // staticServer needs to load last
+                            list.splice(indexOfStaticServer, 0, componentName);
+                        } else {
+                            list.push(componentName);
+                        }
+                    }
 
-				addCloudWalletToComponentList(middlewareList);
-				// need to also register to defaultComponents in order to be able to load the module correctly
-				addCloudWalletToComponentList(conf.defaultComponents);
+                    addComponentToComponentList(middlewareList);
+                    // need to also register to defaultComponents in order to be able to load the module correctly
+                    addComponentToComponentList(conf.defaultComponents);
+                }
+            }
 
-				console.log("Final comp:", middlewareList, conf.defaultComponents)
-			}
+            addRequiredComponent("cloudWallet");
+            addRequiredComponent("mainDSU");
 
 			function installNextComponent(componentList){
 				const componentName = componentList[0];
@@ -59677,9 +59765,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
         addRootMiddlewares();
 		addComponents(()=>{
 			//at this point all components were installed and we need to register the fallback handler
-			console.log(LOG_IDENTIFIER, "Registering the fallback handler. Any endpoint registered after this one will have zero changes to be executed.");
+			logger.info("Registering the fallback handler. Any endpoint registered after this one will have zero changes to be executed.");
 			server.use(function (req, res) {
-				console.log(LOG_IDENTIFIER, "Response handled by fallback handler.");
+				logger.info("Response handled by fallback handler.");
 				res.statusCode = 404;
 				res.end();
 			});
@@ -59705,31 +59793,25 @@ module.exports.start = function(options, callback){
 	return new HttpServer(options, callback);
 }
 
-module.exports.getVMQRequestFactory = function (virtualMQAddress, zeroMQAddress) {
-	const VMQRequestFactory = require('./components/vmq/requestFactory');
-
-	return new VMQRequestFactory(virtualMQAddress, zeroMQAddress);
-};
-
 module.exports.getHttpWrapper = function () {
 	return require('./libs/http-wrapper');
 };
 
 module.exports.getServerConfig = function () {
-	console.log(`${LOG_IDENTIFIER} apihub.getServerConfig() method is deprecated, please use server.config to retrieve necessary info.`);
+	logger.warn(`apihub.getServerConfig() method is deprecated, please use server.config to retrieve necessary info.`);
 	const config = require('./config');
 	return config.getConfig();
 };
 
 module.exports.getDomainConfig = function (domain, ...configKeys) {
-	console.log(`${LOG_IDENTIFIER} apihub.getServerConfig() method is deprecated, please use server.config.getDomainConfig(...) to retrieve necessary info.`);
+	logger.warn(`apihub.getServerConfig() method is deprecated, please use server.config.getDomainConfig(...) to retrieve necessary info.`);
 	const config = require('./config');
 	return config.getDomainConfig(domain, ...configKeys);
 };
 
 module.exports.anchoringStrategies = require("./components/anchoring/strategies");
 
-},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/channelManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/channelManager/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/mqManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqManager/index.js","./components/requestForwarder":"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./components/vmq/requestFactory":"/home/runner/work/privatesky/privatesky/modules/apihub/components/vmq/requestFactory.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/apihub/moduleConstants.js","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
+},{"./components/admin":"/home/runner/work/privatesky/privatesky/modules/apihub/components/admin/index.js","./components/anchoring":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/index.js","./components/anchoring/strategies":"/home/runner/work/privatesky/privatesky/modules/apihub/components/anchoring/strategies/index.js","./components/bdns":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bdns/index.js","./components/bricking":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricking/index.js","./components/bricksFabric":"/home/runner/work/privatesky/privatesky/modules/apihub/components/bricksFabric/index.js","./components/cloudWallet":"/home/runner/work/privatesky/privatesky/modules/apihub/components/cloudWallet/index.js","./components/config":"/home/runner/work/privatesky/privatesky/modules/apihub/components/config/index.js","./components/contracts":"/home/runner/work/privatesky/privatesky/modules/apihub/components/contracts/index.js","./components/debugLogger":"/home/runner/work/privatesky/privatesky/modules/apihub/components/debugLogger/index.js","./components/enclave":"/home/runner/work/privatesky/privatesky/modules/apihub/components/enclave/index.js","./components/fileManager":"/home/runner/work/privatesky/privatesky/modules/apihub/components/fileManager/index.js","./components/installation-details":"/home/runner/work/privatesky/privatesky/modules/apihub/components/installation-details/index.js","./components/keySsiNotifications":"/home/runner/work/privatesky/privatesky/modules/apihub/components/keySsiNotifications/index.js","./components/mainDSU":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mainDSU/index.js","./components/mqHub":"/home/runner/work/privatesky/privatesky/modules/apihub/components/mqHub/index.js","./components/requestForwarder":"/home/runner/work/privatesky/privatesky/modules/apihub/components/requestForwarder/index.js","./components/secrets":"/home/runner/work/privatesky/privatesky/modules/apihub/components/secrets/index.js","./components/staticServer":"/home/runner/work/privatesky/privatesky/modules/apihub/components/staticServer/index.js","./components/stream":"/home/runner/work/privatesky/privatesky/modules/apihub/components/stream/index.js","./config":"/home/runner/work/privatesky/privatesky/modules/apihub/config/index.js","./libs/TokenBucket":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/TokenBucket.js","./libs/http-wrapper":"/home/runner/work/privatesky/privatesky/modules/apihub/libs/http-wrapper/src/index.js","./middlewares/authorisation":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/authorisation/index.js","./middlewares/genericErrorMiddleware":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/genericErrorMiddleware/index.js","./middlewares/logger":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/logger/index.js","./middlewares/oauth":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/oauth/index.js","./middlewares/requestEnhancements":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/requestEnhancements/index.js","./middlewares/responseHeader":"/home/runner/work/privatesky/privatesky/modules/apihub/middlewares/responseHeader/index.js","swarmutils":"swarmutils"}],"bar-fs-adapter":[function(require,module,exports){
 module.exports.createFsAdapter = () => {
     const FsAdapter = require("./lib/FsAdapter");
     return new FsAdapter();
@@ -61033,6 +61115,8 @@ function enableForEnvironment(envType){
         $$.__runtimeModules[name] = module;
     }
 
+    $$.getLogger = require("./Logger").getLogger;
+
     function wrapStep(callbackName) {
         const callback = global[callbackName];
 
@@ -61333,7 +61417,7 @@ module.exports = {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
+},{"./Logger":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/Logger.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js"}],"psk-cache":[function(require,module,exports){
 const Cache = require("./lib/Cache")
 let cacheInstance;
 

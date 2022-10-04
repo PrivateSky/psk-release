@@ -10144,7 +10144,6 @@ const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
 const SSITypes = require("./SSITypes");
-const keySSIFactory = require("./KeySSIFactory");
 
 const MAX_KEYSSI_LENGTH = 2048
 
@@ -15290,6 +15289,7 @@ const CryptoFunctionTypes = keySSIResolver.CryptoFunctionTypes;
 const jwtUtils = require("./jwt");
 const constants = require("../moduleConstants");
 const config = require("./index");
+const { Mnemonic } = require("./mnemonic");
 
 const templateSeedSSI = keySSIFactory.createType(SSITypes.SEED_SSI);
 templateSeedSSI.load(SSITypes.SEED_SSI, "default");
@@ -15580,6 +15580,20 @@ const base64UrlEncodeJOSE = (data) => {
     return data.toString("base64").replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
+const convertKeySSIObjectToMnemonic = (keySSIObject) => {
+
+    const mnemonic = new Mnemonic("english");
+    const randomBase64 = keySSIObject.getSpecificString();
+    const randomBytes = $$.Buffer.from(randomBase64, "base64");
+    return mnemonic.toMnemonic(randomBytes, sha256JOSE);
+}
+
+const convertMnemonicToKeySSIIdentifier = (phrase, typeName, domain, vn) => {
+    const mnemonic = new Mnemonic("english");
+    const specificStringHex = mnemonic.toRawEntropyHex(phrase);
+    const specificStringBase64 = $$.Buffer.from(specificStringHex, "hex").toString("base64");
+    return `ssi:${typeName}:${domain}:${specificStringBase64}::${vn}`
+}
 
 module.exports = {
     getCryptoFunctionForKeySSI,
@@ -15621,10 +15635,12 @@ module.exports = {
     createCredentialForDID,
     base64UrlEncodeJOSE,
     sha256JOSE,
-    joseAPI: require("pskcrypto").joseAPI
+    joseAPI: require("pskcrypto").joseAPI,
+    convertKeySSIObjectToMnemonic,
+    convertMnemonicToKeySSIIdentifier
 };
 
-},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/index.js","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
+},{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./index":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","./jwt":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js","./mnemonic":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/mnemonic.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","psk-dbf":"/home/runner/work/privatesky/privatesky/modules/psk-dbf/index.js","pskcrypto":"/home/runner/work/privatesky/privatesky/modules/pskcrypto/index.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/jwt.js":[function(require,module,exports){
 const keySSIResolver = require("key-ssi-resolver");
 const cryptoRegistry = keySSIResolver.CryptoAlgorithmsRegistry;
 const SSITypes = keySSIResolver.SSITypes;
@@ -15973,7 +15989,387 @@ module.exports = {
     verifyDID_JWT
 };
 
-},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
+},{"../crypto":"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/index.js","key-ssi-resolver":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/index.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/crypto/mnemonic.js":[function(require,module,exports){
+let WORDLISTS = {};
+WORDLISTS["english"] = [
+    "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse",
+    "access", "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act",
+    "action", "actor", "actress", "actual", "adapt", "add", "addict", "address", "adjust", "admit",
+    "adult", "advance", "advice", "aerobic", "affair", "afford", "afraid", "again", "age", "agent",
+    "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album", "alcohol", "alert",
+    "alien", "all", "alley", "allow", "almost", "alone", "alpha", "already", "also", "alter",
+    "always", "amateur", "amazing", "among", "amount", "amused", "analyst", "anchor", "ancient", "anger",
+    "angle", "angry", "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique",
+    "anxiety", "any", "apart", "apology", "appear", "apple", "approve", "april", "arch", "arctic",
+    "area", "arena", "argue", "arm", "armed", "armor", "army", "around", "arrange", "arrest",
+    "arrive", "arrow", "art", "artefact", "artist", "artwork", "ask", "aspect", "assault", "asset",
+    "assist", "assume", "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction",
+    "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado", "avoid", "awake",
+    "aware", "away", "awesome", "awful", "awkward", "axis", "baby", "bachelor", "bacon", "badge",
+    "bag", "balance", "balcony", "ball", "bamboo", "banana", "banner", "bar", "barely", "bargain",
+    "barrel", "base", "basic", "basket", "battle", "beach", "bean", "beauty", "because", "become",
+    "beef", "before", "begin", "behave", "behind", "believe", "below", "belt", "bench", "benefit",
+    "best", "betray", "better", "between", "beyond", "bicycle", "bid", "bike", "bind", "biology",
+    "bird", "birth", "bitter", "black", "blade", "blame", "blanket", "blast", "bleak", "bless",
+    "blind", "blood", "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body",
+    "boil", "bomb", "bone", "bonus", "book", "boost", "border", "boring", "borrow", "boss",
+    "bottom", "bounce", "box", "boy", "bracket", "brain", "brand", "brass", "brave", "bread",
+    "breeze", "brick", "bridge", "brief", "bright", "bring", "brisk", "broccoli", "broken", "bronze",
+    "broom", "brother", "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb",
+    "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus", "business", "busy",
+    "butter", "buyer", "buzz", "cabbage", "cabin", "cable", "cactus", "cage", "cake", "call",
+    "calm", "camera", "camp", "can", "canal", "cancel", "candy", "cannon", "canoe", "canvas",
+    "canyon", "capable", "capital", "captain", "car", "carbon", "card", "cargo", "carpet", "carry",
+    "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog", "catch", "category",
+    "cattle", "caught", "cause", "caution", "cave", "ceiling", "celery", "cement", "census", "century",
+    "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase",
+    "chat", "cheap", "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child",
+    "chimney", "choice", "choose", "chronic", "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle",
+    "citizen", "city", "civil", "claim", "clap", "clarify", "claw", "clay", "clean", "clerk",
+    "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock", "clog", "close",
+    "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
+    "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort",
+    "comic", "common", "company", "concert", "conduct", "confirm", "congress", "connect", "consider", "control",
+    "convince", "cook", "cool", "copper", "copy", "coral", "core", "corn", "correct", "cost",
+    "cotton", "couch", "country", "couple", "course", "cousin", "cover", "coyote", "crack", "cradle",
+    "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream", "credit", "creek",
+    "crew", "cricket", "crime", "crisp", "critic", "crop", "cross", "crouch", "crowd", "crucial",
+    "cruel", "cruise", "crumble", "crunch", "crush", "cry", "crystal", "cube", "culture", "cup",
+    "cupboard", "curious", "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad",
+    "damage", "damp", "dance", "danger", "daring", "dash", "daughter", "dawn", "day", "deal",
+    "debate", "debris", "decade", "december", "decide", "decline", "decorate", "decrease", "deer", "defense",
+    "define", "defy", "degree", "delay", "deliver", "demand", "demise", "denial", "dentist", "deny",
+    "depart", "depend", "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk",
+    "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram", "dial", "diamond",
+    "diary", "dice", "diesel", "diet", "differ", "digital", "dignity", "dilemma", "dinner", "dinosaur",
+    "direct", "dirt", "disagree", "discover", "disease", "dish", "dismiss", "disorder", "display", "distance",
+    "divert", "divide", "divorce", "dizzy", "doctor", "document", "dog", "doll", "dolphin", "domain",
+    "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft", "dragon", "drama",
+    "drastic", "draw", "dream", "dress", "drift", "drill", "drink", "drip", "drive", "drop",
+    "drum", "dry", "duck", "dumb", "dune", "during", "dust", "dutch", "duty", "dwarf",
+    "dynamic", "eager", "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo",
+    "ecology", "economy", "edge", "edit", "educate", "effort", "egg", "eight", "either", "elbow",
+    "elder", "electric", "elegant", "element", "elephant", "elevator", "elite", "else", "embark", "embody",
+    "embrace", "emerge", "emotion", "employ", "empower", "empty", "enable", "enact", "end", "endless",
+    "endorse", "enemy", "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough",
+    "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode", "equal", "equip",
+    "era", "erase", "erode", "erosion", "error", "erupt", "escape", "essay", "essence", "estate",
+    "eternal", "ethics", "evidence", "evil", "evoke", "evolve", "exact", "example", "excess", "exchange",
+    "excite", "exclude", "excuse", "execute", "exercise", "exhaust", "exhibit", "exile", "exist", "exit",
+    "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend", "extra", "eye",
+    "eyebrow", "fabric", "face", "faculty", "fade", "faint", "faith", "fall", "false", "fame",
+    "family", "famous", "fan", "fancy", "fantasy", "farm", "fashion", "fat", "fatal", "father",
+    "fatigue", "fault", "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female",
+    "fence", "festival", "fetch", "fever", "few", "fiber", "fiction", "field", "figure", "file",
+    "film", "filter", "final", "find", "fine", "finger", "finish", "fire", "firm", "first",
+    "fiscal", "fish", "fit", "fitness", "fix", "flag", "flame", "flash", "flat", "flavor",
+    "flee", "flight", "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly",
+    "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot", "force", "forest",
+    "forget", "fork", "fortune", "forum", "forward", "fossil", "foster", "found", "fox", "fragile",
+    "frame", "frequent", "fresh", "friend", "fringe", "frog", "front", "frost", "frown", "frozen",
+    "fruit", "fuel", "fun", "funny", "furnace", "fury", "future", "gadget", "gain", "galaxy",
+    "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment", "gas", "gasp",
+    "gate", "gather", "gauge", "gaze", "general", "genius", "genre", "gentle", "genuine", "gesture",
+    "ghost", "giant", "gift", "giggle", "ginger", "giraffe", "girl", "give", "glad", "glance",
+    "glare", "glass", "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue",
+    "goat", "goddess", "gold", "good", "goose", "gorilla", "gospel", "gossip", "govern", "gown",
+    "grab", "grace", "grain", "grant", "grape", "grass", "gravity", "great", "green", "grid",
+    "grief", "grit", "grocery", "group", "grow", "grunt", "guard", "guess", "guide", "guilt",
+    "guitar", "gun", "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy",
+    "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard", "head", "health",
+    "heart", "heavy", "hedgehog", "height", "hello", "helmet", "help", "hen", "hero", "hidden",
+    "high", "hill", "hint", "hip", "hire", "history", "hobby", "hockey", "hold", "hole",
+    "holiday", "hollow", "home", "honey", "hood", "hope", "horn", "horror", "horse", "hospital",
+    "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble", "humor", "hundred",
+    "hungry", "hunt", "hurdle", "hurry", "hurt", "husband", "hybrid", "ice", "icon", "idea",
+    "identify", "idle", "ignore", "ill", "illegal", "illness", "image", "imitate", "immense", "immune",
+    "impact", "impose", "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate",
+    "indoor", "industry", "infant", "inflict", "inform", "inhale", "inherit", "initial", "inject", "injury",
+    "inmate", "inner", "innocent", "input", "inquiry", "insane", "insect", "inside", "inspire", "install",
+    "intact", "interest", "into", "invest", "invite", "involve", "iron", "island", "isolate", "issue",
+    "item", "ivory", "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel",
+    "job", "join", "joke", "journey", "joy", "judge", "juice", "jump", "jungle", "junior",
+    "junk", "just", "kangaroo", "keen", "keep", "ketchup", "key", "kick", "kid", "kidney",
+    "kind", "kingdom", "kiss", "kit", "kitchen", "kite", "kitten", "kiwi", "knee", "knife",
+    "knock", "know", "lab", "label", "labor", "ladder", "lady", "lake", "lamp", "language",
+    "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law", "lawn", "lawsuit",
+    "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left", "leg", "legal",
+    "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson", "letter", "level",
+    "liar", "liberty", "library", "license", "life", "lift", "light", "like", "limb", "limit",
+    "link", "lion", "liquid", "list", "little", "live", "lizard", "load", "loan", "lobster",
+    "local", "lock", "logic", "lonely", "long", "loop", "lottery", "loud", "lounge", "love",
+    "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics", "machine", "mad",
+    "magic", "magnet", "maid", "mail", "main", "major", "make", "mammal", "man", "manage",
+    "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin", "marine", "market",
+    "marriage", "mask", "mass", "master", "match", "material", "math", "matrix", "matter", "maximum",
+    "maze", "meadow", "mean", "measure", "meat", "mechanic", "medal", "media", "melody", "melt",
+    "member", "memory", "mention", "menu", "mercy", "merge", "merit", "merry", "mesh", "message",
+    "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind", "minimum", "minor",
+    "minute", "miracle", "mirror", "misery", "miss", "mistake", "mix", "mixed", "mixture", "mobile",
+    "model", "modify", "mom", "moment", "monitor", "monkey", "monster", "month", "moon", "moral",
+    "more", "morning", "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie",
+    "much", "muffin", "mule", "multiply", "muscle", "museum", "mushroom", "music", "must", "mutual",
+    "myself", "mystery", "myth", "naive", "name", "napkin", "narrow", "nasty", "nation", "nature",
+    "near", "neck", "need", "negative", "neglect", "neither", "nephew", "nerve", "nest", "net",
+    "network", "neutral", "never", "news", "next", "nice", "night", "noble", "noise", "nominee",
+    "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice", "novel", "now",
+    "nuclear", "number", "nurse", "nut", "oak", "obey", "object", "oblige", "obscure", "observe",
+    "obtain", "obvious", "occur", "ocean", "october", "odor", "off", "offer", "office", "often",
+    "oil", "okay", "old", "olive", "olympic", "omit", "once", "one", "onion", "online",
+    "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit", "orchard", "order",
+    "ordinary", "organ", "orient", "original", "orphan", "ostrich", "other", "outdoor", "outer", "output",
+    "outside", "oval", "oven", "over", "own", "owner", "oxygen", "oyster", "ozone", "pact",
+    "paddle", "page", "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper",
+    "parade", "parent", "park", "parrot", "party", "pass", "patch", "path", "patient", "patrol",
+    "pattern", "pause", "pave", "payment", "peace", "peanut", "pear", "peasant", "pelican", "pen",
+    "penalty", "pencil", "people", "pepper", "perfect", "permit", "person", "pet", "phone", "photo",
+    "phrase", "physical", "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot",
+    "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet", "plastic", "plate",
+    "play", "please", "pledge", "pluck", "plug", "plunge", "poem", "poet", "point", "polar",
+    "pole", "police", "pond", "pony", "pool", "popular", "portion", "position", "possible", "post",
+    "potato", "pottery", "poverty", "powder", "power", "practice", "praise", "predict", "prefer", "prepare",
+    "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority", "prison", "private",
+    "prize", "problem", "process", "produce", "profit", "program", "project", "promote", "proof", "property",
+    "prosper", "protect", "proud", "provide", "public", "pudding", "pull", "pulp", "pulse", "pumpkin",
+    "punch", "pupil", "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle",
+    "pyramid", "quality", "quantum", "quarter", "question", "quick", "quit", "quiz", "quote", "rabbit",
+    "raccoon", "race", "rack", "radar", "radio", "rail", "rain", "raise", "rally", "ramp",
+    "ranch", "random", "range", "rapid", "rare", "rate", "rather", "raven", "raw", "razor",
+    "ready", "real", "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle",
+    "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject", "relax", "release",
+    "relief", "rely", "remain", "remember", "remind", "remove", "render", "renew", "rent", "reopen",
+    "repair", "repeat", "replace", "report", "require", "rescue", "resemble", "resist", "resource", "response",
+    "result", "retire", "retreat", "return", "reunion", "reveal", "review", "reward", "rhythm", "rib",
+    "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid", "ring", "riot",
+    "ripple", "risk", "ritual", "rival", "river", "road", "roast", "robot", "robust", "rocket",
+    "romance", "roof", "rookie", "room", "rose", "rotate", "rough", "round", "route", "royal",
+    "rubber", "rude", "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness",
+    "safe", "sail", "salad", "salmon", "salon", "salt", "salute", "same", "sample", "sand",
+    "satisfy", "satoshi", "sauce", "sausage", "save", "say", "scale", "scan", "scare", "scatter",
+    "scene", "scheme", "school", "science", "scissors", "scorpion", "scout", "scrap", "screen", "script",
+    "scrub", "sea", "search", "season", "seat", "second", "secret", "section", "security", "seed",
+    "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence", "series", "service",
+    "session", "settle", "setup", "seven", "shadow", "shaft", "shallow", "share", "shed", "shell",
+    "sheriff", "shield", "shift", "shine", "ship", "shiver", "shock", "shoe", "shoot", "shop",
+    "short", "shoulder", "shove", "shrimp", "shrug", "shuffle", "shy", "sibling", "sick", "side",
+    "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar", "simple", "since",
+    "sing", "siren", "sister", "situate", "six", "size", "skate", "sketch", "ski", "skill",
+    "skin", "skirt", "skull", "slab", "slam", "sleep", "slender", "slice", "slide", "slight",
+    "slim", "slogan", "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth",
+    "snack", "snake", "snap", "sniff", "snow", "soap", "soccer", "social", "sock", "soda",
+    "soft", "solar", "soldier", "solid", "solution", "solve", "someone", "song", "soon", "sorry",
+    "sort", "soul", "sound", "soup", "source", "south", "space", "spare", "spatial", "spawn",
+    "speak", "special", "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin",
+    "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray", "spread", "spring",
+    "spy", "square", "squeeze", "squirrel", "stable", "stadium", "staff", "stage", "stairs", "stamp",
+    "stand", "start", "state", "stay", "steak", "steel", "stem", "step", "stereo", "stick",
+    "still", "sting", "stock", "stomach", "stone", "stool", "story", "stove", "strategy", "street",
+    "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject", "submit", "subway",
+    "success", "such", "sudden", "suffer", "sugar", "suggest", "suit", "summer", "sun", "sunny",
+    "sunset", "super", "supply", "supreme", "sure", "surface", "surge", "surprise", "surround", "survey",
+    "suspect", "sustain", "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim",
+    "swing", "switch", "sword", "symbol", "symptom", "syrup", "system", "table", "tackle", "tag",
+    "tail", "talent", "talk", "tank", "tape", "target", "task", "taste", "tattoo", "taxi",
+    "teach", "team", "tell", "ten", "tenant", "tennis", "tent", "term", "test", "text",
+    "thank", "that", "theme", "then", "theory", "there", "they", "thing", "this", "thought",
+    "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger", "tilt", "timber",
+    "time", "tiny", "tip", "tired", "tissue", "title", "toast", "tobacco", "today", "toddler",
+    "toe", "together", "toilet", "token", "tomato", "tomorrow", "tone", "tongue", "tonight", "tool",
+    "tooth", "top", "topic", "topple", "torch", "tornado", "tortoise", "toss", "total", "tourist",
+    "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic", "train", "transfer",
+    "trap", "trash", "travel", "tray", "treat", "tree", "trend", "trial", "tribe", "trick",
+    "trigger", "trim", "trip", "trophy", "trouble", "truck", "true", "truly", "trumpet", "trust",
+    "truth", "try", "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle",
+    "twelve", "twenty", "twice", "twin", "twist", "two", "type", "typical", "ugly", "umbrella",
+    "unable", "unaware", "uncle", "uncover", "under", "undo", "unfair", "unfold", "unhappy", "uniform",
+    "unique", "unit", "universe", "unknown", "unlock", "until", "unusual", "unveil", "update", "upgrade",
+    "uphold", "upon", "upper", "upset", "urban", "urge", "usage", "use", "used", "useful",
+    "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley", "valve", "van",
+    "vanish", "vapor", "various", "vast", "vault", "vehicle", "velvet", "vendor", "venture", "venue",
+    "verb", "verify", "version", "very", "vessel", "veteran", "viable", "vibrant", "vicious", "victory",
+    "video", "view", "village", "vintage", "violin", "virtual", "virus", "visa", "visit", "visual",
+    "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote", "voyage", "wage",
+    "wagon", "wait", "walk", "wall", "walnut", "want", "warfare", "warm", "warrior", "wash",
+    "wasp", "waste", "water", "wave", "way", "wealth", "weapon", "wear", "weasel", "weather",
+    "web", "wedding", "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat",
+    "wheel", "when", "where", "whip", "whisper", "wide", "width", "wife", "wild", "will",
+    "win", "window", "wine", "wing", "wink", "winner", "winter", "wire", "wisdom", "wise",
+    "wish", "witness", "wolf", "woman", "wonder", "wood", "wool", "word", "work", "world",
+    "worry", "worth", "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year",
+    "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"];
+
+const Mnemonic = function (language) {
+
+    const RADIX = 2048;
+
+    const self = this;
+    let wordlist = [];
+
+    function init() {
+        wordlist = WORDLISTS[language];
+        if (wordlist.length != RADIX) {
+            err = 'Wordlist should contain ' + RADIX + ' words, but it contains ' + wordlist.length + ' words.';
+            throw err;
+        }
+    }
+
+    self.toMnemonic = function (byteArray, hashFunction) {
+        if (byteArray.length % 4 > 0) {
+            throw 'Data length in bits should be divisible by 32, but it is not (' + byteArray.length + ' bytes = ' + byteArray.length * 8 + ' bits).'
+        }
+
+        const data = byteArrayToWordArray(byteArray);
+        const hash = byteArrayToWordArray(hashFunction(data));
+
+        const h = fromBits(hash);
+        const a = byteArrayToBinaryString(byteArray);
+        const c = zfill(hexStringToBinaryString(h), 256);
+        const d = c.substring(0, byteArray.length * 8 / 32);
+
+        const b = a + d;
+
+        let result = [];
+        const blen = b.length / 11;
+        for (let i = 0; i < blen; i++) {
+            const idx = parseInt(b.substring(i * 11, (i + 1) * 11), 2);
+            result.push(wordlist[idx]);
+        }
+        return self.joinWords(result);
+    }
+
+
+    self.toRawEntropyHex = function (mnemonic) {
+        const b = mnemonicToBinaryString(mnemonic);
+        if (b === null)
+            return null;
+        const d = b.substring(0, b.length / 33 * 32);
+        const nd = binaryStringToWordArray(d);
+
+        let h = "";
+        for (let i = 0; i < nd.length; i++) {
+            h += ('0000000' + nd[i].toString(16)).slice(-8);
+        }
+        return h;
+    }
+
+    self.splitWords = function (mnemonic) {
+        return mnemonic.split(/\s/g).filter(function (x) { return x.length; });
+    }
+
+    self.joinWords = function (words) {
+        // Set space correctly depending on the language
+        // see https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md#japanese
+        let space = " ";
+        if (language == "japanese") {
+            space = "\u3000"; // ideographic space
+        }
+        return words.join(space);
+    }
+
+    self.normalizeString = function (str) {
+        return str.normalize("NFKD");
+    }
+
+    function byteArrayToWordArray(data) {
+        let a = [];
+        for (let i = 0; i < data.length / 4; i++) {
+            let v = 0;
+            v += data[i * 4 + 0] << 8 * 3;
+            v += data[i * 4 + 1] << 8 * 2;
+            v += data[i * 4 + 2] << 8 * 1;
+            v += data[i * 4 + 3] << 8 * 0;
+            a.push(v);
+        }
+        return a;
+    }
+
+    function byteArrayToBinaryString(data) {
+        let bin = "";
+        for (let i = 0; i < data.length; i++) {
+            bin += zfill(data[i].toString(2), 8);
+        }
+        return bin;
+    }
+
+    function hexStringToBinaryString(hexString) {
+        let binaryString = "";
+        for (let i = 0; i < hexString.length; i++) {
+            binaryString += zfill(parseInt(hexString[i], 16).toString(2), 4);
+        }
+        return binaryString;
+    }
+
+    function binaryStringToWordArray(binary) {
+        const aLen = binary.length / 32;
+        let a = [];
+        for (let i = 0; i < aLen; i++) {
+            const valueStr = binary.substring(0, 32);
+            const value = parseInt(valueStr, 2);
+            a.push(value);
+            binary = binary.slice(32);
+        }
+        return a;
+    }
+
+    function mnemonicToBinaryString(mnemonicString) {
+        const mnemonic = self.splitWords(mnemonicString);
+        if (mnemonic.length == 0 || mnemonic.length % 3 > 0) {
+            return null;
+        }
+       
+        let idx = [];
+        for (let i = 0; i < mnemonic.length; i++) {
+            const word = mnemonic[i];
+            const wordIndex = wordlist.indexOf(word);
+            if (wordIndex == -1) {
+                return null;
+            }
+            const binaryIndex = zfill(wordIndex.toString(2), 11);
+            idx.push(binaryIndex);
+        }
+        return idx.join('');
+    }
+
+    // Pad a numeric string on the left with zero digits until the given width
+    // is reached.
+    // Note this differs to the python implementation because it does not
+    // handle numbers starting with a sign.
+    function zfill(source, length) {
+        source = source.toString();
+        while (source.length < length) {
+            source = '0' + source;
+        }
+        return source;
+    }
+
+    function bitLength(a){
+        let l = a.length, x;
+        if (l === 0) { return 0; }
+        x = a[l - 1];
+        return (l - 1) * 32 + getPartial(x);
+    }
+
+    function getPartial(x) {
+        return Math.round(x / 0x10000000000) || 32;
+    }
+
+    /** Convert from a bitArray to a UTF-8 string. */
+    function fromBits(arr) {
+        let out = "", i;
+        for (i = 0; i < arr.length; i++) {
+            out += ((arr[i] | 0) + 0xF00000000000).toString(16).substr(4);
+        }
+        return out.substr(0, bitLength(arr) / 4);
+    }
+
+    init();
+}
+
+module.exports = {
+    Mnemonic
+};
+
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/db/conflictSolvingStrategies/timestampMergingStrategy.js":[function(require,module,exports){
 module.exports.TimestampMergingStrategy = function(){
 
 }
@@ -28437,7 +28833,142 @@ module.exports = {
 }
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
+},{"../moduleConstants.js":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./bootScript/node":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/node.js","./bootScript/web":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/bootScript/web.js","./functions":"/home/runner/work/privatesky/privatesky/modules/opendsu/workers/functions.js","opendsu":"opendsu","syndicate":"/home/runner/work/privatesky/privatesky/modules/syndicate/index.js"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/Logger.js":[function(require,module,exports){
+function Logger(className, moduleName, logFile) {
+    if (typeof className === "undefined" || typeof moduleName === "undefined") {
+        throw Error(`Arguments className and moduleName are mandatory.`);
+    }
+
+    const MAX_STRING_LENGTH = 11;
+    const getPaddingForArg = (arg, maxLen = MAX_STRING_LENGTH) => {
+        let noSpaces = Math.abs(maxLen - arg.length);
+        let spaces = String(" ").repeat(noSpaces);
+        return spaces;
+    };
+
+    const normalizeArg = (arg) => {
+        if (arg.length >= MAX_STRING_LENGTH) {
+            return arg.substring(0, MAX_STRING_LENGTH);
+        } else {
+            return `${arg}${getPaddingForArg(arg)}`;
+        }
+    }
+
+    const convertIntToHexString = (number) => {
+        let hexString = number.toString("16");
+        let paddingLength = (2 - hexString.length) >= 0 ? (2 - hexString.length) : 0;
+        for (let i = 0; i < paddingLength; i++) {
+            hexString = "0" + hexString;
+        }
+        return "0x" + hexString;
+    }
+
+    const getPreamble = (functionName, code = 0) => {
+        const type = functionName.toUpperCase();
+        const timestamp = Date.now().toString();
+        const preamble = `${type}${getPaddingForArg(type, 9)}${convertIntToHexString(code)} ${timestamp} ${normalizeArg(className)} ${normalizeArg(moduleName)}`;
+        return preamble;
+    }
+
+
+    const stripCodeFromArgs = (...args) => {
+        let code = args[0];
+        if (typeof code !== "number") {
+            code = 0;
+        } else {
+            args.shift();
+        }
+
+        return {
+            code,
+            args
+        }
+    }
+
+    const executeFunctionFromConsole = (functionName, ...args) => {
+        for (let i = 0; i < args.length; i++) {
+            if (typeof args[i] === "string") {
+                args[i] = args[i].replaceAll("\n", "\n\t");
+            }
+        }
+
+        const res = stripCodeFromArgs(...args);
+        const preamble = getPreamble(functionName, res.code);
+        if (functionName === "critical") {
+            functionName = "error";
+        }
+        console[functionName](preamble, ...res.args);
+    }
+
+    const writeToFile = (functionName, ...args) => {
+        const fs = require("fs");
+        const path = require("path");
+        if (typeof logFile === "undefined") {
+            return;
+        }
+        const res = stripCodeFromArgs(...args);
+        let stringToBeWritten = getPreamble(functionName, res.code);
+        for (let i = 0; i < res.args.length; i++) {
+            stringToBeWritten += res.args[i]
+        }
+
+        stringToBeWritten += require("os").EOL;
+
+        try {
+            fs.accessSync(path.dirname(logFile));
+        } catch (e) {
+            fs.mkdirSync(path.dirname(logFile), {recursive: true});
+        }
+
+        fs.appendFileSync(logFile, stringToBeWritten);
+    }
+
+    const printToConsoleAndFile = (functionName, ...args) => {
+        executeFunctionFromConsole(functionName, ...args);
+        const envTypes = require("./moduleConstants");
+        if ($$.environmentType === envTypes.NODEJS_ENVIRONMENT_TYPE) {
+            writeToFile(functionName, ...args);
+        }
+    }
+
+    this.log = (...args) => {
+        printToConsoleAndFile("log", ...args);
+    }
+
+    this.info = (...args) => {
+        printToConsoleAndFile("info", ...args);
+    }
+
+    this.warn = (...args) => {
+        printToConsoleAndFile("warn", ...args);
+    }
+
+    this.trace = (...args) => {
+        printToConsoleAndFile("trace", ...args);
+    }
+
+    this.debug = (...args) => {
+        printToConsoleAndFile("debug", ...args);
+    }
+
+    this.error = (...args) => {
+        printToConsoleAndFile("error", ...args);
+    }
+
+    this.critical = (...args) => {
+        printToConsoleAndFile("critical", ...args);
+    }
+}
+
+const getLogger = (className, moduleName, criticalLogFile) => {
+    return new Logger(className, moduleName, criticalLogFile);
+}
+
+module.exports = {
+    getLogger
+}
+
+},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","fs":"/home/runner/work/privatesky/privatesky/node_modules/browserify/lib/_empty.js","os":"/home/runner/work/privatesky/privatesky/node_modules/os-browserify/browser.js","path":"/home/runner/work/privatesky/privatesky/node_modules/path-browserify/index.js"}],"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js":[function(require,module,exports){
 module.exports = {
   BROWSER_ENVIRONMENT_TYPE: 'browser',
   MOBILE_BROWSER_ENVIRONMENT_TYPE: 'mobile-browser',
@@ -63267,49 +63798,36 @@ utils.intFromLE = intFromLE;
 arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/asn1.js/node_modules/bn.js/lib/bn.js"][0].apply(exports,arguments)
 },{"buffer":"/home/runner/work/privatesky/privatesky/node_modules/browser-resolve/empty.js"}],"/home/runner/work/privatesky/privatesky/node_modules/elliptic/package.json":[function(require,module,exports){
 module.exports={
-  "_from": "elliptic@^6.5.3",
-  "_id": "elliptic@6.5.4",
-  "_inBundle": false,
-  "_integrity": "sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==",
-  "_location": "/elliptic",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "range",
-    "registry": true,
-    "raw": "elliptic@^6.5.3",
-    "name": "elliptic",
-    "escapedName": "elliptic",
-    "rawSpec": "^6.5.3",
-    "saveSpec": null,
-    "fetchSpec": "^6.5.3"
-  },
-  "_requiredBy": [
-    "/browserify-sign",
-    "/create-ecdh"
+  "name": "elliptic",
+  "version": "6.5.4",
+  "description": "EC cryptography",
+  "main": "lib/elliptic.js",
+  "files": [
+    "lib"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.4.tgz",
-  "_shasum": "da37cebd31e79a1367e941b592ed1fbebd58abbb",
-  "_spec": "elliptic@^6.5.3",
-  "_where": "/home/runner/work/privatesky/privatesky/node_modules/browserify-sign",
-  "author": {
-    "name": "Fedor Indutny",
-    "email": "fedor@indutny.com"
+  "scripts": {
+    "lint": "eslint lib test",
+    "lint:fix": "npm run lint -- --fix",
+    "unit": "istanbul test _mocha --reporter=spec test/index.js",
+    "test": "npm run lint && npm run unit",
+    "version": "grunt dist && git add dist/"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:indutny/elliptic"
+  },
+  "keywords": [
+    "EC",
+    "Elliptic",
+    "curve",
+    "Cryptography"
+  ],
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/indutny/elliptic/issues"
   },
-  "bundleDependencies": false,
-  "dependencies": {
-    "bn.js": "^4.11.9",
-    "brorand": "^1.1.0",
-    "hash.js": "^1.0.0",
-    "hmac-drbg": "^1.0.1",
-    "inherits": "^2.0.4",
-    "minimalistic-assert": "^1.0.1",
-    "minimalistic-crypto-utils": "^1.0.1"
-  },
-  "deprecated": false,
-  "description": "EC cryptography",
+  "homepage": "https://github.com/indutny/elliptic",
   "devDependencies": {
     "brfs": "^2.0.2",
     "coveralls": "^3.1.0",
@@ -63325,31 +63843,15 @@ module.exports={
     "istanbul": "^0.4.5",
     "mocha": "^8.0.1"
   },
-  "files": [
-    "lib"
-  ],
-  "homepage": "https://github.com/indutny/elliptic",
-  "keywords": [
-    "EC",
-    "Elliptic",
-    "curve",
-    "Cryptography"
-  ],
-  "license": "MIT",
-  "main": "lib/elliptic.js",
-  "name": "elliptic",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/indutny/elliptic.git"
-  },
-  "scripts": {
-    "lint": "eslint lib test",
-    "lint:fix": "npm run lint -- --fix",
-    "test": "npm run lint && npm run unit",
-    "unit": "istanbul test _mocha --reporter=spec test/index.js",
-    "version": "grunt dist && git add dist/"
-  },
-  "version": "6.5.4"
+  "dependencies": {
+    "bn.js": "^4.11.9",
+    "brorand": "^1.1.0",
+    "hash.js": "^1.0.0",
+    "hmac-drbg": "^1.0.1",
+    "inherits": "^2.0.4",
+    "minimalistic-assert": "^1.0.1",
+    "minimalistic-crypto-utils": "^1.0.1"
+  }
 }
 
 },{}],"/home/runner/work/privatesky/privatesky/node_modules/events/events.js":[function(require,module,exports){
@@ -85270,6 +85772,8 @@ function enableForEnvironment(envType){
         $$.__runtimeModules[name] = module;
     }
 
+    $$.getLogger = require("./Logger").getLogger;
+
     function wrapStep(callbackName) {
         const callback = global[callbackName];
 
@@ -85570,7 +86074,7 @@ module.exports = {
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/loaderBoot_intermediar.js"])
+},{"./Logger":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/Logger.js","./moduleConstants":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/moduleConstants.js","./standardGlobalSymbols.js":"/home/runner/work/privatesky/privatesky/modules/overwrite-require/standardGlobalSymbols.js","_process":"/home/runner/work/privatesky/privatesky/node_modules/process/browser.js"}]},{},["/home/runner/work/privatesky/privatesky/builds/tmp/loaderBoot_intermediar.js"])
                     ;(function(global) {
                         global.bundlePaths = {"webshims":"/home/runner/work/privatesky/privatesky/psknode/bundles/webshims.js","pskruntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskruntime.js","pskWebServer":"/home/runner/work/privatesky/privatesky/psknode/bundles/pskWebServer.js","consoleTools":"/home/runner/work/privatesky/privatesky/psknode/bundles/consoleTools.js","blockchain":"/home/runner/work/privatesky/privatesky/psknode/bundles/blockchain.js","openDSU":"/home/runner/work/privatesky/privatesky/psknode/bundles/openDSU.js","nodeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/nodeBoot.js","testsRuntime":"/home/runner/work/privatesky/privatesky/psknode/bundles/testsRuntime.js","bindableModel":"/home/runner/work/privatesky/privatesky/psknode/bundles/bindableModel.js","loaderBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/loaderBoot.js","swBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/swBoot.js","iframeBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/iframeBoot.js","launcherBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/launcherBoot.js","testRunnerBoot":"/home/runner/work/privatesky/privatesky/psknode/bundles/testRunnerBoot.js"};
                     })(typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
