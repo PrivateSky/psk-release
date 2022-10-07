@@ -43927,7 +43927,7 @@ const w3cDID = openDSU.loadAPI("w3cdid");
 
 function RemoteEnclave(clientDID, remoteDID, requestTimeout) {
     let initialised = false;
-    const DEFAULT_TIMEOUT = 5000;
+    const DEFAULT_TIMEOUT = 30000;
 
     this.commandsMap = new Map();
     this.requestTimeout = requestTimeout ?? DEFAULT_TIMEOUT;
@@ -43958,12 +43958,21 @@ function RemoteEnclave(clientDID, remoteDID, requestTimeout) {
     this.__putCommandObject = (commandName, ...args) => {
         const callback = args.pop();
         args.push(clientDID);
+
         const command = JSON.stringify(createCommandObject(commandName, ...args));
+        const commandID = JSON.parse(command).commandID;
+        this.commandsMap.set(commandID, { "callback": callback, "time": Date.now() });
+
+        if (this.commandsMap.size == 1) {
+            this.subscribe();
+
+        }
+
         this.clientDIDDocument.sendMessage(command, this.remoteDIDDocument, (err, res) => {
-            this.commandsMap.set(command.commandID, { "callback": callback, "time": Date.now() });
-            if (this.commandsMap.size == 1) {
-                this.subscribe();
+            if (err) {
+                console.log(err);
             }
+            setTimeout(this.checkTimeout, this.requestTimeout, commandID);
         });
     }
 
@@ -43974,13 +43983,36 @@ function RemoteEnclave(clientDID, remoteDID, requestTimeout) {
                 return;
             }
 
-            const callback = this.commandsMap.get(res.commandID).callback;
-            callback(err, res);
-            this.commandsMap.delete(res.commandID);
-            if(this.commandsMap.size == 0) { 
-                this.clientDIDDocument.stopWaitingForMessages();
+            try {
+                const resObj = JSON.parse(res);
+                const commandResult = resObj.commandResult;
+                const commandID = resObj.commandID;
+
+                if (!this.commandsMap.get(commandID)) return;
+
+                const callback = this.commandsMap.get(commandID).callback;
+                callback(err, JSON.stringify(commandResult));
+
+                this.commandsMap.delete(commandID);
+                if (this.commandsMap.size == 0) {
+                    this.clientDIDDocument.stopWaitingForMessages();
+                }
+            }
+            catch (err) {
+                console.log(err);
             }
         })
+    }
+
+    this.checkTimeout = (commandID) => {
+        if (!this.commandsMap.has(commandID)) return;
+
+        const callback = this.commandsMap.get(commandID).callback;
+        callback(createOpenDSUErrorWrapper(`Timeout for command ${commandID}`), undefined);
+        this.commandsMap.delete(commandID);
+        if (this.commandsMap.size == 0) {
+            this.clientDIDDocument.stopWaitingForMessages();
+        }
     }
 
     init();
@@ -44097,6 +44129,7 @@ module.exports = {
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js":[function(require,module,exports){
 const createCommandObject = (commandName, ...args) => {
     const commandID = require('crypto').randomBytes(32).toString("base64")
+
     return {
         commandName,
         commandID,
@@ -46605,28 +46638,35 @@ function MQHandler(didDocument, domain, pollingTimeout) {
                     return callback(createOpenDSUErrorWrapper(`Failed to sign token`, err));
                 }
 
-                getURL(queueName, "take", signature.toString("hex"), async (err, url) => {
+                getURL(queueName, "take", signature.toString("hex"), (err, url) => {
                     if (err) {
                         return callback(err);
                     }
 
                     let options = { headers: { Authorization: token } };
 
+                    async function makeRequest() {
+                        
+                        let request = http.poll(url, options, connectionTimeout, timeout);
+                        callback.__requestInProgress = request;
+
+                        request.then(response => response.json())
+                            .then((response) => {
+                                callback(undefined, response);
+                                if (callback.on) {
+                                    makeRequest();
+                                }
+                            })
+                            .catch((err) => {
+                                callback(err);
+                            });
+                    }
+
+                    //somebody called abort before we arrived here
                     if (!callback.__requestInProgress) {
                         return;
                     }
-                    while (callback.on) {
-                        try {
-                            const request = http.poll(url, options, connectionTimeout, timeout);
-                            callback.__requestInProgress = request;
-                            const response = await request;
-                            const jsonResponse = await response.json();
-                            callback(undefined, jsonResponse);
-                        }
-                        catch (err) {
-                            callback(err);
-                        }
-                    }
+                    makeRequest();
                 })
             })
         })
