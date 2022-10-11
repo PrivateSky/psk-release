@@ -3417,17 +3417,19 @@ async function handleDefaultMainDSURequest(request, response) {
     const fs = require("fs");
     const keySSISpace = require("opendsu").loadApi("keyssi");
     const resolver = require("opendsu").loadApi("resolver");
-
+    let mainDSUAnchorId;
     try {
+        mainDSUAnchorId = await $$.promisify(mainDSUSeedSSI.getAnchorId)();
         const fileContent = await $$.promisify(fs.readFile)(mainDSUSeedSSIFilePath, { encoding: "utf-8" });
         mainDSUSeedSSI = keySSISpace.parse(fileContent);
-        logger.info(`[MainDSU] Read existing mainDSU from ${mainDSUSeedSSIFilePath}: ${mainDSUSeedSSI.getAnchorId()}`);
+        logger.info(`[MainDSU] Read existing mainDSU from ${mainDSUSeedSSIFilePath}: ${mainDSUAnchorId}`);
         return sendMainDSUSeedSSI(response);
     } catch (error) {
         logger.error(`[MainDSU] Failed to read/parse keySSI from ${mainDSUSeedSSIFilePath}. Generating new keySSI...`, error);
     }
 
     try {
+        mainDSUAnchorId = await $$.promisify(mainDSUSeedSSI.getAnchorId)();
         const environmentJsPath = require("path").join(rootFolderPath, "environment.js");
         logger.info(`[MainDSU] Loading environment.js config file from: ${environmentJsPath}`);
 
@@ -3436,13 +3438,13 @@ async function handleDefaultMainDSURequest(request, response) {
         const seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(environmentConfig.vaultDomain);
         const mainDSU = await $$.promisify(resolver.createDSUForExistingSSI)(seedSSI);
 
-        logger.info(`[MainDSU] Settings config for seed ${seedSSI.getAnchorId()}`, environmentConfig);
+        logger.info(`[MainDSU] Settings config for seed ${await $$.promisify(seedSSI.getAnchorId)()}`, environmentConfig);
         await $$.promisify(mainDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
 
         mainDSUSeedSSI = seedSSI;
-        logger.info("[MainDSU] Generated mainDSUSeedSSI: ", mainDSUSeedSSI.getAnchorId(), mainDSUSeedSSI);
+        logger.info("[MainDSU] Generated mainDSUSeedSSI: ", mainDSUAnchorId, mainDSUSeedSSI);
 
-        logger.info(`[MainDSU] Writing generated mainDSU to ${mainDSUSeedSSIFilePath}: ${mainDSUSeedSSI.getAnchorId()}`);
+        logger.info(`[MainDSU] Writing generated mainDSU to ${mainDSUSeedSSIFilePath}: ${mainDSUAnchorId}`);
         await $$.promisify(fs.writeFile)(mainDSUSeedSSIFilePath, mainDSUSeedSSI.getIdentifier(), "utf-8");
 
         sendMainDSUSeedSSI(response);
@@ -4742,7 +4744,7 @@ async function handleCreateWallet(request, response) {
             sharedEnclaveKeySSI,
         };
 
-        logger.info(`[Stream] Settings config for wallet ${walletSSI.getAnchorId()}`, environmentConfig);
+        logger.info(`[Stream] Settings config for wallet ${await $$.promisify(walletSSI.getAnchorId)()}`, environmentConfig);
         await $$.promisify(writableDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
 
         await $$.promisify(writableDSU.writeFile)("/metadata.json", JSON.stringify({ userId }));
@@ -10629,17 +10631,22 @@ function Archive(archiveConfigurator) {
                         return;
                     }
 
-                    if (brickMapController.getCurrentAnchoredHashLink().getAnchorId() === message.payload) {
-                        // Nothing to do: we're up to date
-                        return;
-                    }
-
-                    // Load and try to merge the latest changes
-                    brickMapController.mergeUpstreamChanges((err, result) => {
+                    brickMapController.getCurrentAnchoredHashLink().getAnchorId((err, anchorId)=>{
                         if (err) {
                             return options.onError(err);
                         }
-                        options.onSync(result);
+
+                        if (anchorId === message.payload) {
+                            return;
+                        }
+
+                        // Load and try to merge the latest changes
+                        brickMapController.mergeUpstreamChanges((err, result) => {
+                            if (err) {
+                                return options.onError(err);
+                            }
+                            options.onSync(result);
+                        })
                     })
                 })
 
@@ -10798,12 +10805,6 @@ function ArchiveConfigurator() {
 
     this.getFsAdapter = () => {
         return config.fsAdapter;
-    };
-
-    this.getBrickMapId = () => {
-        if (config.keySSI) {
-            return config.keySSI.getAnchorId();
-        }
     };
 
     this.setEncryptionAlgorithm = (algorithm) => {
@@ -11887,18 +11888,24 @@ function BrickMapController(options) {
     }
 
     const notifySubscribers = (hashLink, callback) => {
-        const message = {
-            event: "dsu:newAnchor",
-            payload: hashLink.getAnchorId()
-        };
-
-        notifications.publish(keySSI, message, 0, (err) => {
+        hashLink.getAnchorId((err, anchorId)=>{
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish anchoring notification`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchor id for hashlink ${hashLink.getIdentifier()}`, err));
             }
 
-            callback();
-        });
+            const message = {
+                event: "dsu:newAnchor",
+                payload: anchorId
+            };
+
+            notifications.publish(keySSI, message, 0, (err) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish anchoring notification`, err));
+                }
+
+                callback();
+            });
+        })
     }
 
     /**
@@ -12540,28 +12547,35 @@ function BrickMapController(options) {
                     } else {
                         anchoring.appendToAnchor(keySSI, signedHashLink, currentAnchoredHashLink, updateAnchorCallback);
                     }*/
-                    //TODO: update the smart contract and after that uncomment the above code and eliminate the following if statement
-                    if (!currentAnchoredHashLink) {
-                        anchoringx.getLastVersion(keySSI, (err, version) => {
-                            if (err) {
-                                // return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
-                                return anchoringx.createAnchor(keySSI.getAnchorId(), anchorValue,  updateAnchorCallback);
-                            }
-                            return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
-                        });
-                    } else {
-                        anchoringx.getLastVersion(keySSI, (err, version) => {
-                            if (err) {
-                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve last anchor version`, err));
-                            }
+                    keySSI.getAnchorId((err, anchorId)=> {
+                        if (err) {
+                            return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to get anchorId for keySSI ${keySSI.getIdentifier()}`, err));
+                        }
 
-                            if (version.getIdentifier() !== currentAnchoredHashLink.getIdentifier()) {
-                                return updateAnchorCallback({statusCode: 428, message: "Versions out of sync"})
-                            }
+                        //TODO: update the smart contract and after that uncomment the above code and eliminate the following if statement
+                        if (!currentAnchoredHashLink) {
+                            anchoringx.getLastVersion(keySSI, (err, version) => {
+                                if (err) {
+                                    // return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve versions of anchor`, err));
+                                    return anchoringx.createAnchor(anchorId, anchorValue, updateAnchorCallback);
+                                }
+                                return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to create anchor`, err));
+                            });
+                        } else {
+                            anchoringx.getLastVersion(keySSI, (err, version) => {
+                                if (err) {
+                                    return OpenDSUSafeCallback(listener)(createOpenDSUErrorWrapper(`Failed to retrieve last anchor version`, err));
+                                }
 
-                            anchoringx.appendAnchor(keySSI.getAnchorId(), anchorValue, updateAnchorCallback);
-                        });
-                    }
+                                if (version.getIdentifier() !== currentAnchoredHashLink.getIdentifier()) {
+                                    return updateAnchorCallback({statusCode: 428, message: "Versions out of sync"})
+                                }
+
+
+                                anchoringx.appendAnchor(anchorId, anchorValue, updateAnchorCallback);
+                            });
+                        }
+                    });
                 }
 
                 let lastEntryInAnchor ;
@@ -14107,16 +14121,21 @@ function DiffStrategy(options) {
     ////////////////////////////////////////////////////////////
 
     this.load = (keySSI, callback) => {
-        anchoringx.getAllVersions(keySSI, (err, hashLinks) => {
+        keySSI.getAnchorId((err, anchorId) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${keySSI.getAnchorId()}`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchorId for keySSI ${keySSI.getIdentifier()}`, err));
             }
+            anchoringx.getAllVersions(keySSI, (err, hashLinks) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve versions for anchor ${anchorId}`, err));
+                }
 
-            if (!hashLinks.length) {
-                return callback(new Error(`No data found for anchor <${keySSI.getAnchorId()}>`));
-            }
+                if (!hashLinks.length) {
+                    return callback(new Error(`No data found for anchor <${anchorId}>`));
+                }
 
-            assembleBrickMap(hashLinks, callback);
+                assembleBrickMap(hashLinks, callback);
+            });
         })
     }
 
@@ -14394,23 +14413,29 @@ function LatestVersionStrategy(options) {
     ////////////////////////////////////////////////////////////
 
     this.load = (keySSI, callback) => {
-        anchoringx.getLastVersion(keySSI, (err, versionHash) => {
+        keySSI.getAnchorId((err, anchorId) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${keySSI.getAnchorId()}`, err));
-            }
-            if (!versionHash) {
-                return callback(new Error(`No data found for anchor <${keySSI.getAnchorId()}>`));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchorId for keySSI ${keySSI.getIdentifier()}`, err));
             }
 
-            const keySSISpace = require("opendsu").loadAPI("keyssi");
-            if (typeof versionHash === "string") {
-                try{
-                    versionHash = keySSISpace.parse(versionHash);
-                }catch (e) {
-                    return callback(e);
+            anchoringx.getLastVersion(keySSI, (err, versionHash) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get versions for anchor ${anchorId}`, err));
                 }
-            }
-            getLatestVersion(versionHash, callback);
+                if (!versionHash) {
+                    return callback(new Error(`No data found for anchor <${anchorId}>`));
+                }
+
+                const keySSISpace = require("opendsu").loadAPI("keyssi");
+                if (typeof versionHash === "string") {
+                    try {
+                        versionHash = keySSISpace.parse(versionHash);
+                    } catch (e) {
+                        return callback(e);
+                    }
+                }
+                getLatestVersion(versionHash, callback);
+            });
         })
     }
 
@@ -16001,23 +16026,33 @@ function EncryptionTransformation() {
     this.do = (keySSI, data, callback) => {
         const encrypt = crypto.getCryptoFunctionForKeySSI(keySSI, "encryption");
         let encryptedData;
-        try {
-            encryptedData = encrypt(data, keySSI.getEncryptionKey());
-        } catch (e) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to encrypt data`, e));
-        }
-        callback(undefined, encryptedData);
+        keySSI.getEncryptionKey((err, encryptionKey) => {
+            if (err) {
+                return callback(err);
+            }
+            try {
+                encryptedData = encrypt(data, encryptionKey);
+            } catch (e) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to encrypt data`, e));
+            }
+            callback(undefined, encryptedData);
+        });
     };
 
     this.undo = (keySSI, data, callback) => {
         const decrypt = crypto.getCryptoFunctionForKeySSI(keySSI, "decryption");
         let plainData;
-        try {
-            plainData = decrypt(data, keySSI.getEncryptionKey());
-        } catch (e) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to decrypt data`, e));
-        }
-        callback(undefined, plainData);
+        keySSI.getEncryptionKey((err, encryptionKey) => {
+            if (err) {
+                return callback(err);
+            }
+            try {
+                plainData = decrypt(data, encryptionKey);
+            } catch (e) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to decrypt data`, e));
+            }
+            callback(undefined, plainData);
+        });
     };
 }
 
@@ -22947,15 +22982,21 @@ function ArraySSI(enclave, identifier) {
         self.load(SSITypes.ARRAY_SSI, dlDomain, cryptoRegistry.getBase64EncodingFunction(self)(key), "", vn, hint);
     };
 
-    self.derive = () => {
+    self.derive = (callback) => {
         const ConstSSI = require("./ConstSSI");
         const constSSI = ConstSSI.createConstSSI();
         constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControlString(), self.getVn(), self.getHint());
-        return constSSI;
+        callback(undefined, constSSI);
     };
 
-    self.getEncryptionKey = () => {
-        return self.derive().getEncryptionKey();
+    self.getEncryptionKey = (callback) => {
+        self.derive((err, derivedKeySSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            derivedKeySSI.getEncryptionKey(callback);
+        });
     };
 
     self.createAnchorValue = function (brickMapHash, previousAnchorValue, callback) {
@@ -23048,15 +23089,21 @@ function ConstSSI(enclave, identifier) {
         self.load(SSITypes.CONST_SSI, dlDomain, cryptoRegistry.getBase64EncodingFunction(self)(key), "", vn, hint);
     };
 
-    self.getEncryptionKey = () => {
-        return cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
+    self.getEncryptionKey = (callback) => {
+        const encryptionKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
+        callback(undefined, encryptionKey);
     };
 
-    self.derive = () => {
+    self.derive = (callback) => {
         const cZaSSI = CZaSSI.createCZaSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(self)(self.getEncryptionKey());
-        cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControlString(), self.getVn(), self.getHint());
-        return cZaSSI;
+        self.getEncryptionKey((err, encryptionKey) => {
+            if (err) {
+                return callback(err);
+            }
+            const subtypeKey = cryptoRegistry.getHashFunction(self)(encryptionKey);
+            cZaSSI.load(SSITypes.CONSTANT_ZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, self.getControlString(), self.getVn(), self.getHint());
+            callback(undefined, cZaSSI);
+        });
     };
 
     self.createAnchorValue = function (brickMapHash, previousAnchorValue, callback) {
@@ -23106,14 +23153,20 @@ function PasswordSSI(enclave, identifier){
         self.load(SSITypes.PASSWORD_SSI, dlDomain, subtypeSpecificString, '', vn, hint);
     };
 
-    self.derive = () => {
+    self.derive = (callback) => {
         const constSSI = ConstSSI.createConstSSI();
-        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSubtypeSpecificString(), self.getControlString(), self.getVn(), self.getHint());
-        return constSSI;
+        constSSI.load(SSITypes.CONST_SSI, self.getDLDomain(), self.getSpecificString(), self.getControlString(), self.getVn(), self.getHint());
+        callback(constSSI);
     };
 
-    self.getEncryptionKey = () => {
-        return self.derive().getEncryptionKey();
+    self.getEncryptionKey = (callback) => {
+        self.derive((err, constSSI)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            constSSI.getEncryptionKey(callback);
+        })
     };
 }
 
@@ -23255,10 +23308,13 @@ const createAnchorSSI = require("./SecretSSIs/AnchorSSI").createAnchorSSI;
 const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
 const createPublicSSI = require("./SecretSSIs/PublicSSI").createPublicSSI;
 const createZaSSI = require("./SecretSSIs/ZaSSI").createZaSSI;
+
+const createRootKeySSI = require("./SeedSSIs/PathKeySSI").createPathKeySSI;
 const createSeedSSI = require("./SeedSSIs/SeedSSI").createSeedSSI;
-const createWalletSSI = require("./OtherKeySSIs/WalletSSI").createWalletSSI;
 const createSReadSSI = require("./SeedSSIs/SReadSSI").createSReadSSI;
 const createSZaSSI = require("./SeedSSIs/SZaSSI").createSZaSSI;
+
+const createWalletSSI = require("./OtherKeySSIs/WalletSSI").createWalletSSI;
 const createPasswordSSI = require("./ConstSSIs/PasswordSSI").createPasswordSSI;
 const createArraySSI = require("./ConstSSIs/ArraySSI").createArraySSI;
 const createConstSSI = require("./ConstSSIs/ConstSSI").createConstSSI;
@@ -23314,9 +23370,9 @@ KeySSIFactory.prototype.create = (enclave, identifier, options) => {
     let keySSI = {}
     KeySSIMixin(keySSI, enclave);
 
-    try{
+    try {
         keySSI.autoLoad(identifier);
-    }catch (e) {
+    } catch (e) {
         throw createOpenDSUErrorWrapper(`Invalid format for keySSI ${identifier}`, e);
     }
 
@@ -23343,7 +23399,7 @@ KeySSIFactory.prototype.createByType = (typeName, enclave, identifier, options) 
     return keySSI;
 };
 
-KeySSIFactory.prototype.createType = (typeName)=>{
+KeySSIFactory.prototype.createType = (typeName) => {
     return registry[typeName].functionFactory();
 }
 
@@ -23358,19 +23414,12 @@ KeySSIFactory.prototype.getDerivedType = (keySSI, otherType, callback) => {
 
     while (typeof currentEntry.derivedType !== "undefined") {
         if (currentEntry.derivedType === keySSI.getTypeName()) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`${otherType} is not derived from ${keySSI.getTypeName()}`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`${otherType} is not derived from ${keySSI.getTypeName()}`));
         }
         currentEntry = registry[currentEntry.derivedType];
     }
 
-    let derivedKeySSI;
-    try {
-        derivedKeySSI = getDerivedKeySSI(keySSI, otherType);
-    } catch (err){
-        return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve derived type for keySSI`, err));
-    }
-
-    callback(undefined, derivedKeySSI);
+    getDerivedKeySSI(keySSI, otherType, callback);
 };
 
 KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
@@ -23378,19 +23427,28 @@ KeySSIFactory.prototype.getRelatedType = (keySSI, otherType, callback) => {
     KeySSIFactory.prototype.getDerivedType(keySSI, otherType, callback);
 }
 
-KeySSIFactory.prototype.getAnchorType = (keySSI) => {
-    let localKeySSI = keySSI;
-    while (typeof registry[localKeySSI.getTypeName()].derivedType !== "undefined") {
-        localKeySSI = localKeySSI.derive();
+KeySSIFactory.prototype.getAnchorType = (keySSI, callback) => {
+    const __getAnchorTypeRecursively = (currentKeySSI) => {
+        if (typeof registry[currentKeySSI.getTypeName()].derivedType === "undefined") {
+            return callback(undefined, currentKeySSI);
+        }
+
+        currentKeySSI.derive((err, derivedKeySSI)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            __getAnchorTypeRecursively(derivedKeySSI);
+        })
     }
-    return localKeySSI;
+
+    __getAnchorTypeRecursively(keySSI);
 };
 
 KeySSIFactory.prototype.getRootKeySSITypeName = (keySSI) => {
     if (typeof keySSI === "object") {
         return KeySSIFactory.prototype.getRootKeySSITypeName(keySSI.getTypeName())
-    }
-    else if (typeof keySSI === "string") {
+    } else if (typeof keySSI === "string") {
         let found = 0
         for (let parentKey in registry) {
             if (registry[parentKey].derivedType === keySSI) {
@@ -23402,24 +23460,33 @@ KeySSIFactory.prototype.getRootKeySSITypeName = (keySSI) => {
         if (!found || found > 1) {
             return typeof keySSI === "object" ? keySSI.getTypeName() : keySSI
         }
-    }
-    else {
+    } else {
         return false
     }
 }
 
-const getDerivedKeySSI = (keySSI, derivedTypeName) => {
-    let localKeySSI = keySSI;
-    let currentEntry = registry[localKeySSI.getTypeName()];
-    while (typeof currentEntry.derivedType !== "undefined") {
-        if (currentEntry.derivedType === derivedTypeName) {
-            return localKeySSI.derive();
+const getDerivedKeySSI = (keySSI, derivedTypeName, callback) => {
+
+    const __getDerivedKeySSIRecursively = (currentKeySSI) => {
+        let currentEntry = registry[currentKeySSI.getTypeName()];
+        if (typeof currentEntry.derivedType === "undefined") {
+            return callback(Error(`${derivedTypeName} is not a valid KeySSI Type`));
         }
-        localKeySSI = localKeySSI.derive();
-        currentEntry = registry[currentEntry.derivedType];
+
+        if (currentEntry.derivedType === derivedTypeName) {
+            return currentKeySSI.derive(callback);
+        }
+
+        currentKeySSI.derive((err, derivedKeySSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            __getDerivedKeySSIRecursively(derivedKeySSI);
+        })
     }
 
-    throw Error(`${derivedTypeName} is not a valid KeySSI Type`);
+    __getDerivedKeySSIRecursively(keySSI);
 };
 
 KeySSIFactory.prototype.registerFactory(SSITypes.SECRET_SSI, 'v0', SSITypes.ANCHOR_SSI, createSecretSSI);
@@ -23427,6 +23494,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.ANCHOR_SSI, 'v0', SSITypes.READ
 KeySSIFactory.prototype.registerFactory(SSITypes.READ_SSI, 'v0', SSITypes.PUBLIC_SSI, createReadSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_SSI, 'v0', SSITypes.ZERO_ACCESS_SSI, createPublicSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.ZERO_ACCESS_SSI, 'v0', undefined, createZaSSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.PATH_SSI, 'v0', SSITypes.PATH_SSI, createRootKeySSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SEED_SSI, 'v0', SSITypes.SREAD_SSI, createSeedSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.WALLET_SSI, 'v0', SSITypes.CONST_SSI, createWalletSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SREAD_SSI, 'v0', SSITypes.SZERO_ACCESS_SSI, createSReadSSI);
@@ -23454,7 +23522,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.SIZE_SSI, 'v0', undefined, crea
 
 module.exports = new KeySSIFactory();
 
-},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/AliasSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/AliasSSI.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SizeSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SizeSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
+},{"./ConstSSIs/ArraySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ArraySSI.js","./ConstSSIs/CZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/CZaSSI.js","./ConstSSIs/ConstSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/ConstSSI.js","./ConstSSIs/PasswordSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ConstSSIs/PasswordSSI.js","./ContractSSIs/ConsensusSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/ContractSSIs/ConsensusSSI.js","./HashLinkSSIs/SignedHashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/HashLinkSSIs/SignedHashLinkSSI.js","./KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","./OtherKeySSIs/AliasSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/AliasSSI.js","./OtherKeySSIs/HashLinkSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/HashLinkSSI.js","./OtherKeySSIs/PublicKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/PublicKeySSI.js","./OtherKeySSIs/SizeSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SizeSSI.js","./OtherKeySSIs/SymmetricalEncryptionSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/SymmetricalEncryptionSSI.js","./OtherKeySSIs/WalletSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OtherKeySSIs/WalletSSI.js","./OwnershipSSIs/OReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OReadSSI.js","./OwnershipSSIs/OwnershipSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/OwnershipSSI.js","./OwnershipSSIs/ZATSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/OwnershipSSIs/ZATSSI.js","./SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SecretSSIs/AnchorSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/AnchorSSI.js","./SecretSSIs/PublicSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/PublicSSI.js","./SecretSSIs/ReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ReadSSI.js","./SecretSSIs/SecretSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/SecretSSI.js","./SecretSSIs/ZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SecretSSIs/ZaSSI.js","./SeedSSIs/PathKeySSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/PathKeySSI.js","./SeedSSIs/SReadSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js","./SeedSSIs/SZaSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SZaSSI.js","./SeedSSIs/SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","./TokenSSIs/TokenSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TokenSSIs/TokenSSI.js","./TransferSSIs/TransferSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/TransferSSIs/TransferSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js":[function(require,module,exports){
 const cryptoRegistry = require("../CryptoAlgorithms/CryptoAlgorithmsRegistry");
 const {BRICKS_DOMAIN_KEY} = require('opendsu').constants
 const pskCrypto = require("pskcrypto");
@@ -23568,9 +23636,19 @@ function keySSIMixin(target, enclave) {
         return KeySSIFactory.getRootKeySSITypeName(target);
     }
 
-    target.getAnchorId = function (plain) {
+    target.getAnchorId = function (plain, callback) {
+        if (typeof plain === "function") {
+            callback = plain;
+            plain = false;
+        }
         const keySSIFactory = require("./KeySSIFactory");
-        return keySSIFactory.getAnchorType(target).getNoHintIdentifier(plain);
+        keySSIFactory.getAnchorType(target, (err, anchorSSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            callback(undefined, anchorSSI.getNoHintIdentifier(plain));
+        })
     }
 
     target.getSpecificString = function () {
@@ -23694,7 +23772,7 @@ function keySSIMixin(target, enclave) {
         return target.getIdentifier();
     }
 
-    target.canAppend = function(){
+    target.canAppend = function () {
         return true;
     }
 
@@ -23718,24 +23796,28 @@ function keySSIMixin(target, enclave) {
         const keySSIFactory = require("./KeySSIFactory");
 
         const signedHashLinkSSI = keySSIFactory.createType(SSITypes.SIGNED_HASH_LINK_SSI);
-        const anchorId = target.getAnchorId(true);
-        if (typeof previousAnchorValue === "string") {
-            previousAnchorValue = keySSIFactory.create(previousAnchorValue);
-        }
-
-        let previousIdentifier = '';
-        const timestamp = Date.now();
-        if (previousAnchorValue) {
-            previousIdentifier = previousAnchorValue.getIdentifier(true);
-        }
-        let dataToSign = anchorId + brickMapHash + previousIdentifier + timestamp;
-        target.sign(dataToSign, (err, signature)=>{
+        target.getAnchorId(true, (err, anchorId) => {
             if (err) {
                 return callback(err);
             }
+            if (typeof previousAnchorValue === "string") {
+                previousAnchorValue = keySSIFactory.create(previousAnchorValue);
+            }
 
-            signedHashLinkSSI.initialize(target.getBricksDomain(), brickMapHash, timestamp, signature, target.getVn(), target.getHint());
-            callback(undefined, signedHashLinkSSI);
+            let previousIdentifier = '';
+            const timestamp = Date.now();
+            if (previousAnchorValue) {
+                previousIdentifier = previousAnchorValue.getIdentifier(true);
+            }
+            let dataToSign = anchorId + brickMapHash + previousIdentifier + timestamp;
+            target.sign(dataToSign, (err, signature) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                signedHashLinkSSI.initialize(target.getBricksDomain(), brickMapHash, timestamp, signature, target.getVn(), target.getHint());
+                callback(undefined, signedHashLinkSSI);
+            })
         })
     }
 
@@ -24002,8 +24084,9 @@ function SymmetricalEncryptionSSI(enclave, identifier) {
         load(subtype, dlDomain, encryptionKey, '', vn, hint);
     }
 
-    self.getEncryptionKey = function() {
-        return cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
+    self.getEncryptionKey = function(callback) {
+        const encryptionKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getSpecificString());
+        callback(undefined, encryptionKey);
     };
 
     self.derive = function (){
@@ -24064,7 +24147,7 @@ function OReadSSI(identifier) {
         self.load(SSITypes.OWNERSHIP_READ_SSI, dlDomain, hashPrivateKey, hashPublicKeyLevelAndToken, vn, hint);
     };
 
-    self.derive = () => {
+    self.derive = (callback) => {
         const zatSSI = ZATSSI.createZATSSI();
         const token = self.getToken();
         const hashPublicKey = self.getHashPublicKey();
@@ -24076,11 +24159,12 @@ function OReadSSI(identifier) {
             self.getVn(),
             self.getHint()
         );
-        return zatSSI;
+        callback(undefined, zatSSI);
     };
 
-    self.getEncryptionKey = () => {
-        return cryptoRegistry.getBase64DecodingFunction(self)(self.getHashPublicKey());
+    self.getEncryptionKey = (callback) => {
+        const encryptionKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getHashPublicKey());
+        callback(undefined, encryptionKey);
     };
 
     const getControlParts = function () {
@@ -24178,7 +24262,7 @@ function OwnershipSSI(identifier) {
         };
     };
 
-    self.derive = function () {
+    self.derive = function (callback) {
         const oReadSSI = OReadSSI.createOReadSSI();
         const privateKey = self.getPrivateKey();
         const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
@@ -24195,7 +24279,7 @@ function OwnershipSSI(identifier) {
             self.getVn(),
             self.getHint()
         );
-        return oReadSSI;
+        callback(undefined, oReadSSI);
     };
 
     self.getPrivateKey = function (format) {
@@ -24241,8 +24325,14 @@ function OwnershipSSI(identifier) {
         return publicKeyHash;
     };
 
-    self.getEncryptionKey = function () {
-        return self.derive().getEncryptionKey();
+    self.getEncryptionKey = function (callback) {
+        self.derive((err, derivedKeySSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            derivedKeySSI.getEncryptionKey(callback);
+        });
     };
 
     const getControlParts = function () {
@@ -24317,6 +24407,7 @@ module.exports = {
     READ_SSI: "read",
     PUBLIC_SSI: "public",
     ZERO_ACCESS_SSI: "za",
+    PATH_SSI: "root",
     SEED_SSI: "seed",
     SREAD_SSI: "sread",
     SZERO_ACCESS_SSI: "sza",
@@ -24352,11 +24443,17 @@ function AnchorSSI(identifier) {
         this.autoLoad(identifier);
     }
 
-    this.derive = () => {
+    this.derive = (callback) => {
         const readSSI = ReadSSI.createReadSSI();
-        const subtypeKey = cryptoRegistry.getHashFunction(this)(this.getEncryptionKey());
-        readSSI.load(SSITypes.READ_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
-        return readSSI;
+        this.getEncryptionKey((err, encryptionKey) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const subtypeKey = cryptoRegistry.getHashFunction(this)(encryptionKey);
+            readSSI.load(SSITypes.READ_SSI, this.getDLDomain(), subtypeKey, this.getControlString(), this.getVn(), this.getHint());
+            callback(undefined, readSSI);
+        });
     };
 }
 
@@ -24475,7 +24572,141 @@ function createZaSSI(identifier) {
 module.exports = {
     createZaSSI
 };
-},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/PathKeySSI.js":[function(require,module,exports){
+const KeySSIMixin = require("../KeySSIMixin");
+const SeedSSI = require("./SeedSSI");
+const SSITypes = require("../SSITypes");
+const cryptoRegistry = require("../../CryptoAlgorithms/CryptoAlgorithmsRegistry");
+
+function PathKeySSI(enclave, identifier) {
+    if (typeof enclave === "string") {
+        identifier = enclave;
+        enclave = undefined;
+    }
+    KeySSIMixin(this, enclave);
+    const self = this;
+    let privateKey;
+
+    if (typeof identifier !== "undefined") {
+        self.autoLoad(identifier);
+    }
+
+    self.getTypeName = function () {
+        return SSITypes.PATH_SSI;
+    }
+
+    self.setCanSign(true);
+
+    self.initialize = function (dlDomain, slot, path, vn, hint, callback) {
+        if (typeof path === "function") {
+            callback = path;
+            path = slot;
+            slot = 0;
+        }
+
+        if (typeof vn === "function") {
+            callback = vn;
+            vn = 'v0';
+        }
+
+        if (typeof hint === "function") {
+            callback = hint;
+            hint = undefined;
+        }
+
+        const specificString = `${slot}/${path}`;
+        enclave.getPrivateKeyForSlot(slot, (err, _privateKey) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get privateKey`, err));
+            }
+
+            privateKey = _privateKey;
+
+            self.load(SSITypes.PATH_SSI, dlDomain, specificString, '', vn, hint);
+            if (callback) {
+                callback(undefined, self);
+            }
+        })
+
+        self.initialize = function () {
+            throw Error("KeySSI already initialized");
+        }
+    };
+
+    self.derive = function (callback) {
+        const splitSpecificString = self.getSpecificString().split("/");
+        const slot = splitSpecificString[0];
+        enclave.getPrivateKeyForSlot(slot, (err, _privateKey)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            privateKey = _privateKey;
+            const seedSpecificString = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
+            const seedSSI = SeedSSI.createSeedSSI(enclave);
+            seedSSI.load(SSITypes.SEED_SSI, self.getDLDomain(), seedSpecificString, undefined, self.getVn(), self.getHint());
+            callback(undefined, seedSSI);
+        })
+    };
+
+    self.getPrivateKey = function (format) {
+        let validSpecificString = self.getSpecificString();
+        if (validSpecificString === undefined) {
+            throw Error("Operation requested on an invalid SeedSSI. Initialise first")
+        }
+        let privateKey = cryptoRegistry.getBase64DecodingFunction(self)(validSpecificString);
+        if (format === "pem") {
+            const pemKeys = cryptoRegistry.getKeyPairGenerator(self)().getPemKeys(privateKey, self.getPublicKey("raw"));
+            privateKey = pemKeys.privateKey;
+        }
+        return privateKey;
+    }
+
+    self.sign = function (dataToSign, callback) {
+        const privateKey = self.getPrivateKey();
+        const sign = cryptoRegistry.getSignFunction(self);
+        const encode = cryptoRegistry.getBase64EncodingFunction(self);
+        const signature = encode(sign(dataToSign, privateKey));
+        if (callback) {
+            callback(undefined, signature);
+        }
+
+        return signature;
+    }
+
+    self.getPublicKey = function (format) {
+        return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
+    }
+
+    self.getEncryptionKey = function (callback) {
+        self.derive((err, seedSSI)=>{
+            if (err) {
+                return callback(err);
+            }
+
+            seedSSI.getEncryptionKey(callback);
+        })
+    };
+
+    self.getKeyPair = function () {
+        const keyPair = {
+            privateKey: self.getPrivateKey("pem"),
+            publicKey: self.getPublicKey("pem")
+        }
+
+        return keyPair;
+    }
+}
+
+function createPathKeySSI(enclave, identifier) {
+    return new PathKeySSI(enclave, identifier);
+}
+
+module.exports = {
+    createPathKeySSI
+};
+
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -24501,20 +24732,22 @@ function SReadSSI(enclave, identifier) {
         self.load(SSITypes.SREAD_SSI, dlDomain, "", undefined, vn, hint);
     };
 
-    self.derive = () => {
+    self.derive = (callback) => {
         const sZaSSI = SZaSSI.createSZaSSI();
         const subtypeKey = '';
         const subtypeControl = self.getControlString();
         sZaSSI.load(SSITypes.SZERO_ACCESS_SSI, self.getDLDomain(), subtypeKey, subtypeControl, self.getVn(), self.getHint());
-        return sZaSSI;
+        callback(undefined, sZaSSI);
     };
 
-    self.getEncryptionKey = () => {
-        return cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+    self.getEncryptionKey = (callback) => {
+        const encryptionKey = cryptoRegistry.getDecodingFunction(self)(self.getSpecificString());
+        callback(undefined, encryptionKey);
     };
 
     self.getPublicKey = (options) => {
-        return self.derive().getPublicKey(options);
+        let publicKey = cryptoRegistry.getBase64DecodingFunction(self)(self.getControlString());
+        return cryptoRegistry.getConvertPublicKeyFunction(self)(publicKey, options);
     };
 }
 
@@ -24632,14 +24865,14 @@ function SeedSSI(enclave, identifier) {
         }
     };
 
-    self.derive = function () {
+    self.derive = function (callback) {
         const sReadSSI = SReadSSI.createSReadSSI();
         const privateKey = self.getPrivateKey();
         const sreadSpecificString = cryptoRegistry.getHashFunction(self)(privateKey);
         const publicKey = cryptoRegistry.getDerivePublicKeyFunction(self)(privateKey, "raw");
         const controlString = cryptoRegistry.getBase64EncodingFunction(self)(publicKey);
         sReadSSI.load(SSITypes.SREAD_SSI, self.getDLDomain(), sreadSpecificString, controlString, self.getVn(), self.getHint());
-        return sReadSSI;
+        callback(undefined, sReadSSI);
     };
 
     self.getPrivateKey = function (format) {
@@ -24671,8 +24904,14 @@ function SeedSSI(enclave, identifier) {
         return cryptoRegistry.getDerivePublicKeyFunction(self)(self.getPrivateKey(), format);
     }
 
-    self.getEncryptionKey = function () {
-        return self.derive().getEncryptionKey();
+    self.getEncryptionKey = function (callback) {
+        self.derive((err, derivedKeySSI) => {
+            if (err) {
+                return callback(err);
+            }
+
+            derivedKeySSI.getEncryptionKey(callback);
+        });
     };
 
     self.getKeyPair = function () {
@@ -33446,15 +33685,19 @@ function RemotePersistence() {
         }
 
         const dlDomain = anchorSSI.getDLDomain();
-        const anchorId = anchorSSI.getAnchorId();
-
-        getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+        anchorSSI.getAnchorId((err, anchorId) => {
             if (err) {
                 return callback(err);
             }
 
-            const anchorHandler = getAnchorHandler(anchorId, anchorValue.getIdentifier(), dlDomain, anchorAction);
-            promiseRunner.runOneSuccessful(anchoringServicesArray, anchorHandler, callback, new Error(`Failed during execution of ${anchorAction}`));
+            getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                const anchorHandler = getAnchorHandler(anchorId, anchorValue.getIdentifier(), dlDomain, anchorAction);
+                promiseRunner.runOneSuccessful(anchoringServicesArray, anchorHandler, callback, new Error(`Failed during execution of ${anchorAction}`));
+            })
         })
     }
 
@@ -33469,8 +33712,12 @@ function RemotePersistence() {
                         });
                     }
 
-                    resolver.invalidateDSUCache(anchorId);
-                    return resolve(data);
+                    resolver.invalidateDSUCache(anchorId, err => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        resolve(data);
+                    });
                 });
                 if (putResult) {
                     putResult.then(resolve).catch(reject);
@@ -33495,9 +33742,9 @@ function RemotePersistence() {
                         return reject(err);
                     }
 
-                    try{
+                    try {
                         data = JSON.parse(data);
-                    }catch (e) {
+                    } catch (e) {
                         return reject(e);
                     }
 
@@ -33520,15 +33767,19 @@ function RemotePersistence() {
         }
 
         const dlDomain = keySSI.getDLDomain();
-        const anchorId = keySSI.getAnchorId();
-        getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+        keySSI.getAnchorId((err, anchorId) => {
             if (err) {
                 return callback(err);
             }
+            getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+                if (err) {
+                    return callback(err);
+                }
 
-            const fetchAnchor = getFetchAnchor(anchorId, dlDomain, actionName, callback);
-            promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
-        })
+                const fetchAnchor = getFetchAnchor(anchorId, dlDomain, actionName, callback);
+                promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
+            })
+        });
     }
 
     this.getAllVersions = (keySSI, callback) => {
@@ -33558,24 +33809,36 @@ function validateHashLinks(keySSI, hashLinks, callback) {
     const validatedHashLinks = [];
     let lastSSI;
     let lastTransferSSI;
-    for (let i = 0; i < hashLinks.length; i++) {
-        const newSSI = hashLinks[i];
-        if (!verifySignature(keySSI, newSSI, lastSSI)) {
-            return callback(Error("Failed to verify signature"));
-        }
 
-        if (!validateAnchoredSSI(lastTransferSSI, newSSI)) {
-            return callback(Error("Failed to validate SSIs"));
+    const __validateHashLinksRecursively = (index) => {
+        const newSSI = hashLinks[index];
+        if (typeof newSSI === "undefined") {
+            return callback(undefined, validatedHashLinks);
         }
+        verifySignature(keySSI, newSSI, lastSSI, (err, status) => {
+            if (err) {
+                return callback(err);
+            }
 
-        if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
-            lastTransferSSI = newSSI;
-        } else {
-            validatedHashLinks.push(newSSI);
-            lastSSI = newSSI;
-        }
+            if (!status) {
+                return callback(Error("Failed to verify signature"));
+            }
+
+            if (!validateAnchoredSSI(lastTransferSSI, newSSI)) {
+                return callback(Error("Failed to validate SSIs"));
+            }
+
+            if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
+                lastTransferSSI = newSSI;
+            } else {
+                validatedHashLinks.push(newSSI);
+                lastSSI = newSSI;
+            }
+            __validateHashLinksRecursively(index + 1);
+        });
     }
-    callback(undefined, validatedHashLinks);
+
+    __validateHashLinksRecursively(0);
 }
 
 
@@ -33590,12 +33853,17 @@ function validateAnchoredSSI(lastTransferSSI, currentSSI) {
     return true;
 }
 
-function verifySignature(keySSI, newSSI, lastSSI) {
+function verifySignature(keySSI, newSSI, lastSSI, callback) {
+    if (typeof lastSSI === "function") {
+        callback = lastSSI;
+        lastSSI = undefined;
+    }
+
     if (!keySSI.canSign()) {
-        return true;
+        return callback(undefined, true);
     }
     if (!newSSI.canBeVerified()) {
-        return true;
+        return callback(undefined, true);
     }
     const timestamp = newSSI.getTimestamp();
     const signature = newSSI.getSignature();
@@ -33605,16 +33873,22 @@ function verifySignature(keySSI, newSSI, lastSSI) {
     }
 
     let dataToVerify;
-    if (newSSI.getTypeName() === constants.KEY_SSIS.SIGNED_HASH_LINK_SSI) {
-        dataToVerify = keySSI.hash(keySSI.getAnchorId() + newSSI.getHash() + lastEntryInAnchor + timestamp);
-        return keySSI.verify(dataToVerify, signature);
-    }
-    if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
-        dataToVerify += newSSI.getSpecificString();
-        return keySSI.verify(dataToVerify, signature);
-    }
+    keySSI.getAnchorId((err, anchorId) => {
+        if (err) {
+            return callback(err);
+        }
 
-    return false;
+        if (newSSI.getTypeName() === constants.KEY_SSIS.SIGNED_HASH_LINK_SSI) {
+            dataToVerify = keySSI.hash(anchorId + newSSI.getHash() + lastEntryInAnchor + timestamp);
+            return callback(undefined, keySSI.verify(dataToVerify, signature));
+        }
+        if (newSSI.getTypeName() === constants.KEY_SSIS.TRANSFER_SSI) {
+            dataToVerify += newSSI.getSpecificString();
+            return callback(undefined, keySSI.verify(dataToVerify, signature));
+        }
+
+        callback(undefined, false);
+    });
 }
 
 module.exports = {
@@ -33642,18 +33916,23 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
             anchorValueSSIKeySSI = keySSISpace.parse(anchorValueSSI);
         }
 
-        if (!anchorIdKeySSI.canAppend()) {
-            return persistenceStrategy.createAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
-        }
+        anchorIdKeySSI.getAnchorId((err, _anchorId) => {
+            if (err) {
+                return callback(err);
+            }
+            if (!anchorIdKeySSI.canAppend()) {
+                return persistenceStrategy.createAnchor(_anchorId, anchorValueSSIKeySSI.getIdentifier(), callback);
+            }
 
-        const signer = determineSigner(anchorIdKeySSI, []);
-        const signature = anchorValueSSIKeySSI.getSignature();
-        const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, null);
-        if (!signer.verify(dataToVerify, signature)) {
-            return callback(Error("Failed to verify signature"));
-        }
-        persistenceStrategy.createAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), (err) => {
-            return callback(err);
+            const signer = determineSigner(anchorIdKeySSI, []);
+            const signature = anchorValueSSIKeySSI.getSignature();
+            const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, null);
+            if (!signer.verify(dataToVerify, signature)) {
+                return callback(Error("Failed to verify signature"));
+            }
+            persistenceStrategy.createAnchor(_anchorId, anchorValueSSIKeySSI.getIdentifier(), (err) => {
+                return callback(err);
+            });
         });
     }
 
@@ -33695,7 +33974,12 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
                     return callback({statusCode: 428, message: "Versions out of sync"});
                 }
 
-                persistenceStrategy.appendAnchor(anchorIdKeySSI.getAnchorId(), anchorValueSSIKeySSI.getIdentifier(), callback);
+                anchorIdKeySSI.getAnchorId((err, _anchorId) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    persistenceStrategy.appendAnchor(_anchorId, anchorValueSSIKeySSI.getIdentifier(), callback);
+                });
             })
         }
         if (typeof persistenceStrategy.prepareAnchoring === "function") {
@@ -33715,42 +33999,46 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         if (typeof anchorId === "string") {
             anchorIdKeySSI = keySSISpace.parse(anchorId);
         }
-        anchorId = anchorIdKeySSI.getAnchorId();
-
-        persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+        anchorIdKeySSI.getAnchorId((err, anchorId) => {
             if (err) {
                 return callback(err);
             }
-            if (typeof data === 'undefined' || data.length === 0) {
-                return callback(undefined, []);
-            }
-            if (!anchorIdKeySSI.canAppend()) {
-                //skip validation for non signing SSI
-                let anchorValues;
-                try {
-                    anchorValues = data.map(el => keySSISpace.parse(el));
-                } catch (e) {
-                    return callback(e);
+
+            persistenceStrategy.getAllVersions(anchorId, (err, data) => {
+                if (err) {
+                    return callback(err);
                 }
-                return callback(undefined, anchorValues);
-            }
-            const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
-            const progressiveHistoryOfKeySSI = [];
-            let previousSignedHashLinkKeySSI = null;
-            for (let i = 0; i <= historyOfKeySSI.length - 1; i++) {
-                const anchorValueSSIKeySSI = historyOfKeySSI[i];
-                const signer = determineSigner(anchorIdKeySSI, progressiveHistoryOfKeySSI);
-                const signature = anchorValueSSIKeySSI.getSignature();
-                const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, previousSignedHashLinkKeySSI);
-                if (!signer.verify(dataToVerify, signature)) {
-                    return callback(Error("Failed to verify signature"));
+                if (typeof data === 'undefined' || data.length === 0) {
+                    return callback(undefined, []);
                 }
-                //build history
-                progressiveHistoryOfKeySSI.push(anchorValueSSIKeySSI);
-                previousSignedHashLinkKeySSI = anchorValueSSIKeySSI;
-            }
-            //all history was validated
-            return callback(undefined, historyOfKeySSI);
+                if (!anchorIdKeySSI.canAppend()) {
+                    //skip validation for non signing SSI
+                    let anchorValues;
+                    try {
+                        anchorValues = data.map(el => keySSISpace.parse(el));
+                    } catch (e) {
+                        return callback(e);
+                    }
+                    return callback(undefined, anchorValues);
+                }
+                const historyOfKeySSI = data.map(el => keySSISpace.parse(el));
+                const progressiveHistoryOfKeySSI = [];
+                let previousSignedHashLinkKeySSI = null;
+                for (let i = 0; i <= historyOfKeySSI.length - 1; i++) {
+                    const anchorValueSSIKeySSI = historyOfKeySSI[i];
+                    const signer = determineSigner(anchorIdKeySSI, progressiveHistoryOfKeySSI);
+                    const signature = anchorValueSSIKeySSI.getSignature();
+                    const dataToVerify = anchorValueSSIKeySSI.getDataToSign(anchorIdKeySSI, previousSignedHashLinkKeySSI);
+                    if (!signer.verify(dataToVerify, signature)) {
+                        return callback(Error("Failed to verify signature"));
+                    }
+                    //build history
+                    progressiveHistoryOfKeySSI.push(anchorValueSSIKeySSI);
+                    previousSignedHashLinkKeySSI = anchorValueSSIKeySSI;
+                }
+                //all history was validated
+                return callback(undefined, historyOfKeySSI);
+            });
         });
     }
 
@@ -33759,21 +34047,25 @@ function AnchoringAbstractBehaviour(persistenceStrategy) {
         if (typeof anchorId === "string") {
             anchorIdKeySSI = keySSISpace.parse(anchorId);
         }
-        anchorId = anchorIdKeySSI.getAnchorId();
-        persistenceStrategy.getLastVersion(anchorId, (err, data) => {
+        anchorIdKeySSI.getAnchorId((err, anchorId) => {
             if (err) {
                 return callback(err);
             }
-            if (typeof data === 'undefined' || data === null) {
-                return callback();
-            }
-            let anchorValueSSI;
-            try {
-                anchorValueSSI = keySSISpace.parse(data);
-            } catch (e) {
-                return callback(createOpenDSUErrorWrapper("Failed to parse anchor value", e));
-            }
-            callback(undefined, anchorValueSSI);
+            persistenceStrategy.getLastVersion(anchorId, (err, data) => {
+                if (err) {
+                    return callback(err);
+                }
+                if (typeof data === 'undefined' || data === null) {
+                    return callback();
+                }
+                let anchorValueSSI;
+                try {
+                    anchorValueSSI = keySSISpace.parse(data);
+                } catch (e) {
+                    return callback(createOpenDSUErrorWrapper("Failed to parse anchor value", e));
+                }
+                callback(undefined, anchorValueSSI);
+            });
         });
     }
 
@@ -33834,28 +34126,31 @@ const buildGetVersionFunction = function(processingFunction){
         }
 
         const dlDomain = keySSI.getDLDomain();
-        const anchorId = keySSI.getAnchorId();
-
-        const bdns = require("../bdns");
-        // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-        //     return cachedAnchoring.versions(anchorId, callback);
-        // }
-
-        bdns.getAnchoringServices(dlDomain, function (err, anchoringServicesArray) {
+        keySSI.getAnchorId((err, anchorId) => {
             if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+                return callback(err);
             }
+            const bdns = require("../bdns");
+            // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+            //     return cachedAnchoring.versions(anchorId, callback);
+            // }
 
-            if (!anchoringServicesArray.length) {
-                return callback('No anchoring service provided');
-            }
+            bdns.getAnchoringServices(dlDomain, function (err, anchoringServicesArray) {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+                }
 
-            //TODO: security issue (which response we trust)
-            const fetchAnchor = (service) => {
-                return fetch(`${service}/anchor/${dlDomain}/get-all-versions/${anchorId}`).then(processingFunction);
-            };
+                if (!anchoringServicesArray.length) {
+                    return callback('No anchoring service provided');
+                }
 
-            promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
+                //TODO: security issue (which response we trust)
+                const fetchAnchor = (service) => {
+                    return fetch(`${service}/anchor/${dlDomain}/get-all-versions/${anchorId}`).then(processingFunction);
+                };
+
+                promiseRunner.runOneSuccessful(anchoringServicesArray, fetchAnchor, callback, new Error("get Anchoring Service"));
+            });
         });
     }
 }
@@ -33947,56 +34242,64 @@ const addVersion = (SSICapableOfSigning, newSSI, lastSSI, zkpValue, callback) =>
     }
 
     const dlDomain = SSICapableOfSigning.getDLDomain();
-    const anchorId = SSICapableOfSigning.getAnchorId();
-
-    // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
-    //     return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
-    // }
-
-    const bdns = require("../bdns");
-    bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+    SSICapableOfSigning.getAnchorId((err, anchorId) => {
         if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            return callback(err);
         }
 
-        if (!anchoringServicesArray.length) {
-            return callback('No anchoring service provided');
-        }
+        // if (dlDomain === constants.DOMAINS.VAULT && isValidVaultCache()) {
+        //     return cachedAnchoring.addVersion(anchorId, newSSI ? newSSI.getIdentifier() : undefined, callback);
+        // }
 
-        const hashLinkIds = {
-            last: lastSSI ? lastSSI.getIdentifier() : null,
-            new: newSSI ? newSSI.getIdentifier() : null
-        };
+        const bdns = require("../bdns");
+        bdns.getAnchoringServices(dlDomain, (err, anchoringServicesArray) => {
+            if (err) {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get anchoring services from bdns`, err));
+            }
 
-        createDigitalProof(SSICapableOfSigning, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
-            const body = {
-                hashLinkIds,
-                digitalProof,
-                zkp: zkpValue
+            if (!anchoringServicesArray.length) {
+                return callback('No anchoring service provided');
+            }
+
+            const hashLinkIds = {
+                last: lastSSI ? lastSSI.getIdentifier() : null,
+                new: newSSI ? newSSI.getIdentifier() : null
             };
 
-            const anchorAction = newSSI ? "append-to-anchor" : "create-anchor";
+            createDigitalProof(SSICapableOfSigning, hashLinkIds.new, hashLinkIds.last, zkpValue, (err, digitalProof) => {
+                const body = {
+                    hashLinkIds,
+                    digitalProof,
+                    zkp: zkpValue
+                };
 
-            const addAnchor = (service) => {
-                return new Promise((resolve, reject) => {
-                    const putResult = doPut(`${service}/anchor/${dlDomain}/${anchorAction}/${anchorId}`, JSON.stringify(body), (err, data) => {
-                        if (err) {
-                            return reject({
-                                statusCode: err.statusCode,
-                                message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
+                const anchorAction = newSSI ? "append-to-anchor" : "create-anchor";
+
+                const addAnchor = (service) => {
+                    return new Promise((resolve, reject) => {
+                        const putResult = doPut(`${service}/anchor/${dlDomain}/${anchorAction}/${anchorId}`, JSON.stringify(body), (err, data) => {
+                            if (err) {
+                                return reject({
+                                    statusCode: err.statusCode,
+                                    message: err.statusCode === 428 ? 'Unable to add alias: versions out of sync' : err.message || 'Error'
+                                });
+                            }
+
+                            require("opendsu").loadApi("resolver").invalidateDSUCache(SSICapableOfSigning, err=>{
+                                if (err) {
+                                    return reject(err);
+                                }
+                                return resolve(data);
                             });
+                        });
+                        if (putResult) {
+                            putResult.then(resolve).catch(reject);
                         }
+                    })
+                };
 
-                        require("opendsu").loadApi("resolver").invalidateDSUCache(SSICapableOfSigning);
-                        return resolve(data);
-                    });
-                    if (putResult) {
-                        putResult.then(resolve).catch(reject);
-                    }
-                })
-            };
-
-            promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback, new Error(`Failed during execution of ${anchorAction}`));
+                promiseRunner.runOneSuccessful(anchoringServicesArray, addAnchor, callback, new Error(`Failed during execution of ${anchorAction}`));
+            });
         });
     });
 };
@@ -34007,17 +34310,21 @@ function createDigitalProof(SSICapableOfSigning, newSSIIdentifier, lastSSIIdenti
         newSSIIdentifier = "";
     }
 
-    let anchorId = SSICapableOfSigning.getAnchorId();
-    let dataToSign = anchorId + newSSIIdentifier + zkp;
-    if (lastSSIIdentifier) {
-        dataToSign += lastSSIIdentifier;
-    }
+    SSICapableOfSigning.getAnchorId((err, anchorId) => {
+        if (err) {
+            return callback(err);
+        }
+        let dataToSign = anchorId + newSSIIdentifier + zkp;
+        if (lastSSIIdentifier) {
+            dataToSign += lastSSIIdentifier;
+        }
 
-    if (SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.CONST_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
-        return callback(undefined, {signature: "", publicKey: ""});
-    }
+        if (SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.CONST_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.ARRAY_SSI || SSICapableOfSigning.getTypeName() === constants.KEY_SSIS.WALLET_SSI) {
+            return callback(undefined, {signature: "", publicKey: ""});
+        }
 
-    return SSICapableOfSigning.sign(dataToSign, callback);
+        return SSICapableOfSigning.sign(dataToSign, callback);
+    });
 }
 
 const getObservable = (keySSI, fromVersion, authToken, timeout) => {
@@ -37563,58 +37870,61 @@ function createJWT({seedSSI, scope, credentials, options, sign}, callback) {
             return callback(e);
         }
     }
-    const sReadSSI = seedSSI.derive();
+    seedSSI.derive((err, sReadSSI) => {
+        if (err) {
+            return callback(err);
+        }
+        let {subject, valability, ...optionsRest} = options || {};
+        valability = valability || JWT_VALABILITY_SECONDS;
 
-    let {subject, valability, ...optionsRest} = options || {};
-    valability = valability || JWT_VALABILITY_SECONDS;
+        if (subject) {
+            subject = getReadableIdentity(subject);
+        } else {
+            subject = sReadSSI.getIdentifier(true);
+        }
+        if (!subject) {
+            return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
+        }
 
-    if (subject) {
-        subject = getReadableIdentity(subject);
-    } else {
-        subject = sReadSSI.getIdentifier(true);
-    }
-    if (!subject) {
-        return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
-    }
+        const issuer = sReadSSI.getIdentifier(true);
+        if (!issuer) {
+            return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
+        }
 
-    const issuer = sReadSSI.getIdentifier(true);
-    if (!issuer) {
-        return callback(JWT_ERRORS.INVALID_SSI_PROVIDED);
-    }
+        if (credentials) {
+            credentials = Array.isArray(credentials) ? credentials : [credentials];
+        }
 
-    if (credentials) {
-        credentials = Array.isArray(credentials) ? credentials : [credentials];
-    }
+        const header = {
+            typ: SEED_SSI_HEADER_TYPE,
+        };
 
-    const header = {
-        typ: SEED_SSI_HEADER_TYPE,
-    };
+        const now = nowEpochSeconds();
+        const body = {
+            sub: subject,
+            // aud: encodeBase58(scope),
+            scope,
+            iss: issuer,
+            publicKey: seedSSI.getPublicKey(),
+            iat: now,
+            nbf: now,
+            exp: now + valability,
+            credentials,
+            options: optionsRest,
+        };
 
-    const now = nowEpochSeconds();
-    const body = {
-        sub: subject,
-        // aud: encodeBase58(scope),
-        scope,
-        iss: issuer,
-        publicKey: seedSSI.getPublicKey(),
-        iat: now,
-        nbf: now,
-        exp: now + valability,
-        credentials,
-        options: optionsRest,
-    };
+        const segments = [encodeBase58(JSON.stringify(header)), encodeBase58(JSON.stringify(body))];
 
-    const segments = [encodeBase58(JSON.stringify(header)), encodeBase58(JSON.stringify(body))];
+        const jwtToSign = segments.join(".");
+        const hashFn = require("../crypto").getCryptoFunctionForKeySSI(seedSSI, "hash");
+        const hashResult = hashFn(jwtToSign);
+        sign(seedSSI, hashResult, (signError, signResult) => {
+            if (signError || !signResult) return callback(signError);
+            const encodedSignResult = encodeBase58(signResult);
 
-    const jwtToSign = segments.join(".");
-    const hashFn = require("../crypto").getCryptoFunctionForKeySSI(seedSSI, "hash");
-    const hashResult = hashFn(jwtToSign);
-    sign(seedSSI, hashResult, (signError, signResult) => {
-        if (signError || !signResult) return callback(signError);
-        const encodedSignResult = encodeBase58(signResult);
-
-        const jwt = `${jwtToSign}.${encodedSignResult}`;
-        callback(null, jwt);
+            const jwt = `${jwtToSign}.${encodedSignResult}`;
+            callback(null, jwt);
+        });
     });
 }
 
@@ -38524,7 +38834,12 @@ module.exports = {
                             if (err) {
                                 return callback(createOpenDSUErrorWrapper("Failed to anchor batch", err));
                             }
-                            doStorageDSUInitialisation(writableDSU, keySSI.derive());
+                            keySSI.derive((err, derivedKeySSI)=>{
+                                if (err) {
+                                    return callback(createOpenDSUErrorWrapper(`Failed to derive keySSI ${keySSI.getIdentifier()}`, err));
+                                }
+                                doStorageDSUInitialisation(writableDSU, derivedKeySSI);
+                            })
                         });
                     });
                 });
@@ -41671,10 +41986,16 @@ class DeriveCommand extends Command{
         }
 
         try{
-            const keySSI = _getKeySSISpace().parse(bar).derive();
-            callback(undefined, arg ? keySSI.getIdentifier() : keySSI);
+            const keySSI = _getKeySSISpace().parse(bar);
+            keySSI.derive((err, derivedKeySSI) => {
+                if (err) {
+                    return _err(`Could not derive Key ${JSON.stringify(bar)}`, err, callback)
+                }
+
+                callback(undefined, arg ? derivedKeySSI.getIdentifier() : derivedKeySSI);
+            });
         } catch (e) {
-            _err(`Could not derive Key ${JSON.stringify(bar)}`, e, callback)
+            _err(`Could not parse Key ${JSON.stringify(bar)}`, e, callback)
         }
     }
 }
@@ -42720,11 +43041,9 @@ function Enclave_Mixin(target, did) {
         }
 
         const keySSIIdentifier = seedSSI.getIdentifier();
-        const sReadSSIIdentifier = seedSSI.derive().getIdentifier();
-
         const isExistingKeyError = (error) => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
 
-        function registerDerivedKeySSIs(derivedKeySSI) {
+        function registerDerivedKeySSIs(derivedKeySSI, sReadSSIIdentifier) {
             target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
                 if (err && !isExistingKeyError(err)) {
                     // ignore if KeySSI is already present
@@ -42737,12 +43056,17 @@ function Enclave_Mixin(target, did) {
                     }
 
                     try {
-                        derivedKeySSI = derivedKeySSI.derive();
-                    } catch (e) {
+
+                        derivedKeySSI.derive((err, _derivedKeySSI) => {
+                            if (err) {
+                                return callback(err);
+                            }
+
+                            registerDerivedKeySSIs(_derivedKeySSI, sReadSSIIdentifier);
+                        })
+                    }catch (e) {
                         return callback();
                     }
-
-                    registerDerivedKeySSIs(derivedKeySSI);
                 });
             });
         }
@@ -42753,7 +43077,14 @@ function Enclave_Mixin(target, did) {
                 return callback(err);
             }
 
-            return registerDerivedKeySSIs(seedSSI);
+            seedSSI.derive((err, sReadSSI)=>{
+                if (err) {
+                    return callback(err);
+                }
+
+                const sReadSSIIdentifier = sReadSSI.getIdentifier();
+                return registerDerivedKeySSIs(seedSSI, sReadSSIIdentifier);
+            })
         })
     }
 
@@ -43014,7 +43345,8 @@ function Enclave_Mixin(target, did) {
                 let seedSSI;
                 try {
                     seedSSI = await $$.promisify(target.createSeedSSI)(target, vaultDomain);
-                    await $$.promisify(target.storeReadForAliasSSI)(undefined, seedSSI.derive(), keySSI);
+                    const sReadSSI = await $$.promisify(seedSSI.derive)();
+                    await $$.promisify(target.storeReadForAliasSSI)(undefined, sReadSSI, keySSI);
                 } catch (e) {
                     return callback(e);
                 }
@@ -43522,7 +43854,7 @@ function WalletDBEnclave(keySSI, did) {
             }
         }
 
-        resolver.invalidateDSUCache(keySSI);
+        await $$.promisify(resolver.invalidateDSUCache)(keySSI);
         this.storageDB = db.getSimpleWalletDB(DB_NAME, {keySSI});
         this.storageDB.on("initialised", () => {
             initialised = true;
@@ -46202,97 +46534,108 @@ KeySSI Notification API space
 let http = require("../http");
 let bdns = require("../bdns");
 
-function publish(keySSI, message, timeout, callback){
-	if (typeof timeout === 'function') {
-		callback = timeout;
-		timeout = 0;
-	}
-	bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
-		if (err) {
-			throw new Error(err);
-		}
+function publish(keySSI, message, timeout, callback) {
+    if (typeof timeout === 'function') {
+        callback = timeout;
+        timeout = 0;
+    }
+    bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
+        if (err) {
+            throw new Error(err);
+        }
 
-		if (!endpoints.length) {
-			throw new Error("No notification endpoints are available!");
-		}
+        if (!endpoints.length) {
+            throw new Error("No notification endpoints are available!");
+        }
+        keySSI.getAnchorId((err, anchorId) => {
+            if (err) {
+                return callback(err);
+            }
+            let url = endpoints[0] + `/notifications/publish/${anchorId}`;
 
-		let url = endpoints[0]+`/notifications/publish/${keySSI.getAnchorId()}`;
+            if (typeof message !== 'string' && !$$.Buffer.isBuffer(message) && !ArrayBuffer.isView(message)) {
+                message = JSON.stringify(message);
+            }
 
-		if (typeof message !== 'string' && !$$.Buffer.isBuffer(message) && !ArrayBuffer.isView(message)) {
-			message = JSON.stringify(message);
-		}
+            let options = {body: message, method: 'PUT'};
 
-        let options = {body: message, method: 'PUT'};
+            let request = http.poll(url, options, undefined, timeout);
 
-		let request = http.poll(url, options, undefined, timeout);
-
-		request.then((response)=>{
-			callback(undefined, response);
-		}).catch((err)=>{
-			return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish message`, err));
-		});
+            request.then((response) => {
+                callback(undefined, response);
+            }).catch((err) => {
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to publish message`, err));
+            });
+        });
     });
 }
 
 let requests = new Map();
-function getObservableHandler(keySSI, timeout){
-	timeout = timeout || 0;
-	let obs = require("../utils/observable").createObservable();
 
-	bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
-		if (err) {
-			throw new Error(err);
-		}
+function getObservableHandler(keySSI, timeout) {
+    timeout = timeout || 0;
+    let obs = require("../utils/observable").createObservable();
 
-		if (!endpoints.length) {
-			throw new Error("No notification endpoints are available!");
-		}
+    bdns.getNotificationEndpoints(keySSI.getDLDomain(), (err, endpoints) => {
+        if (err) {
+            throw new Error(err);
+        }
 
-		function makeRequest(){
-			let url = endpoints[0] + `/notifications/subscribe/${keySSI.getAnchorId()}`;
-			let options = {
-				method: 'POST'
-			};
-			let request = http.poll(url, options, undefined, timeout);
+        if (!endpoints.length) {
+            throw new Error("No notification endpoints are available!");
+        }
 
-			request.then((response) => {
-				obs.dispatchEvent("message", response);
+        keySSI.getAnchorId((err, anchorId) => {
+            if (err) {
+                return callback(err);
+            }
 
-				// If a subscription still exists, continue polling for messages
-				if (requests.has(obs)) {
-					makeRequest();
-				}
-			}).catch((err) => {
-				obs.dispatchEvent("error", err);
-			});
+            function makeRequest() {
+                let url = endpoints[0] + `/notifications/subscribe/${anchorId}`;
+                let options = {
+                    method: 'POST'
+                };
+                let request = http.poll(url, options, undefined, timeout);
 
-			requests.set(obs, request);
-		}
+                request.then((response) => {
+                    obs.dispatchEvent("message", response);
 
-		makeRequest();
-	})
+                    // If a subscription still exists, continue polling for messages
+                    if (requests.has(obs)) {
+                        makeRequest();
+                    }
+                }).catch((err) => {
+                    obs.dispatchEvent("error", err);
+                });
 
-	return obs;
+                requests.set(obs, request);
+            }
+
+            makeRequest();
+        })
+    })
+
+    return obs;
 }
 
-function unsubscribe(observable){
-	const request = requests.get(observable);
-	if (!request) {
-		return;
-	}
-	http.unpoll(request);
-	requests.delete(observable);
+function unsubscribe(observable) {
+    const request = requests.get(observable);
+    if (!request) {
+        return;
+    }
+    http.unpoll(request);
+    requests.delete(observable);
 }
 
 function isSubscribed(observable) {
-	return requests.has(observable);
+    return requests.has(observable);
 }
 
 module.exports = {
-	publish,
-	getObservableHandler,
-	unsubscribe,
-	isSubscribed
+    publish,
+    getObservableHandler,
+    unsubscribe,
+    isSubscribed
 }
 
 },{"../bdns":"/home/runner/work/privatesky/privatesky/modules/opendsu/bdns/index.js","../http":"/home/runner/work/privatesky/privatesky/modules/opendsu/http/index.js","../utils/observable":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/observable.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/oauth/index.js":[function(require,module,exports){
@@ -47137,9 +47480,13 @@ function addDSUInstanceInCache(dsuInstance, callback) {
         if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to retrieve keySSI`, err));
         }
-        const cacheKey = keySSI.getAnchorId();
-        dsuCache.set(cacheKey, dsuInstance);
-        callback(undefined, dsuInstance);
+        keySSI.getAnchorId((err, cacheKey) => {
+            if (err) {
+                return callback(err);
+            }
+            dsuCache.set(cacheKey, dsuInstance);
+            callback(undefined, dsuInstance);
+        });
     });
 }
 
@@ -47277,26 +47624,30 @@ const loadDSU = (keySSI, options, callback) => {
     }
 
     if (cachingEnabled) {
-        const cacheKey = keySSI.getAnchorId()
-        const cachedDSU = dsuCache.get(cacheKey);
+        keySSI.getAnchorId((err, cacheKey) => {
+            if (err) {
+                return callback(err);
+            }
+            const cachedDSU = dsuCache.get(cacheKey);
+            if (cachedDSU) {
+                return getLatestDSUVersion(cachedDSU, callback);
+            }
 
-        if (cachedDSU) {
-            return getLatestDSUVersion(cachedDSU, callback);
-        }
+
+            const keySSIResolver = initializeResolver(options);
+            keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
+                if (err) {
+                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
+                }
+
+                if (cachingEnabled) {
+                    return addDSUInstanceInCache(dsuInstance, callback);
+                }
+
+                callback(undefined, dsuInstance);
+            });
+        })
     }
-
-    const keySSIResolver = initializeResolver(options);
-    keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
-        if (err) {
-            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
-        }
-
-        if (cachingEnabled) {
-            return addDSUInstanceInCache(dsuInstance, callback);
-        }
-
-        callback(undefined, dsuInstance);
-    });
 };
 
 /*
@@ -47458,23 +47809,24 @@ const getRemoteHandler = (dsuKeySSI, remoteURL, presentation) => {
     throw Error("Not available yet");
 };
 
-function invalidateDSUCache(dsuKeySSI) {
-    let cacheKey
-
+function invalidateDSUCache(dsuKeySSI, callback) {
     try {
-        if (typeof dsuKeySSI !== "string") {
-            cacheKey = dsuKeySSI.getAnchorId();
-        } else {
-            const keySSI = keySSISpace.parse(dsuKeySSI);
-            cacheKey = keySSI.getAnchorId();
+        if (typeof dsuKeySSI === "string") {
+            dsuKeySSI = keySSISpace.parse(dsuKeySSI);
         }
     } catch (e) {
         console.error(e);
     }
+    dsuKeySSI.getAnchorId((err, cacheKey) => {
+        if (err) {
+            return callback(err);
+        }
+        if (cacheKey) {
+            delete dsuCache.set(cacheKey, undefined);
+        }
 
-    if (cacheKey) {
-        delete dsuCache.set(cacheKey, undefined);
-    }
+        callback();
+    });
 }
 
 module.exports = {
@@ -47533,177 +47885,205 @@ module.exports = {
 
  */
 
-const constants = require("../moduleConstants");
-const openDSU = require("opendsu");
-const config = openDSU.loadAPI("config")
-const MainDSU = require("./lib/MainDSU");
-const SecurityContext = require("./lib/SecurityContext");
-
-const getVaultDomain = (callback) => {
-    config.getEnv(constants.VAULT_DOMAIN, (err, vaultDomain) => {
-        if (err || !vaultDomain) {
-            console.log(`The property <${constants.DOMAIN}> is deprecated in environment.js. Use the property <${constants.VAULT_DOMAIN}> instead`)
-            return config.getEnv(constants.DOMAIN, callback);
-        }
-
-        callback(undefined, vaultDomain);
-    });
-}
-
-const getDIDDomain = (callback) => {
-    config.getEnv(constants.DID_DOMAIN, callback);
-}
-
-const securityContextIsInitialised = () => {
-    if (typeof $$.sc === "undefined") {
-        return false;
-    }
-
-    return $$.sc.isInitialised();
-}
-
-const getSecurityContext = () => {
-    if (typeof $$.sc === "undefined") {
-        $$.sc = new SecurityContext();
-    }
-
-    return $$.sc;
-};
-
-const refreshSecurityContext = () => {
-    $$.sc = new SecurityContext();
-    return $$.sc;
-};
-
-const getMainEnclave = (callback) => {
-    if (!$$.sc && !callback) {
-        return;
-    }
-    const sc = getSecurityContext();
-    if (sc.isInitialised()) {
-        return sc.getMainEnclaveDB(callback);
-    } else {
-        sc.on("initialised", () => {
-            sc.getMainEnclaveDB(callback);
+    const constants = require("../moduleConstants");
+    const openDSU = require("opendsu");
+    const config = openDSU.loadAPI("config")
+    const crypto = openDSU.loadAPI("crypto")
+    const MainDSU = require("./lib/MainDSU");
+    const SecurityContext = require("./lib/SecurityContext");
+    
+    const getVaultDomain = (callback) => {
+        config.getEnv(constants.VAULT_DOMAIN, (err, vaultDomain) => {
+            if (err || !vaultDomain) {
+                console.log(`The property <${constants.DOMAIN}> is deprecated in environment.js. Use the property <${constants.VAULT_DOMAIN}> instead`)
+                return config.getEnv(constants.DOMAIN, callback);
+            }
+    
+            callback(undefined, vaultDomain);
         });
     }
-}
-
-const getSharedEnclave = (callback) => {
-    const sc = getSecurityContext();
-    if (sc.isInitialised()) {
-        sc.getSharedEnclaveDB(callback);
-    } else {
-        sc.on("initialised", () => {
+    
+    const getDIDDomain = (callback) => {
+        config.getEnv(constants.DID_DOMAIN, callback);
+    }
+    
+    const securityContextIsInitialised = () => {
+        if (typeof $$.sc === "undefined") {
+            return false;
+        }
+    
+        return $$.sc.isInitialised();
+    }
+    
+    const getSecurityContext = () => {
+        if (typeof $$.sc === "undefined") {
+            $$.sc = new SecurityContext();
+        }
+    
+        return $$.sc;
+    };
+    
+    const refreshSecurityContext = (pin) => {
+        $$.sc = new SecurityContext(undefined, pin);
+        return $$.sc;
+    };
+    
+    const getMainEnclave = (callback) => {
+        if (!$$.sc && !callback) {
+            return;
+        }
+        const sc = getSecurityContext();
+        if (sc.isInitialised()) {
+            return sc.getMainEnclaveDB(callback);
+        } else {
+            sc.on("initialised", () => {
+                sc.getMainEnclaveDB(callback);
+            });
+        }
+    }
+    
+    const getSharedEnclave = (callback) => {
+        const sc = getSecurityContext();
+        if (sc.isInitialised()) {
             sc.getSharedEnclaveDB(callback);
-        });
-    }
-}
-
-const sharedEnclaveExists = () => {
-    const sc = getSecurityContext();
-    return sc.sharedEnclaveExists();
-}
-
-const configEnvironment = (config, refreshSC, callback) => {
-    if (typeof refreshSC === "function") {
-        callback = refreshSC;
-        refreshSC = true;
-    }
-    MainDSU.getMainDSU((err, mainDSU) => {
-        if (err) {
-            return callback(createOpenDSUErrorWrapper("Failed to get main DSU", err));
+        } else {
+            sc.on("initialised", () => {
+                sc.getSharedEnclaveDB(callback);
+            });
         }
-
-        mainDSU.writeFile(constants.ENVIRONMENT_PATH, JSON.stringify(config), (err) => {
+    }
+    
+    const sharedEnclaveExists = () => {
+        const sc = getSecurityContext();
+        return sc.sharedEnclaveExists();
+    }
+    
+    const configEnvironment = (config, refreshSC, callback) => {
+        if (typeof refreshSC === "function") {
+            callback = refreshSC;
+            refreshSC = true;
+        }
+        MainDSU.getMainDSU((err, mainDSU) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper("Failed to write env", err));
+                return callback(createOpenDSUErrorWrapper("Failed to get main DSU", err));
             }
-
-            if (refreshSC) {
-                const sc = refreshSecurityContext();
-                sc.on("initialised", () => callback(undefined, sc));
-            } else {
-                const sc = getSecurityContext();
-                if (securityContextIsInitialised()) {
-                    return callback(undefined, sc);
+    
+            mainDSU.writeFile(constants.ENVIRONMENT_PATH, JSON.stringify(config), (err) => {
+                if (err) {
+                    return callback(createOpenDSUErrorWrapper("Failed to write env", err));
                 }
-
-                sc.on("initialised", () => {
-                    callback(undefined, sc)
-                });
-            }
+    
+                if (refreshSC) {
+                    const pin = getSecurityContext().getPaddedPIN();
+                    const sc = refreshSecurityContext(pin);
+                    sc.on("initialised", () => callback(undefined, sc));
+                } else {
+                    const sc = getSecurityContext();
+                    if (securityContextIsInitialised()) {
+                        return callback(undefined, sc);
+                    }
+    
+                    sc.on("initialised", () => {
+                        callback(undefined, sc)
+                    });
+                }
+            });
         });
-    });
-}
-
-const setEnclave = (enclave, type, callback) => {
-    config.readEnvFile((err, config) => {
-        if (err) {
-            return callback(err);
-        }
-        enclave.getDID((err, did) => {
+    }
+    
+    const setEnclave = (enclave, type, callback) => {
+        config.readEnvFile((err, config) => {
             if (err) {
                 return callback(err);
             }
-
-            config[openDSU.constants[type].DID] = did;
-            enclave.getKeySSI((err, keySSI) => {
+            enclave.getDID((err, did) => {
                 if (err) {
                     return callback(err);
                 }
-
-                config[openDSU.constants[type].KEY_SSI] = keySSI;
-                config[openDSU.constants[type].TYPE] = enclave.getEnclaveType();
-                configEnvironment(config, callback);
+    
+                config[openDSU.constants[type].DID] = did;
+                enclave.getKeySSI((err, keySSI) => {
+                    if (err) {
+                        return callback(err);
+                    }
+    
+                    setEnclaveKeySSI(type, keySSI, config);
+    
+                    config[openDSU.constants[type].TYPE] = enclave.getEnclaveType();
+                    configEnvironment(config, callback);
+    
+                })
             })
         })
-    })
-}
-
-const deleteEnclave = (type, callback) => {
-    config.readEnvFile((err, env) => {
-        if (err) {
-            return callback(err);
+    }
+    
+    const setEnclaveKeySSI = (type, keySSI, config) => {
+        const sc = getSecurityContext();
+        const pin = sc.getPaddedPIN();
+    
+        if (type != "SHARED_ENCLAVE" || pin == undefined) {
+            config[openDSU.constants[type].KEY_SSI] = keySSI;
+            return;
         }
-
-        delete env[openDSU.constants[type].DID];
-        delete env[openDSU.constants[type].KEY_SSI];
-        delete env[openDSU.constants[type].TYPE];
-        configEnvironment(env, callback);
-    })
-}
-
-const deleteSharedEnclave = (callback) => {
-    deleteEnclave("SHARED_ENCLAVE", callback);
-}
-
-const setMainEnclave = (enclave, callback) => {
-    setEnclave(enclave, "MAIN_ENCLAVE", callback);
-};
-
-const setSharedEnclave = (enclave, callback) => {
-    setEnclave(enclave, "SHARED_ENCLAVE", callback);
-};
-
-module.exports = {
-    setMainDSU: MainDSU.setMainDSU,
-    getMainDSU: MainDSU.getMainDSU,
-    getVaultDomain,
-    getSecurityContext,
-    refreshSecurityContext,
-    getDIDDomain,
-    securityContextIsInitialised,
-    getMainEnclave,
-    setMainEnclave,
-    getSharedEnclave,
-    setSharedEnclave,
-    setEnclave,
-    deleteSharedEnclave,
-    configEnvironment,
-    sharedEnclaveExists
-};
-
+    
+        const decodedBase58 = crypto.decodeBase58(keySSI);
+        const encryptedKey = crypto.encrypt(decodedBase58, pin)
+        const base58EncryptedKey = crypto.encodeBase58(encryptedKey);
+        config[openDSU.constants[type].KEY_SSI] = base58EncryptedKey;
+    
+    }
+    
+    const deleteEnclave = (type, callback) => {
+        config.readEnvFile((err, env) => {
+            if (err) {
+                return callback(err);
+            }
+    
+            delete env[openDSU.constants[type].DID];
+            delete env[openDSU.constants[type].KEY_SSI];
+            delete env[openDSU.constants[type].TYPE];
+            configEnvironment(env, callback);
+        })
+    }
+    
+    const deleteSharedEnclave = (callback) => {
+        deleteEnclave("SHARED_ENCLAVE", callback);
+    }
+    
+    const setMainEnclave = (enclave, callback) => {
+        setEnclave(enclave, "MAIN_ENCLAVE", callback);
+    };
+    
+    const setSharedEnclave = (enclave, callback) => {
+        setEnclave(enclave, "SHARED_ENCLAVE", callback);
+    };
+    
+    const setPIN = (pin) => {
+        const sc = getSecurityContext();
+        sc.setPIN(pin);
+    }
+    
+    
+    module.exports = {
+        setMainDSU: MainDSU.setMainDSU,
+        getMainDSU: MainDSU.getMainDSU,
+        getVaultDomain,
+        getSecurityContext,
+        refreshSecurityContext,
+        getDIDDomain,
+        securityContextIsInitialised,
+        getMainEnclave,
+        setMainEnclave,
+        getSharedEnclave,
+        setSharedEnclave,
+        setEnclave,
+        deleteSharedEnclave,
+        configEnvironment,
+        sharedEnclaveExists,
+        setPIN,
+        setEnclaveKeySSI
+    };
+    
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./lib/MainDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/MainDSU.js","./lib/SecurityContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/SecurityContext.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/InMemoryMainDSU.js":[function(require,module,exports){
 (function (Buffer){(function (){
 function InMemoryMainDSU() {
@@ -47834,7 +48214,7 @@ module.exports = {
 },{"../../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","../../utils/getURLForSsappContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/getURLForSsappContext.js","./InMemoryMainDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/InMemoryMainDSU.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/SecurityContext.js":[function(require,module,exports){
 const constants = require("../../moduleConstants");
 
-function SecurityContext(target) {
+function SecurityContext(target, PIN) {
     target = target || this;
 
     const ObservableMixin = require("../../utils/ObservableMixin");
@@ -47842,11 +48222,14 @@ function SecurityContext(target) {
     const openDSU = require("opendsu");
     const config = openDSU.loadAPI("config");
     const enclaveAPI = openDSU.loadAPI("enclave");
+    const keySSIApi = openDSU.loadAPI("keyssi");
+    const crypto = openDSU.loadAPI("crypto");
     let enclave;
     let sharedEnclave;
     let storageDSU;
     let scDSUKeySSI;
     let mainDID;
+    let paddedPIN;
 
     let initialised = false;
 
@@ -47869,8 +48252,35 @@ function SecurityContext(target) {
             }
         }
 
-        sharedEnclave = enclaveAPI.createEnclave(sharedEnclaveType, sharedEnclaveKeySSI);
-        return sharedEnclave;
+        if (PIN == undefined) {
+            try {
+                keySSIApi.parse(sharedEnclaveKeySSI);
+                sharedEnclave = enclaveAPI.createEnclave(sharedEnclaveType, sharedEnclaveKeySSI);
+                return sharedEnclave;
+            }
+            catch (err) {
+                sharedEnclave = new Promise((res, rej) => {
+                    target.on("pinSet", async () => {
+                        await initSharedEnclave();
+                        res(sharedEnclave)
+                    })
+                })
+                return;
+            }
+        } else {
+            const decodedBase58 = crypto.decodeBase58(sharedEnclaveKeySSI);
+            const decryptedKey = crypto.decrypt(decodedBase58, paddedPIN);
+            const keySSI = crypto.encodeBase58(decryptedKey);
+            try {
+                sharedEnclave = enclaveAPI.createEnclave(sharedEnclaveType, keySSI);
+            }
+            catch (e) {
+                throw Error(e);
+            }
+        }
+
+
+
     }
 
     target.init = async () => {
@@ -47904,7 +48314,7 @@ function SecurityContext(target) {
                 }
             }
 
-            if (!sharedEnclave) {
+            if (!sharedEnclave || isPromise(sharedEnclave)) {
                 return finishInit();
             }
             if (!sharedEnclave.isInitialised()) {
@@ -48061,6 +48471,13 @@ function SecurityContext(target) {
             if (!sharedEnclave) {
                 return callback(Error(`No shared db found`))
             }
+            if (isPromise(sharedEnclave)) {
+                sharedEnclave.then((sharedEnclave) => {
+                    sharedEnclaveDB = wrapEnclave(asDID, sharedEnclave);
+                    callback(undefined, sharedEnclaveDB);
+                })
+                return;
+            }
             sharedEnclaveDB = wrapEnclave(asDID, sharedEnclave);
             callback(undefined, sharedEnclaveDB);
         }
@@ -48081,8 +48498,38 @@ function SecurityContext(target) {
         return true;
     }
 
+    target.setPIN = (pin) => {
+        PIN = pin;
+        if (PIN == undefined) return;
+        paddedPIN = pad(pin, 32);
+        target.dispatchEvent("pinSet");
+    }
+
+    target.getPIN = () => {
+        return PIN;
+    }
+
+    target.getPaddedPIN = () => {
+        return paddedPIN;
+    }
+
+    const pad = (key, length) => {
+        if (key == undefined) return;
+        const padding = "0".repeat(length - key.length);
+        return key + padding;
+    }
+
+    function isPromise(p) {
+        if (typeof p === 'object' && typeof p.then === 'function') {
+            return true;
+        }
+        return false;
+    }
+
+    paddedPIN = pad(PIN, 32);
+
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(target, ["on", "off", "isInitialised", "init", "sharedEnclaveExists"]);
+    bindAutoPendingFunctions(target, ["on", "off", "isInitialised", "init", "sharedEnclaveExists", "dispatchEvent"]);
     target.init();
     return target;
 }
@@ -49996,7 +50443,11 @@ function SReadDID_Document(enclave, isInitialisation, seedSSI) {
         }
 
         if (isInitialisation) {
-            sReadSSI = seedSSI.derive();
+            try {
+                sReadSSI = await $$.promisify(seedSSI.derive)();
+            } catch (e) {
+                throw createOpenDSUErrorWrapper(`Failed to derive seedSSI ${seedSSI.getIdentifier()}`, e);
+            }
             await createSeedDSU();
             this.finishInitialisation();
             this.dispatchEvent("initialised");
