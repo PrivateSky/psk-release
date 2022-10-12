@@ -26080,6 +26080,11 @@ module.exports = {
         const sc = getSecurityContext();
         sc.setPIN(pin);
     }
+
+    const isPINNeeded = async () => {
+        const sc = getSecurityContext();
+        return await sc.isPINNeeded();
+    }
     
     
     module.exports = {
@@ -26099,7 +26104,8 @@ module.exports = {
         configEnvironment,
         sharedEnclaveExists,
         setPIN,
-        setEnclaveKeySSI
+        setEnclaveKeySSI,
+        isPINNeeded
     };
     
 },{"../moduleConstants":"/home/runner/work/privatesky/privatesky/modules/opendsu/moduleConstants.js","./lib/MainDSU":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/MainDSU.js","./lib/SecurityContext":"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/SecurityContext.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/sc/lib/InMemoryMainDSU.js":[function(require,module,exports){
@@ -26247,6 +26253,7 @@ function SecurityContext(target, PIN) {
     let paddedPIN;
 
     let initialised = false;
+    let pinNeeded = false;
 
     const initSharedEnclave = async () => {
         let sharedEnclaveType;
@@ -26274,9 +26281,11 @@ function SecurityContext(target, PIN) {
                 return sharedEnclave;
             }
             catch (err) {
+                pinNeeded = true;
                 sharedEnclave = new Promise((res, rej) => {
                     target.on("pinSet", async () => {
                         await initSharedEnclave();
+                        pinNeeded = false;
                         res(sharedEnclave)
                     })
                 })
@@ -26293,9 +26302,6 @@ function SecurityContext(target, PIN) {
                 throw Error(e);
             }
         }
-
-
-
     }
 
     target.init = async () => {
@@ -26528,6 +26534,21 @@ function SecurityContext(target, PIN) {
         return paddedPIN;
     }
 
+    target.isPINNeeded = async () => {
+
+        return new Promise((res, rej) => {
+            if (initialised) {
+                res(pinNeeded);
+            }
+            else {
+                target.on("initialised", async () => {
+                    res(pinNeeded)
+                })
+            }
+        })
+
+    }
+
     const pad = (key, length) => {
         if (key == undefined) return;
         const padding = "0".repeat(length - key.length);
@@ -26544,7 +26565,7 @@ function SecurityContext(target, PIN) {
     paddedPIN = pad(PIN, 32);
 
     const bindAutoPendingFunctions = require("../../utils/BindAutoPendingFunctions").bindAutoPendingFunctions;
-    bindAutoPendingFunctions(target, ["on", "off", "isInitialised", "init", "sharedEnclaveExists", "dispatchEvent"]);
+    bindAutoPendingFunctions(target, ["on", "off", "isInitialised", "init", "sharedEnclaveExists", "dispatchEvent", "isPINNeeded"]);
     target.init();
     return target;
 }
