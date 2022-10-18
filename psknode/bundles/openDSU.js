@@ -24796,14 +24796,13 @@ function APIHUBProxy(domain, did) {
 
 module.exports = APIHUBProxy;
 },{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
+const constants = require("./constants");
+const path = require("path");
+
 function Enclave_Mixin(target, did) {
     const openDSU = require("opendsu");
     const keySSISpace = openDSU.loadAPI("keyssi")
     const w3cDID = openDSU.loadAPI("w3cdid")
-    const KEY_SSIS_TABLE = "keyssis";
-    const SREAD_SSIS_TABLE = "sreadssis";
-    const SEED_SSIS_TABLE = "seedssis";
-    const DIDS_PRIVATE_KEYS = "dids_private";
     const errorAPI = openDSU.loadAPI("error");
 
     const ObservableMixin = require("../../utils/ObservableMixin");
@@ -24811,7 +24810,7 @@ function Enclave_Mixin(target, did) {
     const CryptoSkills = w3cDID.CryptographicSkills;
 
     const getPrivateInfoForDID = (did, callback) => {
-        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, did, (err, record) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, did, (err, record) => {
             if (err) {
                 return callback(err);
             }
@@ -24840,7 +24839,7 @@ function Enclave_Mixin(target, did) {
             }
         }
 
-        target.storageDB.getRecord(KEY_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.KEY_SSIS, keySSI.getIdentifier(), (err, record) => {
             if (err) {
                 return callback(createOpenDSUErrorWrapper(`No capable of signing keySSI found for keySSI ${keySSI.getIdentifier()}`, err));
             }
@@ -24964,12 +24963,12 @@ function Enclave_Mixin(target, did) {
         const isExistingKeyError = (error) => error.originalMessage === errorAPI.DB_INSERT_EXISTING_RECORD_ERROR;
 
         function registerDerivedKeySSIs(derivedKeySSI, sReadSSIIdentifier) {
-            target.storageDB.insertRecord(KEY_SSIS_TABLE, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
+            target.storageDB.insertRecord(constants.TABLE_NAMES.KEY_SSIS, derivedKeySSI.getIdentifier(), {capableOfSigningKeySSI: keySSIIdentifier}, (err) => {
                 if (err && !isExistingKeyError(err)) {
                     // ignore if KeySSI is already present
                     return callback(err);
                 }
-                target.storageDB.insertRecord(SREAD_SSIS_TABLE, derivedKeySSI.getIdentifier(), {sReadSSI: sReadSSIIdentifier}, (err) => {
+                target.storageDB.insertRecord(constants.TABLE_NAMES.SREAD_SSIS, derivedKeySSI.getIdentifier(), {sReadSSI: sReadSSIIdentifier}, (err) => {
                     if (err && !isExistingKeyError(err)) {
                         // ignore if sReadSSI is already present
                         return callback(err);
@@ -24984,20 +24983,20 @@ function Enclave_Mixin(target, did) {
 
                             registerDerivedKeySSIs(_derivedKeySSI, sReadSSIIdentifier);
                         })
-                    }catch (e) {
+                    } catch (e) {
                         return callback();
                     }
                 });
             });
         }
 
-        target.storageDB.insertRecord(SEED_SSIS_TABLE, alias, {seedSSI: keySSIIdentifier}, (err) => {
+        target.storageDB.insertRecord(constants.TABLE_NAMES.SEED_SSIS, alias, {seedSSI: keySSIIdentifier}, (err) => {
             if (err && !isExistingKeyError(err)) {
                 // ignore if SeedSSI is already present
                 return callback(err);
             }
 
-            seedSSI.derive((err, sReadSSI)=>{
+            seedSSI.derive((err, sReadSSI) => {
                 if (err) {
                     return callback(err);
                 }
@@ -25028,7 +25027,7 @@ function Enclave_Mixin(target, did) {
         }
         const keySSIIdentifier = keySSI.getIdentifier();
 
-        target.storageDB.insertRecord(KEY_SSIS_TABLE, keySSIIdentifier, {keySSI: keySSIIdentifier}, callback)
+        target.storageDB.insertRecord(constants.TABLE_NAMES.KEY_SSIS, keySSIIdentifier, {keySSI: keySSIIdentifier}, callback)
     }
 
     target.storeReadForAliasSSI = (forDID, sReadSSI, aliasSSI, callback) => {
@@ -25048,7 +25047,7 @@ function Enclave_Mixin(target, did) {
             }
         }
         const keySSIIdentifier = sReadSSI.getIdentifier();
-        target.storageDB.insertRecord(SREAD_SSIS_TABLE, aliasSSI.getIdentifier(), {sReadSSI: keySSIIdentifier}, callback)
+        target.storageDB.insertRecord(constants.TABLE_NAMES.SREAD_SSIS, aliasSSI.getIdentifier(), {sReadSSI: keySSIIdentifier}, callback)
     }
 
     target.getReadForKeySSI = (forDID, keySSI, callback) => {
@@ -25066,7 +25065,7 @@ function Enclave_Mixin(target, did) {
             }
         }
 
-        target.storageDB.getRecord(SREAD_SSIS_TABLE, keySSI.getIdentifier(), (err, record) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.SREAD_SSIS, keySSI.getIdentifier(), (err, record) => {
             if (err) {
                 return callback(err);
             }
@@ -25085,27 +25084,27 @@ function Enclave_Mixin(target, did) {
             privateKeys = [privateKeys];
         }
 
-        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), (err, res) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), (err, res) => {
             if (err || !res) {
-                return target.storageDB.insertRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), {privateKeys: privateKeys}, callback);
+                return target.storageDB.insertRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), {privateKeys: privateKeys}, callback);
             }
 
             privateKeys.forEach(privateKey => {
                 res.privateKeys.push(privateKey);
             })
-            target.storageDB.updateRecord(DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), res, callback);
+            target.storageDB.updateRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, storedDID.getIdentifier(), res, callback);
         });
     }
 
     target.addPrivateKeyForDID = (didDocument, privateKey, callback) => {
         const privateKeyObj = {privateKeys: [privateKey]}
-        target.storageDB.getRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), (err, res) => {
             if (err || !res) {
-                return target.storageDB.insertRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
+                return target.storageDB.insertRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), privateKeyObj, callback);
             }
 
             res.privateKeys.push(privateKey);
-            target.storageDB.updateRecord(DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
+            target.storageDB.updateRecord(constants.TABLE_NAMES.DIDS_PRIVATE_KEYS, didDocument.getIdentifier(), res, callback);
         });
     }
 
@@ -25323,10 +25322,114 @@ function Enclave_Mixin(target, did) {
             callback(undefined, dsu);
         })
     }
+
+    target.storePathKeySSI = (pathKeySSI, callback) => {
+
+    };
+
+    const compactPathKeys = (callback) => {
+        let compactedContent = "";
+        const path = require("path");
+        const crypto = require("opendsu").loadAPI("crypto");
+        target.storageDB.listFiles(constants.PATHS.SCATTERED_PATH_KEYS, async (err, files) => {
+            if (err) {
+                return callback(err);
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const {key, value} = getKeyValueFromPath(files[i]);
+                compactedContent = `${compactedContent}${key} ${value}\n`;
+            }
+
+            try{
+                const fileName = crypto.encodeBase58(crypto.generateRandom("16"));
+                await target.storageDB.writeFile(path.join(constants.PATHS.COMPACTED_PATH_KEYS, fileName), compactedContent);
+            }catch (e) {
+                callback(e);
+            }
+        });
+    }
+
+    const getKeyValueFromPath = (path) => {
+        const lastSegmentIndex = path.lastIndexOf("/");
+        const key = lastSegmentIndex.slice(0, lastSegmentIndex);
+        const value = lastSegmentIndex.slice(lastSegmentIndex + 1);
+        return {
+            key, value
+        }
+    }
+    target.loadPaths = (callback) => {
+        loadCompactedPathKeys((err, compactedKeys) => {
+            if (err) {
+                return callback(err);
+            }
+
+            loadScatteredPathKeys((err, scatteredKeys) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                callback(undefined, {...compactedKeys, ...scatteredKeys});
+            })
+        });
+    }
+
+    const loadScatteredPathKeys = (callback) => {
+        const pathKeyMap = {};
+        target.storageDB.listFiles(constants.PATHS.SCATTERED_PATH_KEYS, async (err, files) => {
+            if (err) {
+                return callback(err);
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const {key, value} = getKeyValueFromPath(files[i]);
+                pathKeyMap[key] = value;
+            }
+
+            callback(undefined, pathKeyMap);
+        });
+    }
+
+    const loadCompactedPathKeys = (callback) => {
+        let pathKeyMap = {};
+        const compactedValuesLocation = constants.PATHS.COMPACTED_PATH_KEYS;
+        const path = require("path");
+        target.storageDB.listFiles(compactedValuesLocation, async (err, files) => {
+            if (err) {
+                return callback(err);
+            }
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const filePath = path.join(compactedValuesLocation, files[i]);
+                    let compactedFileContent = target.storageDB.readFile(filePath);
+                    compactedFileContent = compactedFileContent.toString();
+                    const partialKeyMap = mapFileContent(compactedFileContent);
+                    pathKeyMap = {...pathKeyMap, ...partialKeyMap};
+                }
+            } catch (e) {
+                return callback(e);
+            }
+
+
+            callback(undefined, pathKeyMap);
+        });
+    }
+
+    const mapFileContent = (fileContent) => {
+        const pathKeyMap = {};
+        const fileLines = fileContent.split("\n");
+        for (let i = 0; i < fileLines.length; i++) {
+            const splitLine = fileLines[i].split(" ");
+            pathKeyMap[splitLine[0]] = splitLine[1];
+        }
+
+        return pathKeyMap;
+    }
 }
 
 module.exports = Enclave_Mixin;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js","opendsu":"opendsu","path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -25421,8 +25524,6 @@ const {createOpenDSUErrorWrapper} = require("../../error");
 
 function ProxyMixin(target) {
     const commandNames = require("./lib/commandsNames");
-    const EnclaveMixin = require("./Enclave_Mixin");
-    EnclaveMixin(target);
     const ObservableMixin = require("../../utils/ObservableMixin");
     ObservableMixin(target);
 
@@ -25627,7 +25728,7 @@ function ProxyMixin(target) {
 module.exports = ProxyMixin;
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js":[function(require,module,exports){
+},{"../../error":"/home/runner/work/privatesky/privatesky/modules/opendsu/error/index.js","../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./lib/commandsNames":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js","buffer":false}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/RemoteEnclave.js":[function(require,module,exports){
 const { createCommandObject } = require("./lib/createCommandObject");
 const ProxyMixin = require("./ProxyMixin");
 const openDSU = require('../../index');
@@ -25806,7 +25907,20 @@ function WalletDBEnclave(keySSI, did) {
 }
 
 module.exports = WalletDBEnclave;
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js":[function(require,module,exports){
+module.exports = {
+    TABLE_NAMES: {
+        KEY_SSIS: "keyssis",
+        SREAD_SSIS: "sreadssis",
+        SEED_SSIS: "seedssis",
+        DIDS_PRIVATE_KEYS: "dids_private",
+    },
+    PATHS: {
+        SCATTERED_PATH_KEYS: "/paths/scatteredPathKeys",
+        COMPACTED_PATH_KEYS: "/paths/compactedPathKeys"
+    }
+};
+},{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
 module.exports = {
     INSERT_RECORD: "insertRecord",
     UPDATE_RECORD: "updateRecord",
