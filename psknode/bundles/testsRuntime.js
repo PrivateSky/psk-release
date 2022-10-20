@@ -27651,7 +27651,7 @@ const createReadSSI = require("./SecretSSIs/ReadSSI").createReadSSI;
 const createPublicSSI = require("./SecretSSIs/PublicSSI").createPublicSSI;
 const createZaSSI = require("./SecretSSIs/ZaSSI").createZaSSI;
 
-const createRootKeySSI = require("./SeedSSIs/PathKeySSI").createPathKeySSI;
+const createPathKeySSI = require("./SeedSSIs/PathKeySSI").createPathKeySSI;
 const createSeedSSI = require("./SeedSSIs/SeedSSI").createSeedSSI;
 const createSReadSSI = require("./SeedSSIs/SReadSSI").createSReadSSI;
 const createSZaSSI = require("./SeedSSIs/SZaSSI").createSZaSSI;
@@ -27741,8 +27741,8 @@ KeySSIFactory.prototype.createByType = (typeName, enclave, identifier, options) 
     return keySSI;
 };
 
-KeySSIFactory.prototype.createType = (typeName) => {
-    return registry[typeName].functionFactory();
+KeySSIFactory.prototype.createType = (typeName, enclave) => {
+    return registry[typeName].functionFactory(enclave);
 }
 
 KeySSIFactory.prototype.getDerivedType = (keySSI, otherType, callback) => {
@@ -27836,7 +27836,7 @@ KeySSIFactory.prototype.registerFactory(SSITypes.ANCHOR_SSI, 'v0', SSITypes.READ
 KeySSIFactory.prototype.registerFactory(SSITypes.READ_SSI, 'v0', SSITypes.PUBLIC_SSI, createReadSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.PUBLIC_SSI, 'v0', SSITypes.ZERO_ACCESS_SSI, createPublicSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.ZERO_ACCESS_SSI, 'v0', undefined, createZaSSI);
-KeySSIFactory.prototype.registerFactory(SSITypes.PATH_SSI, 'v0', SSITypes.PATH_SSI, createRootKeySSI);
+KeySSIFactory.prototype.registerFactory(SSITypes.PATH_SSI, 'v0', SSITypes.PATH_SSI, createPathKeySSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SEED_SSI, 'v0', SSITypes.SREAD_SSI, createSeedSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.WALLET_SSI, 'v0', SSITypes.CONST_SSI, createWalletSSI);
 KeySSIFactory.prototype.registerFactory(SSITypes.SREAD_SSI, 'v0', SSITypes.SZERO_ACCESS_SSI, createSReadSSI);
@@ -28749,7 +28749,7 @@ module.exports = {
     READ_SSI: "read",
     PUBLIC_SSI: "public",
     ZERO_ACCESS_SSI: "za",
-    PATH_SSI: "root",
+    PATH_SSI: "path",
     SEED_SSI: "seed",
     SREAD_SSI: "sread",
     SZERO_ACCESS_SSI: "sza",
@@ -28939,13 +28939,7 @@ function PathKeySSI(enclave, identifier) {
 
     self.setCanSign(true);
 
-    self.initialize = function (dlDomain, slot, path, vn, hint, callback) {
-        if (typeof path === "function") {
-            callback = path;
-            path = slot;
-            slot = 0;
-        }
-
+    self.initialize = function (dlDomain, path, vn, hint, callback) {
         if (typeof vn === "function") {
             callback = vn;
             vn = 'v0';
@@ -28956,7 +28950,7 @@ function PathKeySSI(enclave, identifier) {
             hint = undefined;
         }
 
-        const specificString = `${slot}/${path}`;
+        const slot = path.split("/")[0];
         enclave.getPrivateKeyForSlot(slot, (err, _privateKey) => {
             if (err) {
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get privateKey`, err));
@@ -28964,7 +28958,7 @@ function PathKeySSI(enclave, identifier) {
 
             privateKey = _privateKey;
 
-            self.load(SSITypes.PATH_SSI, dlDomain, specificString, '', vn, hint);
+            self.load(SSITypes.PATH_SSI, dlDomain, path, '', vn, hint);
             if (callback) {
                 callback(undefined, self);
             }
@@ -28978,12 +28972,14 @@ function PathKeySSI(enclave, identifier) {
     self.derive = function (callback) {
         const splitSpecificString = self.getSpecificString().split("/");
         const slot = splitSpecificString[0];
+        const path = splitSpecificString[1];
         enclave.getPrivateKeyForSlot(slot, (err, _privateKey)=>{
             if (err) {
                 return callback(err);
             }
 
             privateKey = _privateKey;
+            privateKey = cryptoRegistry.getHashFunction(self)(`${path}${privateKey}`);
             const seedSpecificString = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
             const seedSSI = SeedSSI.createSeedSSI(enclave);
             seedSSI.load(SSITypes.SEED_SSI, self.getDLDomain(), seedSpecificString, undefined, self.getVn(), self.getHint());
@@ -29005,15 +29001,13 @@ function PathKeySSI(enclave, identifier) {
     }
 
     self.sign = function (dataToSign, callback) {
-        const privateKey = self.getPrivateKey();
-        const sign = cryptoRegistry.getSignFunction(self);
-        const encode = cryptoRegistry.getBase64EncodingFunction(self);
-        const signature = encode(sign(dataToSign, privateKey));
-        if (callback) {
-            callback(undefined, signature);
-        }
+        self.derive((err, seedSSI)=>{
+            if (err) {
+                return callback(err);
+            }
 
-        return signature;
+            seedSSI.sign(dataToSign, callback);
+        })
     }
 
     self.getPublicKey = function (format) {
@@ -38675,7 +38669,6 @@ function APIHUBProxy(domain, did) {
 module.exports = APIHUBProxy;
 },{".././../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js":[function(require,module,exports){
 const constants = require("./constants");
-const path = require("path");
 
 function Enclave_Mixin(target, did) {
     const openDSU = require("opendsu");
@@ -38753,6 +38746,10 @@ function Enclave_Mixin(target, did) {
 
         target.storageDB.refresh(callback);
     }
+
+    target.getPrivateKeyForSlot = (forDID, slot, callback) => {
+        target.storageDB.getRecord(constants.TABLE_NAMES.PATH_KEY_SSI_PRIVATE_KEYS, slot, callback);
+    };
 
     target.addIndex = (forDID, table, field, forceReindex, callback) => {
         if (typeof forceReindex === "function") {
@@ -39200,114 +39197,10 @@ function Enclave_Mixin(target, did) {
             callback(undefined, dsu);
         })
     }
-
-    target.storePathKeySSI = (pathKeySSI, callback) => {
-
-    };
-
-    const compactPathKeys = (callback) => {
-        let compactedContent = "";
-        const path = require("path");
-        const crypto = require("opendsu").loadAPI("crypto");
-        target.storageDB.listFiles(constants.PATHS.SCATTERED_PATH_KEYS, async (err, files) => {
-            if (err) {
-                return callback(err);
-            }
-
-            for (let i = 0; i < files.length; i++) {
-                const {key, value} = getKeyValueFromPath(files[i]);
-                compactedContent = `${compactedContent}${key} ${value}\n`;
-            }
-
-            try{
-                const fileName = crypto.encodeBase58(crypto.generateRandom("16"));
-                await target.storageDB.writeFile(path.join(constants.PATHS.COMPACTED_PATH_KEYS, fileName), compactedContent);
-            }catch (e) {
-                callback(e);
-            }
-        });
-    }
-
-    const getKeyValueFromPath = (path) => {
-        const lastSegmentIndex = path.lastIndexOf("/");
-        const key = lastSegmentIndex.slice(0, lastSegmentIndex);
-        const value = lastSegmentIndex.slice(lastSegmentIndex + 1);
-        return {
-            key, value
-        }
-    }
-    target.loadPaths = (callback) => {
-        loadCompactedPathKeys((err, compactedKeys) => {
-            if (err) {
-                return callback(err);
-            }
-
-            loadScatteredPathKeys((err, scatteredKeys) => {
-                if (err) {
-                    return callback(err);
-                }
-
-                callback(undefined, {...compactedKeys, ...scatteredKeys});
-            })
-        });
-    }
-
-    const loadScatteredPathKeys = (callback) => {
-        const pathKeyMap = {};
-        target.storageDB.listFiles(constants.PATHS.SCATTERED_PATH_KEYS, async (err, files) => {
-            if (err) {
-                return callback(err);
-            }
-
-            for (let i = 0; i < files.length; i++) {
-                const {key, value} = getKeyValueFromPath(files[i]);
-                pathKeyMap[key] = value;
-            }
-
-            callback(undefined, pathKeyMap);
-        });
-    }
-
-    const loadCompactedPathKeys = (callback) => {
-        let pathKeyMap = {};
-        const compactedValuesLocation = constants.PATHS.COMPACTED_PATH_KEYS;
-        const path = require("path");
-        target.storageDB.listFiles(compactedValuesLocation, async (err, files) => {
-            if (err) {
-                return callback(err);
-            }
-
-            try {
-                for (let i = 0; i < files.length; i++) {
-                    const filePath = path.join(compactedValuesLocation, files[i]);
-                    let compactedFileContent = target.storageDB.readFile(filePath);
-                    compactedFileContent = compactedFileContent.toString();
-                    const partialKeyMap = mapFileContent(compactedFileContent);
-                    pathKeyMap = {...pathKeyMap, ...partialKeyMap};
-                }
-            } catch (e) {
-                return callback(e);
-            }
-
-
-            callback(undefined, pathKeyMap);
-        });
-    }
-
-    const mapFileContent = (fileContent) => {
-        const pathKeyMap = {};
-        const fileLines = fileContent.split("\n");
-        for (let i = 0; i < fileLines.length; i++) {
-            const splitLine = fileLines[i].split(" ");
-            pathKeyMap[splitLine[0]] = splitLine[1];
-        }
-
-        return pathKeyMap;
-    }
 }
 
 module.exports = Enclave_Mixin;
-},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js","opendsu":"opendsu","path":false,"swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
+},{"../../utils/ObservableMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/ObservableMixin.js","./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js","opendsu":"opendsu","swarmutils":"swarmutils"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/HighSecurityProxy.js":[function(require,module,exports){
 (function (Buffer){(function (){
 const {createCommandObject} = require("./lib/createCommandObject");
 
@@ -39710,11 +39603,13 @@ module.exports = RemoteEnclave;
 },{"../../index":"/home/runner/work/privatesky/privatesky/modules/opendsu/index.js","./ProxyMixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/ProxyMixin.js","./lib/createCommandObject":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/createCommandObject.js"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/WalletDBEnclave.js":[function(require,module,exports){
 function WalletDBEnclave(keySSI, did) {
     const openDSU = require("opendsu");
+    const constants = require("./constants");
     const db = openDSU.loadAPI("db")
     const scAPI = openDSU.loadAPI("sc");
     const resolver = openDSU.loadAPI("resolver");
     const config = openDSU.loadAPI("config");
-    const DB_NAME = "walletdb_enclave";
+    const keySSISpace = openDSU.loadAPI("keyssi");
+    const DB_NAME = constants.DB_NAMES.WALLET_DB_ENCLAVE;
     const EnclaveMixin = require("./Enclave_Mixin");
     EnclaveMixin(this, did);
     let enclaveDSU;
@@ -39755,7 +39650,19 @@ function WalletDBEnclave(keySSI, did) {
 
         await $$.promisify(resolver.invalidateDSUCache)(keySSI);
         this.storageDB = db.getSimpleWalletDB(DB_NAME, {keySSI});
-        this.storageDB.on("initialised", () => {
+        this.storageDB.on("initialised", async () => {
+            if (typeof keySSI === "string") {
+                keySSI = keySSISpace.parse(keySSI);
+            }
+            let privateKey;
+            try{
+                privateKey = await $$.promisify(this.storageDB.getRecord)(constants.TABLE_NAMES.PATH_KEY_SSI_PRIVATE_KEYS, 0);
+            } catch (e) {
+            }
+            if (!privateKey) {
+                await $$.promisify(this.storageDB.insertRecord)(constants.TABLE_NAMES.PATH_KEY_SSI_PRIVATE_KEYS, 0, {privateKey: keySSI.getPrivateKey()});
+            }
+
             initialised = true;
             this.finishInitialisation();
             this.dispatchEvent("initialised");
@@ -39785,17 +39692,21 @@ function WalletDBEnclave(keySSI, did) {
 }
 
 module.exports = WalletDBEnclave;
-},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js":[function(require,module,exports){
+},{"../../utils/BindAutoPendingFunctions":"/home/runner/work/privatesky/privatesky/modules/opendsu/utils/BindAutoPendingFunctions.js","./Enclave_Mixin":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/Enclave_Mixin.js","./constants":"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/constants.js":[function(require,module,exports){
 module.exports = {
     TABLE_NAMES: {
         KEY_SSIS: "keyssis",
         SREAD_SSIS: "sreadssis",
         SEED_SSIS: "seedssis",
         DIDS_PRIVATE_KEYS: "dids_private",
+        PATH_KEY_SSI_PRIVATE_KEYS: "path-keyssi-private-keys"
     },
     PATHS: {
         SCATTERED_PATH_KEYS: "/paths/scatteredPathKeys",
         COMPACTED_PATH_KEYS: "/paths/compactedPathKeys"
+    },
+    DB_NAMES: {
+        WALLET_DB_ENCLAVE: "wallet-db-enclave"
     }
 };
 },{}],"/home/runner/work/privatesky/privatesky/modules/opendsu/enclave/impl/lib/commandsNames.js":[function(require,module,exports){
@@ -41030,6 +40941,14 @@ const createTemplateSeedSSI = (domain, specificString, control, vn, hint, callba
     return createTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
+const we_createPathKeySSI = (enclave, domain, path, vn, hint, callback) => {
+    let pathKeySSI = keySSIFactory.createType(SSITypes.PATH_SSI, enclave);
+    pathKeySSI.initialize(domain, path, vn, hint, callback);
+}
+
+const createPathKeySSI = (domain, path, vn, hint, callback)=>{
+    return we_createPathKeySSI(openDSU.loadAPI("sc").getMainEnclave(), domain, path, vn, hint, callback);
+}
 const createHashLinkSSI = (domain, hash, vn, hint) => {
     const hashLinkSSI = keySSIFactory.createType(SSITypes.HASH_LINK_SSI)
     hashLinkSSI.initialize(domain, hash, vn, hint);
@@ -41257,7 +41176,9 @@ module.exports = {
     we_createConstSSI,
     we_createArraySSI,
     createAliasSSI,
-    createSizeSSI
+    createSizeSSI,
+    createPathKeySSI,
+    we_createPathKeySSI
 };
 
 },{"../anchoring":"/home/runner/work/privatesky/privatesky/modules/opendsu/anchoring/index.js","key-ssi-resolver":"key-ssi-resolver","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/opendsu/m2dsu/apisRegistry.js":[function(require,module,exports){
@@ -43530,36 +43451,37 @@ const loadDSU = (keySSI, options, callback) => {
         }
     }
 
-    let cachingEnabled = true;
-    if (typeof options === 'object' && options !== null && options.skipCache) {
-        cachingEnabled = false;
-    }
+    const loadDSU = (addInCache) => {
 
-    if (cachingEnabled) {
-        keySSI.getAnchorId((err, cacheKey) => {
+        const keySSIResolver = initializeResolver(options);
+        keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
             if (err) {
-                return callback(err);
-            }
-            const cachedDSU = dsuCache.get(cacheKey);
-            if (cachedDSU) {
-                return getLatestDSUVersion(cachedDSU, callback);
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
             }
 
+            if (addInCache) {
+                return addDSUInstanceInCache(dsuInstance, callback);
+            }
 
-            const keySSIResolver = initializeResolver(options);
-            keySSIResolver.loadDSU(keySSI, options, (err, dsuInstance) => {
-                if (err) {
-                    return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU`, err));
-                }
-
-                if (cachingEnabled) {
-                    return addDSUInstanceInCache(dsuInstance, callback);
-                }
-
-                callback(undefined, dsuInstance);
-            });
-        })
+            callback(undefined, dsuInstance);
+        });
     }
+
+    if (typeof options === 'object' && options !== null && options.skipCache) {
+        return loadDSU(false);
+    }
+
+    keySSI.getAnchorId((err, cacheKey) => {
+        if (err) {
+            return callback(err);
+        }
+        const cachedDSU = dsuCache.get(cacheKey);
+        if (cachedDSU) {
+            return getLatestDSUVersion(cachedDSU, callback);
+        }
+        loadDSU(true);
+    })
+
 };
 
 /*
