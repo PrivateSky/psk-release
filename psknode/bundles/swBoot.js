@@ -10054,6 +10054,7 @@ CryptoAlgorithmsRegistry.prototype.getCryptoFunction = getCryptoFunction;
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface = registerCryptoInterface;
 
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SEED_SSI, 'v0',  new SeedSSICryptoAlgorithms());
+CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.PATH_SSI, 'v0',  new CryptoAlgorithmsMixin());
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.WALLET_SSI, 'v0', new SeedSSICryptoAlgorithms());
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SREAD_SSI, 'v0',  new CryptoAlgorithmsMixin());
 CryptoAlgorithmsRegistry.prototype.registerCryptoInterface(SSITypes.SZERO_ACCESS_SSI, 'v0', new CryptoAlgorithmsMixin());
@@ -12662,52 +12663,41 @@ function PathKeySSI(enclave, identifier) {
 
     self.setCanSign(true);
 
-    self.initialize = function (dlDomain, path, vn, hint, callback) {
-        if (typeof vn === "function") {
-            callback = vn;
-            vn = 'v0';
-        }
-
-        if (typeof hint === "function") {
-            callback = hint;
-            hint = undefined;
-        }
-
-        const slot = path.split("/")[0];
-        enclave.getPrivateKeyForSlot(slot, (err, _privateKey) => {
-            if (err) {
-                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get privateKey`, err));
-            }
-
-            privateKey = _privateKey;
-
-            self.load(SSITypes.PATH_SSI, dlDomain, path, '', vn, hint);
-            if (callback) {
-                callback(undefined, self);
-            }
-        })
-
-        self.initialize = function () {
-            throw Error("KeySSI already initialized");
-        }
-    };
-
     self.derive = function (callback) {
         const splitSpecificString = self.getSpecificString().split("/");
         const slot = splitSpecificString[0];
         const path = splitSpecificString[1];
-        enclave.getPrivateKeyForSlot(slot, (err, _privateKey)=>{
-            if (err) {
-                return callback(err);
-            }
 
-            privateKey = _privateKey;
-            privateKey = cryptoRegistry.getHashFunction(self)(`${path}${privateKey}`);
-            const seedSpecificString = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
-            const seedSSI = SeedSSI.createSeedSSI(enclave);
-            seedSSI.load(SSITypes.SEED_SSI, self.getDLDomain(), seedSpecificString, undefined, self.getVn(), self.getHint());
-            callback(undefined, seedSSI);
-        })
+        const __getPrivateKeyForSlot = () => {
+            enclave.getPrivateKeyForSlot(slot, (err, _privateKey)=>{
+                if (err) {
+                    return callback(err);
+                }
+
+                privateKey = _privateKey;
+                privateKey = cryptoRegistry.getHashFunction(self)(`${path}${privateKey}`);
+                privateKey = cryptoRegistry.getDecodingFunction(self)(privateKey);
+                const seedSpecificString = cryptoRegistry.getBase64EncodingFunction(self)(privateKey);
+                const seedSSI = SeedSSI.createSeedSSI(enclave);
+                seedSSI.load(SSITypes.SEED_SSI, self.getDLDomain(), seedSpecificString, undefined, self.getVn(), self.getHint());
+                callback(undefined, seedSSI);
+            });
+        }
+
+        if (typeof enclave === "undefined") {
+            require("opendsu").loadAPI("sc").getMainEnclave((err, mainEnclave)=>{
+                if (err) {
+                    return callback(err);
+                }
+
+                enclave = mainEnclave;
+                __getPrivateKeyForSlot();
+            })
+
+            return;
+        }
+
+        __getPrivateKeyForSlot();
     };
 
     self.getPrivateKey = function (format) {
@@ -12765,7 +12755,7 @@ module.exports = {
     createPathKeySSI
 };
 
-},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
+},{"../../CryptoAlgorithms/CryptoAlgorithmsRegistry":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/CryptoAlgorithms/CryptoAlgorithmsRegistry.js","../KeySSIMixin":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/KeySSIMixin.js","../SSITypes":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SSITypes.js","./SeedSSI":"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SeedSSI.js","opendsu":"opendsu"}],"/home/runner/work/privatesky/privatesky/modules/key-ssi-resolver/lib/KeySSIs/SeedSSIs/SReadSSI.js":[function(require,module,exports){
 const KeySSIMixin = require("../KeySSIMixin");
 const SZaSSI = require("./SZaSSI");
 const SSITypes = require("../SSITypes");
@@ -22483,7 +22473,19 @@ function Enclave_Mixin(target, did) {
     }
 
     target.getPrivateKeyForSlot = (forDID, slot, callback) => {
-        target.storageDB.getRecord(constants.TABLE_NAMES.PATH_KEY_SSI_PRIVATE_KEYS, slot, callback);
+        target.storageDB.getRecord(constants.TABLE_NAMES.PATH_KEY_SSI_PRIVATE_KEYS, slot, (err, privateKeyRecord)=>{
+            if (err) {
+                return callback(err);
+            }
+            let privateKey;
+            try{
+                privateKey = $$.Buffer.from(privateKeyRecord.privateKey);
+            }catch (e) {
+                return callback(e);
+            }
+
+            callback(undefined, privateKey);
+        });
     };
 
     target.addIndex = (forDID, table, field, forceReindex, callback) => {
@@ -22585,7 +22587,6 @@ function Enclave_Mixin(target, did) {
                     }
 
                     try {
-
                         derivedKeySSI.derive((err, _derivedKeySSI) => {
                             if (err) {
                                 return callback(err);
@@ -24679,14 +24680,16 @@ const createTemplateSeedSSI = (domain, specificString, control, vn, hint, callba
     return createTemplateKeySSI(SSITypes.SEED_SSI, domain, specificString, control, vn, hint, callback);
 };
 
-const we_createPathKeySSI = (enclave, domain, path, vn, hint, callback) => {
+const we_createPathKeySSI = (enclave, domain, path, vn, hint) => {
     let pathKeySSI = keySSIFactory.createType(SSITypes.PATH_SSI, enclave);
-    pathKeySSI.initialize(domain, path, vn, hint, callback);
+    pathKeySSI.load(SSITypes.PATH_SSI, domain, path, '', vn, hint);
+    return pathKeySSI;
 }
 
-const createPathKeySSI = (domain, path, vn, hint, callback)=>{
-    return we_createPathKeySSI(openDSU.loadAPI("sc").getMainEnclave(), domain, path, vn, hint, callback);
-}
+const createPathKeySSI = (domain, path, vn, hint) => {
+    return we_createPathKeySSI(openDSU.loadAPI("sc").getMainEnclave(), domain, path, vn, hint);
+};
+
 const createHashLinkSSI = (domain, hash, vn, hint) => {
     const hashLinkSSI = keySSIFactory.createType(SSITypes.HASH_LINK_SSI)
     hashLinkSSI.initialize(domain, hash, vn, hint);
