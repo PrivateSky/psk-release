@@ -50,8 +50,8 @@ module.exports.enableLifeLine = function(timeout){
         try {
             process.send(PING);
         } catch (e) {
-            console.log('Parent is not available, shutting down');
-            exit(1)
+            //console.log('Parent is not available, shutting down');
+            //exit(1)
         }
     }
 
@@ -73,8 +73,8 @@ module.exports.enableLifeLine = function(timeout){
         process.on(exceptionEvents[i], (event, code)=>{
             killingSignal = true;
             clearInterval(timeoutInterval);
-            console.log(`Caught event type [${exceptionEvents[i]}]. Shutting down...`, code, event);
-            exit(code);
+            //console.log(`Caught event type [${exceptionEvents[i]}]. Shutting down...`, code, event);
+            //exit(code);
         });
     }
 
@@ -84,8 +84,8 @@ module.exports.enableLifeLine = function(timeout){
         if(typeof lastConfirmationTime === "undefined" || currentTime - lastConfirmationTime < interval + roundingError && !killingSignal){
             sendPing();
         }else{
-            console.log("Parent process did not answer. Shutting down...", process.argv, killingSignal);
-            exit(1);
+            //console.log("Parent process did not answer. Shutting down...", process.argv, killingSignal);
+            //exit(1);
         }
     }, interval);
 };
