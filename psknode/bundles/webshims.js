@@ -20679,14 +20679,14 @@ var objectKeys = Object.keys || function (obj) {
 /*</replacement>*/
 
 module.exports = Duplex;
-const Readable = require('./_stream_readable');
-const Writable = require('./_stream_writable');
+var Readable = require('./_stream_readable');
+var Writable = require('./_stream_writable');
 require('inherits')(Duplex, Readable);
 {
   // Allow the keys array to be GC'ed.
-  const keys = objectKeys(Writable.prototype);
+  var keys = objectKeys(Writable.prototype);
   for (var v = 0; v < keys.length; v++) {
-    const method = keys[v];
+    var method = keys[v];
     if (!Duplex.prototype[method]) Duplex.prototype[method] = Writable.prototype[method];
   }
 }
@@ -20709,7 +20709,7 @@ Object.defineProperty(Duplex.prototype, 'writableHighWaterMark', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.highWaterMark;
   }
 });
@@ -20727,7 +20727,7 @@ Object.defineProperty(Duplex.prototype, 'writableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.length;
   }
 });
@@ -20749,13 +20749,13 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._readableState === undefined || this._writableState === undefined) {
       return false;
     }
     return this._readableState.destroyed && this._writableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (this._readableState === undefined || this._writableState === undefined) {
@@ -20799,7 +20799,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 'use strict';
 
 module.exports = PassThrough;
-const Transform = require('./_stream_transform');
+var Transform = require('./_stream_transform');
 require('inherits')(PassThrough, Transform);
 function PassThrough(options) {
   if (!(this instanceof PassThrough)) return new PassThrough(options);
@@ -20842,7 +20842,7 @@ var Duplex;
 Readable.ReadableState = ReadableState;
 
 /*<replacement>*/
-const EE = require('events').EventEmitter;
+var EE = require('events').EventEmitter;
 var EElistenerCount = function EElistenerCount(emitter, type) {
   return emitter.listeners(type).length;
 };
@@ -20852,8 +20852,8 @@ var EElistenerCount = function EElistenerCount(emitter, type) {
 var Stream = require('./internal/streams/stream');
 /*</replacement>*/
 
-const Buffer = require('buffer').Buffer;
-const OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
+var Buffer = require('buffer').Buffer;
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
@@ -20862,8 +20862,8 @@ function _isUint8Array(obj) {
 }
 
 /*<replacement>*/
-const debugUtil = require('util');
-let debug;
+var debugUtil = require('util');
+var debug;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
 } else {
@@ -20871,23 +20871,23 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-const BufferList = require('./internal/streams/buffer_list');
-const destroyImpl = require('./internal/streams/destroy');
-const _require = require('./internal/streams/state'),
+var BufferList = require('./internal/streams/buffer_list');
+var destroyImpl = require('./internal/streams/destroy');
+var _require = require('./internal/streams/state'),
   getHighWaterMark = _require.getHighWaterMark;
-const _require$codes = require('../errors').codes,
+var _require$codes = require('../errors').codes,
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PUSH_AFTER_EOF = _require$codes.ERR_STREAM_PUSH_AFTER_EOF,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT = _require$codes.ERR_STREAM_UNSHIFT_AFTER_END_EVENT;
 
 // Lazy loaded to improve the startup performance.
-let StringDecoder;
-let createReadableStreamAsyncIterator;
-let from;
+var StringDecoder;
+var createReadableStreamAsyncIterator;
+var from;
 require('inherits')(Readable, Stream);
-const errorOrDestroy = destroyImpl.errorOrDestroy;
-const kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
+var errorOrDestroy = destroyImpl.errorOrDestroy;
+var kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
 function prependListener(emitter, event, fn) {
   // Sadly this is not cacheable as some libraries bundle their own
   // event emitter implementation with them.
@@ -20978,7 +20978,7 @@ function Readable(options) {
 
   // Checking for a Stream.Duplex instance is faster here instead of inside
   // the ReadableState constructor, at least with V8 6.5
-  const isDuplex = this instanceof Duplex;
+  var isDuplex = this instanceof Duplex;
   this._readableState = new ReadableState(options, this, isDuplex);
 
   // legacy
@@ -20994,13 +20994,13 @@ Object.defineProperty(Readable.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._readableState === undefined) {
       return false;
     }
     return this._readableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (!this._readableState) {
@@ -21111,14 +21111,14 @@ Readable.prototype.isPaused = function () {
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
   if (!StringDecoder) StringDecoder = require('string_decoder/').StringDecoder;
-  const decoder = new StringDecoder(enc);
+  var decoder = new StringDecoder(enc);
   this._readableState.decoder = decoder;
   // If setEncoding(null), decoder.encoding equals utf8
   this._readableState.encoding = this._readableState.decoder.encoding;
 
   // Iterate over current buffer to convert already stored Buffers:
-  let p = this._readableState.buffer.head;
-  let content = '';
+  var p = this._readableState.buffer.head;
+  var content = '';
   while (p !== null) {
     content += decoder.write(p.data);
     p = p.next;
@@ -21130,7 +21130,7 @@ Readable.prototype.setEncoding = function (enc) {
 };
 
 // Don't raise the hwm > 1GB
-const MAX_HWM = 0x40000000;
+var MAX_HWM = 0x40000000;
 function computeNewHighWaterMark(n) {
   if (n >= MAX_HWM) {
     // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
@@ -21357,7 +21357,7 @@ function maybeReadMore_(stream, state) {
   //   read()s. The execution ends in this method again after the _read() ends
   //   up calling push() with more data.
   while (!state.reading && !state.ended && (state.length < state.highWaterMark || state.flowing && state.length === 0)) {
-    const len = state.length;
+    var len = state.length;
     debug('maybeReadMore read 0');
     stream.read(0);
     if (len === state.length)
@@ -21554,8 +21554,8 @@ Readable.prototype.unpipe = function (dest) {
 // set up data events if they are asked for
 // Ensure readable listeners eventually get something
 Readable.prototype.on = function (ev, fn) {
-  const res = Stream.prototype.on.call(this, ev, fn);
-  const state = this._readableState;
+  var res = Stream.prototype.on.call(this, ev, fn);
+  var state = this._readableState;
   if (ev === 'data') {
     // update readableListening so that resume() may be a no-op
     // a few lines down. This is needed to support once('readable').
@@ -21580,7 +21580,7 @@ Readable.prototype.on = function (ev, fn) {
 };
 Readable.prototype.addListener = Readable.prototype.on;
 Readable.prototype.removeListener = function (ev, fn) {
-  const res = Stream.prototype.removeListener.call(this, ev, fn);
+  var res = Stream.prototype.removeListener.call(this, ev, fn);
   if (ev === 'readable') {
     // We need to check if there is someone still listening to
     // readable and reset the state. However this needs to happen
@@ -21593,7 +21593,7 @@ Readable.prototype.removeListener = function (ev, fn) {
   return res;
 };
 Readable.prototype.removeAllListeners = function (ev) {
-  const res = Stream.prototype.removeAllListeners.apply(this, arguments);
+  var res = Stream.prototype.removeAllListeners.apply(this, arguments);
   if (ev === 'readable' || ev === undefined) {
     // We need to check if there is someone still listening to
     // readable and reset the state. However this needs to happen
@@ -21606,7 +21606,7 @@ Readable.prototype.removeAllListeners = function (ev) {
   return res;
 };
 function updateReadableListening(self) {
-  const state = self._readableState;
+  var state = self._readableState;
   state.readableListening = self.listenerCount('readable') > 0;
   if (state.resumeScheduled && !state.paused) {
     // flowing needs to be set to true now, otherwise
@@ -21665,7 +21665,7 @@ Readable.prototype.pause = function () {
   return this;
 };
 function flow(stream) {
-  const state = stream._readableState;
+  var state = stream._readableState;
   debug('flow', state.flowing);
   while (state.flowing && stream.read() !== null);
 }
@@ -21674,23 +21674,24 @@ function flow(stream) {
 // This is *not* part of the readable stream interface.
 // It is an ugly unfortunate mess of history.
 Readable.prototype.wrap = function (stream) {
+  var _this = this;
   var state = this._readableState;
   var paused = false;
-  stream.on('end', () => {
+  stream.on('end', function () {
     debug('wrapped end');
     if (state.decoder && !state.ended) {
       var chunk = state.decoder.end();
-      if (chunk && chunk.length) this.push(chunk);
+      if (chunk && chunk.length) _this.push(chunk);
     }
-    this.push(null);
+    _this.push(null);
   });
-  stream.on('data', chunk => {
+  stream.on('data', function (chunk) {
     debug('wrapped data');
     if (state.decoder) chunk = state.decoder.write(chunk);
 
     // don't skip over falsy values in objectMode
     if (state.objectMode && (chunk === null || chunk === undefined)) return;else if (!state.objectMode && (!chunk || !chunk.length)) return;
-    var ret = this.push(chunk);
+    var ret = _this.push(chunk);
     if (!ret) {
       paused = true;
       stream.pause();
@@ -21716,7 +21717,7 @@ Readable.prototype.wrap = function (stream) {
 
   // when we try to consume some more bytes, simply unpause the
   // underlying stream.
-  this._read = n => {
+  this._read = function (n) {
     debug('wrapped _read', n);
     if (paused) {
       paused = false;
@@ -21773,7 +21774,7 @@ Object.defineProperty(Readable.prototype, 'readableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._readableState.length;
   }
 });
@@ -21815,7 +21816,7 @@ function endReadableNT(state, stream) {
     if (state.autoDestroy) {
       // In case of duplex streams we need a way to detect
       // if the writable side is ready for autoDestroy as well
-      const wState = stream._writableState;
+      var wState = stream._writableState;
       if (!wState || wState.autoDestroy && wState.finished) {
         stream.destroy();
       }
@@ -21905,12 +21906,12 @@ function indexOf(xs, x) {
 'use strict';
 
 module.exports = Transform;
-const _require$codes = require('../errors').codes,
+var _require$codes = require('../errors').codes,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
   ERR_TRANSFORM_ALREADY_TRANSFORMING = _require$codes.ERR_TRANSFORM_ALREADY_TRANSFORMING,
   ERR_TRANSFORM_WITH_LENGTH_0 = _require$codes.ERR_TRANSFORM_WITH_LENGTH_0;
-const Duplex = require('./_stream_duplex');
+var Duplex = require('./_stream_duplex');
 require('inherits')(Transform, Duplex);
 function afterTransform(er, data) {
   var ts = this._transformState;
@@ -21959,9 +21960,10 @@ function Transform(options) {
   this.on('prefinish', prefinish);
 }
 function prefinish() {
+  var _this = this;
   if (typeof this._flush === 'function' && !this._readableState.destroyed) {
-    this._flush((er, data) => {
-      done(this, er, data);
+    this._flush(function (er, data) {
+      done(_this, er, data);
     });
   } else {
     done(this, null, null);
@@ -22011,7 +22013,7 @@ Transform.prototype._read = function (n) {
   }
 };
 Transform.prototype._destroy = function (err, cb) {
-  Duplex.prototype._destroy.call(this, err, err2 => {
+  Duplex.prototype._destroy.call(this, err, function (err2) {
     cb(err2);
   });
 };
@@ -22070,10 +22072,11 @@ function WriteReq(chunk, encoding, cb) {
 // It seems a linked list but it is not
 // there will be only 2 of these for each stream
 function CorkedRequest(state) {
+  var _this = this;
   this.next = null;
   this.entry = null;
-  this.finish = () => {
-    onCorkedFinish(this, state);
+  this.finish = function () {
+    onCorkedFinish(_this, state);
   };
 }
 /* </replacement> */
@@ -22085,7 +22088,7 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-const internalUtil = {
+var internalUtil = {
   deprecate: require('util-deprecate')
 };
 /*</replacement>*/
@@ -22094,18 +22097,18 @@ const internalUtil = {
 var Stream = require('./internal/streams/stream');
 /*</replacement>*/
 
-const Buffer = require('buffer').Buffer;
-const OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
+var Buffer = require('buffer').Buffer;
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
 function _isUint8Array(obj) {
   return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
 }
-const destroyImpl = require('./internal/streams/destroy');
-const _require = require('./internal/streams/state'),
+var destroyImpl = require('./internal/streams/destroy');
+var _require = require('./internal/streams/state'),
   getHighWaterMark = _require.getHighWaterMark;
-const _require$codes = require('../errors').codes,
+var _require$codes = require('../errors').codes,
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
@@ -22114,7 +22117,7 @@ const _require$codes = require('../errors').codes,
   ERR_STREAM_NULL_VALUES = _require$codes.ERR_STREAM_NULL_VALUES,
   ERR_STREAM_WRITE_AFTER_END = _require$codes.ERR_STREAM_WRITE_AFTER_END,
   ERR_UNKNOWN_ENCODING = _require$codes.ERR_UNKNOWN_ENCODING;
-const errorOrDestroy = destroyImpl.errorOrDestroy;
+var errorOrDestroy = destroyImpl.errorOrDestroy;
 require('inherits')(Writable, Stream);
 function nop() {}
 function WritableState(options, stream, isDuplex) {
@@ -22272,7 +22275,7 @@ function Writable(options) {
 
   // Checking for a Stream.Duplex instance is faster here instead of inside
   // the WritableState constructor, at least with V8 6.5
-  const isDuplex = this instanceof Duplex;
+  var isDuplex = this instanceof Duplex;
   if (!isDuplex && !realHasInstance.call(Writable, this)) return new Writable(options);
   this._writableState = new WritableState(options, this, isDuplex);
 
@@ -22396,9 +22399,9 @@ function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
   if (state.writing || state.corked) {
     var last = state.lastBufferedRequest;
     state.lastBufferedRequest = {
-      chunk,
-      encoding,
-      isBuf,
+      chunk: chunk,
+      encoding: encoding,
+      isBuf: isBuf,
       callback: cb,
       next: null
     };
@@ -22571,7 +22574,7 @@ Object.defineProperty(Writable.prototype, 'writableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.length;
   }
 });
@@ -22579,7 +22582,7 @@ function needFinish(state) {
   return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
 }
 function callFinal(stream, state) {
-  stream._final(err => {
+  stream._final(function (err) {
     state.pendingcb--;
     if (err) {
       errorOrDestroy(stream, err);
@@ -22611,7 +22614,7 @@ function finishMaybe(stream, state) {
       if (state.autoDestroy) {
         // In case of duplex streams we need a way to detect
         // if the readable side is ready for autoDestroy as well
-        const rState = stream._readableState;
+        var rState = stream._readableState;
         if (!rState || rState.autoDestroy && rState.endEmitted) {
           stream.destroy();
         }
@@ -22647,13 +22650,13 @@ Object.defineProperty(Writable.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._writableState === undefined) {
       return false;
     }
     return this._writableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (!this._writableState) {
@@ -22676,24 +22679,28 @@ Writable.prototype._destroy = function (err, cb) {
 (function (process){(function (){
 'use strict';
 
-const finished = require('./end-of-stream');
-const kLastResolve = Symbol('lastResolve');
-const kLastReject = Symbol('lastReject');
-const kError = Symbol('error');
-const kEnded = Symbol('ended');
-const kLastPromise = Symbol('lastPromise');
-const kHandlePromise = Symbol('handlePromise');
-const kStream = Symbol('stream');
+var _Object$setPrototypeO;
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+var finished = require('./end-of-stream');
+var kLastResolve = Symbol('lastResolve');
+var kLastReject = Symbol('lastReject');
+var kError = Symbol('error');
+var kEnded = Symbol('ended');
+var kLastPromise = Symbol('lastPromise');
+var kHandlePromise = Symbol('handlePromise');
+var kStream = Symbol('stream');
 function createIterResult(value, done) {
   return {
-    value,
-    done
+    value: value,
+    done: done
   };
 }
 function readAndResolve(iter) {
-  const resolve = iter[kLastResolve];
+  var resolve = iter[kLastResolve];
   if (resolve !== null) {
-    const data = iter[kStream].read();
+    var data = iter[kStream].read();
     // we defer if data is null
     // we can be expecting either 'end' or
     // 'error'
@@ -22711,8 +22718,8 @@ function onReadable(iter) {
   process.nextTick(readAndResolve, iter);
 }
 function wrapForNext(lastPromise, iter) {
-  return (resolve, reject) => {
-    lastPromise.then(() => {
+  return function (resolve, reject) {
+    lastPromise.then(function () {
       if (iter[kEnded]) {
         resolve(createIterResult(undefined, true));
         return;
@@ -22721,15 +22728,16 @@ function wrapForNext(lastPromise, iter) {
     }, reject);
   };
 }
-const AsyncIteratorPrototype = Object.getPrototypeOf(function () {});
-const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
+var AsyncIteratorPrototype = Object.getPrototypeOf(function () {});
+var ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf((_Object$setPrototypeO = {
   get stream() {
     return this[kStream];
   },
-  next() {
+  next: function next() {
+    var _this = this;
     // if we have detected an error in the meanwhile
     // reject straight away
-    const error = this[kError];
+    var error = this[kError];
     if (error !== null) {
       return Promise.reject(error);
     }
@@ -22741,10 +22749,10 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
       // called, the error will be emitted via nextTick, and
       // we cannot guarantee that there is no error lingering around
       // waiting to be emitted.
-      return new Promise((resolve, reject) => {
-        process.nextTick(() => {
-          if (this[kError]) {
-            reject(this[kError]);
+      return new Promise(function (resolve, reject) {
+        process.nextTick(function () {
+          if (_this[kError]) {
+            reject(_this[kError]);
           } else {
             resolve(createIterResult(undefined, true));
           }
@@ -22756,14 +22764,14 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     // we will wait for the previous Promise to finish
     // this logic is optimized to support for await loops,
     // where next() is only called once at a time
-    const lastPromise = this[kLastPromise];
-    let promise;
+    var lastPromise = this[kLastPromise];
+    var promise;
     if (lastPromise) {
       promise = new Promise(wrapForNext(lastPromise, this));
     } else {
       // fast path needed to support multiple this.push()
       // without triggering the next() queue
-      const data = this[kStream].read();
+      var data = this[kStream].read();
       if (data !== null) {
         return Promise.resolve(createIterResult(data, false));
       }
@@ -22771,70 +22779,60 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     }
     this[kLastPromise] = promise;
     return promise;
-  },
-  [Symbol.asyncIterator]() {
-    return this;
-  },
-  return() {
-    // destroy(err, cb) is a private API
-    // we can guarantee we have that here, because we control the
-    // Readable class this is attached to
-    return new Promise((resolve, reject) => {
-      this[kStream].destroy(null, err => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(createIterResult(undefined, true));
-      });
-    });
   }
-}, AsyncIteratorPrototype);
-const createReadableStreamAsyncIterator = stream => {
-  const iterator = Object.create(ReadableStreamAsyncIteratorPrototype, {
-    [kStream]: {
-      value: stream,
-      writable: true
-    },
-    [kLastResolve]: {
-      value: null,
-      writable: true
-    },
-    [kLastReject]: {
-      value: null,
-      writable: true
-    },
-    [kError]: {
-      value: null,
-      writable: true
-    },
-    [kEnded]: {
-      value: stream._readableState.endEmitted,
-      writable: true
-    },
-    // the function passed to new Promise
-    // is cached so we avoid allocating a new
-    // closure at every run
-    [kHandlePromise]: {
-      value: (resolve, reject) => {
-        const data = iterator[kStream].read();
-        if (data) {
-          iterator[kLastPromise] = null;
-          iterator[kLastResolve] = null;
-          iterator[kLastReject] = null;
-          resolve(createIterResult(data, false));
-        } else {
-          iterator[kLastResolve] = resolve;
-          iterator[kLastReject] = reject;
-        }
-      },
-      writable: true
-    }
+}, _defineProperty(_Object$setPrototypeO, Symbol.asyncIterator, function () {
+  return this;
+}), _defineProperty(_Object$setPrototypeO, "return", function _return() {
+  var _this2 = this;
+  // destroy(err, cb) is a private API
+  // we can guarantee we have that here, because we control the
+  // Readable class this is attached to
+  return new Promise(function (resolve, reject) {
+    _this2[kStream].destroy(null, function (err) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(createIterResult(undefined, true));
+    });
   });
+}), _Object$setPrototypeO), AsyncIteratorPrototype);
+var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterator(stream) {
+  var _Object$create;
+  var iterator = Object.create(ReadableStreamAsyncIteratorPrototype, (_Object$create = {}, _defineProperty(_Object$create, kStream, {
+    value: stream,
+    writable: true
+  }), _defineProperty(_Object$create, kLastResolve, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kLastReject, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kError, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kEnded, {
+    value: stream._readableState.endEmitted,
+    writable: true
+  }), _defineProperty(_Object$create, kHandlePromise, {
+    value: function value(resolve, reject) {
+      var data = iterator[kStream].read();
+      if (data) {
+        iterator[kLastPromise] = null;
+        iterator[kLastResolve] = null;
+        iterator[kLastReject] = null;
+        resolve(createIterResult(data, false));
+      } else {
+        iterator[kLastResolve] = resolve;
+        iterator[kLastReject] = reject;
+      }
+    },
+    writable: true
+  }), _Object$create));
   iterator[kLastPromise] = null;
-  finished(stream, err => {
+  finished(stream, function (err) {
     if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-      const reject = iterator[kLastReject];
+      var reject = iterator[kLastReject];
       // reject if we are waiting for data in the Promise
       // returned by next() and store the error
       if (reject !== null) {
@@ -22846,7 +22844,7 @@ const createReadableStreamAsyncIterator = stream => {
       iterator[kError] = err;
       return;
     }
-    const resolve = iterator[kLastResolve];
+    var resolve = iterator[kLastResolve];
     if (resolve !== null) {
       iterator[kLastPromise] = null;
       iterator[kLastResolve] = null;
@@ -22867,164 +22865,193 @@ module.exports = createReadableStreamAsyncIterator;
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-const _require = require('buffer'),
+var _require = require('buffer'),
   Buffer = _require.Buffer;
-const _require2 = require('util'),
+var _require2 = require('util'),
   inspect = _require2.inspect;
-const custom = inspect && inspect.custom || 'inspect';
+var custom = inspect && inspect.custom || 'inspect';
 function copyBuffer(src, target, offset) {
   Buffer.prototype.copy.call(src, target, offset);
 }
-module.exports = class BufferList {
-  constructor() {
+module.exports = /*#__PURE__*/function () {
+  function BufferList() {
+    _classCallCheck(this, BufferList);
     this.head = null;
     this.tail = null;
     this.length = 0;
   }
-  push(v) {
-    const entry = {
-      data: v,
-      next: null
-    };
-    if (this.length > 0) this.tail.next = entry;else this.head = entry;
-    this.tail = entry;
-    ++this.length;
-  }
-  unshift(v) {
-    const entry = {
-      data: v,
-      next: this.head
-    };
-    if (this.length === 0) this.tail = entry;
-    this.head = entry;
-    ++this.length;
-  }
-  shift() {
-    if (this.length === 0) return;
-    const ret = this.head.data;
-    if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
-    --this.length;
-    return ret;
-  }
-  clear() {
-    this.head = this.tail = null;
-    this.length = 0;
-  }
-  join(s) {
-    if (this.length === 0) return '';
-    var p = this.head;
-    var ret = '' + p.data;
-    while (p = p.next) ret += s + p.data;
-    return ret;
-  }
-  concat(n) {
-    if (this.length === 0) return Buffer.alloc(0);
-    const ret = Buffer.allocUnsafe(n >>> 0);
-    var p = this.head;
-    var i = 0;
-    while (p) {
-      copyBuffer(p.data, ret, i);
-      i += p.data.length;
-      p = p.next;
+  _createClass(BufferList, [{
+    key: "push",
+    value: function push(v) {
+      var entry = {
+        data: v,
+        next: null
+      };
+      if (this.length > 0) this.tail.next = entry;else this.head = entry;
+      this.tail = entry;
+      ++this.length;
     }
-    return ret;
-  }
-
-  // Consumes a specified amount of bytes or characters from the buffered data.
-  consume(n, hasStrings) {
-    var ret;
-    if (n < this.head.data.length) {
-      // `slice` is the same for buffers and strings.
-      ret = this.head.data.slice(0, n);
-      this.head.data = this.head.data.slice(n);
-    } else if (n === this.head.data.length) {
-      // First chunk is a perfect match.
-      ret = this.shift();
-    } else {
-      // Result spans more than one buffer.
-      ret = hasStrings ? this._getString(n) : this._getBuffer(n);
+  }, {
+    key: "unshift",
+    value: function unshift(v) {
+      var entry = {
+        data: v,
+        next: this.head
+      };
+      if (this.length === 0) this.tail = entry;
+      this.head = entry;
+      ++this.length;
     }
-    return ret;
-  }
-  first() {
-    return this.head.data;
-  }
-
-  // Consumes a specified amount of characters from the buffered data.
-  _getString(n) {
-    var p = this.head;
-    var c = 1;
-    var ret = p.data;
-    n -= ret.length;
-    while (p = p.next) {
-      const str = p.data;
-      const nb = n > str.length ? str.length : n;
-      if (nb === str.length) ret += str;else ret += str.slice(0, n);
-      n -= nb;
-      if (n === 0) {
-        if (nb === str.length) {
-          ++c;
-          if (p.next) this.head = p.next;else this.head = this.tail = null;
-        } else {
-          this.head = p;
-          p.data = str.slice(nb);
-        }
-        break;
+  }, {
+    key: "shift",
+    value: function shift() {
+      if (this.length === 0) return;
+      var ret = this.head.data;
+      if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
+      --this.length;
+      return ret;
+    }
+  }, {
+    key: "clear",
+    value: function clear() {
+      this.head = this.tail = null;
+      this.length = 0;
+    }
+  }, {
+    key: "join",
+    value: function join(s) {
+      if (this.length === 0) return '';
+      var p = this.head;
+      var ret = '' + p.data;
+      while (p = p.next) ret += s + p.data;
+      return ret;
+    }
+  }, {
+    key: "concat",
+    value: function concat(n) {
+      if (this.length === 0) return Buffer.alloc(0);
+      var ret = Buffer.allocUnsafe(n >>> 0);
+      var p = this.head;
+      var i = 0;
+      while (p) {
+        copyBuffer(p.data, ret, i);
+        i += p.data.length;
+        p = p.next;
       }
-      ++c;
+      return ret;
     }
-    this.length -= c;
-    return ret;
-  }
 
-  // Consumes a specified amount of bytes from the buffered data.
-  _getBuffer(n) {
-    const ret = Buffer.allocUnsafe(n);
-    var p = this.head;
-    var c = 1;
-    p.data.copy(ret);
-    n -= p.data.length;
-    while (p = p.next) {
-      const buf = p.data;
-      const nb = n > buf.length ? buf.length : n;
-      buf.copy(ret, ret.length - n, 0, nb);
-      n -= nb;
-      if (n === 0) {
-        if (nb === buf.length) {
-          ++c;
-          if (p.next) this.head = p.next;else this.head = this.tail = null;
-        } else {
-          this.head = p;
-          p.data = buf.slice(nb);
-        }
-        break;
+    // Consumes a specified amount of bytes or characters from the buffered data.
+  }, {
+    key: "consume",
+    value: function consume(n, hasStrings) {
+      var ret;
+      if (n < this.head.data.length) {
+        // `slice` is the same for buffers and strings.
+        ret = this.head.data.slice(0, n);
+        this.head.data = this.head.data.slice(n);
+      } else if (n === this.head.data.length) {
+        // First chunk is a perfect match.
+        ret = this.shift();
+      } else {
+        // Result spans more than one buffer.
+        ret = hasStrings ? this._getString(n) : this._getBuffer(n);
       }
-      ++c;
+      return ret;
     }
-    this.length -= c;
-    return ret;
-  }
+  }, {
+    key: "first",
+    value: function first() {
+      return this.head.data;
+    }
 
-  // Make sure the linked list only shows the minimal necessary information.
-  [custom](_, options) {
-    return inspect(this, _objectSpread(_objectSpread({}, options), {}, {
-      // Only inspect one level.
-      depth: 0,
-      // It should not recurse.
-      customInspect: false
-    }));
-  }
-};
+    // Consumes a specified amount of characters from the buffered data.
+  }, {
+    key: "_getString",
+    value: function _getString(n) {
+      var p = this.head;
+      var c = 1;
+      var ret = p.data;
+      n -= ret.length;
+      while (p = p.next) {
+        var str = p.data;
+        var nb = n > str.length ? str.length : n;
+        if (nb === str.length) ret += str;else ret += str.slice(0, n);
+        n -= nb;
+        if (n === 0) {
+          if (nb === str.length) {
+            ++c;
+            if (p.next) this.head = p.next;else this.head = this.tail = null;
+          } else {
+            this.head = p;
+            p.data = str.slice(nb);
+          }
+          break;
+        }
+        ++c;
+      }
+      this.length -= c;
+      return ret;
+    }
+
+    // Consumes a specified amount of bytes from the buffered data.
+  }, {
+    key: "_getBuffer",
+    value: function _getBuffer(n) {
+      var ret = Buffer.allocUnsafe(n);
+      var p = this.head;
+      var c = 1;
+      p.data.copy(ret);
+      n -= p.data.length;
+      while (p = p.next) {
+        var buf = p.data;
+        var nb = n > buf.length ? buf.length : n;
+        buf.copy(ret, ret.length - n, 0, nb);
+        n -= nb;
+        if (n === 0) {
+          if (nb === buf.length) {
+            ++c;
+            if (p.next) this.head = p.next;else this.head = this.tail = null;
+          } else {
+            this.head = p;
+            p.data = buf.slice(nb);
+          }
+          break;
+        }
+        ++c;
+      }
+      this.length -= c;
+      return ret;
+    }
+
+    // Make sure the linked list only shows the minimal necessary information.
+  }, {
+    key: custom,
+    value: function value(_, options) {
+      return inspect(this, _objectSpread(_objectSpread({}, options), {}, {
+        // Only inspect one level.
+        depth: 0,
+        // It should not recurse.
+        customInspect: false
+      }));
+    }
+  }]);
+  return BufferList;
+}();
 },{"buffer":"buffer","util":"util"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/destroy.js":[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
 // undocumented cb() API, needed for core, not for public API
 function destroy(err, cb) {
-  const readableDestroyed = this._readableState && this._readableState.destroyed;
-  const writableDestroyed = this._writableState && this._writableState.destroyed;
+  var _this = this;
+  var readableDestroyed = this._readableState && this._readableState.destroyed;
+  var writableDestroyed = this._writableState && this._writableState.destroyed;
   if (readableDestroyed || writableDestroyed) {
     if (cb) {
       cb(err);
@@ -23050,21 +23077,21 @@ function destroy(err, cb) {
   if (this._writableState) {
     this._writableState.destroyed = true;
   }
-  this._destroy(err || null, err => {
+  this._destroy(err || null, function (err) {
     if (!cb && err) {
-      if (!this._writableState) {
-        process.nextTick(emitErrorAndCloseNT, this, err);
-      } else if (!this._writableState.errorEmitted) {
-        this._writableState.errorEmitted = true;
-        process.nextTick(emitErrorAndCloseNT, this, err);
+      if (!_this._writableState) {
+        process.nextTick(emitErrorAndCloseNT, _this, err);
+      } else if (!_this._writableState.errorEmitted) {
+        _this._writableState.errorEmitted = true;
+        process.nextTick(emitErrorAndCloseNT, _this, err);
       } else {
-        process.nextTick(emitCloseNT, this);
+        process.nextTick(emitCloseNT, _this);
       }
     } else if (cb) {
-      process.nextTick(emitCloseNT, this);
+      process.nextTick(emitCloseNT, _this);
       cb(err);
     } else {
-      process.nextTick(emitCloseNT, this);
+      process.nextTick(emitCloseNT, _this);
     }
   });
   return this;
@@ -23105,14 +23132,14 @@ function errorOrDestroy(stream, err) {
   // the error to be emitted nextTick. In a future
   // semver major update we should change the default to this.
 
-  const rState = stream._readableState;
-  const wState = stream._writableState;
+  var rState = stream._readableState;
+  var wState = stream._writableState;
   if (rState && rState.autoDestroy || wState && wState.autoDestroy) stream.destroy(err);else stream.emit('error', err);
 }
 module.exports = {
-  destroy,
-  undestroy,
-  errorOrDestroy
+  destroy: destroy,
+  undestroy: undestroy,
+  errorOrDestroy: errorOrDestroy
 };
 }).call(this)}).call(this,require('_process'))
 
@@ -23122,9 +23149,9 @@ module.exports = {
 
 'use strict';
 
-const ERR_STREAM_PREMATURE_CLOSE = require('../../../errors').codes.ERR_STREAM_PREMATURE_CLOSE;
+var ERR_STREAM_PREMATURE_CLOSE = require('../../../errors').codes.ERR_STREAM_PREMATURE_CLOSE;
 function once(callback) {
-  let called = false;
+  var called = false;
   return function () {
     if (called) return;
     called = true;
@@ -23142,28 +23169,28 @@ function eos(stream, opts, callback) {
   if (typeof opts === 'function') return eos(stream, null, opts);
   if (!opts) opts = {};
   callback = once(callback || noop);
-  let readable = opts.readable || opts.readable !== false && stream.readable;
-  let writable = opts.writable || opts.writable !== false && stream.writable;
-  const onlegacyfinish = () => {
+  var readable = opts.readable || opts.readable !== false && stream.readable;
+  var writable = opts.writable || opts.writable !== false && stream.writable;
+  var onlegacyfinish = function onlegacyfinish() {
     if (!stream.writable) onfinish();
   };
   var writableEnded = stream._writableState && stream._writableState.finished;
-  const onfinish = () => {
+  var onfinish = function onfinish() {
     writable = false;
     writableEnded = true;
     if (!readable) callback.call(stream);
   };
   var readableEnded = stream._readableState && stream._readableState.endEmitted;
-  const onend = () => {
+  var onend = function onend() {
     readable = false;
     readableEnded = true;
     if (!writable) callback.call(stream);
   };
-  const onerror = err => {
+  var onerror = function onerror(err) {
     callback.call(stream, err);
   };
-  const onclose = () => {
-    let err;
+  var onclose = function onclose() {
+    var err;
     if (readable && !readableEnded) {
       if (!stream._readableState || !stream._readableState.ended) err = new ERR_STREAM_PREMATURE_CLOSE();
       return callback.call(stream, err);
@@ -23173,7 +23200,7 @@ function eos(stream, opts, callback) {
       return callback.call(stream, err);
     }
   };
-  const onrequest = () => {
+  var onrequest = function onrequest() {
     stream.req.on('finish', onfinish);
   };
   if (isRequest(stream)) {
@@ -23214,16 +23241,16 @@ module.exports = function () {
 
 'use strict';
 
-let eos;
+var eos;
 function once(callback) {
-  let called = false;
+  var called = false;
   return function () {
     if (called) return;
     called = true;
-    callback(...arguments);
+    callback.apply(void 0, arguments);
   };
 }
-const _require$codes = require('../../../errors').codes,
+var _require$codes = require('../../../errors').codes,
   ERR_MISSING_ARGS = _require$codes.ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED = _require$codes.ERR_STREAM_DESTROYED;
 function noop(err) {
@@ -23235,21 +23262,21 @@ function isRequest(stream) {
 }
 function destroyer(stream, reading, writing, callback) {
   callback = once(callback);
-  let closed = false;
-  stream.on('close', () => {
+  var closed = false;
+  stream.on('close', function () {
     closed = true;
   });
   if (eos === undefined) eos = require('./end-of-stream');
   eos(stream, {
     readable: reading,
     writable: writing
-  }, err => {
+  }, function (err) {
     if (err) return callback(err);
     closed = true;
     callback();
   });
-  let destroyed = false;
-  return err => {
+  var destroyed = false;
+  return function (err) {
     if (closed) return;
     if (destroyed) return;
     destroyed = true;
@@ -23275,15 +23302,15 @@ function pipeline() {
   for (var _len = arguments.length, streams = new Array(_len), _key = 0; _key < _len; _key++) {
     streams[_key] = arguments[_key];
   }
-  const callback = popCallback(streams);
+  var callback = popCallback(streams);
   if (Array.isArray(streams[0])) streams = streams[0];
   if (streams.length < 2) {
     throw new ERR_MISSING_ARGS('streams');
   }
-  let error;
-  const destroys = streams.map(function (stream, i) {
-    const reading = i < streams.length - 1;
-    const writing = i > 0;
+  var error;
+  var destroys = streams.map(function (stream, i) {
+    var reading = i < streams.length - 1;
+    var writing = i > 0;
     return destroyer(stream, reading, writing, function (err) {
       if (!error) error = err;
       if (err) destroys.forEach(call);
@@ -23298,15 +23325,15 @@ module.exports = pipeline;
 },{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js","./end-of-stream":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/state.js":[function(require,module,exports){
 'use strict';
 
-const ERR_INVALID_OPT_VALUE = require('../../../errors').codes.ERR_INVALID_OPT_VALUE;
+var ERR_INVALID_OPT_VALUE = require('../../../errors').codes.ERR_INVALID_OPT_VALUE;
 function highWaterMarkFrom(options, isDuplex, duplexKey) {
   return options.highWaterMark != null ? options.highWaterMark : isDuplex ? options[duplexKey] : null;
 }
 function getHighWaterMark(state, options, duplexKey, isDuplex) {
-  const hwm = highWaterMarkFrom(options, isDuplex, duplexKey);
+  var hwm = highWaterMarkFrom(options, isDuplex, duplexKey);
   if (hwm != null) {
     if (!(isFinite(hwm) && Math.floor(hwm) === hwm) || hwm < 0) {
-      const name = isDuplex ? duplexKey : 'highWaterMark';
+      var name = isDuplex ? duplexKey : 'highWaterMark';
       throw new ERR_INVALID_OPT_VALUE(name, hwm);
     }
     return Math.floor(hwm);
@@ -23316,7 +23343,7 @@ function getHighWaterMark(state, options, duplexKey, isDuplex) {
   return state.objectMode ? 16 : 16 * 1024;
 }
 module.exports = {
-  getHighWaterMark
+  getHighWaterMark: getHighWaterMark
 };
 },{"../../../errors":"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/errors-browser.js"}],"/home/runner/work/privatesky/privatesky/node_modules/browserify-sign/node_modules/readable-stream/lib/internal/streams/stream-browser.js":[function(require,module,exports){
 module.exports = require('events').EventEmitter;
@@ -29544,14 +29571,14 @@ var objectKeys = Object.keys || function (obj) {
 /*</replacement>*/
 
 module.exports = Duplex;
-const Readable = require('./_stream_readable');
-const Writable = require('./_stream_writable');
+var Readable = require('./_stream_readable');
+var Writable = require('./_stream_writable');
 require('inherits')(Duplex, Readable);
 {
   // Allow the keys array to be GC'ed.
-  const keys = objectKeys(Writable.prototype);
+  var keys = objectKeys(Writable.prototype);
   for (var v = 0; v < keys.length; v++) {
-    const method = keys[v];
+    var method = keys[v];
     if (!Duplex.prototype[method]) Duplex.prototype[method] = Writable.prototype[method];
   }
 }
@@ -29574,7 +29601,7 @@ Object.defineProperty(Duplex.prototype, 'writableHighWaterMark', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.highWaterMark;
   }
 });
@@ -29592,7 +29619,7 @@ Object.defineProperty(Duplex.prototype, 'writableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.length;
   }
 });
@@ -29614,13 +29641,13 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._readableState === undefined || this._writableState === undefined) {
       return false;
     }
     return this._readableState.destroyed && this._writableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (this._readableState === undefined || this._writableState === undefined) {
@@ -29671,7 +29698,7 @@ var Duplex;
 Readable.ReadableState = ReadableState;
 
 /*<replacement>*/
-const EE = require('events').EventEmitter;
+var EE = require('events').EventEmitter;
 var EElistenerCount = function EElistenerCount(emitter, type) {
   return emitter.listeners(type).length;
 };
@@ -29681,8 +29708,8 @@ var EElistenerCount = function EElistenerCount(emitter, type) {
 var Stream = require('./internal/streams/stream');
 /*</replacement>*/
 
-const Buffer = require('buffer').Buffer;
-const OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
+var Buffer = require('buffer').Buffer;
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
@@ -29691,8 +29718,8 @@ function _isUint8Array(obj) {
 }
 
 /*<replacement>*/
-const debugUtil = require('util');
-let debug;
+var debugUtil = require('util');
+var debug;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
 } else {
@@ -29700,23 +29727,23 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-const BufferList = require('./internal/streams/buffer_list');
-const destroyImpl = require('./internal/streams/destroy');
-const _require = require('./internal/streams/state'),
+var BufferList = require('./internal/streams/buffer_list');
+var destroyImpl = require('./internal/streams/destroy');
+var _require = require('./internal/streams/state'),
   getHighWaterMark = _require.getHighWaterMark;
-const _require$codes = require('../errors').codes,
+var _require$codes = require('../errors').codes,
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PUSH_AFTER_EOF = _require$codes.ERR_STREAM_PUSH_AFTER_EOF,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT = _require$codes.ERR_STREAM_UNSHIFT_AFTER_END_EVENT;
 
 // Lazy loaded to improve the startup performance.
-let StringDecoder;
-let createReadableStreamAsyncIterator;
-let from;
+var StringDecoder;
+var createReadableStreamAsyncIterator;
+var from;
 require('inherits')(Readable, Stream);
-const errorOrDestroy = destroyImpl.errorOrDestroy;
-const kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
+var errorOrDestroy = destroyImpl.errorOrDestroy;
+var kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
 function prependListener(emitter, event, fn) {
   // Sadly this is not cacheable as some libraries bundle their own
   // event emitter implementation with them.
@@ -29807,7 +29834,7 @@ function Readable(options) {
 
   // Checking for a Stream.Duplex instance is faster here instead of inside
   // the ReadableState constructor, at least with V8 6.5
-  const isDuplex = this instanceof Duplex;
+  var isDuplex = this instanceof Duplex;
   this._readableState = new ReadableState(options, this, isDuplex);
 
   // legacy
@@ -29823,13 +29850,13 @@ Object.defineProperty(Readable.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._readableState === undefined) {
       return false;
     }
     return this._readableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (!this._readableState) {
@@ -29940,14 +29967,14 @@ Readable.prototype.isPaused = function () {
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
   if (!StringDecoder) StringDecoder = require('string_decoder/').StringDecoder;
-  const decoder = new StringDecoder(enc);
+  var decoder = new StringDecoder(enc);
   this._readableState.decoder = decoder;
   // If setEncoding(null), decoder.encoding equals utf8
   this._readableState.encoding = this._readableState.decoder.encoding;
 
   // Iterate over current buffer to convert already stored Buffers:
-  let p = this._readableState.buffer.head;
-  let content = '';
+  var p = this._readableState.buffer.head;
+  var content = '';
   while (p !== null) {
     content += decoder.write(p.data);
     p = p.next;
@@ -29959,7 +29986,7 @@ Readable.prototype.setEncoding = function (enc) {
 };
 
 // Don't raise the hwm > 1GB
-const MAX_HWM = 0x40000000;
+var MAX_HWM = 0x40000000;
 function computeNewHighWaterMark(n) {
   if (n >= MAX_HWM) {
     // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
@@ -30186,7 +30213,7 @@ function maybeReadMore_(stream, state) {
   //   read()s. The execution ends in this method again after the _read() ends
   //   up calling push() with more data.
   while (!state.reading && !state.ended && (state.length < state.highWaterMark || state.flowing && state.length === 0)) {
-    const len = state.length;
+    var len = state.length;
     debug('maybeReadMore read 0');
     stream.read(0);
     if (len === state.length)
@@ -30383,8 +30410,8 @@ Readable.prototype.unpipe = function (dest) {
 // set up data events if they are asked for
 // Ensure readable listeners eventually get something
 Readable.prototype.on = function (ev, fn) {
-  const res = Stream.prototype.on.call(this, ev, fn);
-  const state = this._readableState;
+  var res = Stream.prototype.on.call(this, ev, fn);
+  var state = this._readableState;
   if (ev === 'data') {
     // update readableListening so that resume() may be a no-op
     // a few lines down. This is needed to support once('readable').
@@ -30409,7 +30436,7 @@ Readable.prototype.on = function (ev, fn) {
 };
 Readable.prototype.addListener = Readable.prototype.on;
 Readable.prototype.removeListener = function (ev, fn) {
-  const res = Stream.prototype.removeListener.call(this, ev, fn);
+  var res = Stream.prototype.removeListener.call(this, ev, fn);
   if (ev === 'readable') {
     // We need to check if there is someone still listening to
     // readable and reset the state. However this needs to happen
@@ -30422,7 +30449,7 @@ Readable.prototype.removeListener = function (ev, fn) {
   return res;
 };
 Readable.prototype.removeAllListeners = function (ev) {
-  const res = Stream.prototype.removeAllListeners.apply(this, arguments);
+  var res = Stream.prototype.removeAllListeners.apply(this, arguments);
   if (ev === 'readable' || ev === undefined) {
     // We need to check if there is someone still listening to
     // readable and reset the state. However this needs to happen
@@ -30435,7 +30462,7 @@ Readable.prototype.removeAllListeners = function (ev) {
   return res;
 };
 function updateReadableListening(self) {
-  const state = self._readableState;
+  var state = self._readableState;
   state.readableListening = self.listenerCount('readable') > 0;
   if (state.resumeScheduled && !state.paused) {
     // flowing needs to be set to true now, otherwise
@@ -30494,7 +30521,7 @@ Readable.prototype.pause = function () {
   return this;
 };
 function flow(stream) {
-  const state = stream._readableState;
+  var state = stream._readableState;
   debug('flow', state.flowing);
   while (state.flowing && stream.read() !== null);
 }
@@ -30503,23 +30530,24 @@ function flow(stream) {
 // This is *not* part of the readable stream interface.
 // It is an ugly unfortunate mess of history.
 Readable.prototype.wrap = function (stream) {
+  var _this = this;
   var state = this._readableState;
   var paused = false;
-  stream.on('end', () => {
+  stream.on('end', function () {
     debug('wrapped end');
     if (state.decoder && !state.ended) {
       var chunk = state.decoder.end();
-      if (chunk && chunk.length) this.push(chunk);
+      if (chunk && chunk.length) _this.push(chunk);
     }
-    this.push(null);
+    _this.push(null);
   });
-  stream.on('data', chunk => {
+  stream.on('data', function (chunk) {
     debug('wrapped data');
     if (state.decoder) chunk = state.decoder.write(chunk);
 
     // don't skip over falsy values in objectMode
     if (state.objectMode && (chunk === null || chunk === undefined)) return;else if (!state.objectMode && (!chunk || !chunk.length)) return;
-    var ret = this.push(chunk);
+    var ret = _this.push(chunk);
     if (!ret) {
       paused = true;
       stream.pause();
@@ -30545,7 +30573,7 @@ Readable.prototype.wrap = function (stream) {
 
   // when we try to consume some more bytes, simply unpause the
   // underlying stream.
-  this._read = n => {
+  this._read = function (n) {
     debug('wrapped _read', n);
     if (paused) {
       paused = false;
@@ -30602,7 +30630,7 @@ Object.defineProperty(Readable.prototype, 'readableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._readableState.length;
   }
 });
@@ -30644,7 +30672,7 @@ function endReadableNT(state, stream) {
     if (state.autoDestroy) {
       // In case of duplex streams we need a way to detect
       // if the writable side is ready for autoDestroy as well
-      const wState = stream._writableState;
+      var wState = stream._writableState;
       if (!wState || wState.autoDestroy && wState.finished) {
         stream.destroy();
       }
@@ -30711,10 +30739,11 @@ function WriteReq(chunk, encoding, cb) {
 // It seems a linked list but it is not
 // there will be only 2 of these for each stream
 function CorkedRequest(state) {
+  var _this = this;
   this.next = null;
   this.entry = null;
-  this.finish = () => {
-    onCorkedFinish(this, state);
+  this.finish = function () {
+    onCorkedFinish(_this, state);
   };
 }
 /* </replacement> */
@@ -30726,7 +30755,7 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-const internalUtil = {
+var internalUtil = {
   deprecate: require('util-deprecate')
 };
 /*</replacement>*/
@@ -30735,18 +30764,18 @@ const internalUtil = {
 var Stream = require('./internal/streams/stream');
 /*</replacement>*/
 
-const Buffer = require('buffer').Buffer;
-const OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
+var Buffer = require('buffer').Buffer;
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
 function _isUint8Array(obj) {
   return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
 }
-const destroyImpl = require('./internal/streams/destroy');
-const _require = require('./internal/streams/state'),
+var destroyImpl = require('./internal/streams/destroy');
+var _require = require('./internal/streams/state'),
   getHighWaterMark = _require.getHighWaterMark;
-const _require$codes = require('../errors').codes,
+var _require$codes = require('../errors').codes,
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
@@ -30755,7 +30784,7 @@ const _require$codes = require('../errors').codes,
   ERR_STREAM_NULL_VALUES = _require$codes.ERR_STREAM_NULL_VALUES,
   ERR_STREAM_WRITE_AFTER_END = _require$codes.ERR_STREAM_WRITE_AFTER_END,
   ERR_UNKNOWN_ENCODING = _require$codes.ERR_UNKNOWN_ENCODING;
-const errorOrDestroy = destroyImpl.errorOrDestroy;
+var errorOrDestroy = destroyImpl.errorOrDestroy;
 require('inherits')(Writable, Stream);
 function nop() {}
 function WritableState(options, stream, isDuplex) {
@@ -30913,7 +30942,7 @@ function Writable(options) {
 
   // Checking for a Stream.Duplex instance is faster here instead of inside
   // the WritableState constructor, at least with V8 6.5
-  const isDuplex = this instanceof Duplex;
+  var isDuplex = this instanceof Duplex;
   if (!isDuplex && !realHasInstance.call(Writable, this)) return new Writable(options);
   this._writableState = new WritableState(options, this, isDuplex);
 
@@ -31037,9 +31066,9 @@ function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
   if (state.writing || state.corked) {
     var last = state.lastBufferedRequest;
     state.lastBufferedRequest = {
-      chunk,
-      encoding,
-      isBuf,
+      chunk: chunk,
+      encoding: encoding,
+      isBuf: isBuf,
       callback: cb,
       next: null
     };
@@ -31212,7 +31241,7 @@ Object.defineProperty(Writable.prototype, 'writableLength', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     return this._writableState.length;
   }
 });
@@ -31220,7 +31249,7 @@ function needFinish(state) {
   return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
 }
 function callFinal(stream, state) {
-  stream._final(err => {
+  stream._final(function (err) {
     state.pendingcb--;
     if (err) {
       errorOrDestroy(stream, err);
@@ -31252,7 +31281,7 @@ function finishMaybe(stream, state) {
       if (state.autoDestroy) {
         // In case of duplex streams we need a way to detect
         // if the readable side is ready for autoDestroy as well
-        const rState = stream._readableState;
+        var rState = stream._readableState;
         if (!rState || rState.autoDestroy && rState.endEmitted) {
           stream.destroy();
         }
@@ -31288,13 +31317,13 @@ Object.defineProperty(Writable.prototype, 'destroyed', {
   // because otherwise some prototype manipulation in
   // userland will fail
   enumerable: false,
-  get() {
+  get: function get() {
     if (this._writableState === undefined) {
       return false;
     }
     return this._writableState.destroyed;
   },
-  set(value) {
+  set: function set(value) {
     // we ignore the value if the stream
     // has not been initialized yet
     if (!this._writableState) {
@@ -31317,24 +31346,28 @@ Writable.prototype._destroy = function (err, cb) {
 (function (process){(function (){
 'use strict';
 
-const finished = require('./end-of-stream');
-const kLastResolve = Symbol('lastResolve');
-const kLastReject = Symbol('lastReject');
-const kError = Symbol('error');
-const kEnded = Symbol('ended');
-const kLastPromise = Symbol('lastPromise');
-const kHandlePromise = Symbol('handlePromise');
-const kStream = Symbol('stream');
+var _Object$setPrototypeO;
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+var finished = require('./end-of-stream');
+var kLastResolve = Symbol('lastResolve');
+var kLastReject = Symbol('lastReject');
+var kError = Symbol('error');
+var kEnded = Symbol('ended');
+var kLastPromise = Symbol('lastPromise');
+var kHandlePromise = Symbol('handlePromise');
+var kStream = Symbol('stream');
 function createIterResult(value, done) {
   return {
-    value,
-    done
+    value: value,
+    done: done
   };
 }
 function readAndResolve(iter) {
-  const resolve = iter[kLastResolve];
+  var resolve = iter[kLastResolve];
   if (resolve !== null) {
-    const data = iter[kStream].read();
+    var data = iter[kStream].read();
     // we defer if data is null
     // we can be expecting either 'end' or
     // 'error'
@@ -31352,8 +31385,8 @@ function onReadable(iter) {
   process.nextTick(readAndResolve, iter);
 }
 function wrapForNext(lastPromise, iter) {
-  return (resolve, reject) => {
-    lastPromise.then(() => {
+  return function (resolve, reject) {
+    lastPromise.then(function () {
       if (iter[kEnded]) {
         resolve(createIterResult(undefined, true));
         return;
@@ -31362,15 +31395,16 @@ function wrapForNext(lastPromise, iter) {
     }, reject);
   };
 }
-const AsyncIteratorPrototype = Object.getPrototypeOf(function () {});
-const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
+var AsyncIteratorPrototype = Object.getPrototypeOf(function () {});
+var ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf((_Object$setPrototypeO = {
   get stream() {
     return this[kStream];
   },
-  next() {
+  next: function next() {
+    var _this = this;
     // if we have detected an error in the meanwhile
     // reject straight away
-    const error = this[kError];
+    var error = this[kError];
     if (error !== null) {
       return Promise.reject(error);
     }
@@ -31382,10 +31416,10 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
       // called, the error will be emitted via nextTick, and
       // we cannot guarantee that there is no error lingering around
       // waiting to be emitted.
-      return new Promise((resolve, reject) => {
-        process.nextTick(() => {
-          if (this[kError]) {
-            reject(this[kError]);
+      return new Promise(function (resolve, reject) {
+        process.nextTick(function () {
+          if (_this[kError]) {
+            reject(_this[kError]);
           } else {
             resolve(createIterResult(undefined, true));
           }
@@ -31397,14 +31431,14 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     // we will wait for the previous Promise to finish
     // this logic is optimized to support for await loops,
     // where next() is only called once at a time
-    const lastPromise = this[kLastPromise];
-    let promise;
+    var lastPromise = this[kLastPromise];
+    var promise;
     if (lastPromise) {
       promise = new Promise(wrapForNext(lastPromise, this));
     } else {
       // fast path needed to support multiple this.push()
       // without triggering the next() queue
-      const data = this[kStream].read();
+      var data = this[kStream].read();
       if (data !== null) {
         return Promise.resolve(createIterResult(data, false));
       }
@@ -31412,70 +31446,60 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     }
     this[kLastPromise] = promise;
     return promise;
-  },
-  [Symbol.asyncIterator]() {
-    return this;
-  },
-  return() {
-    // destroy(err, cb) is a private API
-    // we can guarantee we have that here, because we control the
-    // Readable class this is attached to
-    return new Promise((resolve, reject) => {
-      this[kStream].destroy(null, err => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(createIterResult(undefined, true));
-      });
-    });
   }
-}, AsyncIteratorPrototype);
-const createReadableStreamAsyncIterator = stream => {
-  const iterator = Object.create(ReadableStreamAsyncIteratorPrototype, {
-    [kStream]: {
-      value: stream,
-      writable: true
-    },
-    [kLastResolve]: {
-      value: null,
-      writable: true
-    },
-    [kLastReject]: {
-      value: null,
-      writable: true
-    },
-    [kError]: {
-      value: null,
-      writable: true
-    },
-    [kEnded]: {
-      value: stream._readableState.endEmitted,
-      writable: true
-    },
-    // the function passed to new Promise
-    // is cached so we avoid allocating a new
-    // closure at every run
-    [kHandlePromise]: {
-      value: (resolve, reject) => {
-        const data = iterator[kStream].read();
-        if (data) {
-          iterator[kLastPromise] = null;
-          iterator[kLastResolve] = null;
-          iterator[kLastReject] = null;
-          resolve(createIterResult(data, false));
-        } else {
-          iterator[kLastResolve] = resolve;
-          iterator[kLastReject] = reject;
-        }
-      },
-      writable: true
-    }
+}, _defineProperty(_Object$setPrototypeO, Symbol.asyncIterator, function () {
+  return this;
+}), _defineProperty(_Object$setPrototypeO, "return", function _return() {
+  var _this2 = this;
+  // destroy(err, cb) is a private API
+  // we can guarantee we have that here, because we control the
+  // Readable class this is attached to
+  return new Promise(function (resolve, reject) {
+    _this2[kStream].destroy(null, function (err) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(createIterResult(undefined, true));
+    });
   });
+}), _Object$setPrototypeO), AsyncIteratorPrototype);
+var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterator(stream) {
+  var _Object$create;
+  var iterator = Object.create(ReadableStreamAsyncIteratorPrototype, (_Object$create = {}, _defineProperty(_Object$create, kStream, {
+    value: stream,
+    writable: true
+  }), _defineProperty(_Object$create, kLastResolve, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kLastReject, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kError, {
+    value: null,
+    writable: true
+  }), _defineProperty(_Object$create, kEnded, {
+    value: stream._readableState.endEmitted,
+    writable: true
+  }), _defineProperty(_Object$create, kHandlePromise, {
+    value: function value(resolve, reject) {
+      var data = iterator[kStream].read();
+      if (data) {
+        iterator[kLastPromise] = null;
+        iterator[kLastResolve] = null;
+        iterator[kLastReject] = null;
+        resolve(createIterResult(data, false));
+      } else {
+        iterator[kLastResolve] = resolve;
+        iterator[kLastReject] = reject;
+      }
+    },
+    writable: true
+  }), _Object$create));
   iterator[kLastPromise] = null;
-  finished(stream, err => {
+  finished(stream, function (err) {
     if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-      const reject = iterator[kLastReject];
+      var reject = iterator[kLastReject];
       // reject if we are waiting for data in the Promise
       // returned by next() and store the error
       if (reject !== null) {
@@ -31487,7 +31511,7 @@ const createReadableStreamAsyncIterator = stream => {
       iterator[kError] = err;
       return;
     }
-    const resolve = iterator[kLastResolve];
+    var resolve = iterator[kLastResolve];
     if (resolve !== null) {
       iterator[kLastPromise] = null;
       iterator[kLastResolve] = null;
@@ -31510,8 +31534,9 @@ arguments[4]["/home/runner/work/privatesky/privatesky/node_modules/browserify-si
 
 // undocumented cb() API, needed for core, not for public API
 function destroy(err, cb) {
-  const readableDestroyed = this._readableState && this._readableState.destroyed;
-  const writableDestroyed = this._writableState && this._writableState.destroyed;
+  var _this = this;
+  var readableDestroyed = this._readableState && this._readableState.destroyed;
+  var writableDestroyed = this._writableState && this._writableState.destroyed;
   if (readableDestroyed || writableDestroyed) {
     if (cb) {
       cb(err);
@@ -31537,21 +31562,21 @@ function destroy(err, cb) {
   if (this._writableState) {
     this._writableState.destroyed = true;
   }
-  this._destroy(err || null, err => {
+  this._destroy(err || null, function (err) {
     if (!cb && err) {
-      if (!this._writableState) {
-        process.nextTick(emitErrorAndCloseNT, this, err);
-      } else if (!this._writableState.errorEmitted) {
-        this._writableState.errorEmitted = true;
-        process.nextTick(emitErrorAndCloseNT, this, err);
+      if (!_this._writableState) {
+        process.nextTick(emitErrorAndCloseNT, _this, err);
+      } else if (!_this._writableState.errorEmitted) {
+        _this._writableState.errorEmitted = true;
+        process.nextTick(emitErrorAndCloseNT, _this, err);
       } else {
-        process.nextTick(emitCloseNT, this);
+        process.nextTick(emitCloseNT, _this);
       }
     } else if (cb) {
-      process.nextTick(emitCloseNT, this);
+      process.nextTick(emitCloseNT, _this);
       cb(err);
     } else {
-      process.nextTick(emitCloseNT, this);
+      process.nextTick(emitCloseNT, _this);
     }
   });
   return this;
@@ -31592,14 +31617,14 @@ function errorOrDestroy(stream, err) {
   // the error to be emitted nextTick. In a future
   // semver major update we should change the default to this.
 
-  const rState = stream._readableState;
-  const wState = stream._writableState;
+  var rState = stream._readableState;
+  var wState = stream._writableState;
   if (rState && rState.autoDestroy || wState && wState.autoDestroy) stream.destroy(err);else stream.emit('error', err);
 }
 module.exports = {
-  destroy,
-  undestroy,
-  errorOrDestroy
+  destroy: destroy,
+  undestroy: undestroy,
+  errorOrDestroy: errorOrDestroy
 };
 }).call(this)}).call(this,require('_process'))
 
